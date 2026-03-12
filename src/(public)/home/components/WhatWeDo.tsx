@@ -16,15 +16,15 @@ const WhatWeDo = () => {
       ]
     },
     {
-      title: "Teacher Advocacy & Rights",
-      description: "Your voice, amplified. We negotiate for fair salaries, improved working conditions, and better benefits. From policy reform to workplace disputes, ZUTE represents teachers with strength and unity.",
+      title: "Advocacy & Rights",
+      description: "Your voice, amplified. We negotiate for fair salaries, improved working conditions, and better benefits. From policy reform to workplace disputes, AVEC represents educators with strength and unity.",
       icon: Megaphone,
       gradient: "from-orange-600 to-red-600",
       bgColor: "bg-gradient-to-br from-orange-50 to-orange-100",
       iconBg: "bg-gradient-to-br from-[#F15A29] to-[#d94c1e]",
       stats: [
         { icon: Shield, label: "Recent Wins", value: "Q1 2026" },
-        { icon: Users, label: "Teachers", value: "5,000+" }
+        { icon: Users, label: "Educators", value: "5,000+" }
       ]
     },
     {
@@ -78,7 +78,7 @@ const WhatWeDo = () => {
             </span>
           </div>
           <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 font-inter bg-clip-text text-transparent bg-gradient-to-r from-[#172E70] to-[#F15A29]">
-            What We Do For Teachers
+            What We Do For Educators
           </h2>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
             Three pillars of support designed to empower, protect, and elevate your teaching career

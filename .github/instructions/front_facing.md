@@ -1,5 +1,5 @@
 WIREFRAME SPECIFICATIONS
-Interactive Website for ZUTE (Zambia Union of Teachers Empowerment)
+Interactive Website for AVEC (Association for Vocational and Educational Change)
 
 DESIGN PHILOSOPHY
 Three Core Principles:
@@ -18,7 +18,7 @@ Breakpoint Strategy: Breakpoints: Mobile (320-767px), Tablet (768-1023px), Deskt
 PAGE STRUCTURE
 Site Map:
 Home Page (DONE - DON'T TOUCH)
-About ZUTE
+About AVEC
 ECOS (Investment Wing)
 Membership(DONE - DON'T TOUCH)
 What We Do (Programs & Services)
@@ -34,13 +34,13 @@ A. Smart Navigation System
 
 Mobile
 │ ┌─────────────────────────────────────────────────────────────┐ │
-│ │ [ZUTE Logo]                              [Join ZUTE] [Menu] │ │
+│ │ [AVEC Logo]                              [Apply Now] [Menu] │ │
 │ └─────────────────────────────────────────────────────────────┘ │
 │ Off-Canvas Menu: │
 │ ┌─────────────────────────────────────────────────────────────┐ │
 │ │ × │ │
 │ │ Home │ │
-│ │ About ZUTE │ │
+│ │ About AVEC │ │
 │ │ ECOS Investment Wing │ │
 │ │ Become a Member │ │
 │ │ What We Do ▸ │ │
@@ -52,31 +52,31 @@ Mobile
 │ │ Partner With Us │ │
 │ │ Donations │ │
 │ │ Contact │ │
-│ │ [Join ZUTE Today] │ │
+│ │ [Apply Now] │ │
 │ └─────────────────────────────────────────────────────────────┘ │
 │ │
 │ Desktop (1440px+): │
 │ ┌─────────────────────────────────────────────────────────────┐ │
-│ │ [ZUTE Logo] About ECOS Membership Programs News │ │
-│ │ Contact [Join ZUTE] │ │
+│ │ [AVEC Logo] About ECOS Membership Programs News │ │
+│ │ Contact [Apply Now] │ │
 │ └─────────────────────────────────────────────────────────────┘ │
 └─────────────────────────────────────────────────────────────────────┘
 Interactions:
 Sticky on scroll: Becomes compact after 100px scroll
 Dropdown on "What We Do" hover, Highlight current section
-Smart CTA: "Join ZUTE" becomes "Apply Now" on membership page
+Smart CTA: "Join AVEC" becomes "Apply Now" on membership page
 Mobile: Smooth slide-in menu with overlay
 
-ABOUT ZUTE PAGE
+ABOUT AVEC PAGE
 Goal:
-Convey ZUTE's story, vision, mission, values, organizational structure, and leadership
+Convey AVEC's story, vision, mission, values, organizational structure, and leadership
 Mobile Layout (320px)
 ┌─────────────────────────────────────────────────────────────┐
 │ PAGE HEADER │
 │ ┌───────────────────────────────────────────────────────┐ │
 │ │ Background: Teachers collaborating │ │
 │ │ │ │
-│ │ About ZUTE │ │
+│ │ About AVEC │ │
 │ │ Empowerment Our Agenda │ │
 │ └───────────────────────────────────────────────────────┘ │
 │ │
@@ -84,7 +84,7 @@ Mobile Layout (320px)
 │ ┌───────────────────────────────────────────────────────┐ │
 │ │ Who We Are │ │
 │ │ │ │
-│ │ [Combined paragraph about ZUTE and ECOS] │ │
+│ │ [Combined paragraph about AVEC and ECOS] │ │
 │ │ │ │
 │ │ [Read more about our journey...] │ │
 │ └───────────────────────────────────────────────────────┘ │
@@ -92,7 +92,7 @@ Mobile Layout (320px)
 │ VISION & MISSION │
 │ ┌───────────────────────────────────────────────────────┐ │
 │ │ Our Vision │ │
-│ │ To be the leading teachers' union in Zambia │ │
+│ │ To be a leading educators' association in Zambia │ │
 │ │ known for integrity, innovation, and sustainable │ │
 │ │ empowerment through ECOS. │ │
 │ └───────────────────────────────────────────────────────┘ │
@@ -171,8 +171,8 @@ Mobile Layout (320px)
 │ ┌───────────────────────────────────────────────────────┐ │
 │ │ Join Our Movement │ │
 │ │ │ │
-│ │ Be part of the union that's transforming │ │
-│ │ teaching in Zambia. │ │
+│ │ Be part of the movement that's transforming │ │
+│ │ education in Zambia. │ │
 │ │ │ │
 │ │ [Become a Member] │ │
 │ └───────────────────────────────────────────────────────┘ │
@@ -183,7 +183,7 @@ Desktop Layout (1440px)
 │ ┌───────────────────────────────────────────────────────────────────────┐ │
 │ │ Background: High-quality image of teachers in professional setting │ │
 │ │ │ │
-│ │ About ZUTE │ │
+│ │ About AVEC │ │
 │ │ Building a stronger future for Zambia's educators │ │
 │ │ "Empowerment Our Agenda" │ │
 │ └───────────────────────────────────────────────────────────────────────┘ │
@@ -192,7 +192,7 @@ Desktop Layout (1440px)
 │ ┌───────────────────────────────────────────────────────────────────────┐ │
 │ │ Who We Are │ │
 │ │ │ │
-│ │ [2-3 paragraphs about ZUTE's founding, purpose, and ECOS] │ │
+│ │ [2-3 paragraphs about AVEC's founding, purpose, and ECOS] │ │
 │ │ [Include key milestones if available] │ │
 │ └───────────────────────────────────────────────────────────────────────┘ │
 │ │
@@ -295,7 +295,7 @@ Mobile Layout (320px)
 │ ┌───────────────────────────────────────────────────────┐ │
 │ │ Building Wealth Together │ │
 │ │ │ │
-│ │ ECOS is ZUTE's investment wing, registered with │ │
+│ │ ECOS is AVEC's investment wing, registered with │ │
 │ │ the Ministry of Agriculture and Cooperatives. │ │
 │ │ We create sustainable wealth-building opportunities │ │
 │ │ designed by teachers, for teachers. │ │
@@ -332,8 +332,8 @@ Mobile Layout (320px)
 │ ┌───────────────────────────────────────────────────────┐ │
 │ │ Join ECOS in 3 Simple Steps │ │
 │ │ │ │
-│ │ Step 1: Become a ZUTE Member │ │
-│ │ Join ZUTE to access all cooperative benefits. │ │
+│ │ Step 1: Become an AVEC Member │ │
+│ │ Join AVEC to access all cooperative benefits. │ │
 │ │ │ │
 │ │ Step 2: Register with ECOS │ │
 │ │ Complete your ECOS membership registration. │ │
@@ -409,8 +409,8 @@ Desktop Layout (1440px)
 │ │ ┌──────────┐ ┌──────────┐ ┌──────────┐ │ │
 │ │ │ 1 │ → │ 2 │ → │ 3 │ │ │
 │ │ │ │ │ │ │ │ │ │
-│ │ │ Become a │ │ Register │ │ Start │ │ │
-│ │ │ ZUTE │ │ with │ │ Investing│ │ │
+│ │ │ Become an │ │ Register │ │ Start │ │ │
+│ │ │ AVEC │ │ with │ │ Investing│ │ │
 │ │ │ Member │ │ ECOS │ │ │ │ │
 │ │ │ │ │ │ │ │ │ │
 │ │ │ [Details]│ │ [Details]│ │ [Details]│ │ │
@@ -460,7 +460,7 @@ Mobile Layout (320px)
 │ └───────────────────────────────────────────────────────┘ │
 │ INTRO │
 │ ┌───────────────────────────────────────────────────────┐ │
-│ │ ZUTE serves teachers through four key areas: │ │
+│ │ AVEC serves teachers through four key areas: │ │
 │ │ advocacy, professional development, economic │ │
 │ │ empowerment, and community impact. │ │
 │ └───────────────────────────────────────────────────────┘ │
@@ -470,7 +470,7 @@ Mobile Layout (320px)
 │ │ Your Voice in Policy and Practice │ │
 │ │ We represent teachers' interests in national │ │
 │ │ dialogue, labor negotiations, and education reform. │ │
-│ │ ZUTE ensures fair treatment, improved working │ │
+│ │ AVEC ensures fair treatment, improved working │ │
 │ │ conditions, and policies that put teachers first. │ │
 │ │ │ │
 │ │ What We Do: │ │
@@ -486,7 +486,7 @@ Mobile Layout (320px)
 │ │ │ │
 │ │ Growing Excellence in Teaching │ │
 │ │ │ │
-│ │ ZUTE supports continuous learning through training, │ │
+│ │ AVEC supports continuous learning through training, │ │
 │ │ mentorship, and knowledge-sharing platforms that │ │
 │ │ elevate your skills and career. │ │
 │ │ │ │
@@ -504,7 +504,7 @@ Mobile Layout (320px)
 │ │ │ │
 │ │ Building Wealth Through ECOS │ │
 │ │ │ │
-│ │ Through our ECOS cooperative, ZUTE provides │ │
+│ │ Through our ECOS cooperative, AVEC provides │ │
 │ │ investment opportunities, financial services, and │ │
 │ │ entrepreneurial support to improve teachers' │ │
 │ │ economic status. │ │
@@ -522,7 +522,7 @@ Mobile Layout (320px)
 │ │ │ │
 │ │ Strengthening Education Beyond the Classroom │ │
 │ │ │ │
-│ │ ZUTE engages in social development initiatives │ │
+│ │ AVEC engages in social development initiatives │ │
 │ │ that strengthen the broader education ecosystem │ │
 │ │ and empower communities across Zambia. │ │
 │ │ │ │
@@ -549,7 +549,7 @@ Mobile Layout (320px)
 │ └───────────────────────────────────────────────────────┘ │
 │ CALL TO ACTION │
 │ ┌───────────────────────────────────────────────────────┐ │
-│ │ Experience the ZUTE Difference │ │
+│ │ Experience the AVEC Difference │ │
 │ │ Join us and access programs that empower you │ │
 │ │ professionally, financially, and personally. │ │
 │ │ [Become a Member] │ │
@@ -565,7 +565,7 @@ Desktop Layout (1440px)
 │ └───────────────────────────────────────────────────────────────────────┘ │
 │ INTRO (Center-aligned, max-width 900px) │
 │ ┌───────────────────────────────────────────────────────────────────────┐ │
-│ │ ZUTE serves Zambia's teachers through four key areas: advocacy, │ │
+│ │ AVEC serves Zambia's teachers through four key areas: advocacy, │ │
 │ │ professional development, economic empowerment, and community impact. │ │
 │ └───────────────────────────────────────────────────────────────────────┘ │
 │ PROGRAM 1: ADVOCACY (Alternating layout - Image Left, Text Right) │
@@ -651,7 +651,7 @@ Desktop Layout (1440px)
 │ └───────────────────────────────────────────────────────────────────────┘ │
 │ FINAL CTA │
 │ ┌───────────────────────────────────────────────────────────────────────┐ │
-│ │ Experience the ZUTE Difference │ │
+│ │ Experience the AVEC Difference │ │
 │ │ Join us and access programs that empower you professionally, │ │
 │ │ financially, and personally. │ │
 │ │ [Become a Member] │ │
@@ -674,7 +674,7 @@ Mobile Layout (320px)
 │ [Load More Articles] │
 │ PODCAST SECTION │
 │ ┌───────────────────────────────────────────────────────┐ │
-│ │ ZUTE Podcasts │ │
+│ │ AVEC Podcasts │ │
 │ │ [View All Podcasts] │ │
 │ └───────────────────────────────────────────────────────┘ │
 │ │
@@ -687,7 +687,7 @@ Mobile Layout (320px)
 │ NEWSLETTER SIGNUP │
 │ ┌───────────────────────────────────────────────────────┐ │
 │ │ Stay Updated │ │
-│ │ Get ZUTE news delivered to your inbox. │ │
+│ │ Get AVEC news delivered to your inbox. │ │
 │ │ Email: [___________________________] │ │
 │ │ [Subscribe] │ │
 │ └───────────────────────────────────────────────────────┘ │
@@ -698,7 +698,7 @@ Desktop Layout (1440px)
 │ PAGE HEADER │
 │ ┌───────────────────────────────────────────────────────────────────────┐ │
 │ │ News & Updates │ │
-│ │ Stay Informed on Teachers' Issues and ZUTE Activities │ │
+│ │ Stay Informed on Teachers' Issues and AVEC Activities │ │
 │ └───────────────────────────────────────────────────────────────────────┘ │
 │ FILTER BAR & SEARCH │
 │ ┌───────────────────────────────────────────────────────────────────────┐ │
@@ -766,17 +766,17 @@ Mobile Layout (320px)
 ┌─────────────────────────────────────────────────────────────┐
 │ PAGE HEADER │
 │ ┌───────────────────────────────────────────────────────┐ │
-│ │ Partner With ZUTE │ │
+│ │ Partner With AVEC │ │
 │ │ Together, We Can Transform Education │ │
 │ └───────────────────────────────────────────────────────┘ │
 │ INTRO │
 │ ┌───────────────────────────────────────────────────────┐ │
-│ │ ZUTE welcomes partnerships with organizations, │ │
+│ │ AVEC welcomes partnerships with organizations, │ │
 │ │ government agencies, investors, and stakeholders │ │
 │ │ committed to empowering teachers and strengthening │ │
 │ │ education in Zambia. │ │
 │ └───────────────────────────────────────────────────────┘ │
-│ WHY PARTNER WITH ZUTE? │
+│ WHY PARTNER WITH AVEC? │
 │ ┌───────────────────────────────────────────────────────┐ │
 │ │ Direct Access to Educators │ │
 │ │ Connect with thousands of teachers across Zambia. │ │
@@ -843,16 +843,16 @@ Desktop Layout (1440px)
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │ PAGE HEADER │
 │ ┌───────────────────────────────────────────────────────────────────────┐ │
-│ │ Partner With ZUTE │ │
+│ │ Partner With AVEC │ │
 │ │ Together, We Can Transform Education in Zambia │ │
 │ └───────────────────────────────────────────────────────────────────────┘ │
 │ INTRO (Center-aligned, max-width 900px) │
 │ ┌───────────────────────────────────────────────────────────────────────┐ │
-│ │ ZUTE welcomes partnerships with organizations, government agencies, │ │
+│ │ AVEC welcomes partnerships with organizations, government agencies, │ │
 │ │ investors, and stakeholders committed to empowering teachers and │ │
 │ │ strengthening education in Zambia. │ │
 │ └───────────────────────────────────────────────────────────────────────┘ │
-│ WHY PARTNER WITH ZUTE? (4 Column Grid) │
+│ WHY PARTNER WITH AVEC? (4 Column Grid) │
 │ ┌───────────────────────────────────────────────────────────────────────┐ │
 │ │ ┌─────────────┐ ┌─────────────┐ ┌─────────────┐ ┌─────────────┐ │ │
 │ │ │ Direct │ │ National │ │ Investment │ │ Social │ │ │
@@ -975,11 +975,11 @@ CONTENT STRATEGY
 
 Content Matrix by Page:
 Page	Primary Goal	Key Messages	CTAs
-Home	Introduce ZUTE & drive membership	Empowerment, Unity, ECOS	Join ZUTE, Learn About ECOS
+Home	Introduce AVEC & drive membership	Empowerment, Unity, ECOS	Join AVEC, Learn About ECOS
 About	Build trust & credibility	Story, Values, Leadership	Become a Member
 ECOS	Explain investment wing & drive participation	Financial empowerment, Wealth building	Join ECOS, Schedule Consultation
 Membership	Convert visitors to members	Benefits, Value, Process	Apply Now, Contact Us
-What We Do	Showcase programs & impact	Comprehensive support, Real results	Explore Programs, Join ZUTE
+What We Do	Showcase programs & impact	Comprehensive support, Real results	Explore Programs, Join AVEC
 News	Keep stakeholders informed	Updates, Events, Insights	Subscribe, Read More
 Get Involved	Attract partners & investors	Collaboration opportunities, Impact	Partner With Us, Invest in ECOS
 Contact	Facilitate communication	Accessibility, Responsiveness	Send Message, Call Now
@@ -1032,6 +1032,6 @@ Cookie consent banner
 PERFORMANCE OPTIMIZATION
 
 Final Note:
-The site should feel modern, hopeful, and empowering—a digital home that reflects ZUTE's mission of building a stronger future for Zambia's educators.
+The site should feel modern, hopeful, and empowering—a digital home that reflects AVEC's mission of building a stronger future for Zambia's educators.
 
 Ready for high-fidelity mockups and React component development.

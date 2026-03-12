@@ -6,7 +6,7 @@ import { USER_ROLES } from "../constants";
 import { ROLE_PERMISSIONS } from "../permissions";
 
 export const seedDefaultAdmin = async () => {
-  const email = "admin@zute.com";
+  const email = "admin@avec.com";
   const password = "Password123!"; // Default password
   const firstName = "Super";
   const lastName = "Admin";
@@ -38,7 +38,7 @@ export const seedDefaultAdmin = async () => {
     await setDoc(doc(db, "admins", user.uid), adminProfile);
 
     console.log("Default admin seeded successfully");
-    return { success: true, message: "Admin created successfully. Email: admin@zute.com, Password: Password123!" };
+    return { success: true, message: "Admin created successfully. Email: admin@avec.com, Password: Password123!" };
   } catch (error) {
     console.error("Error seeding admin:", error);
     if (error && typeof error === 'object' && 'code' in error && error.code === "auth/email-already-in-use") {

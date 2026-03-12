@@ -239,7 +239,7 @@ export default function PartnershipPage() {
             <DialogHeader>
               <DialogTitle>Add New Partnership</DialogTitle>
               <DialogDescription>
-                Create a new partnership or exclusive offer for ZUTE members.
+                Create a new partnership or exclusive offer for AVEC members.
               </DialogDescription>
             </DialogHeader>
 

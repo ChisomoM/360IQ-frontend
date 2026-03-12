@@ -119,7 +119,7 @@ export const ReportsPage: React.FC = () => {
       'Referral Code': item.referralCode || 'N/A',
       'Application Date': item.createdAt ? dayjs(item.createdAt.toDate ? item.createdAt.toDate() : item.createdAt).format('YYYY-MM-DD') : 'N/A',
     }));
-    exportToCSV(exportData, `ZUTE_Reports_${dayjs().format('YYYY-MM-DD')}`);
+    exportToCSV(exportData, `AVEC_Reports_${dayjs().format('YYYY-MM-DD')}`);
   };
 
   if (loading) {

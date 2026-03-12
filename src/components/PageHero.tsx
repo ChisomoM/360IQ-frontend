@@ -22,9 +22,9 @@ function PageHero({
   const shouldReduceMotion = useReducedMotion();
   return (
     <section
-      className={`relative bg-[url('/ZUTE-IMAGE.jpg')] bg-cover bg-top bg-no-repeat py-20 sm:py-24 md:py-28 lg:py-32 overflow-hidden ${className}`}
+      className={`relative bg-[url('/AVEC-IMAGE.jpg')] bg-cover bg-top bg-no-repeat py-20 sm:py-24 md:py-28 lg:py-32 overflow-hidden ${className}`}
     //   style={{
-    //     backgroundImage: `url('${backgroundImage ?? '/ZUTE-IMAGE.jpg'}')`,
+    //     backgroundImage: `url('${backgroundImage ?? '/AVEC-IMAGE.jpg'}')`,
     //     backgroundSize: 'cover',
     //     backgroundPosition: 'center',
     //     backgroundRepeat: 'no-repeat'

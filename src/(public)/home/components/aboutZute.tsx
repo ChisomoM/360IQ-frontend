@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 // import { Users, TrendingUp, Award, Target } from 'lucide-react';
 
-export default function AboutZUTE(){
+export default function AboutAVEC(){
     // const stats = [
     //     { icon: Users, value: "5,000+", label: "Active Members" },
     //     { icon: TrendingUp, value: "15%", label: "ROI Growth" },
@@ -33,7 +33,7 @@ export default function AboutZUTE(){
                             
                             <img 
                                 src="/bg-t.png" 
-                                alt="About ZUTE" 
+                                alt="About Avec" 
                                 className="w-full h-full object-cover"
                             />
                             
@@ -89,9 +89,9 @@ export default function AboutZUTE(){
                                 transition={{ duration: 0.6, delay: 0.3 }}
                                 className="text-3xl md:text-4xl lg:text-5xl font-bold mt-6 mb-6 font-inter leading-tight"
                             >
-                                A Union made to{' '}
+                                A platform built to{' '}
                                 <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#172E70] to-[#F15A29]">
-                                    empower teachers
+                                    enable organizations
                                 </span>
                             </motion.h2>
                             
@@ -102,9 +102,7 @@ export default function AboutZUTE(){
                                 transition={{ duration: 0.6, delay: 0.4 }}
                                 className="text-lg text-gray-600 leading-relaxed"
                             >
-                                ZUTE unites educators through advocacy, professional development, and economic opportunities 
-                                through our cooperative, ECOS. Together, we're building a stronger teaching profession that 
-                                values growth, protection, and financial empowerment.
+                                Avec partners with organizations to deliver DIMS: modern document intelligence, secure storage, and workflow automation.
                             </motion.p>
                         </div>
 

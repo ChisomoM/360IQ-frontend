@@ -48,17 +48,17 @@ const BecomeMember = () => {
                 >
                   <div className="inline-block mb-4">
                     <span className="text-[#F15A29] font-semibold text-sm uppercase tracking-wider px-4 py-2 bg-orange-500/20 rounded-full border border-orange-400/30 backdrop-blur">
-                      Join Today
+                      Apply
                     </span>
                   </div>
                   
                   <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-6 font-inter text-white leading-tight">
-                    Ready to Join the <span className="text-[#F15A29]">Movement?</span>
+                    Ready to <span className="text-[#F15A29]">Apply?</span>
                   </h2>
                   
                   <p className="text-lg text-blue-100 mb-8 leading-relaxed">
                     Become part of a community that prioritizes your growth, rights, and financial future. 
-                    Join ZUTE today and start your journey towards empowerment.
+                    Apply now and start your journey towards empowerment.
                   </p>
 
                   {/* Benefits List */}
@@ -81,12 +81,12 @@ const BecomeMember = () => {
                   </div>
 
                   <div className="flex flex-col sm:flex-row gap-4">
-                    <Link to="/join" className="flex-1 sm:flex-initial">
+                    <Link to="/contact" className="flex-1 sm:flex-initial">
                       <Button 
                         size="lg" 
                         className="w-full sm:w-auto bg-[#F15A29] hover:bg-[#d94c1e] text-white font-bold px-10 py-7 text-lg rounded-full shadow-lg hover:shadow-orange-500/50 transition-all duration-300 group"
                       >
-                        Become a Member
+                        Apply Now
                         <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
                       </Button>
                     </Link>
