@@ -204,7 +204,7 @@ export default function TeamManagement() {
                   type="email"
                   value={formData.email}
                   onChange={(e) => setFormData({...formData, email: e.target.value})}
-                  placeholder="john.doe@zute.org"
+                  placeholder="john.doe@avec.org"
                 />
               </div>
 

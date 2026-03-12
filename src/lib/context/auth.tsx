@@ -125,8 +125,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         // Auto-redirect based on role
         // Auto-redirect based on role and account type
+        // Student routes were removed; send students to the public home page.
         if (authUser.accountType === 'student') {
-          navigate('/student/dashboard');
+          navigate('/');
         } else if (authUser.role === USER_ROLES.TEACHER) {
           navigate('/dashboard');
         } else {

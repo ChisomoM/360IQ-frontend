@@ -39,8 +39,8 @@ const PreFooter = () => {
             viewport={{ once: true }}
             className="inline-block mb-4"
           >
-            <span className="text-[#F15A29] font-semibold text-sm uppercase tracking-wider px-4 py-2 bg-orange-50 rounded-full border border-orange-200">
-              Why Choose ZUTE
+              <span className="text-[#F15A29] font-semibold text-sm uppercase tracking-wider px-4 py-2 bg-orange-50 rounded-full border border-orange-200">
+              Why Choose AVEC
             </span>
           </motion.div>
           <motion.h2 
@@ -102,19 +102,19 @@ const PreFooter = () => {
           <div className="relative z-10 flex flex-col lg:flex-row items-center justify-between gap-8">
             <div className="text-center lg:text-left max-w-xl">
               <h3 className="text-3xl md:text-4xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-[#F15A29] via-orange-400 to-[#F15A29]">
-                Join the Movement for Teacher Empowerment
+                Join the Movement for Educator Empowerment
               </h3>
               <p className="text-blue-100 text-lg">
                 Be part of a union that fights for your rights, protects your future, and builds your wealth.
               </p>
             </div>
             <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
-              <Link to="/join">
+              <Link to="/contact">
                 <Button 
                   size="lg" 
                   className="bg-[#F15A29] hover:bg-[#d94c1e] text-white font-semibold px-8 py-6 h-auto text-base w-full sm:w-auto shadow-lg shadow-orange-900/20"
                 >
-                  Become a Member
+                  Contact Support
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </Link>

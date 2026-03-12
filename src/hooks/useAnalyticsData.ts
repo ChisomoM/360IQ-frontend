@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { FirebaseFirestore } from '@/lib/firebase/firestore';
-import type { JoinZuteFormData } from '@/types/join-zute';
 import { Timestamp } from 'firebase/firestore';
 import type { QueryConstraint } from 'firebase/firestore';
 
@@ -11,7 +10,24 @@ export interface AnalyticsFilters {
   status?: 'pending' | 'approved' | 'rejected';
 }
 
-export interface AnalyticsData extends JoinZuteFormData {
+export interface JoinApplicationFormData {
+  fullName?: string;
+  school?: string;
+  poBox?: string;
+  applicationDate?: string;
+  tsManNo?: string;
+  employmentNo?: string;
+  salaryScale?: string;
+  district?: string;
+  province?: string;
+  payPoint?: string;
+  payPointDistrict?: string;
+  applicantSignature?: string;
+  nrc?: string;
+  contactNumber?: string;
+}
+
+export interface AnalyticsData extends JoinApplicationFormData {
   id: string;
 }
 

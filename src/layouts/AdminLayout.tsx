@@ -101,22 +101,7 @@ export default function AdminLayout() {
                     {!isCollapsed && 'Student Management'}
                   </div>
 
-                  {/* Applications */}
-                  <SidebarMenuItem>
-                    <SidebarMenuButton 
-                      asChild 
-                      isActive={isActive('/admin/join-applications')}
-                      className={`text-gray-700 hover:bg-gray-100 data-[active=true]:bg-gradient-to-r data-[active=true]:from-[#D70F0E] data-[active=true]:to-[#E5600B] data-[active=true]:text-white rounded-lg transition-colors ${
-                        isCollapsed ? 'justify-center px-2' : ''
-                      }`}
-                      title={isCollapsed ? 'Applications' : ''}
-                    >
-                      <Link to="/admin/join-applications" className="flex items-center gap-3">
-                        <Users className="h-5 w-5 flex-shrink-0" />
-                        {!isCollapsed && <span>Applications</span>}
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
+                  {/* Applications menu removed (join flow deprecated) */}
 
                    {/* Students */}
                    <SidebarMenuItem>

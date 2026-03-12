@@ -8,7 +8,7 @@ const NewsUpdates = () => {
   const newsItems = [
     {
       id: 1,
-      title: "ZUTE Secures Commitment for Q1 2026 Salary Review",
+      title: "AVEC Secures Commitment for Q1 2026 Salary Review",
       excerpt: "After months of negotiation, the ministry has agreed to a comprehensive review of teacher salaries starting next year.",
       category: "Advocacy Win",
       categoryColor: "bg-gradient-to-r from-orange-500 to-red-500 text-white",
@@ -20,7 +20,7 @@ const NewsUpdates = () => {
     {
       id: 2,
       title: "Member Spotlight: Mrs. Mulenga's Farming Success",
-      excerpt: "How one teacher used ZUTE's agricultural investment program to build a thriving maize farm in Chongwe.",
+      excerpt: "How one teacher used AVEC's agricultural investment program to build a thriving maize farm in Chongwe.",
       category: "Member Spotlight",
       categoryColor: "bg-gradient-to-r from-purple-500 to-purple-700 text-white",
       date: "Nov 28, 2024",
@@ -87,7 +87,7 @@ const NewsUpdates = () => {
               Latest News & Updates
             </h2>
             <p className="text-gray-600 text-xl max-w-2xl leading-relaxed">
-              Stay informed on advocacy wins, policy changes, and ZUTE initiatives
+              Stay informed on advocacy wins, policy changes, and AVEC initiatives
             </p>
           </div>
           <Link to="/news" className="hidden lg:block">

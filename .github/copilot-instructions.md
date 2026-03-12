@@ -1,6 +1,6 @@
-# GitHub Copilot Instructions for Zute (c-react-template)
+# GitHub Copilot Instructions for AVEC (c-react-template)
 
-This document provides context and guidelines for AI agents working on the Zute codebase.
+This document provides context and guidelines for AI agents working on the AVEC codebase.
 
 ## Project Overview
 - **Type**: Modern React Application (Vite)

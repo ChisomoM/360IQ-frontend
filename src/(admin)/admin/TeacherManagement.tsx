@@ -174,7 +174,7 @@ export default function TeacherManagement() {
           <h1 className="text-3xl font-bold text-gray-900">Members</h1>
           <p className="text-gray-600 mt-1">
             {canViewAll 
-              ? 'All ZUTE members' 
+              ? 'All AVEC members' 
               : `Viewing: ${user?.assignedRegions?.join(', ') || 'No regions assigned'}`
             }
           </p>

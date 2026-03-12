@@ -30,7 +30,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSignUpClick }) => {
         {/* Branding */}
         <div className="text-center mb-8">
           {/* <h1 className="text-5xl font-bold tracking-tight mb-4 bg-clip-text text-transparent bg-gradient-to-r from-white to-slate-400">
-            Zute
+            Avec
           </h1> */}
           {/* <p className="text-slate-400 text-lg leading-relaxed font-light">
             Admin Dashboard

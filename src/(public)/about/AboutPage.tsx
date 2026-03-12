@@ -65,11 +65,11 @@ const leadershipTeam = [
     image: '',
     bio: 'A staunch advocate for teacher rights with a background in labor law...'
   },
-  {
+    {
     name: 'Ms. Grace Phiri',
     title: 'General Secretary',
     image: '',
-    bio: 'Driving the strategic vision of ZUTE with operational excellence...'
+    bio: 'Driving the strategic vision of AVEC with operational excellence...'
   },
   {
     name: 'Mr. David Banda',
@@ -139,8 +139,8 @@ export default function AboutPage() {
   return (
     <div className="bg-white overflow-x-hidden" ref={containerRef}>
       <SEO 
-        title="About ZUTE | Empowering Zambia's Educators"
-        description="Discover the story, mission, and leadership behind ZUTE. We are building a stronger future for teachers through advocacy and economic empowerment."
+        title="About Avec | DIMS Tenant"
+        description="Discover the story and mission behind Avec. DIMS powers document intelligence and management for organizations."
       />
       
       <Navbar />
@@ -155,13 +155,13 @@ export default function AboutPage() {
         <div className="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 z-10">
           <div className="text-center space-y-4">
             {/* Small label */}
-            <motion.div
+              <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
             >
               <span className="text-sm md:text-base font-semibold text-[#F15A29] tracking-widest uppercase">
-                About ZUTE
+                About Avec
               </span>
             </motion.div>
 
@@ -172,17 +172,17 @@ export default function AboutPage() {
               transition={{ delay: 0.15, duration: 0.6 }}
               className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-white leading-tight font-inter"
             >
-              About <span className="text-[#F15A29]">ZUTE</span>
+              About <span className="text-[#F15A29]">Avec</span>
             </motion.h1>
 
             {/* Subtitle */}
-            <motion.p
+              <motion.p
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.25, duration: 0.6 }}
               className="text-base sm:text-lg md:text-xl text-blue-100/90 max-w-2xl mx-auto leading-relaxed font-light"
             >
-              Building a stronger, more dignified future for Zambia's educators through unity, advocacy, and economic independence.
+              Delivering modern document management, automation, and intelligence to organizations through DIMS.
             </motion.p>
           </div>
         </div>
@@ -203,13 +203,13 @@ export default function AboutPage() {
               />
               <div className="prose prose-lg text-gray-600">
                 <p className="mb-6">
-                  The <strong className="text-[#172E70]">Zambia Union of Teachers Empowerment (ZUTE)</strong> was born from a simple yet powerful realization: teachers deserve more than just representation; they deserve <span className="text-[#F15A29] font-semibold">transformation</span>.
+                  Avec partners with organizations to deliver DIMS: a modern document intelligence and management platform focused on operational efficiency and compliance.
                 </p>
                 <p className="mb-6">
                   Founded on the principles of integrity and unity, we are a forward-thinking organization that combines traditional labor advocacy with modern economic solutions.
                 </p>
                 <p>
-                  Through our investment wing, <strong className="text-[#172E70]">ECOS</strong>, we are rewriting the narrative of the "struggling teacher" by providing sustainable wealth-building opportunities designed by teachers, for teachers.
+                  With tailored integrations and services, we help clients streamline workflows, secure documents, and extract actionable insights.
                 </p>
               </div>
               
@@ -348,7 +348,7 @@ export default function AboutPage() {
                 subtitle="Built on transparency. Governed by you."
               />
               <p className="text-lg text-gray-600 mb-8">
-                ZUTE operates on a bottom-up democratic model. Every member has a voice, from the district level all the way to the National Conference.
+                AVEC operates on a bottom-up democratic model. Every member has a voice, from the district level all the way to the National Conference.
               </p>
               
               <div className="space-y-6">
@@ -605,7 +605,7 @@ export default function AboutPage() {
             transition={{ delay: 0.2 }}
             className="text-xl text-gray-300 mb-10 max-w-2xl mx-auto"
           >
-            Join thousands of educators who are taking control of their professional and financial future with ZUTE.
+            Join thousands of educators who are taking control of their professional and financial future with AVEC.
           </motion.p>
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
@@ -613,7 +613,7 @@ export default function AboutPage() {
             viewport={{ once: true }}
             transition={{ delay: 0.4 }}
           >
-            <Button size="lg" className="bg-[#F15A29] hover:bg-[#d14012] text-white px-10 py-8 text-xl rounded-full shadow-2xl shadow-orange-900/50 transition-transform hover:scale-105" onClick={() => window.location.href = '/join'}>
+            <Button size="lg" className="bg-[#F15A29] hover:bg-[#d14012] text-white px-10 py-8 text-xl rounded-full shadow-2xl shadow-orange-900/50 transition-transform hover:scale-105" onClick={() => window.location.href = '/contact'}>
               Become a Member
             </Button>
           </motion.div>

@@ -60,10 +60,10 @@ function Contact() {
       <Navbar />
       <main className="flex-grow">
       <SEO 
-        title="Contact Us - ZUTE"
-        description="Contact ZUTE for inquiries, support, or membership information. We are here to serve Zambian teachers."
-        keywords="contact ZUTE, teacher union Zambia, education support, join ZUTE"
-        url="https://zute.org.zm/contact"
+        title="Contact Us - Avec"
+        description="Contact Avec for inquiries about DIMS (Document Intelligence & Management System)."
+        keywords="contact Avec, DIMS support, document management"
+        url="https://avec.example.com/contact"
       />
       {/* Hero Section */}
       <section className="relative bg-gradient-to-br from-[#172E70] via-[#1a3580] to-[#172E70] py-16 sm:py-20 md:py-24 overflow-hidden">
@@ -149,7 +149,7 @@ function Contact() {
                     <Mail className="w-7 h-7 text-[#F15A29]" />
                   </div>
                   <div>
-                    <p className="text-[#172E70] font-semibold text-lg">info@zute.org.zm</p>
+                    <p className="text-[#172E70] font-semibold text-lg">info@avec.com</p>
                   </div>
                 </div>
 
