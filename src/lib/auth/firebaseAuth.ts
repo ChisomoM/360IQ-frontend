@@ -1,14 +1,4 @@
-// Firebase Authentication utilities
-// This is optional and can be removed if not needed
-import {
-  signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
-  signOut,
-  onAuthStateChanged,
-  type User,
-  updateProfile,
-} from 'firebase/auth';
-import { auth } from '../firebase';
+// Firebase auth removed — provide no-op fallbacks so imports remain valid
 
 export interface FirebaseUser {
   uid: string;
@@ -17,37 +7,25 @@ export interface FirebaseUser {
   photoURL: string | null;
 }
 
-// Sign in with email and password
-export const signInWithFirebase = async (email: string, password: string) => {
-  const userCredential = await signInWithEmailAndPassword(auth, email, password);
-  return userCredential.user;
+export const signInWithFirebase = async (_email: string, _password: string) => {
+  console.warn('Firebase auth removed: signInWithFirebase is a no-op');
+  return null;
 };
 
-// Sign up with email and password
-export const signUpWithFirebase = async (email: string, password: string, displayName?: string) => {
-  const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-  if (displayName) {
-    await updateProfile(userCredential.user, { displayName });
-  }
-  return userCredential.user;
+export const signUpWithFirebase = async (_email: string, _password: string, _displayName?: string) => {
+  console.warn('Firebase auth removed: signUpWithFirebase is a no-op');
+  return null;
 };
 
-// Sign out
 export const signOutFromFirebase = async () => {
-  await signOut(auth);
+  console.warn('Firebase auth removed: signOutFromFirebase is a no-op');
 };
 
-// Listen to auth state changes
-export const onAuthStateChange = (callback: (user: User | null) => void) => {
-  return onAuthStateChanged(auth, callback);
+export const onAuthStateChange = (_callback: (user: FirebaseUser | null) => void) => {
+  console.warn('Firebase auth removed: onAuthStateChange is a no-op');
+  return () => {};
 };
 
-// Convert Firebase user to our format
-export const convertFirebaseUser = (user: User): FirebaseUser => {
-  return {
-    uid: user.uid,
-    email: user.email,
-    displayName: user.displayName,
-    photoURL: user.photoURL,
-  };
+export const convertFirebaseUser = (_user: any): FirebaseUser => {
+  return { uid: '', email: null, displayName: null, photoURL: null };
 };

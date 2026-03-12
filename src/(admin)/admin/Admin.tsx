@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { GraduationCap, Users, DollarSign, FileText, Clock, ArrowRight, AlertCircle, Building2, ClipboardList } from 'lucide-react';
 import { useAuth } from '@/lib/context/useAuth';
-import { FirebaseFirestore } from '@/lib/firebase/firestore';
 import type { ApprovalRequest } from '@/types/admin';
 import { hasPermission, PERMISSIONS } from '@/lib/permissions';
 import { USER_ROLES } from '@/lib/constants';
@@ -33,28 +32,15 @@ export const AdminDashboard = () => {
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
-        // Fetch stats
-        const members = await FirebaseFirestore.getCollection('users');
-        const applications = await FirebaseFirestore.getCollection('join_requests');
-        const referrals = await FirebaseFirestore.getCollection('referrals');
-
+        // Firebase integration removed; dashboard data not available from Firestore.
+        console.warn('Firebase removed: Admin dashboard metrics are unavailable');
         setStats({
-          totalMembers: members.length,
-          pendingApplications: applications.filter((app: any) => app.status === 'pending').length,
-          monthlyRevenue: members.length * 100, // Estimated revenue: K100 per member
-          activeReferrals: referrals.filter((ref: any) => ref.status === 'eligible' || ref.status === 'requested').length,
+          totalMembers: 0,
+          pendingApplications: 0,
+          monthlyRevenue: 0,
+          activeReferrals: 0,
         });
-
-        // Fetch pending approvals for executives
-        if (canViewApprovals) {
-          const approvals = await FirebaseFirestore.getCollection('approval_requests') as ApprovalRequest[];
-          const filtered = approvals.filter(req => 
-            req.status === 'pending' || 
-            req.status === 'awaiting_vp' || 
-            req.status === 'awaiting_president'
-          );
-          setPendingApprovals(filtered.slice(0, 5)); // Show top 5
-        }
+        setPendingApprovals([]);
       } catch (error) {
         console.error('Error fetching dashboard data:', error);
       }

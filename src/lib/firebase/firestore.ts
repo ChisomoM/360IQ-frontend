@@ -1,64 +1,40 @@
-// Firebase Firestore utilities
-// This is optional and can be removed if not needed
-import {
-  collection,
-  doc,
-  getDoc,
-  getDocs,
-  addDoc,
-  updateDoc,
-  setDoc,
-  deleteDoc,
-  query,
-  where,
-  orderBy,
-  limit,
-  type DocumentData,
-  type QueryConstraint,
-} from 'firebase/firestore';
-import { db } from '../firebase';
+// Stub Firebase Firestore adapter — returns safe empty values after removing Firebase.
+// This keeps existing imports working while the project migrates away from Firebase.
 
 export class FirebaseFirestore {
-  // Get a document by ID
-  static async getDocument(collectionName: string, docId: string) {
-    const docRef = doc(db, collectionName, docId);
-    const docSnap = await getDoc(docRef);
-    return docSnap.exists() ? { id: docSnap.id, ...docSnap.data() } : null;
+  static async getDocument(_collectionName: string, _docId: string) {
+    return null;
   }
 
-  // Get all documents in a collection
-  static async getCollection(collectionName: string, constraints: QueryConstraint[] = []) {
-    const q = query(collection(db, collectionName), ...constraints);
-    const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  static async getCollection(_collectionName: string, _constraints: any[] = []) {
+    return [];
   }
 
-  // Add a new document
-  static async addDocument(collectionName: string, data: DocumentData) {
-    const docRef = await addDoc(collection(db, collectionName), data);
-    return docRef.id;
+  static async addDocument(_collectionName: string, _data: any) {
+    console.warn('Firebase removed: addDocument no-op');
+    return null;
   }
 
-  // Update a document
-  static async updateDocument(collectionName: string, docId: string, data: Partial<DocumentData>) {
-    const docRef = doc(db, collectionName, docId);
-    await updateDoc(docRef, data);
+  static async updateDocument(_collectionName: string, _docId: string, _data: any) {
+    console.warn('Firebase removed: updateDocument no-op');
   }
 
-  // Set a document (creates if doesn't exist, updates if exists)
-  static async setDocument(collectionName: string, docId: string, data: DocumentData) {
-    const docRef = doc(db, collectionName, docId);
-    await setDoc(docRef, data);
+  static async setDocument(_collectionName: string, _docId: string, _data: any) {
+    console.warn('Firebase removed: setDocument no-op');
   }
 
-  // Delete a document
-  static async deleteDocument(collectionName: string, docId: string) {
-    const docRef = doc(db, collectionName, docId);
-    await deleteDoc(docRef);
+  static async deleteDocument(_collectionName: string, _docId: string) {
+    console.warn('Firebase removed: deleteDocument no-op');
   }
 
-  // Query helpers
-  static where = where;
-  static orderBy = orderBy;
-  static limit = limit;
+  // Query helpers placeholders
+  static where = (_field: string, _op: string, _value: any) => {
+    return null;
+  };
+  static orderBy = (_field: string, _dir?: string) => {
+    return null;
+  };
+  static limit = (_n: number) => {
+    return null;
+  };
 }
