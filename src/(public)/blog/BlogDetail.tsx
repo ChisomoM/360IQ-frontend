@@ -3,7 +3,6 @@ import { useParams, Link } from 'react-router-dom';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Loader2, Calendar, User, ArrowLeft } from 'lucide-react';
-import { FirebaseFirestore } from '@/lib/firebase/firestore';
 import type { Blog } from '@/types/admin';
 
 export default function BlogDetail() {
@@ -12,19 +11,10 @@ export default function BlogDetail() {
   const [loading, setLoading] = useState(true);
 
   const fetchBlog = async () => {
-    if (!id) return;
-
-    try {
-      setLoading(true);
-      const data = await FirebaseFirestore.getDocument('blogs', id);
-      if (data && (data as Blog).published) {
-        setBlog(data as Blog);
-      }
-    } catch (error) {
-      console.error('Error fetching blog:', error);
-    } finally {
-      setLoading(false);
-    }
+    // Firebase removed — blog detail not available from Firestore anymore.
+    console.warn('Firebase removed: BlogDetail cannot fetch blog content');
+    setBlog(null);
+    setLoading(false);
   };
 
   useEffect(() => {
