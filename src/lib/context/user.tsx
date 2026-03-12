@@ -1,26 +1,32 @@
 import React, { createContext, useContext, useState } from 'react';
 import type { ReactNode } from 'react';
-import type { User } from 'firebase/auth';
+
+// Firebase removed — use a lightweight local user type for OAuth helpers
+export interface AppUser {
+  id: string;
+  provider?: string;
+  displayName?: string;
+  email?: string;
+  photo?: string;
+}
 
 interface UserContextType {
-  user: User | null;
-  oAuthLogin: (userData: { id: string; provider: string; displayName: string; email: string; photo: string }) => Promise<void>;
-  oAuthRegister: (userData: { id: string; provider: string; displayName: string; email: string; photo: string }) => Promise<void>;
+  user: AppUser | null;
+  oAuthLogin: (userData: AppUser) => Promise<void>;
+  oAuthRegister: (userData: AppUser) => Promise<void>;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
 export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [user] = useState<User | null>(null);
+  const [user] = useState<AppUser | null>(null);
 
-  const oAuthLogin = async (userData: { id: string; provider: string; displayName: string; email: string; photo: string }) => {
-    console.log(userData);
-    // Add login logic here
+  const oAuthLogin = async (userData: AppUser) => {
+    console.log('OAuth login (no-op):', userData);
   };
 
-  const oAuthRegister = async (userData: { id: string; provider: string; displayName: string; email: string; photo: string }) => {
-    console.log(userData);
-    // Add register logic here
+  const oAuthRegister = async (userData: AppUser) => {
+    console.log('OAuth register (no-op):', userData);
   };
 
   return (
@@ -28,7 +34,7 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       {children}
     </UserContext.Provider>
   );
-};;
+};
 
 export const useUser = () => {
   const context = useContext(UserContext);

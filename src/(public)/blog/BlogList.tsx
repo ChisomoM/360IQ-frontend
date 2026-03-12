@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, Calendar, User } from 'lucide-react';
-import { FirebaseFirestore } from '@/lib/firebase/firestore';
 import type { Blog } from '@/types/admin';
 
 export default function BlogList() {
@@ -11,19 +10,11 @@ export default function BlogList() {
   const [loading, setLoading] = useState(true);
 
   const fetchBlogs = async () => {
-    try {
-      setLoading(true);
-      // Fetch only published blogs, ordered by createdAt desc
-      const data = await FirebaseFirestore.getCollection('blogs', [
-        FirebaseFirestore.where('published', '==', true),
-        FirebaseFirestore.orderBy('createdAt', 'desc')
-      ]);
-      setBlogs(data as Blog[]);
-    } catch (error) {
-      console.error('Error fetching blogs:', error);
-    } finally {
-      setLoading(false);
-    }
+    // Firebase integration removed. Blogs are not available from Firestore.
+    // Keep graceful fallback: show no posts and stop loading.
+    console.warn('Firebase removed: BlogList will show no posts');
+    setBlogs([]);
+    setLoading(false);
   };
 
   useEffect(() => {

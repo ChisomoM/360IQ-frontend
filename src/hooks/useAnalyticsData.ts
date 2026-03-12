@@ -1,7 +1,5 @@
 import { useState, useEffect } from 'react';
-import { FirebaseFirestore } from '@/lib/firebase/firestore';
-import { Timestamp } from 'firebase/firestore';
-import type { QueryConstraint } from 'firebase/firestore';
+// Firebase removed: Analytics data hook now returns empty data and logs a warning.
 
 export interface AnalyticsFilters {
   startDate?: Date;
@@ -39,37 +37,16 @@ export const useAnalyticsData = (filters: AnalyticsFilters = {}, collectionName:
   useEffect(() => {
     const fetchData = async () => {
       try {
-        setLoading(true);
+        // Firebase removed — return empty dataset
+        console.warn('Firebase removed: analytics hook will return empty data');
+        setData([]);
         setError(null);
-
-        const constraints: QueryConstraint[] = [];
-
-        // Add date range filter if provided
-        if (filters.startDate) {
-          constraints.push(FirebaseFirestore.where('createdAt', '>=', Timestamp.fromDate(filters.startDate)));
-        }
-        if (filters.endDate) {
-          // Set end date to end of day
-          const endOfDay = new Date(filters.endDate);
-          endOfDay.setHours(23, 59, 59, 999);
-          constraints.push(FirebaseFirestore.where('createdAt', '<=', Timestamp.fromDate(endOfDay)));
-        }
-
-        // Add status filter if provided
-        if (filters.status) {
-          constraints.push(FirebaseFirestore.where('status', '==', filters.status));
-        }
-
-        // Order by createdAt descending (most recent first)
-        constraints.push(FirebaseFirestore.orderBy('createdAt', 'desc'));
-
-        const result = await FirebaseFirestore.getCollection(collectionName, constraints);
-        setData(result as AnalyticsData[]);
+        setLoading(false);
       } catch (err) {
         console.error('Error fetching analytics data:', err);
         setError(err instanceof Error ? err.message : 'Failed to fetch data');
       } finally {
-        setLoading(false);
+        // already set above when Firebase removed
       }
     };
 
