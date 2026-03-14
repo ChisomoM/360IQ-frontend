@@ -41,7 +41,7 @@ function App() {
     <ScrollToTop/>
     <ChangePasswordModal />
     <Routes>
-      <Route path="/" element={<Home />} />
+      <Route path="/" element={<Login />} />
       <Route path="/about" element={<AboutPage />} />
       <Route path="/contact" element={<Contact />} />
       <Route path="/login" element={<Login />} />
