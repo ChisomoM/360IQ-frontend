@@ -7,11 +7,10 @@ import {
   SidebarMenuItem,
   SidebarMenuButton,
 } from "@/components/ui/sidebar"
+
 import {
   LogOut,
   LayoutDashboard,
-  ChevronLeft,
-  ChevronRight,
   FileText,
   CreditCard,
   PieChart,
@@ -21,6 +20,7 @@ import {
   BarChart3,
   Users,
 } from "lucide-react"
+
 import { AIChatSidebar } from "@/components/ai/AIChatSidebar"
 import { RightSidebar } from "@/components/layout/RightSidebar"
 import { useAuth } from "@/lib/context/useAuth"
@@ -30,13 +30,11 @@ export default function AdminLayout() {
 
   const location = useLocation()
   const { user, logout } = useAuth()
-  const [collapsed, setCollapsed] = useState(false)
+
   const [isChatOpen, setIsChatOpen] = useState(false)
   const [isDocDetailsOpen, setIsDocDetailsOpen] = useState(false)
 
   const isActive = (path: string) => location.pathname === path
-
-  const toggleSidebar = () => setCollapsed(!collapsed)
 
   const handleLogout = () => logout()
 
@@ -46,53 +44,44 @@ export default function AdminLayout() {
 
       <SidebarProvider>
 
-        <aside
-          className={`fixed left-0 top-0 h-screen z-40 transition-all duration-300 ${
-            collapsed ? "w-20" : "w-64"
-          }`}
-        >
+        {/* SIDEBAR */}
+        <aside className="group fixed left-0 top-0 h-screen w-20 hover:w-64 transition-all duration-300 z-40">
 
           <div className="h-full flex flex-col bg-gradient-to-b from-[#1e5631] to-[#184626] text-white shadow-xl">
 
+            {/* LOGO */}
             <div className="flex items-center justify-center py-6 border-b border-green-800">
 
               <img
                 src="/logos/unilus-logo-3.png"
                 alt="UNILUS"
-                className={`transition-all duration-300 ${
-                  collapsed ? "h-8" : "h-14"
-                }`}
+                className="h-10 group-hover:h-14 transition-all duration-300"
               />
 
             </div>
 
-            <button
-              onClick={toggleSidebar}
-              className="absolute -right-3 top-24 bg-white text-[#1e5631] rounded-full p-1 shadow-lg"
-            >
-              {collapsed
-                ? <ChevronRight className="h-4 w-4"/>
-                : <ChevronLeft className="h-4 w-4"/>
-              }
-            </button>
 
-            <div className="flex-1 overflow-y-auto p-4">
+            <div className="flex-1 overflow-y-auto p-3">
 
               <SidebarMenu className="space-y-1">
 
+
+                {/* DASHBOARD */}
                 <SidebarMenuItem>
 
                   <SidebarMenuButton
                     asChild
                     isActive={isActive("/admin") || isActive("/admin/dashboard")}
-                    className="text-white hover:bg-green-700 data-[active=true]:bg-[#febb00] data-[active=true]:text-black rounded-md"
+                    className="relative flex items-center gap-3 text-white hover:bg-green-700 rounded-md px-3 py-2 transition-all hover:shadow-[0_0_10px_rgba(254,187,0,0.6)] data-[active=true]:bg-[#febb00] data-[active=true]:text-black"
                   >
 
-                    <Link to="/admin/dashboard" className="flex items-center gap-3">
+                    <Link to="/admin/dashboard">
 
                       <LayoutDashboard className="h-5 w-5"/>
 
-                      {!collapsed && <span>Dashboard</span>}
+                      <span className="opacity-0 group-hover:opacity-100 transition">
+                        Dashboard
+                      </span>
 
                     </Link>
 
@@ -100,11 +89,12 @@ export default function AdminLayout() {
 
                 </SidebarMenuItem>
 
-                {/* Financials Section */}
+
+                {/* FINANCIALS */}
                 {hasPermission(user, PERMISSIONS.VIEW_ALL_FINANCIALS) && (<>
 
-                  <div className="px-3 pt-4 pb-1 text-xs text-yellow-200 uppercase tracking-wider">
-                    {!collapsed && "Financials"}
+                  <div className="px-3 pt-4 pb-1 text-xs text-yellow-200 uppercase tracking-wider opacity-0 group-hover:opacity-100 transition">
+                    Financials
                   </div>
 
                   <SidebarMenuItem>
@@ -112,34 +102,39 @@ export default function AdminLayout() {
                     <SidebarMenuButton
                       asChild
                       isActive={isActive("/admin/finance/dashboard")}
-                      className="text-white hover:bg-green-700 data-[active=true]:bg-[#febb00] data-[active=true]:text-black rounded-md"
+                      className="flex items-center gap-3 text-white hover:bg-green-700 rounded-md px-3 py-2 transition-all hover:shadow-[0_0_10px_rgba(254,187,0,0.6)] data-[active=true]:bg-[#febb00] data-[active=true]:text-black"
                     >
 
-                      <Link to="/admin/finance/dashboard" className="flex items-center gap-3">
+                      <Link to="/admin/finance/dashboard">
 
                         <Wallet className="h-5 w-5"/>
 
-                        {!collapsed && <span>Finance Dashboard</span>}
+                        <span className="opacity-0 group-hover:opacity-100 transition">
+                          Finance Dashboard
+                        </span>
 
                       </Link>
 
                     </SidebarMenuButton>
 
                   </SidebarMenuItem>
+
 
                   <SidebarMenuItem>
 
                     <SidebarMenuButton
                       asChild
                       isActive={isActive("/admin/finance/payments")}
-                      className="text-white hover:bg-green-700 data-[active=true]:bg-[#febb00] data-[active=true]:text-black rounded-md"
+                      className="flex items-center gap-3 text-white hover:bg-green-700 rounded-md px-3 py-2 transition-all hover:shadow-[0_0_10px_rgba(254,187,0,0.6)] data-[active=true]:bg-[#febb00] data-[active=true]:text-black"
                     >
 
-                      <Link to="/admin/finance/payments" className="flex items-center gap-3">
+                      <Link to="/admin/finance/payments">
 
                         <CreditCard className="h-5 w-5"/>
 
-                        {!collapsed && <span>Payments</span>}
+                        <span className="opacity-0 group-hover:opacity-100 transition">
+                          Payments
+                        </span>
 
                       </Link>
 
@@ -147,19 +142,22 @@ export default function AdminLayout() {
 
                   </SidebarMenuItem>
 
+
                   <SidebarMenuItem>
 
                     <SidebarMenuButton
                       asChild
                       isActive={isActive("/admin/finance/reports")}
-                      className="text-white hover:bg-green-700 data-[active=true]:bg-[#febb00] data-[active=true]:text-black rounded-md"
+                      className="flex items-center gap-3 text-white hover:bg-green-700 rounded-md px-3 py-2 transition-all hover:shadow-[0_0_10px_rgba(254,187,0,0.6)] data-[active=true]:bg-[#febb00] data-[active=true]:text-black"
                     >
 
-                      <Link to="/admin/finance/reports" className="flex items-center gap-3">
+                      <Link to="/admin/finance/reports">
 
                         <PieChart className="h-5 w-5"/>
 
-                        {!collapsed && <span>Finance Reports</span>}
+                        <span className="opacity-0 group-hover:opacity-100 transition">
+                          Finance Reports
+                        </span>
 
                       </Link>
 
@@ -169,9 +167,10 @@ export default function AdminLayout() {
 
                 </>)}
 
-                {/* Documents Section */}
-                <div className="px-3 pt-4 pb-1 text-xs text-yellow-200 uppercase tracking-wider">
-                  {!collapsed && "Documents"}
+
+                {/* DOCUMENTS */}
+                <div className="px-3 pt-4 pb-1 text-xs text-yellow-200 uppercase tracking-wider opacity-0 group-hover:opacity-100 transition">
+                  Documents
                 </div>
 
                 <SidebarMenuItem>
@@ -179,14 +178,16 @@ export default function AdminLayout() {
                   <SidebarMenuButton
                     asChild
                     isActive={isActive("/admin/documents")}
-                    className="text-white hover:bg-green-700 data-[active=true]:bg-[#febb00] data-[active=true]:text-black rounded-md"
+                    className="flex items-center gap-3 text-white hover:bg-green-700 rounded-md px-3 py-2 transition-all hover:shadow-[0_0_10px_rgba(254,187,0,0.6)] data-[active=true]:bg-[#febb00] data-[active=true]:text-black"
                   >
 
-                    <Link to="/admin/documents" className="flex items-center gap-3">
+                    <Link to="/admin/documents">
 
                       <FileText className="h-5 w-5"/>
 
-                      {!collapsed && <span>Documents</span>}
+                      <span className="opacity-0 group-hover:opacity-100 transition">
+                        Documents
+                      </span>
 
                     </Link>
 
@@ -194,42 +195,12 @@ export default function AdminLayout() {
 
                 </SidebarMenuItem>
 
-                {/* Reports & Analytics Section */}
-                {(hasPermission(user, PERMISSIONS.VIEW_ANALYTICS) ||
-                  hasPermission(user, PERMISSIONS.VIEW_ENROLLMENT_ANALYTICS) ||
-                  hasPermission(user, PERMISSIONS.VIEW_APPLICATION_ANALYTICS) ||
-                  hasPermission(user, PERMISSIONS.VIEW_PROGRAM_ANALYTICS)) && (<>
 
-                  <div className="px-3 pt-4 pb-1 text-xs text-yellow-200 uppercase tracking-wider">
-                    {!collapsed && "Reports & Analytics"}
-                  </div>
-
-                  <SidebarMenuItem>
-
-                    <SidebarMenuButton
-                      asChild
-                      isActive={isActive("/admin/reports")}
-                      className="text-white hover:bg-green-700 data-[active=true]:bg-[#febb00] data-[active=true]:text-black rounded-md"
-                    >
-
-                      <Link to="/admin/reports" className="flex items-center gap-3">
-
-                        <BarChart3 className="h-5 w-5"/>
-
-                        {!collapsed && <span>Reports</span>}
-
-                      </Link>
-
-                    </SidebarMenuButton>
-
-                  </SidebarMenuItem>
-
-                </>)}
-
-                {/* System Section */}
-                <div className="px-3 pt-4 pb-1 text-xs text-yellow-200 uppercase tracking-wider">
-                  {!collapsed && "System"}
+                {/* SYSTEM */}
+                <div className="px-3 pt-4 pb-1 text-xs text-yellow-200 uppercase tracking-wider opacity-0 group-hover:opacity-100 transition">
+                  System
                 </div>
+
 
                 {hasPermission(user, PERMISSIONS.MANAGE_USERS) && (
 
@@ -238,14 +209,16 @@ export default function AdminLayout() {
                     <SidebarMenuButton
                       asChild
                       isActive={isActive("/admin/departments")}
-                      className="text-white hover:bg-green-700 data-[active=true]:bg-[#febb00] data-[active=true]:text-black rounded-md"
+                      className="flex items-center gap-3 text-white hover:bg-green-700 rounded-md px-3 py-2 transition-all hover:shadow-[0_0_10px_rgba(254,187,0,0.6)] data-[active=true]:bg-[#febb00] data-[active=true]:text-black"
                     >
 
-                      <Link to="/admin/departments" className="flex items-center gap-3">
+                      <Link to="/admin/departments">
 
                         <Building2 className="h-5 w-5"/>
 
-                        {!collapsed && <span>Departments</span>}
+                        <span className="opacity-0 group-hover:opacity-100 transition">
+                          Departments
+                        </span>
 
                       </Link>
 
@@ -254,6 +227,7 @@ export default function AdminLayout() {
                   </SidebarMenuItem>
 
                 )}
+
 
                 {hasPermission(user, PERMISSIONS.MANAGE_USERS) && (
 
@@ -262,14 +236,16 @@ export default function AdminLayout() {
                     <SidebarMenuButton
                       asChild
                       isActive={isActive("/admin/user-management")}
-                      className="text-white hover:bg-green-700 data-[active=true]:bg-[#febb00] data-[active=true]:text-black rounded-md"
+                      className="flex items-center gap-3 text-white hover:bg-green-700 rounded-md px-3 py-2 transition-all hover:shadow-[0_0_10px_rgba(254,187,0,0.6)] data-[active=true]:bg-[#febb00] data-[active=true]:text-black"
                     >
 
-                      <Link to="/admin/user-management" className="flex items-center gap-3">
+                      <Link to="/admin/user-management">
 
                         <Users className="h-5 w-5"/>
 
-                        {!collapsed && <span>User Management</span>}
+                        <span className="opacity-0 group-hover:opacity-100 transition">
+                          User Management
+                        </span>
 
                       </Link>
 
@@ -279,6 +255,7 @@ export default function AdminLayout() {
 
                 )}
 
+
                 {hasPermission(user, PERMISSIONS.VIEW_AUDIT_LOGS) && (
 
                   <SidebarMenuItem>
@@ -286,14 +263,16 @@ export default function AdminLayout() {
                     <SidebarMenuButton
                       asChild
                       isActive={isActive("/admin/audit-trails")}
-                      className="text-white hover:bg-green-700 data-[active=true]:bg-[#febb00] data-[active=true]:text-black rounded-md"
+                      className="flex items-center gap-3 text-white hover:bg-green-700 rounded-md px-3 py-2 transition-all hover:shadow-[0_0_10px_rgba(254,187,0,0.6)] data-[active=true]:bg-[#febb00] data-[active=true]:text-black"
                     >
 
-                      <Link to="/admin/audit-trails" className="flex items-center gap-3">
+                      <Link to="/admin/audit-trails">
 
                         <History className="h-5 w-5"/>
 
-                        {!collapsed && <span>Audit Trails</span>}
+                        <span className="opacity-0 group-hover:opacity-100 transition">
+                          Audit Trails
+                        </span>
 
                       </Link>
 
@@ -307,6 +286,8 @@ export default function AdminLayout() {
 
             </div>
 
+
+            {/* LOGOUT */}
             <div className="p-4 border-t border-green-800">
 
               <SidebarMenu>
@@ -315,12 +296,14 @@ export default function AdminLayout() {
 
                   <SidebarMenuButton
                     onClick={handleLogout}
-                    className="text-white hover:bg-green-700 rounded-md"
+                    className="flex items-center gap-3 text-white hover:bg-green-700 rounded-md px-3 py-2"
                   >
 
                     <LogOut className="h-5 w-5"/>
 
-                    {!collapsed && <span>Log Out</span>}
+                    <span className="opacity-0 group-hover:opacity-100 transition">
+                      Log Out
+                    </span>
 
                   </SidebarMenuButton>
 
@@ -334,11 +317,9 @@ export default function AdminLayout() {
 
         </aside>
 
-        <div
-          className={`flex-1 transition-all duration-300 ${
-            collapsed ? "ml-20" : "ml-64"
-          }`}
-        >
+
+        {/* MAIN CONTENT */}
+        <div className="flex-1 ml-20">
 
           <main className="px-10 py-10 min-h-screen">
 
@@ -350,10 +331,10 @@ export default function AdminLayout() {
 
       </SidebarProvider>
 
-      {/* AI Chat Floating Panel */}
+
       <AIChatSidebar isOpen={isChatOpen} onClose={() => setIsChatOpen(false)} />
 
-      {/* Right Sidebar - Profile, AI, Doc Details */}
+
       <RightSidebar
         isChatOpen={isChatOpen}
         onToggleChat={() => setIsChatOpen(!isChatOpen)}

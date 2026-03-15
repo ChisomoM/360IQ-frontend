@@ -1,3 +1,4 @@
+
 import React from "react";
 import { LoginForm } from "../../components/auth/loginForm";
 
@@ -9,20 +10,11 @@ export const LoginPage: React.FC<LoginPageProps> = () => {
 
   return (
 
-    <div className="min-h-screen w-full flex bg-gradient-to-br from-[#1e3c21] via-[#143018] to-[#1e3c21] relative overflow-hidden">
-
-      <div className="absolute inset-0 pointer-events-none">
-
-        <div className="absolute top-[-15%] left-[-10%] w-[45%] h-[45%] rounded-full bg-[#febb00]/10 blur-[150px]" />
-
-        <div className="absolute bottom-[-15%] right-[-10%] w-[45%] h-[45%] rounded-full bg-[#febb00]/10 blur-[150px]" />
-
-      </div>
-
+    <div className="min-h-screen w-full flex bg-[#1e3c21] relative overflow-hidden">
 
       <div className="relative z-10 flex w-full min-h-screen">
 
-
+        {/* LEFT SIDE - CAMPUS + INFO */}
         <div
           className="hidden lg:flex flex-col justify-between w-1/2 px-16 py-14 text-white bg-cover bg-center relative"
           style={{ backgroundImage: "url('/campus.jpg')" }}
@@ -30,6 +22,7 @@ export const LoginPage: React.FC<LoginPageProps> = () => {
 
           <div className="absolute inset-0 bg-[#1e3c21]/85" />
 
+          {/* LOGO */}
           <div className="relative z-10 flex items-start">
 
             <img
@@ -40,7 +33,7 @@ export const LoginPage: React.FC<LoginPageProps> = () => {
 
           </div>
 
-
+          {/* SYSTEM INFO */}
           <div className="relative z-10 max-w-lg">
 
             <div className="inline-flex items-center gap-2 bg-[#febb00]/20 backdrop-blur-md px-4 py-1.5 rounded-full border border-[#febb00]/40 mb-6">
@@ -51,7 +44,6 @@ export const LoginPage: React.FC<LoginPageProps> = () => {
 
             </div>
 
-
             <h1 className="text-4xl font-bold leading-tight mb-5">
 
               Document Intelligence &{" "}
@@ -61,7 +53,6 @@ export const LoginPage: React.FC<LoginPageProps> = () => {
 
             </h1>
 
-
             <p className="text-base text-white/80 leading-relaxed">
 
               A centralized digital platform built to manage institutional
@@ -70,7 +61,7 @@ export const LoginPage: React.FC<LoginPageProps> = () => {
 
             </p>
 
-
+            {/* FEATURES */}
             <div className="mt-8 grid grid-cols-2 gap-4 text-sm text-white/75">
 
               <div className="flex items-center gap-2">
@@ -103,10 +94,12 @@ export const LoginPage: React.FC<LoginPageProps> = () => {
 
 
 
-        <div className="flex items-center justify-center w-full lg:w-1/2 px-8">
+        {/* RIGHT SIDE - LOGIN FORM */}
+        <div className="flex items-center justify-center w-full lg:w-1/2 px-8 bg-white border-l border-gray-200">
 
           <div className="w-full max-w-md">
 
+            {/* MOBILE LOGO */}
             <div className="lg:hidden flex justify-center mb-10">
 
               <img
@@ -117,8 +110,8 @@ export const LoginPage: React.FC<LoginPageProps> = () => {
 
             </div>
 
-
-            <div className="bg-white/90 backdrop-blur-xl border border-gray-200 rounded-2xl shadow-2xl p-10">
+            {/* LOGIN CARD */}
+            <div className="bg-white border border-gray-200 rounded-2xl shadow-xl p-10">
 
               <h2 className="text-3xl font-bold text-[#1e3c21] mb-2">
                 Welcome Back
@@ -129,9 +122,7 @@ export const LoginPage: React.FC<LoginPageProps> = () => {
                 Management System.
               </p>
 
-
               <LoginForm onSignUpClick={() => {}} />
-
 
               <p className="mt-8 text-center text-xs text-gray-400">
 
@@ -159,10 +150,10 @@ export const LoginPage: React.FC<LoginPageProps> = () => {
 
         </div>
 
-
       </div>
 
     </div>
 
   );
 };
+
