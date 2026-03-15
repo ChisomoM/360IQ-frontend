@@ -1,4 +1,3 @@
-
 import React from "react"
 import { motion } from "framer-motion"
 import { LoginForm } from "../../components/auth/loginForm"
@@ -9,47 +8,36 @@ interface LoginPageProps {
 
 export const LoginPage: React.FC<LoginPageProps> = () => {
 
-  const particles = Array.from({ length: 18 })
+  const container = {
+    hidden: {},
+    show: {
+      transition: {
+        staggerChildren: 0.25
+      }
+    }
+  }
+
+  const item = {
+    hidden: { opacity: 0, y: 20 },
+    show: {
+      opacity: 1,
+      y: 0,
+      transition: { duration: 0.6 }
+    }
+  }
 
   return (
 
     <motion.div
       className="min-h-screen w-full flex bg-[#1e3c21] relative overflow-hidden"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.6 }}
+      initial="hidden"
+      animate="show"
+      variants={container}
     >
-
-      {/* floating particles */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-
-        {particles.map((_, i) => (
-
-          <motion.div
-            key={i}
-            className="absolute w-2 h-2 bg-[#febb00]/40 rounded-full"
-            initial={{
-              x: Math.random() * 1400,
-              y: Math.random() * 800,
-              opacity: 0
-            }}
-            animate={{
-              y: [null, -120],
-              opacity: [0, 1, 0]
-            }}
-            transition={{
-              duration: 12 + Math.random() * 10,
-              repeat: Infinity,
-              delay: Math.random() * 5
-            }}
-          />
-
-        ))}
-
-      </div>
 
       <div className="relative z-10 flex w-full min-h-screen">
 
+        {/* LEFT PANEL */}
         <div
           className="hidden lg:flex flex-col justify-between w-1/2 px-16 py-14 text-white bg-cover bg-center relative"
           style={{ backgroundImage: "url('/campus.jpg')" }}
@@ -59,26 +47,20 @@ export const LoginPage: React.FC<LoginPageProps> = () => {
 
           <motion.div
             className="relative z-10 flex items-start"
-            initial={{ y: -40, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ duration: 0.8 }}
+            variants={item}
           >
 
-            <motion.img
+            <img
               src="/logos/unilus-logo-3.png"
               alt="UNILUS Logo"
-              className="h-36 object-contain"
-              whileHover={{ scale: 1.05 }}
-              transition={{ type: "spring", stiffness: 200 }}
+              className="h-36 object-contain transition-transform duration-500 hover:scale-105"
             />
 
           </motion.div>
 
           <motion.div
             className="relative z-10 max-w-lg"
-            initial={{ x: -60, opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            transition={{ duration: 0.8, delay: 0.2 }}
+            variants={item}
           >
 
             <div className="inline-flex items-center gap-2 bg-[#febb00]/20 backdrop-blur-md px-4 py-1.5 rounded-full border border-[#febb00]/40 mb-6">
@@ -136,16 +118,19 @@ export const LoginPage: React.FC<LoginPageProps> = () => {
 
         </div>
 
+
+        {/* LOGIN PANEL */}
         <div className="flex items-center justify-center w-full lg:w-1/2 px-8 bg-white border-l border-gray-200">
 
           <motion.div
             className="w-full max-w-md"
-            initial={{ y: 80, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ duration: 0.7, delay: 0.3 }}
+            variants={container}
           >
 
-            <div className="lg:hidden flex justify-center mb-10">
+            <motion.div
+              className="lg:hidden flex justify-center mb-10"
+              variants={item}
+            >
 
               <img
                 src="/logos/unilus-logo-3.png"
@@ -153,26 +138,36 @@ export const LoginPage: React.FC<LoginPageProps> = () => {
                 className="h-28"
               />
 
-            </div>
+            </motion.div>
 
             <motion.div
               className="bg-white border border-gray-200 rounded-2xl shadow-xl p-10"
-              whileHover={{ y: -3 }}
-              transition={{ duration: 0.2 }}
+              variants={item}
             >
 
-              <h2 className="text-3xl font-bold text-[#1e3c21] mb-2">
+              <motion.h2
+                className="text-3xl font-bold text-[#1e3c21] mb-2"
+                variants={item}
+              >
                 Welcome Back
-              </h2>
+              </motion.h2>
 
-              <p className="text-sm text-gray-500 mb-8">
+              <motion.p
+                className="text-sm text-gray-500 mb-8"
+                variants={item}
+              >
                 Sign in to access the UNILUS Document Intelligence &
                 Management System.
-              </p>
+              </motion.p>
 
-              <LoginForm onSignUpClick={() => {}} />
+              <motion.div variants={item}>
+                <LoginForm onSignUpClick={() => {}} />
+              </motion.div>
 
-              <p className="mt-8 text-center text-xs text-gray-400">
+              <motion.p
+                className="mt-8 text-center text-xs text-gray-400"
+                variants={item}
+              >
 
                 By signing in you agree to the{" "}
 
@@ -190,7 +185,7 @@ export const LoginPage: React.FC<LoginPageProps> = () => {
                   Privacy Policy
                 </a>
 
-              </p>
+              </motion.p>
 
             </motion.div>
 
