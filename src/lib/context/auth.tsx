@@ -47,20 +47,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         setTokens(parsedTokens);
         setUser(parsedUser);
-      } else if (process.env.NODE_ENV === 'development') {
-        // Mock user for development to bypass authentication while backend is down
-        const mockUser: AuthUser = {
-          id: 'mock-admin',
-          email: 'admin@example.com',
-          firstName: 'Mock',
-          lastName: 'Admin',
-          role: USER_ROLES.SUPER_ADMIN,
-          permissions: ['admin.view', 'admin.edit', 'user.manage', 'finance.view', 'analytics.view', 'documents.manage', 'approvals.manage'], // Example permissions for full access
-          isActive: true,
-        };
-        const mockTokens: AuthTokens = { token: 'mock-token' };
-        setUser(mockUser);
-        setTokens(mockTokens);
       }
     } catch (err) {
       console.error('Failed to restore session from storage:', err);

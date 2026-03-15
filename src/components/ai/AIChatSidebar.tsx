@@ -30,7 +30,7 @@ export function AIChatSidebar({ isOpen, onClose }: AIChatSidebarProps) {
   const [messages, setMessages] = useState<Message[]>([WELCOME_MESSAGE]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState<'chat' | 'analyze'>('chat');
+  const [activeTab, setActiveTab] = useState<'chat' | 'analyze'>('analyze');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -175,120 +175,15 @@ export function AIChatSidebar({ isOpen, onClose }: AIChatSidebarProps) {
         </button>
       </div>
 
-      {/* Tabs */}
-      <div className="flex border-b border-gray-100 flex-shrink-0">
-        <button
-          onClick={() => setActiveTab('chat')}
-          className={cn(
-            'flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-medium transition-colors',
-            activeTab === 'chat'
-              ? 'text-[#1e3c21] border-b-2 border-[#1e3c21] bg-[#1e3c21]/5'
-              : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'
-          )}
-        >
-          <MessageSquare className="h-3.5 w-3.5" />
-          Chat
-        </button>
-        <button
-          onClick={() => setActiveTab('analyze')}
-          className={cn(
-            'flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-medium transition-colors',
-            activeTab === 'analyze'
-              ? 'text-[#1e3c21] border-b-2 border-[#1e3c21] bg-[#1e3c21]/5'
-              : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'
-          )}
-        >
+      {/* Tab header - hidden, only showing Doc Analysis */}
+      <div className="px-4 py-3 border-b border-gray-100 flex-shrink-0 bg-gray-50/60">
+        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider flex items-center gap-2">
           <FileSearch className="h-3.5 w-3.5" />
-          Doc Analysis
-        </button>
+          Document Analysis
+        </p>
       </div>
 
-      {/* Chat Tab */}
-      {activeTab === 'chat' && (
-        <>
-          {/* Message List */}
-          <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4 scroll-smooth">
-            {messages.map((msg) => (
-              <div
-                key={msg.id}
-                className={cn('flex gap-2', msg.role === 'user' ? 'flex-row-reverse' : 'flex-row')}
-              >
-                {msg.role === 'assistant' && (
-                  <div className="w-7 h-7 rounded-full bg-gradient-to-br from-[#1e3c21] to-[#2a5230] flex items-center justify-center flex-shrink-0 mt-0.5 shadow-sm">
-                    <Bot className="h-3.5 w-3.5 text-white" />
-                  </div>
-                )}
-                <div className="flex flex-col gap-1 max-w-[82%]">
-                  <div
-                    className={cn(
-                      'rounded-2xl px-3 py-2 text-sm leading-relaxed',
-                      msg.role === 'user'
-                        ? 'bg-gradient-to-br from-[#D70F0E] to-[#E5600B] text-white rounded-tr-sm'
-                        : 'bg-gray-100 text-gray-800 rounded-tl-sm'
-                    )}
-                  >
-                    <p className="whitespace-pre-wrap break-words">{msg.content}</p>
-                  </div>
-                  <p
-                    className={cn(
-                      'text-[10px] text-gray-400',
-                      msg.role === 'user' ? 'text-right' : 'text-left'
-                    )}
-                  >
-                    {formatTime(msg.timestamp)}
-                  </p>
-                </div>
-              </div>
-            ))}
 
-            {isLoading && (
-              <div className="flex gap-2">
-                <div className="w-7 h-7 rounded-full bg-gradient-to-br from-[#1e3c21] to-[#2a5230] flex items-center justify-center flex-shrink-0 shadow-sm">
-                  <Bot className="h-3.5 w-3.5 text-white" />
-                </div>
-                <div className="bg-gray-100 rounded-2xl rounded-tl-sm px-3 py-2.5 flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce [animation-delay:0ms]" />
-                  <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce [animation-delay:150ms]" />
-                  <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce [animation-delay:300ms]" />
-                </div>
-              </div>
-            )}
-
-            <div ref={messagesEndRef} />
-          </div>
-
-          {/* Input Area */}
-          <div className="p-4 border-t border-gray-100 bg-gray-50/60 flex-shrink-0">
-            <div className="flex items-end gap-2">
-              <textarea
-                ref={textareaRef}
-                value={input}
-                onChange={handleInputChange}
-                onKeyDown={handleKeyDown}
-                placeholder="Ask anything about your documents…"
-                rows={1}
-                disabled={isLoading}
-                className="flex-1 resize-none rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#1e3c21]/25 focus:border-[#1e3c21] transition-all min-h-[38px] max-h-[120px] overflow-y-auto leading-relaxed disabled:opacity-50"
-              />
-              <button
-                onClick={handleSend}
-                disabled={!input.trim() || isLoading}
-                className="w-9 h-9 flex-shrink-0 rounded-xl bg-gradient-to-br from-[#1e3c21] to-[#2a5230] text-white flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed hover:opacity-90 active:scale-95 transition-all shadow-sm"
-                aria-label="Send message"
-              >
-                {isLoading ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Send className="h-4 w-4" />
-                )}
-              </button>
-            </div>
-            <p className="text-[10px] text-gray-400 mt-1.5 text-center">
-              Enter to send · Shift+Enter for new line
-            </p>
-          </div>
-        </>
-      )}
 
       {/* Doc Analysis Tab */}
       {activeTab === 'analyze' && (

@@ -76,7 +76,7 @@ export const fetchData = async (
 ) => {
   const h = new Headers();
   h.append("Content-Type", "application/json");
-  const tenant = import.meta.env.VITE_TENANT_ID;
+  const tenant = import.meta.env.VITE_TENANT_ID || "unilus_meta";
   h.append("X-Tenant-ID", tenant);
 
   // Read tokens from localStorage (AuthContext storage)
