@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { X, Send, Sparkles, FileSearch, MessageSquare, Loader2, Bot, Search, ChevronRight, RotateCcw, TrendingUp, Tag, Users, Smile, ListTodo, Globe, FileType } from 'lucide-react';
+import { X, Sparkles, FileSearch, Loader2, Search, ChevronRight, RotateCcw, TrendingUp, Tag, Users, Smile, ListTodo, Globe, FileType } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { list, post } from '@/lib/api/crud';
 import type { Document, AISummary, AIAnalysis } from '@/types/dms';
@@ -14,6 +14,8 @@ interface Message {
 interface AIChatSidebarProps {
   isOpen: boolean;
   onClose: () => void;
+  pendingDoc?: Document | null;
+  onDocConsumed?: () => void;
 }
 
 const WELCOME_MESSAGE: Message = {
@@ -26,13 +28,14 @@ const WELCOME_MESSAGE: Message = {
 
 type AnalysisMode = 'summarize' | 'analyze';
 
-export function AIChatSidebar({ isOpen, onClose }: AIChatSidebarProps) {
+export function AIChatSidebar({ isOpen, onClose, pendingDoc, onDocConsumed }: AIChatSidebarProps) {
   const [messages, setMessages] = useState<Message[]>([WELCOME_MESSAGE]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'chat' | 'analyze'>('analyze');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const shouldAutoRunRef = useRef(false);
 
   // Doc Analysis tab state
   const [documents, setDocuments] = useState<Document[]>([]);
@@ -58,6 +61,37 @@ export function AIChatSidebar({ isOpen, onClose }: AIChatSidebarProps) {
       .catch(() => setDocuments([]))
       .finally(() => setDocsLoading(false));
   }, [activeTab]);
+
+  // Pre-select a document and auto-run analysis when pendingDoc is provided
+  useEffect(() => {
+    if (!isOpen || !pendingDoc) return;
+    setActiveTab('analyze');
+    setSummary(null);
+    setAnalysis(null);
+    setAnalysisError(null);
+    setAnalysisMode('summarize');
+    setSelectedDoc(pendingDoc);
+    shouldAutoRunRef.current = true;
+    onDocConsumed?.();
+    // Ensure the document appears in the list
+    setDocuments((prev) =>
+      prev.some((d) => d.id === pendingDoc.id) ? prev : [pendingDoc, ...prev]
+    );
+  }, [pendingDoc, isOpen]);
+
+  // Auto-run analysis after selectedDoc is committed to state
+  useEffect(() => {
+    if (!shouldAutoRunRef.current || !selectedDoc) return;
+    shouldAutoRunRef.current = false;
+    setAnalysisLoading(true);
+    setAnalysisError(null);
+    setSummary(null);
+    setAnalysis(null);
+    post('DOCUMENT_SUMMARIZE', {}, { id: selectedDoc.id })
+      .then((result) => setSummary(result as AISummary))
+      .catch((err: any) => setAnalysisError(err?.message || 'AI analysis failed. Please try again.'))
+      .finally(() => setAnalysisLoading(false));
+  }, [selectedDoc]);
 
   const handleDocSelect = (doc: Document) => {
     setSelectedDoc(doc);
@@ -94,7 +128,7 @@ export function AIChatSidebar({ isOpen, onClose }: AIChatSidebarProps) {
     d.document_type?.toLowerCase().includes(docSearch.toLowerCase())
   );
 
-  // Auto-resize textarea
+  // Auto-resize textarea (used by chat tab)
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setInput(e.target.value);
     const el = e.target;

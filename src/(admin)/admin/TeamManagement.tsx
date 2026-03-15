@@ -77,7 +77,7 @@ export default function TeamManagement() {
       setUsers(mappedUsers);
     } catch (error) {
       console.error('Error fetching users:', error);
-      toast.error('Failed to load team members');
+      toast.error('Failed to load administrators');
     } finally {
       setLoading(false);
     }
@@ -160,19 +160,19 @@ export default function TeamManagement() {
     <div className="w-full space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Team Management</h1>
-          <p className="text-gray-600 mt-1">Manage administrators and their roles</p>
+          <h1 className="text-3xl font-bold text-gray-900">Administrators</h1>
+          <p className="text-gray-600 mt-1">Manage system accounts and access levels</p>
         </div>
         <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
           <DialogTrigger asChild>
             <Button>
               <Plus className="h-4 w-4 mr-2" />
-              Add Team Member
+              Add Administrator
             </Button>
           </DialogTrigger>
           <DialogContent className="max-w-2xl bg-white max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Add New Team Member</DialogTitle>
+              <DialogTitle>Add New Administrator</DialogTitle>
               <DialogDescription>
                 Create a new administrator account with specific roles and permissions.
               </DialogDescription>
@@ -278,7 +278,7 @@ export default function TeamManagement() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Search className="h-5 w-5" />
-            Search Team
+            Search Administrators
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -316,7 +316,7 @@ export default function TeamManagement() {
               ) : filteredUsers.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={5} className="text-center py-8 text-gray-500">
-                    No team members found
+                    No administrators found
                   </TableCell>
                 </TableRow>
               ) : (

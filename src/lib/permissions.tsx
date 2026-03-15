@@ -31,6 +31,17 @@ export const PERMISSIONS = {
   VIEW_APPLICATION_ANALYTICS: 'view_application_analytics',
   VIEW_PROGRAM_ANALYTICS: 'view_program_analytics',
   EXPORT_ANALYTICS_DATA: 'export_analytics_data',
+
+  // HR Module
+  HR_STAFF_VIEW: 'hr.staff.view',
+  HR_STAFF_MANAGE: 'hr.staff.manage',
+  HR_LEAVE_VIEW: 'hr.leave.view',
+  HR_LEAVE_MANAGE: 'hr.leave.manage',
+  HR_LEAVE_REQUEST: 'hr.leave.request',
+  HR_ANALYTICS_VIEW: 'hr.analytics.view',
+  HR_REPORTS_EXPORT: 'hr.reports.export',
+  HR_APPLICATIONS_VIEW: 'hr.applications.view',
+  HR_APPLICATIONS_MANAGE: 'hr.applications.manage',
 } as const;
 
 export const ROLE_PERMISSIONS: Record<UserRole, string[]> = {

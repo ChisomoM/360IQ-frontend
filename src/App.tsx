@@ -26,11 +26,18 @@ import PartnershipPage from './(admin)/admin/PartnershipPage';
 import BlogPage from './(admin)/admin/BlogPage';
 import Departments from './(admin)/admin/Departments';
 import Documents from './(admin)/admin/Documents';
+import DocumentDetail from './(admin)/admin/DocumentDetail';
+import DocumentCharts from './(admin)/admin/DocumentCharts';
 import Workflows from './(admin)/admin/Workflows';
 import AuditTrails from './(admin)/admin/AuditTrails';
 import FinanceDashboard from './(admin)/finance/FinanceDashboard';
 import PaymentManagement from './(admin)/finance/PaymentManagement';
 import FinanceReports from './(admin)/finance/FinanceReports';
+import HRDashboard from './(admin)/hr/HRDashboard';
+import StaffDirectory from './(admin)/hr/StaffDirectory';
+import LeaveManagement from './(admin)/hr/LeaveManagement';
+import StaffApplications from './(admin)/hr/StaffApplications';
+import StaffOnboarding from './(public)/staff-onboarding/StaffOnboarding';
 
 
 
@@ -48,6 +55,7 @@ function App() {
       {/* Join page removed */}
       <Route path="/blog" element={<BlogList />} />
       <Route path="/blog/:id" element={<BlogDetail />} />
+      <Route path="/staff-onboarding" element={<StaffOnboarding />} />
       <Route path="*" element={<div>Page Not Found</div>} />
 
 
@@ -75,10 +83,12 @@ function App() {
         <Route path="financials" element={<FinancialsPage />} />
         <Route path="referrals" element={<Referrals />} />
         <Route path="reports" element={<AnalyticsDashboard />} />
+        <Route path="reports/document-charts" element={<DocumentCharts />} />
         <Route path="partnerships" element={<PartnershipPage />} />
         <Route path="blogs" element={<BlogPage />} />
         <Route path="departments" element={<Departments />} />
         <Route path="documents" element={<Documents />} />
+        <Route path="documents/:id" element={<DocumentDetail />} />
         <Route path="workflows" element={<Workflows />} />
         <Route path="audit-trails" element={<AuditTrails />} />
         
@@ -86,6 +96,12 @@ function App() {
         <Route path="finance/dashboard" element={<FinanceDashboard />} />
         <Route path="finance/payments" element={<PaymentManagement />} />
         <Route path="finance/reports" element={<FinanceReports />} />
+
+        {/* HR Routes */}
+        <Route path="hr/dashboard" element={<HRDashboard />} />
+        <Route path="hr/staff" element={<StaffDirectory />} />
+        <Route path="hr/leave" element={<LeaveManagement />} />
+        <Route path="hr/applications" element={<StaffApplications />} />
       </Route>
     </Routes>
     <Toaster position="top-right" richColors />

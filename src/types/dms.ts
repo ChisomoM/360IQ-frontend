@@ -93,3 +93,22 @@ export interface DocumentUpdatePayload {
   category?: string;
   document_type?: string;
 }
+
+// ─── Excel / Spreadsheet Chart Types ────────────────────────────────────────
+
+export type ColumnKind = 'numeric' | 'categorical';
+
+export interface ColumnMeta {
+  name: string;
+  kind: ColumnKind;
+}
+
+export interface SheetData {
+  name: string;
+  columns: ColumnMeta[];
+  rows: (string | number | null)[][];
+}
+
+export interface SpreadsheetData {
+  sheets: SheetData[];
+}

@@ -1,5 +1,10 @@
 import { Outlet, Link, useLocation } from "react-router-dom"
 import { useState } from "react"
+import type { Document } from "@/types/dms"
+
+export type AdminLayoutContext = {
+  analyzeDocument: (doc: Document) => void;
+};
 
 import {
   SidebarProvider,
@@ -19,7 +24,11 @@ import {
   History,
   Wallet,
   BarChart3,
+  BarChart2,
   Users,
+  UserCog,
+  ClipboardList,
+  ClipboardCheck,
 } from "lucide-react"
 import { AIChatSidebar } from "@/components/ai/AIChatSidebar"
 import { RightSidebar } from "@/components/layout/RightSidebar"
@@ -33,6 +42,12 @@ export default function AdminLayout() {
   const [collapsed, setCollapsed] = useState(false)
   const [isChatOpen, setIsChatOpen] = useState(false)
   const [isDocDetailsOpen, setIsDocDetailsOpen] = useState(false)
+  const [pendingAnalysisDoc, setPendingAnalysisDoc] = useState<Document | null>(null)
+
+  const analyzeDocument = (doc: Document) => {
+    setPendingAnalysisDoc(doc)
+    setIsChatOpen(true)
+  }
 
   const isActive = (path: string) => location.pathname === path
 
@@ -169,6 +184,70 @@ export default function AdminLayout() {
 
                 </>)}
 
+                {/* HR Section */}
+                {(hasPermission(user, PERMISSIONS.HR_STAFF_VIEW) ||
+                  hasPermission(user, PERMISSIONS.HR_LEAVE_VIEW)) && (<>
+
+                  <div className="px-3 pt-4 pb-1 text-xs text-yellow-200 uppercase tracking-wider">
+                    {!collapsed && "Human Resources"}
+                  </div>
+
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={isActive("/admin/hr/dashboard")}
+                      className="text-white hover:bg-green-700 data-[active=true]:bg-[#febb00] data-[active=true]:text-black rounded-md"
+                    >
+                      <Link to="/admin/hr/dashboard" className="flex items-center gap-3">
+                        <BarChart3 className="h-5 w-5"/>
+                        {!collapsed && <span>HR Dashboard</span>}
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={isActive("/admin/hr/staff")}
+                      className="text-white hover:bg-green-700 data-[active=true]:bg-[#febb00] data-[active=true]:text-black rounded-md"
+                    >
+                      <Link to="/admin/hr/staff" className="flex items-center gap-3">
+                        <UserCog className="h-5 w-5"/>
+                        {!collapsed && <span>Staff Directory</span>}
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={isActive("/admin/hr/leave")}
+                      className="text-white hover:bg-green-700 data-[active=true]:bg-[#febb00] data-[active=true]:text-black rounded-md"
+                    >
+                      <Link to="/admin/hr/leave" className="flex items-center gap-3">
+                        <ClipboardList className="h-5 w-5"/>
+                        {!collapsed && <span>Leave Management</span>}
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+
+                  {hasPermission(user, PERMISSIONS.HR_APPLICATIONS_VIEW) && (
+                    <SidebarMenuItem>
+                      <SidebarMenuButton
+                        asChild
+                        isActive={isActive("/admin/hr/applications")}
+                        className="text-white hover:bg-green-700 data-[active=true]:bg-[#febb00] data-[active=true]:text-black rounded-md"
+                      >
+                        <Link to="/admin/hr/applications" className="flex items-center gap-3">
+                          <ClipboardCheck className="h-5 w-5"/>
+                          {!collapsed && <span>Staff Applications</span>}
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  )}
+
+                </>)}
+
                 {/* Documents Section */}
                 <div className="px-3 pt-4 pb-1 text-xs text-yellow-200 uppercase tracking-wider">
                   {!collapsed && "Documents"}
@@ -224,6 +303,26 @@ export default function AdminLayout() {
 
                   </SidebarMenuItem>
 
+                  <SidebarMenuItem>
+
+                    <SidebarMenuButton
+                      asChild
+                      isActive={isActive("/admin/reports/document-charts")}
+                      className="text-white hover:bg-green-700 data-[active=true]:bg-[#febb00] data-[active=true]:text-black rounded-md"
+                    >
+
+                      <Link to="/admin/reports/document-charts" className="flex items-center gap-3">
+
+                        <BarChart2 className="h-5 w-5"/>
+
+                        {!collapsed && <span>Chart Analysis</span>}
+
+                      </Link>
+
+                    </SidebarMenuButton>
+
+                  </SidebarMenuItem>
+
                 </>)}
 
                 {/* System Section */}
@@ -269,7 +368,7 @@ export default function AdminLayout() {
 
                         <Users className="h-5 w-5"/>
 
-                        {!collapsed && <span>User Management</span>}
+                        {!collapsed && <span>Administrators</span>}
 
                       </Link>
 
@@ -342,7 +441,7 @@ export default function AdminLayout() {
 
           <main className="px-10 py-10 min-h-screen">
 
-            <Outlet />
+            <Outlet context={{ analyzeDocument } as AdminLayoutContext} />
 
           </main>
 
@@ -351,7 +450,12 @@ export default function AdminLayout() {
       </SidebarProvider>
 
       {/* AI Chat Floating Panel */}
-      <AIChatSidebar isOpen={isChatOpen} onClose={() => setIsChatOpen(false)} />
+      <AIChatSidebar
+        isOpen={isChatOpen}
+        onClose={() => setIsChatOpen(false)}
+        pendingDoc={pendingAnalysisDoc}
+        onDocConsumed={() => setPendingAnalysisDoc(null)}
+      />
 
       {/* Right Sidebar - Profile, AI, Doc Details */}
       <RightSidebar

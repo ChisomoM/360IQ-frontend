@@ -16,6 +16,7 @@ export const API: Record<string, string> = {
   DOCUMENT_VERSIONS: "documents/:id/versions",
   DOCUMENT_SUMMARIZE: "documents/:id/summarize",
   DOCUMENT_ANALYZE: "documents/:id/analyze",
+  DOCUMENT_CHART_DATA: "documents/:id/chart-data",
   WORKFLOWS: "workflows",
   WORKFLOW_DETAIL: "workflows/:id",
   WORKFLOW_STEP_APPROVE: "workflows/steps/:id/approve",
@@ -32,6 +33,23 @@ export const API: Record<string, string> = {
   APPLICATION_APPROVE: "students/applications/:id/approve",
   STUDENTS: "students",
   STUDENT_DETAIL: "students/:id",
+
+  // HR Module
+  HR_STAFF: "hr/staff",
+  HR_STAFF_DETAIL: "hr/staff/:id",
+  HR_ME: "hr/me",
+  HR_LEAVE: "hr/leave",
+  HR_LEAVE_DETAIL: "hr/leave/:id",
+  HR_LEAVE_APPROVE: "hr/leave/:id/approve",
+  HR_LEAVE_REJECT: "hr/leave/:id/reject",
+  HR_LEAVE_CANCEL: "hr/leave/:id/cancel",
+  HR_ANALYTICS: "hr/analytics",
+  // Staff Applications
+  HR_APPLICATIONS: "hr/applications",
+  HR_APPLICATION_DETAIL: "hr/applications/:id",
+  HR_APPLICATION_APPROVE: "hr/applications/:id/approve",
+  HR_APPLICATION_REJECT: "hr/applications/:id/reject",
+  HR_APPLICATION_SUBMIT: "hr/applications",
 
   // Audit
   AUDIT_LOGS: "audit",
