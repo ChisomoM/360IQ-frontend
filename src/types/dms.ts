@@ -69,3 +69,27 @@ export interface WorkflowStep {
   approved_by_id?: string;
   comments?: string;
 }
+
+export interface AISummary {
+  summary: string;
+  key_points: string[];
+  doc_type: string;
+  language: string;
+}
+
+export interface AIAnalysis {
+  insights: string;
+  themes: string[];
+  entities: string[];
+  sentiment: 'positive' | 'neutral' | 'negative';
+  action_items: string[];
+}
+
+export interface DocumentUpdatePayload {
+  title?: string;
+  description?: string;
+  visibility_level?: 'public' | 'department' | 'restricted';
+  status?: 'active' | 'archived';
+  category?: string;
+  document_type?: string;
+}

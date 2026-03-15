@@ -20,19 +20,98 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet';
+import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { FileText, Search, Plus, Loader2, Filter, Upload, Eye, Download, History, ClipboardList } from 'lucide-react';
+import { Separator } from '@/components/ui/separator';
+import {
+  FileText,
+  Plus,
+  Loader2,
+  Filter,
+  Upload,
+  Eye,
+  Download,
+  History,
+  Pencil,
+  Trash2,
+  X,
+  FileArchive,
+  Clock,
+  User,
+  Building,
+  Lock,
+  Globe,
+  Shield,
+} from 'lucide-react';
 import { toast } from 'sonner';
 import { fetchData } from '@/lib/api/crud';
-import type { Document, Department } from '@/types/dms';
+import type { Document, Department, DocumentVersion, DocumentUpdatePayload } from '@/types/dms';
 import dayjs from 'dayjs';
+
+// ─── helpers ────────────────────────────────────────────────────────────────
+
+const formatBytes = (bytes: number) => {
+  if (bytes === 0) return '0 B';
+  const k = 1024;
+  const sizes = ['B', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`;
+};
+
+const visibilityIcon = (level: string) => {
+  if (level === 'public') return <Globe className="h-3 w-3" />;
+  if (level === 'restricted') return <Lock className="h-3 w-3" />;
+  return <Shield className="h-3 w-3" />;
+};
+
+const getStatusBadge = (status: string) => {
+  const map: Record<string, string> = {
+    active: 'bg-green-100 text-green-800',
+    archived: 'bg-gray-100 text-gray-700',
+    approved: 'bg-blue-100 text-blue-800',
+    rejected: 'bg-red-100 text-red-800',
+    pending: 'bg-yellow-100 text-yellow-800',
+  };
+  return <Badge className={map[status] ?? ''}>{status}</Badge>;
+};
+
+// ─── Upload form defaults ────────────────────────────────────────────────────
+
+const UPLOAD_DEFAULTS = {
+  title: '',
+  description: '',
+  document_type: 'policy',
+  category: 'administrative',
+  department_id: '',
+  visibility_level: 'department',
+  file: null as File | null,
+};
+
+// ─── Component ───────────────────────────────────────────────────────────────
 
 export default function Documents() {
   const [documents, setDocuments] = useState<Document[]>([]);
@@ -40,108 +119,237 @@ export default function Documents() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [deptFilter, setDeptFilter] = useState('all');
-  const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Upload Form State
-  const [uploadData, setUploadData] = useState({
-    title: '',
-    description: '',
-    document_type: 'policy',
-    category: 'administrative',
-    department_id: '',
-    visibility_level: 'department',
-    file: null as File | null,
-  });
+  // Selected document (shared across dialogs)
+  const [selectedDoc, setSelectedDoc] = useState<Document | null>(null);
 
-  const fetchDataBatch = async () => {
+  // Dialog / sheet open states
+  const [isUploadOpen, setIsUploadOpen] = useState(false);
+  const [isViewOpen, setIsViewOpen] = useState(false);
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [isVersionsOpen, setIsVersionsOpen] = useState(false);
+
+  // Upload form
+  const [uploadData, setUploadData] = useState({ ...UPLOAD_DEFAULTS });
+  const [isUploading, setIsUploading] = useState(false);
+
+  // Edit form
+  const [editData, setEditData] = useState<DocumentUpdatePayload>({});
+  const [isUpdating, setIsUpdating] = useState(false);
+
+  // Delete
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  // Versions
+  const [versions, setVersions] = useState<DocumentVersion[]>([]);
+  const [loadingVersions, setLoadingVersions] = useState(false);
+  const [isNewVersionOpen, setIsNewVersionOpen] = useState(false);
+  const [newVersionFile, setNewVersionFile] = useState<File | null>(null);
+  const [newVersionNotes, setNewVersionNotes] = useState('');
+  const [isUploadingVersion, setIsUploadingVersion] = useState(false);
+
+  // ── data fetching ────────────────────────────────────────────────────────
+
+  const fetchAll = async () => {
     try {
       setLoading(true);
       const [docsData, deptsData] = await Promise.all([
         fetchData('DOCUMENTS', 'GET'),
         fetchData('DEPARTMENTS', 'GET'),
       ]);
-      // Handle both array and paginated response formats
-      const docsList = Array.isArray(docsData) ? docsData : (docsData?.items || []);
-      const deptsList = Array.isArray(deptsData) ? deptsData : (deptsData?.items || []);
-      setDocuments(docsList);
-      setDepartments(deptsList);
-    } catch (error) {
-      console.error('Error fetching data:', error);
+      setDocuments(Array.isArray(docsData) ? docsData : (docsData?.items ?? []));
+      setDepartments(Array.isArray(deptsData) ? deptsData : (deptsData?.items ?? []));
+    } catch {
       toast.error('Failed to load documents');
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    fetchDataBatch();
-  }, []);
+  useEffect(() => { fetchAll(); }, []);
+
+  // ── upload ───────────────────────────────────────────────────────────────
 
   const handleUpload = async () => {
-    if (!uploadData.file || !uploadData.title) {
+    if (!uploadData.file || !uploadData.title.trim()) {
       toast.error('Please provide a title and select a file');
       return;
     }
-
     try {
-      setIsSubmitting(true);
-      const formData = new FormData();
-      formData.append('file', uploadData.file);
-      formData.append('title', uploadData.title);
-      formData.append('description', uploadData.description);
-      formData.append('document_type', uploadData.document_type);
-      formData.append('category', uploadData.category);
-      formData.append('department_id', uploadData.department_id);
-      formData.append('visibility_level', uploadData.visibility_level);
-
-      await fetchData('DOCUMENTS', 'POST', {}, formData);
+      setIsUploading(true);
+      const form = new FormData();
+      form.append('file', uploadData.file);
+      form.append('title', uploadData.title);
+      form.append('description', uploadData.description);
+      form.append('document_type', uploadData.document_type);
+      form.append('category', uploadData.category);
+      form.append('department_id', uploadData.department_id);
+      form.append('visibility_level', uploadData.visibility_level);
+      await fetchData('DOCUMENTS', 'POST', {}, form);
       toast.success('Document uploaded successfully');
-      setIsUploadDialogOpen(false);
-      setUploadData({
-        title: '',
-        description: '',
-        document_type: 'policy',
-        category: 'administrative',
-        department_id: '',
-        visibility_level: 'department',
-        file: null,
-      });
-      fetchDataBatch();
-    } catch (error: any) {
-      console.error('Upload error:', error);
-      toast.error(error.message || 'Failed to upload document');
+      setIsUploadOpen(false);
+      setUploadData({ ...UPLOAD_DEFAULTS });
+      fetchAll();
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to upload document');
     } finally {
-      setIsSubmitting(false);
+      setIsUploading(false);
     }
   };
 
-  const filteredDocuments = documents.filter(doc => {
-    const matchesSearch = doc.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         doc.description?.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesDept = deptFilter === 'all' || doc.department_id === deptFilter;
-    return matchesSearch && matchesDept;
+  // ── view detail ──────────────────────────────────────────────────────────
+
+  const openView = (doc: Document) => {
+    setSelectedDoc(doc);
+    setIsViewOpen(true);
+  };
+
+  // ── download ─────────────────────────────────────────────────────────────
+
+  const handleDownload = (doc: Document) => {
+    if (!doc.file_url) {
+      toast.error('No download URL available for this document');
+      return;
+    }
+    const a = window.document.createElement('a');
+    a.href = doc.file_url;
+    a.download = doc.file_name;
+    a.target = '_blank';
+    a.rel = 'noopener noreferrer';
+    window.document.body.appendChild(a);
+    a.click();
+    window.document.body.removeChild(a);
+  };
+
+  // ── edit ─────────────────────────────────────────────────────────────────
+
+  const openEdit = (doc: Document) => {
+    setSelectedDoc(doc);
+    setEditData({
+      title: doc.title,
+      description: doc.description ?? '',
+      visibility_level: doc.visibility_level as any,
+      status: doc.status as any,
+      category: doc.category ?? '',
+      document_type: doc.document_type,
+    });
+    setIsEditOpen(true);
+  };
+
+  const handleUpdate = async () => {
+    if (!selectedDoc) return;
+    try {
+      setIsUpdating(true);
+      await fetchData(
+        'DOCUMENT_UPDATE',
+        'PATCH',
+        { id: selectedDoc.id },
+        editData
+      );
+      toast.success('Document updated');
+      setIsEditOpen(false);
+      fetchAll();
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to update document');
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  // ── delete ───────────────────────────────────────────────────────────────
+
+  const openDelete = (doc: Document) => {
+    setSelectedDoc(doc);
+    setIsDeleteOpen(true);
+  };
+
+  const handleDelete = async () => {
+    if (!selectedDoc) return;
+    try {
+      setIsDeleting(true);
+      await fetchData('DOCUMENT_DELETE', 'DELETE', { id: selectedDoc.id });
+      toast.success('Document deleted');
+      setIsDeleteOpen(false);
+      setSelectedDoc(null);
+      fetchAll();
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to delete document');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  // ── versions ─────────────────────────────────────────────────────────────
+
+  const openVersions = async (doc: Document) => {
+    setSelectedDoc(doc);
+    setVersions([]);
+    setIsVersionsOpen(true);
+    try {
+      setLoadingVersions(true);
+      const data = await fetchData('DOCUMENT_VERSIONS', 'GET', { id: doc.id });
+      setVersions(Array.isArray(data) ? data : (data?.items ?? []));
+    } catch {
+      toast.error('Failed to load version history');
+    } finally {
+      setLoadingVersions(false);
+    }
+  };
+
+  const handleUploadVersion = async () => {
+    if (!selectedDoc || !newVersionFile) {
+      toast.error('Please select a file');
+      return;
+    }
+    try {
+      setIsUploadingVersion(true);
+      const form = new FormData();
+      form.append('file', newVersionFile);
+      form.append('change_notes', newVersionNotes);
+      await fetchData('DOCUMENT_VERSIONS', 'POST', { id: selectedDoc.id }, form);
+      toast.success('New version uploaded');
+      setIsNewVersionOpen(false);
+      setNewVersionFile(null);
+      setNewVersionNotes('');
+      // Refresh versions list
+      const data = await fetchData('DOCUMENT_VERSIONS', 'GET', { id: selectedDoc.id });
+      setVersions(Array.isArray(data) ? data : (data?.items ?? []));
+      fetchAll();
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to upload version');
+    } finally {
+      setIsUploadingVersion(false);
+    }
+  };
+
+  // ── filter ───────────────────────────────────────────────────────────────
+
+  const filtered = documents.filter(doc => {
+    const q = searchQuery.toLowerCase();
+    const matchSearch = doc.title.toLowerCase().includes(q) ||
+      doc.description?.toLowerCase().includes(q);
+    const matchDept = deptFilter === 'all' || doc.department_id === deptFilter;
+    return matchSearch && matchDept;
   });
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'active': return <Badge className="bg-green-100 text-green-800">Active</Badge>;
-      case 'archived': return <Badge className="bg-gray-100 text-gray-800">Archived</Badge>;
-      case 'approved': return <Badge className="bg-blue-100 text-blue-800">Approved</Badge>;
-      case 'pending': return <Badge className="bg-yellow-100 text-yellow-800">Pending</Badge>;
-      case 'rejected': return <Badge className="bg-red-100 text-red-800">Rejected</Badge>;
-      default: return <Badge>{status}</Badge>;
-    }
-  };
+  const deptName = (id?: string) =>
+    departments.find(d => d.id === id)?.name ?? 'Global';
+
+  const deptCode = (id?: string) =>
+    departments.find(d => d.id === id)?.code ?? 'GLB';
+
+  // ── render ───────────────────────────────────────────────────────────────
 
   return (
     <div className="w-full space-y-6">
+      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Document Explorer</h1>
           <p className="text-gray-600 mt-1">Manage university archives and official records</p>
         </div>
-        <Dialog open={isUploadDialogOpen} onOpenChange={setIsUploadDialogOpen}>
+        <Dialog open={isUploadOpen} onOpenChange={setIsUploadOpen}>
           <DialogTrigger asChild>
             <Button className="bg-[#febb00] text-[#1e3c21] hover:bg-[#e8a900] font-bold">
               <Upload className="h-4 w-4 mr-2" />
@@ -151,39 +359,25 @@ export default function Documents() {
           <DialogContent className="max-w-lg bg-white overflow-y-auto max-h-[90vh]">
             <DialogHeader>
               <DialogTitle>Upload New Document</DialogTitle>
-              <DialogDescription>
-                Upload a file and assign metadata for proper indexing.
-              </DialogDescription>
+              <DialogDescription>Upload a file and assign metadata for proper indexing.</DialogDescription>
             </DialogHeader>
-            
             <div className="grid gap-4 py-4">
               <div className="space-y-2">
-                <Label>File</Label>
-                <Input 
-                  type="file"
-                  onChange={(e) => setUploadData({...uploadData, file: e.target.files?.[0] || null})}
-                />
+                <Label>File *</Label>
+                <Input type="file" onChange={(e) => setUploadData({ ...uploadData, file: e.target.files?.[0] ?? null })} />
               </div>
               <div className="space-y-2">
-                <Label>Title</Label>
-                <Input 
-                  value={uploadData.title}
-                  onChange={(e) => setUploadData({...uploadData, title: e.target.value})}
-                  placeholder="e.g., Q3 Financial Report 2023"
-                />
+                <Label>Title *</Label>
+                <Input value={uploadData.title} onChange={(e) => setUploadData({ ...uploadData, title: e.target.value })} placeholder="e.g., Q3 Financial Report 2025" />
               </div>
               <div className="space-y-2">
                 <Label>Description</Label>
-                <Input 
-                  value={uploadData.description}
-                  onChange={(e) => setUploadData({...uploadData, description: e.target.value})}
-                  placeholder="Brief summary..."
-                />
+                <Textarea value={uploadData.description} onChange={(e) => setUploadData({ ...uploadData, description: e.target.value })} placeholder="Brief summary..." rows={2} />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Type</Label>
-                  <Select value={uploadData.document_type} onValueChange={(val) => setUploadData({...uploadData, document_type: val})}>
+                  <Select value={uploadData.document_type} onValueChange={(v) => setUploadData({ ...uploadData, document_type: v })}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="policy">Policy</SelectItem>
@@ -196,7 +390,7 @@ export default function Documents() {
                 </div>
                 <div className="space-y-2">
                   <Label>Category</Label>
-                  <Select value={uploadData.category} onValueChange={(val) => setUploadData({...uploadData, category: val})}>
+                  <Select value={uploadData.category} onValueChange={(v) => setUploadData({ ...uploadData, category: v })}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="academic">Academic</SelectItem>
@@ -209,18 +403,18 @@ export default function Documents() {
               </div>
               <div className="space-y-2">
                 <Label>Department</Label>
-                <Select value={uploadData.department_id} onValueChange={(val) => setUploadData({...uploadData, department_id: val})}>
+                <Select value={uploadData.department_id} onValueChange={(v) => setUploadData({ ...uploadData, department_id: v })}>
                   <SelectTrigger><SelectValue placeholder="Select Department" /></SelectTrigger>
                   <SelectContent>
-                    {departments.filter(dept => dept.id && dept.id.trim() !== '').map(dept => (
-                      <SelectItem key={dept.id} value={dept.id}>{dept.name}</SelectItem>
+                    {departments.filter(d => d.id?.trim()).map(d => (
+                      <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
                 <Label>Visibility</Label>
-                <Select value={uploadData.visibility_level} onValueChange={(val: any) => setUploadData({...uploadData, visibility_level: val})}>
+                <Select value={uploadData.visibility_level} onValueChange={(v) => setUploadData({ ...uploadData, visibility_level: v })}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="department">Department Only</SelectItem>
@@ -230,11 +424,10 @@ export default function Documents() {
                 </Select>
               </div>
             </div>
-
             <DialogFooter>
-              <Button variant="outline" onClick={() => setIsUploadDialogOpen(false)}>Cancel</Button>
-              <Button onClick={handleUpload} disabled={isSubmitting} className="bg-primary-blue">
-                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              <Button variant="outline" onClick={() => setIsUploadOpen(false)}>Cancel</Button>
+              <Button onClick={handleUpload} disabled={isUploading} className="bg-[#febb00] text-[#1e3c21] hover:bg-[#e8a900] font-bold">
+                {isUploading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Upload & Save
               </Button>
             </DialogFooter>
@@ -242,7 +435,9 @@ export default function Documents() {
         </Dialog>
       </div>
 
+      {/* Main content grid */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        {/* Filters */}
         <Card className="md:col-span-1 border-none shadow-md">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg">
@@ -253,11 +448,7 @@ export default function Documents() {
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label>Search</Label>
-              <Input 
-                placeholder="Title or keywords..." 
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
+              <Input placeholder="Title or keywords..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
             </div>
             <div className="space-y-2">
               <Label>Department</Label>
@@ -265,22 +456,25 @@ export default function Documents() {
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Departments</SelectItem>
-                  {departments.filter(dept => dept.id && dept.id.trim() !== '').map(dept => (
-                    <SelectItem key={dept.id} value={dept.id}>{dept.name}</SelectItem>
+                  {departments.filter(d => d.id?.trim()).map(d => (
+                    <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
+            <Separator />
+            <p className="text-xs text-gray-400">{filtered.length} document{filtered.length !== 1 ? 's' : ''} shown</p>
           </CardContent>
         </Card>
 
+        {/* Table */}
         <Card className="md:col-span-3 border-none shadow-lg overflow-hidden">
           <CardContent className="p-0">
             <Table>
               <TableHeader className="bg-gray-900">
                 <TableRow>
-                  <TableHead className="text-white">Document Name</TableHead>
-                  <TableHead className="text-white">Dept</TableHead>
+                  <TableHead className="text-white">Document</TableHead>
+                  <TableHead className="text-white">Department</TableHead>
                   <TableHead className="text-white">Status</TableHead>
                   <TableHead className="text-white">Modified</TableHead>
                   <TableHead className="text-white text-right">Actions</TableHead>
@@ -293,30 +487,32 @@ export default function Documents() {
                       <Loader2 className="h-10 w-10 animate-spin mx-auto text-[#E5600B]" />
                     </TableCell>
                   </TableRow>
-                ) : filteredDocuments.length === 0 ? (
+                ) : filtered.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={5} className="text-center py-20 text-gray-500">
                       <FileText className="h-12 w-12 mx-auto mb-4 opacity-10" />
-                      No documents found matching your criteria.
+                      No documents found.
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredDocuments.map((doc) => (
+                  filtered.map((doc) => (
                     <TableRow key={doc.id} className="hover:bg-gray-50 transition-colors">
                       <TableCell className="py-4">
-                         <div className="flex items-center gap-3">
-                           <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">
-                             <FileText className="h-5 w-5" />
-                           </div>
-                           <div>
-                             <p className="font-semibold text-gray-900">{doc.title}</p>
-                             <p className="text-xs text-gray-500 uppercase font-mono">{doc.file_type} • {(doc.file_size / 1024 / 1024).toFixed(2)} MB</p>
-                           </div>
-                         </div>
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">
+                            <FileText className="h-5 w-5" />
+                          </div>
+                          <div>
+                            <p className="font-semibold text-gray-900 max-w-[220px] truncate">{doc.title}</p>
+                            <p className="text-xs text-gray-500 uppercase font-mono">
+                              {doc.file_type?.split('/').pop() ?? 'file'} • {formatBytes(doc.file_size)} • v{doc.version}
+                            </p>
+                          </div>
+                        </div>
                       </TableCell>
                       <TableCell>
                         <Badge variant="outline" className="border-gray-200 text-gray-600">
-                          {departments.find(d => d.id === doc.department_id)?.code || 'Global'}
+                          {deptCode(doc.department_id)}
                         </Badge>
                       </TableCell>
                       <TableCell>{getStatusBadge(doc.status)}</TableCell>
@@ -325,17 +521,20 @@ export default function Documents() {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-1">
-                          <Button variant="ghost" size="sm" title="View Details">
+                          <Button variant="ghost" size="sm" title="View Details" onClick={() => openView(doc)}>
                             <Eye className="h-4 w-4" />
                           </Button>
-                          <Button variant="ghost" size="sm" title="Download">
+                          <Button variant="ghost" size="sm" title="Download" onClick={() => handleDownload(doc)}>
                             <Download className="h-4 w-4" />
                           </Button>
-                          <Button variant="ghost" size="sm" title="History">
+                          <Button variant="ghost" size="sm" title="Version History" onClick={() => openVersions(doc)}>
                             <History className="h-4 w-4" />
                           </Button>
-                          <Button variant="ghost" size="sm" title="Start Workflow">
-                            <ClipboardList className="h-4 w-4" />
+                          <Button variant="ghost" size="sm" title="Edit Metadata" onClick={() => openEdit(doc)}>
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button variant="ghost" size="sm" title="Delete Document" className="text-red-500 hover:text-red-700" onClick={() => openDelete(doc)}>
+                            <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>
                       </TableCell>
@@ -347,6 +546,279 @@ export default function Documents() {
           </CardContent>
         </Card>
       </div>
+
+      {/* ── View Detail Sheet ──────────────────────────────────────────────── */}
+      <Sheet open={isViewOpen} onOpenChange={setIsViewOpen}>
+        <SheetContent className="min-w-[480px] overflow-y-auto bg-white">
+          {selectedDoc && (
+            <>
+              <SheetHeader className="mb-6">
+                <div className="flex items-start gap-3">
+                  <div className="p-3 bg-blue-50 text-blue-600 rounded-xl mt-1">
+                    <FileText className="h-6 w-6" />
+                  </div>
+                  <div>
+                    <SheetTitle className="text-xl leading-tight">{selectedDoc.title}</SheetTitle>
+                    <SheetDescription className="mt-1">
+                      {selectedDoc.description || 'No description provided.'}
+                    </SheetDescription>
+                  </div>
+                </div>
+              </SheetHeader>
+
+              <div className="space-y-5">
+                {/* Quick stats */}
+                <div className="grid grid-cols-2 gap-3">
+                  {[
+                    { icon: <FileArchive className="h-4 w-4" />, label: 'File', value: selectedDoc.file_name },
+                    { icon: <Clock className="h-4 w-4" />, label: 'Size', value: formatBytes(selectedDoc.file_size) },
+                    { icon: <Building className="h-4 w-4" />, label: 'Department', value: deptName(selectedDoc.department_id) },
+                    { icon: <User className="h-4 w-4" />, label: 'Version', value: `v${selectedDoc.version}` },
+                  ].map(({ icon, label, value }) => (
+                    <div key={label} className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
+                      <span className="text-gray-400">{icon}</span>
+                      <div>
+                        <p className="text-xs text-gray-400">{label}</p>
+                        <p className="text-sm font-medium truncate max-w-[160px]">{value}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <Separator />
+
+                {/* Metadata */}
+                <div className="space-y-3">
+                  {[
+                    { label: 'Type', value: selectedDoc.document_type },
+                    { label: 'Category', value: selectedDoc.category ?? '—' },
+                    { label: 'Status', value: <>{getStatusBadge(selectedDoc.status)}</> },
+                    {
+                      label: 'Visibility',
+                      value: (
+                        <span className="flex items-center gap-1 capitalize">
+                          {visibilityIcon(selectedDoc.visibility_level)}
+                          {selectedDoc.visibility_level}
+                        </span>
+                      ),
+                    },
+                    { label: 'Uploaded', value: dayjs(selectedDoc.created_at).format('DD MMM YYYY, HH:mm') },
+                    { label: 'Last Modified', value: dayjs(selectedDoc.updated_at).format('DD MMM YYYY, HH:mm') },
+                    { label: 'Encrypted', value: selectedDoc.is_encrypted ? 'Yes' : 'No' },
+                  ].map(({ label, value }) => (
+                    <div key={label} className="flex justify-between text-sm">
+                      <span className="text-gray-500 min-w-[110px]">{label}</span>
+                      <span className="font-medium text-right">{value}</span>
+                    </div>
+                  ))}
+                </div>
+
+                <Separator />
+
+                {/* Tags */}
+                {selectedDoc.tags && selectedDoc.tags.length > 0 && (
+                  <div className="space-y-2">
+                    <p className="text-xs text-gray-400 uppercase tracking-wide">Tags</p>
+                    <div className="flex flex-wrap gap-2">
+                      {selectedDoc.tags.map(tag => (
+                        <Badge key={tag} variant="outline">{tag}</Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Actions */}
+                <div className="flex gap-2 pt-2">
+                  <Button className="flex-1" variant="outline" onClick={() => handleDownload(selectedDoc)}>
+                    <Download className="h-4 w-4 mr-2" /> Download
+                  </Button>
+                  <Button className="flex-1" variant="outline" onClick={() => { setIsViewOpen(false); openEdit(selectedDoc); }}>
+                    <Pencil className="h-4 w-4 mr-2" /> Edit
+                  </Button>
+                  <Button className="flex-1 text-red-500 hover:text-red-700" variant="outline" onClick={() => { setIsViewOpen(false); openDelete(selectedDoc); }}>
+                    <Trash2 className="h-4 w-4 mr-2" /> Delete
+                  </Button>
+                </div>
+              </div>
+            </>
+          )}
+        </SheetContent>
+      </Sheet>
+
+      {/* ── Edit Metadata Dialog ───────────────────────────────────────────── */}
+      <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
+        <DialogContent className="max-w-lg bg-white">
+          <DialogHeader>
+            <DialogTitle>Edit Document Metadata</DialogTitle>
+            <DialogDescription>Update the document's information. The file itself is not changed.</DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="space-y-2">
+              <Label>Title</Label>
+              <Input value={editData.title ?? ''} onChange={(e) => setEditData({ ...editData, title: e.target.value })} />
+            </div>
+            <div className="space-y-2">
+              <Label>Description</Label>
+              <Textarea value={editData.description ?? ''} onChange={(e) => setEditData({ ...editData, description: e.target.value })} rows={3} />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Type</Label>
+                <Select value={editData.document_type ?? ''} onValueChange={(v) => setEditData({ ...editData, document_type: v })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="policy">Policy</SelectItem>
+                    <SelectItem value="minutes">Minutes</SelectItem>
+                    <SelectItem value="report">Report</SelectItem>
+                    <SelectItem value="form">Form</SelectItem>
+                    <SelectItem value="memo">Memo</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Category</Label>
+                <Select value={editData.category ?? ''} onValueChange={(v) => setEditData({ ...editData, category: v })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="academic">Academic</SelectItem>
+                    <SelectItem value="financial">Financial</SelectItem>
+                    <SelectItem value="hr">Human Resources</SelectItem>
+                    <SelectItem value="administrative">Administrative</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Visibility</Label>
+                <Select value={editData.visibility_level ?? ''} onValueChange={(v: any) => setEditData({ ...editData, visibility_level: v })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="department">Department Only</SelectItem>
+                    <SelectItem value="public">Public</SelectItem>
+                    <SelectItem value="restricted">Restricted</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Status</Label>
+                <Select value={editData.status ?? ''} onValueChange={(v: any) => setEditData({ ...editData, status: v })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="active">Active</SelectItem>
+                    <SelectItem value="archived">Archived</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsEditOpen(false)}>Cancel</Button>
+            <Button onClick={handleUpdate} disabled={isUpdating} className="bg-[#febb00] text-[#1e3c21] hover:bg-[#e8a900] font-bold">
+              {isUpdating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Save Changes
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Delete Confirmation ────────────────────────────────────────────── */}
+      <AlertDialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
+        <AlertDialogContent className="bg-white">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Document</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete <strong>"{selectedDoc?.title}"</strong>? This action will soft-delete the document and preserve the audit trail, but it will no longer appear in the explorer.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              disabled={isDeleting}
+              className="bg-red-600 hover:bg-red-700 text-white"
+            >
+              {isDeleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* ── Version History Dialog ─────────────────────────────────────────── */}
+      <Dialog open={isVersionsOpen} onOpenChange={(open) => { setIsVersionsOpen(open); if (!open) setIsNewVersionOpen(false); }}>
+        <DialogContent className="max-w-2xl bg-white">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <History className="h-5 w-5" />
+              Version History — {selectedDoc?.title}
+            </DialogTitle>
+            <DialogDescription>All versions of this document, newest first.</DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-3 max-h-[50vh] overflow-y-auto py-2">
+            {loadingVersions ? (
+              <div className="flex justify-center py-10">
+                <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+              </div>
+            ) : versions.length === 0 ? (
+              <p className="text-center text-gray-500 py-8 text-sm">No version history found.</p>
+            ) : (
+              versions.map((v) => (
+                <div key={v.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-100">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-white rounded-lg border text-gray-600">
+                      <FileText className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold">Version {v.version_number}</p>
+                      <p className="text-xs text-gray-500">{v.file_name} • {formatBytes(v.file_size)}</p>
+                      {v.change_notes && <p className="text-xs text-gray-400 italic mt-0.5">{v.change_notes}</p>}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-gray-400">{dayjs(v.created_at).format('MMM DD, YYYY')}</span>
+                    {v.file_url && (
+                      <Button variant="ghost" size="sm" onClick={() => window.open(v.file_url, '_blank')}>
+                        <Download className="h-3 w-3" />
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+
+          {/* Upload new version */}
+          {!isNewVersionOpen ? (
+            <DialogFooter className="border-t pt-4">
+              <Button variant="outline" className="w-full" onClick={() => setIsNewVersionOpen(true)}>
+                <Plus className="h-4 w-4 mr-2" /> Upload New Version
+              </Button>
+            </DialogFooter>
+          ) : (
+            <div className="border-t pt-4 space-y-3">
+              <p className="text-sm font-medium">Upload New Version</p>
+              <Input type="file" onChange={(e) => setNewVersionFile(e.target.files?.[0] ?? null)} />
+              <Textarea
+                placeholder="Change notes (optional)..."
+                value={newVersionNotes}
+                onChange={(e) => setNewVersionNotes(e.target.value)}
+                rows={2}
+              />
+              <div className="flex gap-2">
+                <Button variant="outline" className="flex-1" onClick={() => setIsNewVersionOpen(false)}>
+                  <X className="h-4 w-4 mr-1" /> Cancel
+                </Button>
+                <Button className="flex-1 bg-[#febb00] text-[#1e3c21] hover:bg-[#e8a900] font-bold" onClick={handleUploadVersion} disabled={isUploadingVersion}>
+                  {isUploadingVersion && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  Upload
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
