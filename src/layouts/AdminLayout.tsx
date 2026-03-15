@@ -11,8 +11,9 @@ import { LogOut, LayoutDashboard, ChevronLeft, ChevronRight, Users, GraduationCa
   Building2, 
   // ClipboardList, 
   History } from 'lucide-react';
-  import { BarChart3 } from 'lucide-react';
-import { TopNavBar } from '@/components/TopNavBar';
+import { BarChart3 } from 'lucide-react';
+import { AIChatSidebar } from '@/components/ai/AIChatSidebar';
+import { RightSidebar } from '@/components/layout/RightSidebar';
 import { useAuth } from '@/lib/context/useAuth';
 import { hasPermission, PERMISSIONS } from '@/lib/permissions';
 
@@ -20,6 +21,8 @@ export default function AdminLayout() {
   const location = useLocation();
   const { user, logout } = useAuth();
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isChatOpen, setIsChatOpen] = useState(false);
+  const [isDocDetailsOpen, setIsDocDetailsOpen] = useState(false);
 
   const isActive = (path: string) => location.pathname === path;
 
@@ -33,15 +36,12 @@ export default function AdminLayout() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Fixed Top Navigation Bar - 64px height */}
-      <TopNavBar />
-
-      {/* Main Content Area with Sidebar - starts below nav bar */}
-      <div className="pt-16">
+      {/* Main Content Area with Sidebar */}
+      <div>
         <SidebarProvider>
           {/* Vertical Sidebar with rounded corners and padding - separated from edges */}
           <div 
-            className={`fixed top-20 left-4 h-[calc(100vh-6rem)] z-40 transition-all duration-300 ${
+            className={`fixed top-4 left-4 h-[calc(100vh-2rem)] z-40 transition-all duration-300 ${
               isCollapsed ? 'w-20' : 'w-64'
             }`}
           >
@@ -475,14 +475,26 @@ export default function AdminLayout() {
           <div 
             className={`flex-1 transition-all duration-300 ${
               isCollapsed ? 'ml-28' : 'ml-72'
-            }`}
+            } mr-20`}
           >
-            <main className="p-8 min-h-[calc(100vh-4rem)] max-w-[calc(100vw-18rem)] lg:max-w-[calc(100vw-20rem)]">
+            <main className="p-8 min-h-screen">
               <Outlet />
             </main>
           </div>
         </SidebarProvider>
       </div>
+
+      {/* AI Chat Floating Panel */}
+      <AIChatSidebar isOpen={isChatOpen} onClose={() => setIsChatOpen(false)} />
+
+      {/* Right Sidebar - Profile, AI, Doc Details */}
+      <RightSidebar
+        isChatOpen={isChatOpen}
+        onToggleChat={() => setIsChatOpen(!isChatOpen)}
+        onToggleDocDetails={() => setIsDocDetailsOpen(!isDocDetailsOpen)}
+        isDocDetailsOpen={isDocDetailsOpen}
+        onLogout={handleLogout}
+      />
     </div>
   );
 }
