@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import { Upload, X, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -272,6 +272,7 @@ export function QuickUploadWidget({
         type="file"
         onChange={handleFileInputChange}
         accept={supportedFormats.map(f => `.${f}`).join(',')}
+        aria-label="Upload file"
         className="hidden"
       />
 

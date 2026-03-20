@@ -112,3 +112,15 @@ export interface SheetData {
 export interface SpreadsheetData {
   sheets: SheetData[];
 }
+
+export interface ComparisonSeries {
+  document_id: string;
+  title: string;
+  file_name: string;
+  rows: (string | number | null)[][];
+}
+
+export interface ComparisonData {
+  shared_columns: ColumnMeta[];
+  series: ComparisonSeries[];
+}

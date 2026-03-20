@@ -1,4 +1,3 @@
-import Home from './(public)/home/home'
 import Contact from './(public)/contact/contact-us'
 import AboutPage from './(public)/about/AboutPage';
 import BlogList from './(public)/blog/BlogList';
@@ -37,6 +36,7 @@ import HRDashboard from './(admin)/hr/HRDashboard';
 import StaffDirectory from './(admin)/hr/StaffDirectory';
 import LeaveManagement from './(admin)/hr/LeaveManagement';
 import StaffApplications from './(admin)/hr/StaffApplications';
+import MySignatures from './(admin)/admin/MySignatures';
 import StaffOnboarding from './(public)/staff-onboarding/StaffOnboarding';
 
 
@@ -102,6 +102,7 @@ function App() {
         <Route path="hr/staff" element={<StaffDirectory />} />
         <Route path="hr/leave" element={<LeaveManagement />} />
         <Route path="hr/applications" element={<StaffApplications />} />
+        <Route path="signatures" element={<MySignatures />} />
       </Route>
     </Routes>
     <Toaster position="top-right" richColors />

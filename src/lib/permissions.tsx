@@ -42,6 +42,10 @@ export const PERMISSIONS = {
   HR_REPORTS_EXPORT: 'hr.reports.export',
   HR_APPLICATIONS_VIEW: 'hr.applications.view',
   HR_APPLICATIONS_MANAGE: 'hr.applications.manage',
+
+  // E-Signature
+  SIGN_DOCUMENTS: 'sign_documents',
+  REQUEST_SIGNATURE: 'request_signature',
 } as const;
 
 export const ROLE_PERMISSIONS: Record<UserRole, string[]> = {

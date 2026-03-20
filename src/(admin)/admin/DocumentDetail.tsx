@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, useOutletContext } from 'react-router-dom';
-import { fetchData } from '@/lib/api/crud';
+import { fetchData, file as downloadFile } from '@/lib/api/crud';
 import type { Document, Department, DocumentVersion, DocumentUpdatePayload } from '@/types/dms';
 import type { AdminLayoutContext } from '@/layouts/AdminLayout';
 import { toast } from 'sonner';
@@ -59,8 +59,13 @@ import {
   Clock,
   Tag,
   Activity,
+  PenLine,
+  CheckCircle,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import RequestSignatureModal from '@/components/signature/RequestSignatureModal';
+import { getDocumentSignatureRequests } from '@/lib/api/signatures';
+import type { SignatureRequest } from '@/types/signatures';
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 
@@ -130,6 +135,11 @@ export default function DocumentDetail() {
   const [newVersionNotes, setNewVersionNotes] = useState('');
   const [isUploadingVersion, setIsUploadingVersion] = useState(false);
 
+  // Signatures
+  const [sigRequests, setSigRequests] = useState<SignatureRequest[]>([]);
+  const [loadingSigs, setLoadingSigs] = useState(false);
+  const [isRequestSigOpen, setIsRequestSigOpen] = useState(false);
+
   // ── data fetching ────────────────────────────────────────────────────────
 
   useEffect(() => {
@@ -150,22 +160,29 @@ export default function DocumentDetail() {
       .finally(() => setLoading(false));
   }, [id]);
 
+  useEffect(() => {
+    if (loading) return;
+    if (!id) return;
+    setLoadingSigs(true);
+    getDocumentSignatureRequests(id)
+      .then(setSigRequests)
+      .catch(() => {/* silent — signatures are optional */})
+      .finally(() => setLoadingSigs(false));
+  }, [id, loading]);
+
   // ── actions ──────────────────────────────────────────────────────────────
 
   const handleAnalyzeWithAI = () => {
     if (doc) analyzeDocument(doc);
   };
 
-  const handleDownload = () => {
-    if (!doc?.file_url) { toast.error('No download URL available'); return; }
-    const a = window.document.createElement('a');
-    a.href = doc.file_url;
-    a.download = doc.file_name;
-    a.target = '_blank';
-    a.rel = 'noopener noreferrer';
-    window.document.body.appendChild(a);
-    a.click();
-    window.document.body.removeChild(a);
+  const handleDownload = async () => {
+    if (!doc) { toast.error('No document available'); return; }
+    try {
+      await downloadFile('DOCUMENT_DOWNLOAD', { id: doc.id });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Download failed');
+    }
   };
 
   const openEdit = () => {
@@ -448,7 +465,62 @@ export default function DocumentDetail() {
         {/* ── Right: sidebar ───────────────────────────────────────────────── */}
         <div className="lg:col-span-4 space-y-4">
 
-          {/* File Info */}
+          {/* Signatures Card */}
+          <Card className="border-none shadow-md">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base font-semibold flex items-center gap-2 text-gray-700">
+                <PenLine className="h-4 w-4" />
+                Signatures
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {loadingSigs ? (
+                <div className="flex justify-center py-4">
+                  <Loader2 className="h-5 w-5 animate-spin text-gray-400" />
+                </div>
+              ) : sigRequests.length === 0 ? (
+                <p className="text-xs text-gray-400 text-center py-2">No signature requests yet.</p>
+              ) : (
+                <div className="space-y-2">
+                  {sigRequests.map((req) => {
+                    const name = req.signer
+                      ? `${req.signer.first_name} ${req.signer.last_name}`
+                      : 'Unknown';
+                    const statusMap: Record<string, { cls: string; icon: React.ReactNode }> = {
+                      pending:  { cls: 'bg-amber-50 text-amber-700 border-amber-300', icon: <Clock className="h-3 w-3" /> },
+                      signed:   { cls: 'bg-green-50 text-green-700 border-green-300', icon: <CheckCircle className="h-3 w-3" /> },
+                      declined: { cls: 'bg-red-50 text-red-700 border-red-300',       icon: <XCircle className="h-3 w-3" /> },
+                      expired:  { cls: 'bg-gray-100 text-gray-500 border-gray-300',   icon: <X className="h-3 w-3" /> },
+                    };
+                    const s = statusMap[req.status] ?? statusMap.pending;
+                    return (
+                      <div key={req.id} className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className="text-xs font-medium text-gray-600 truncate">{name}</span>
+                          {req.sign_order > 1 && (
+                            <span className="text-xs text-gray-400">#{req.sign_order}</span>
+                          )}
+                        </div>
+                        <Badge variant="outline" className={cn('border text-xs flex items-center gap-1 flex-shrink-0', s.cls)}>
+                          {s.icon}
+                          <span className="capitalize">{req.status}</span>
+                        </Badge>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+              <Button
+                variant="outline"
+                className="w-full justify-start"
+                size="sm"
+                onClick={() => setIsRequestSigOpen(true)}
+              >
+                <PenLine className="h-4 w-4 mr-2 text-gray-500" />
+                Request Signature
+              </Button>
+            </CardContent>
+          </Card>
           <Card className="border-none shadow-md">
             <CardHeader className="pb-3">
               <CardTitle className="text-base font-semibold flex items-center gap-2 text-gray-700">
@@ -726,6 +798,20 @@ export default function DocumentDetail() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* ── Request Signature Modal ───────────────────────────────────────── */}
+      {doc && (
+        <RequestSignatureModal
+          documentId={doc.id}
+          documentTitle={doc.title}
+          open={isRequestSigOpen}
+          onClose={() => setIsRequestSigOpen(false)}
+          onRequested={(req) => {
+            setSigRequests((prev) => [...prev, req]);
+            setIsRequestSigOpen(false);
+          }}
+        />
+      )}
     </div>
   );
 }

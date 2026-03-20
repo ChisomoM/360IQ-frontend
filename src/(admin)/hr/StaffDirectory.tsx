@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,10 +13,10 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow
 } from '@/components/ui/table';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { UserCog, Search, Loader2, AlertTriangle } from 'lucide-react';
+import { UserCog, Search, Loader2, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { useAuth } from '@/lib/context/useAuth';
 import { PERMISSIONS, hasPermission } from '@/lib/permissions';
-import { listStaffProfiles, createStaffProfile } from '@/lib/api/hr';
+import { listStaffProfiles, createStaffProfile, searchUsersForHR } from '@/lib/api/hr';
 import type {
   StaffProfile, CreateStaffProfileLinkedPayload, CreateStaffProfileOfflinePayload, EmploymentType, ProfileStatus
 } from '@/types/hr';
@@ -92,6 +92,34 @@ export default function StaffDirectory() {
   });
   const [saving, setSaving] = useState(false);
 
+  // User search for linked tab
+  const [userQuery, setUserQuery] = useState('');
+  const [userResults, setUserResults] = useState<Array<{ id: string; first_name: string; last_name: string; email: string }>>([]);
+  const [selectedUserLabel, setSelectedUserLabel] = useState('');
+  const [userSearchOpen, setUserSearchOpen] = useState(false);
+  const userSearchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleUserQueryChange = (val: string) => {
+    setUserQuery(val);
+    setSelectedUserLabel('');
+    setLinkedForm(f => ({ ...f, user_id: undefined }));
+    if (userSearchTimer.current) clearTimeout(userSearchTimer.current);
+    if (val.length < 2) { setUserResults([]); setUserSearchOpen(false); return; }
+    userSearchTimer.current = setTimeout(() => {
+      searchUsersForHR(val)
+        .then(r => { setUserResults(r); setUserSearchOpen(r.length > 0); })
+        .catch(() => {});
+    }, 300);
+  };
+
+  const selectUser = (u: { id: string; first_name: string; last_name: string; email: string }) => {
+    setLinkedForm(f => ({ ...f, user_id: u.id }));
+    setSelectedUserLabel(`${u.first_name} ${u.last_name} — ${u.email}`);
+    setUserQuery(`${u.first_name} ${u.last_name}`);
+    setUserSearchOpen(false);
+    setUserResults([]);
+  };
+
   const load = useCallback(() => {
     setLoading(true);
     const params: Record<string, string> = {};
@@ -135,6 +163,9 @@ export default function StaffDirectory() {
       setShowCreate(false);
       setLinkedForm({ employment_type: 'permanent' });
       setOfflineForm({ employment_type: 'permanent' });
+      setUserQuery('');
+      setSelectedUserLabel('');
+      setUserResults([]);
       load();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to create staff profile');
@@ -214,7 +245,7 @@ export default function StaffDirectory() {
                       <p className="font-medium text-gray-900">{getDisplayName(p)}</p>
                       <p className="text-xs text-gray-500">{getDisplayEmail(p)}</p>
                     </TableCell>
-                    <TableCell>{p.user?.position ?? '—'}</TableCell>
+                    <TableCell>{p.user?.position ?? p.position ?? '—'}</TableCell>
                     <TableCell>{p.user?.department?.name ?? '—'}</TableCell>
                     <TableCell>
                       <Badge className={EMPLOYMENT_BADGE[p.employment_type]}>
@@ -256,7 +287,7 @@ export default function StaffDirectory() {
               <SheetHeader>
                 <SheetTitle>{getDisplayName(selected)}</SheetTitle>
                 <p className="text-sm text-gray-500">
-                  {selected.user?.position ?? (selected.full_name ? 'Offline Profile' : '')}
+                  {selected.user?.position ?? selected.position ?? (selected.full_name ? 'Offline Profile' : '')}
                 </p>
                 <Badge className={PROFILE_STATUS_BADGE[selected.profile_status]}>
                   {PROFILE_STATUS_LABEL[selected.profile_status]}
@@ -340,7 +371,7 @@ export default function StaffDirectory() {
       </Sheet>
 
       {/* Create Staff Profile Dialog */}
-      <Dialog open={showCreate} onOpenChange={open => { if (!open) setShowCreate(false); }}>
+      <Dialog open={showCreate} onOpenChange={open => { if (!open) { setShowCreate(false); setUserQuery(''); setSelectedUserLabel(''); setUserResults([]); setUserSearchOpen(false); } }}>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>Add Staff Profile</DialogTitle>
@@ -353,12 +384,44 @@ export default function StaffDirectory() {
 
             {/* Linked: for staff who already have a user account */}
             <TabsContent value="linked" className="space-y-4 pt-2">
-              <p className="text-xs text-gray-500">Use this when the staff member already has a system account. Paste their User UUID.</p>
+              <p className="text-xs text-gray-500">Use this when the staff member already has a system account. Type their name or email to find them.</p>
               <div className="space-y-1">
-                <Label>User ID <span className="text-red-500">*</span></Label>
-                <Input placeholder="User UUID"
-                  value={linkedForm.user_id ?? ''}
-                  onChange={e => setLinkedForm(f => ({ ...f, user_id: e.target.value }))} />
+                <Label>Search User <span className="text-red-500">*</span></Label>
+                <div className="relative">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <Input
+                      className="pl-9"
+                      placeholder="Type name or email..."
+                      value={userQuery}
+                      onChange={e => handleUserQueryChange(e.target.value)}
+                      onFocus={() => userResults.length > 0 && setUserSearchOpen(true)}
+                    />
+                  </div>
+                  {userSearchOpen && userResults.length > 0 && (
+                    <div className="absolute z-50 w-full mt-1 bg-white border rounded-md shadow-lg max-h-48 overflow-y-auto">
+                      {userResults.map(u => (
+                        <button
+                          key={u.id}
+                          type="button"
+                          className="w-full text-left px-4 py-2 hover:bg-gray-50 flex items-center gap-2"
+                          onClick={() => selectUser(u)}
+                        >
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium text-sm truncate">{u.first_name} {u.last_name}</p>
+                            <p className="text-xs text-gray-500 truncate">{u.email}</p>
+                          </div>
+                          {linkedForm.user_id === u.id && <CheckCircle2 className="h-4 w-4 text-green-600 shrink-0" />}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                {selectedUserLabel && (
+                  <p className="text-xs text-green-700 flex items-center gap-1">
+                    <CheckCircle2 className="h-3 w-3" /> {selectedUserLabel}
+                  </p>
+                )}
               </div>
               <div className="space-y-1">
                 <Label>Employment Type <span className="text-red-500">*</span></Label>

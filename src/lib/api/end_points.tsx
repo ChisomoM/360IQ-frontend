@@ -14,9 +14,12 @@ export const API: Record<string, string> = {
   DOCUMENT_UPDATE: "documents/:id",
   DOCUMENT_DELETE: "documents/:id",
   DOCUMENT_VERSIONS: "documents/:id/versions",
+  DOCUMENT_DOWNLOAD: "documents/:id/download",
   DOCUMENT_SUMMARIZE: "documents/:id/summarize",
   DOCUMENT_ANALYZE: "documents/:id/analyze",
   DOCUMENT_CHART_DATA: "documents/:id/chart-data",
+  DOCUMENT_COMPARE: "documents/compare",
+  AI_CHAT: "ai/chat",
   WORKFLOWS: "workflows",
   WORKFLOW_DETAIL: "workflows/:id",
   WORKFLOW_STEP_APPROVE: "workflows/steps/:id/approve",
@@ -50,9 +53,17 @@ export const API: Record<string, string> = {
   HR_APPLICATION_APPROVE: "hr/applications/:id/approve",
   HR_APPLICATION_REJECT: "hr/applications/:id/reject",
   HR_APPLICATION_SUBMIT: "hr/applications",
+  HR_USERS_SEARCH: "hr/users/search",
 
   // Audit
   AUDIT_LOGS: "audit",
+  
+  // Signatures
+  SIGNATURE_REQUEST: "signatures/request",
+  SIGNATURE_MY: "signatures/my",
+  SIGNATURE_SIGN: "signatures/:id/sign",
+  SIGNATURE_DECLINE: "signatures/:id/decline",
+  SIGNATURE_DOCUMENT: "signatures/document/:docId",
   
   // Payments
   PAYMENTS: "payments",

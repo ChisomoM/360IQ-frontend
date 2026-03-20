@@ -23,6 +23,7 @@ export interface StaffProfile {
   full_name?: string;
   email?: string;
   contact_number?: string;
+  position?: string;
   profile_status: ProfileStatus;
   national_id?: string;
   gender?: string;
