@@ -1,5 +1,4 @@
-export type SignatureRequestStatus = 'pending' | 'signed' | 'declined' | 'expired';
-
+﻿export type SignatureRequestStatus = 'pending' | 'signed' | 'declined' | 'expired';
 export interface SignatureRequest {
   id: string;
   document_id: string;
@@ -32,9 +31,11 @@ export interface SignatureRequest {
   signature_hash?: string;
   sign_order: number;
   signed_version_id?: string;
-  signature_page?: number;
-  signature_x?: number;
-  signature_y?: number;
+  signature_page: number;
+  signature_x: number;
+  signature_y: number;
+  signature_w: number;
+  signature_h: number;
   created_at: string;
   updated_at: string;
 }
@@ -45,11 +46,13 @@ export interface RequestSignaturePayload {
   message?: string;
   expiry_days?: number;
   sign_order?: number;
+  signature_page?: number;
+  signature_x?: number;
+  signature_y?: number;
+  signature_w?: number;
+  signature_h?: number;
 }
 
 export interface SignDocumentPayload {
   signed_version_id?: string;
-  signature_page?: number;
-  signature_x?: number;
-  signature_y?: number;
 }
