@@ -61,6 +61,7 @@
     "react-helmet-async": "^2.0.5",
     "react-hook-form": "^7.67.0",
     "react-horizontal-scrolling-menu": "^8.2.0",
+    "react-pdf": "^10.4.1",
     "react-router-dom": "^7.9.5",
     "react-signature-canvas": "1.1.0-alpha.2",
     "recharts": "^3.5.1",
