@@ -38,6 +38,7 @@ import LeaveManagement from './(admin)/hr/LeaveManagement';
 import StaffApplications from './(admin)/hr/StaffApplications';
 import MySignatures from './(admin)/admin/MySignatures';
 import StaffOnboarding from './(public)/staff-onboarding/StaffOnboarding';
+import DepartmentDetailPage from './(admin)/admin/DepartmentDetailPage';
 
 
 
@@ -87,6 +88,7 @@ function App() {
         <Route path="partnerships" element={<PartnershipPage />} />
         <Route path="blogs" element={<BlogPage />} />
         <Route path="departments" element={<Departments />} />
+        <Route path="departments/:id" element={<DepartmentDetailPage />} />
         <Route path="documents" element={<Documents />} />
         <Route path="documents/:id" element={<DocumentDetail />} />
         <Route path="workflows" element={<Workflows />} />

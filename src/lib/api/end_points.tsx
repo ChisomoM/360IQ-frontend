@@ -7,8 +7,12 @@ export const API: Record<string, string> = {
   REFRESH_TOKEN: "auth/refresh-token",
   ME: "auth/me",
 
-  // UNIDIS DMS Endpoints
+  // DMS — Departments
   DEPARTMENTS: "departments",
+  DEPARTMENT_DETAIL: "departments/:id",
+  DEPARTMENT_UPDATE: "departments/:id",
+  DEPARTMENT_DELETE: "departments/:id",
+  DEPARTMENT_USERS: "departments/:id/users",
   DOCUMENTS: "documents",
   DOCUMENT_DETAIL: "documents/:id",
   DOCUMENT_UPDATE: "documents/:id",
