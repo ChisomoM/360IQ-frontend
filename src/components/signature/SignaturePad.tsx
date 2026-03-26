@@ -105,7 +105,11 @@ const SignaturePad = forwardRef<SignaturePadHandle, SignaturePadProps>(
         <div className="border-2 border-dashed border-gray-300 rounded-lg bg-white overflow-hidden cursor-crosshair">
           <SignatureCanvas
             ref={canvasRef}
-            penColor="#1e3c21"
+            penColor="#000000"
+            dotSize={2}
+            minWidth={1}
+            maxWidth={2}
+            velocityFilterWeight={1.5}
             canvasProps={{
               width,
               height,
