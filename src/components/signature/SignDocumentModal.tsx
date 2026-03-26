@@ -10,16 +10,13 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, FileText, PenLine, AlertCircle } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { Loader2, FileText, PenLine, AlertCircle, CheckCircle2, Download } from 'lucide-react';
 import SignaturePad from './SignaturePad';
 import type { SignaturePadHandle } from './SignaturePad';
+import PDFFieldPositioner from './PDFFieldPositioner';
 import { signDocument } from '@/lib/api/signatures';
-import { fetchFileBuffer } from '@/lib/api/crud';
-import { fetchData } from '@/lib/api/crud';
+import { fetchFileBuffer, fetchData } from '@/lib/api/crud';
 import type { SignatureRequest } from '@/types/signatures';
 
 interface SignDocumentModalProps {
@@ -28,13 +25,6 @@ interface SignDocumentModalProps {
   onClose: () => void;
   onSigned: () => void;
 }
-
-type ColPos = 'left' | 'center' | 'right';
-type RowPos = 'top' | 'middle' | 'bottom';
-
-// Map human-readable position to normalized PDF coords (origin: bottom-left)
-const X_MAP: Record<ColPos, number> = { left: 0.05, center: 0.375, right: 0.70 };
-const Y_MAP: Record<RowPos, number> = { top: 0.82, middle: 0.48, bottom: 0.05 };
 
 function base64ToUint8Array(dataUrl: string): Uint8Array {
   const base64 = dataUrl.split(',')[1];
@@ -46,13 +36,101 @@ function base64ToUint8Array(dataUrl: string): Uint8Array {
 
 export default function SignDocumentModal({ request, open, onClose, onSigned }: SignDocumentModalProps) {
   const sigPadRef = useRef<SignaturePadHandle>(null);
-  const [page, setPage] = useState(1);
-  const [colPos, setColPos] = useState<ColPos>('right');
-  const [rowPos, setRowPos] = useState<RowPos>('bottom');
+  const [pdfBuffer, setPdfBuffer] = useState<ArrayBuffer | null>(null);
+  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+  const [loadingPdf, setLoadingPdf] = useState(false);
+  const [previewError, setPreviewError] = useState<string | null>(null);
   const [isSigning, setIsSigning] = useState(false);
+  const [activeView, setActiveView] = useState<'sign' | 'signed'>('sign');
+  const [signedPdfBuffer, setSignedPdfBuffer] = useState<ArrayBuffer | null>(null);
+  const [signedPdfUrl, setSignedPdfUrl] = useState<string | null>(null);
 
   const doc = request.document;
   const isPdf = doc?.file_type?.toLowerCase().includes('pdf') || doc?.file_name?.toLowerCase().endsWith('.pdf');
+
+  const loadPreview = async () => {
+    if (!isPdf || !doc?.id) return;
+
+    setLoadingPdf(true);
+    setPreviewError(null);
+
+    try {
+      const buf = await fetchFileBuffer('DOCUMENT_DOWNLOAD', { id: doc.id });
+      setPdfBuffer(buf);
+      setPdfUrl(URL.createObjectURL(new Blob([buf], { type: 'application/pdf' })));
+      return;
+    } catch (downloadErr: any) {
+      if (doc.file_url) {
+        try {
+          const res = await fetch(doc.file_url);
+          if (!res.ok) {
+            throw new Error(`Preview fallback failed (${res.status})`);
+          }
+          const buf = await res.arrayBuffer();
+          setPdfBuffer(buf);
+          setPdfUrl(URL.createObjectURL(new Blob([buf], { type: 'application/pdf' })));
+          return;
+        } catch (fallbackErr: any) {
+          setPreviewError(fallbackErr?.message || downloadErr?.message || 'Failed to load document preview');
+        }
+      } else {
+        setPreviewError(downloadErr?.message || 'Failed to load document preview');
+      }
+    } finally {
+      setLoadingPdf(false);
+    }
+  };
+
+  const handleOpenChange = (v: boolean) => {
+    if (v) {
+      setActiveView('sign');
+      setSignedPdfBuffer(null);
+      if (signedPdfUrl) {
+         URL.revokeObjectURL(signedPdfUrl);
+         setSignedPdfUrl(null);
+      }
+      setPreviewError(null);
+      if (!pdfUrl && isPdf && doc?.id) {
+        void loadPreview();
+      }
+    }
+    if (!v) {
+      if (activeView === 'signed') onSigned();
+      else if (!isSigning) onClose();
+      
+      // Optional cleanup on full dismiss
+      if (pdfUrl) {
+        URL.revokeObjectURL(pdfUrl);
+        setPdfUrl(null);
+        setPdfBuffer(null);
+      }
+      if (signedPdfUrl) {
+        URL.revokeObjectURL(signedPdfUrl);
+        setSignedPdfUrl(null);
+        setSignedPdfBuffer(null);
+      }
+    }
+  };
+
+  const downloadSignedPdf = () => {
+    if (!signedPdfBuffer) return;
+    const blob = new Blob([signedPdfBuffer], { type: 'application/pdf' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `signed-${doc?.file_name ?? 'document.pdf'}`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  // Signature field position stored on the request by the requester
+  const sigField = {
+    page: request.signature_page ?? 1,
+    x: request.signature_x ?? 0,
+    y: request.signature_y ?? 0,
+    w: request.signature_w ?? 0.25,
+    h: request.signature_h ?? 0.06,
+  };
 
   const handleSign = async () => {
     if (!sigPadRef.current || sigPadRef.current.isEmpty()) {
@@ -63,55 +141,60 @@ export default function SignDocumentModal({ request, open, onClose, onSigned }: 
     setIsSigning(true);
     try {
       let signedVersionId: string | undefined;
+      let signedBuf: ArrayBuffer | null = null;
 
-      if (isPdf && doc?.id) {
-        // 1. Fetch the PDF bytes via the authenticated backend endpoint
-        const pdfArrayBuffer = await fetchFileBuffer('DOCUMENT_DOWNLOAD', { id: doc.id });
-
-        // 2. Load and modify with pdf-lib
-        const pdfDoc = await PDFDocument.load(pdfArrayBuffer);
+      if (isPdf && doc?.id && pdfBuffer) {
+        // Pass a copy to pdf-lib — PDFDocument.load() transfers/detaches the
+        // ArrayBuffer it receives, which would corrupt pdfBuffer for the preview.
+        const pdfDoc = await PDFDocument.load(pdfBuffer.slice(0));
         const pages = pdfDoc.getPages();
-        const targetPage = pages[Math.min(page - 1, pages.length - 1)];
+        const targetPage = pages[Math.min(sigField.page - 1, pages.length - 1)];
         const { width, height } = targetPage.getSize();
 
-        // 3. Embed signature PNG
         const sigDataUrl = sigPadRef.current.getDataURL();
         const pngBytes = base64ToUint8Array(sigDataUrl);
         const pngImage = await pdfDoc.embedPng(pngBytes);
-        const pngDims = pngImage.scale(1);
 
-        // Scale signature to 25% of page width, maintain aspect ratio
-        const sigWidth = width * 0.25;
-        const sigHeight = (pngDims.height / pngDims.width) * sigWidth;
+        const sigW = sigField.w * width;
+        const sigH = sigField.h * height;
+        const x = sigField.x * width;
+        const y = (1 - sigField.y - sigField.h) * height;
 
-        const x = X_MAP[colPos] * width;
-        const y = Y_MAP[rowPos] * height;
+        targetPage.drawImage(pngImage, { x, y, width: sigW, height: sigH });
 
-        targetPage.drawImage(pngImage, { x, y, width: sigWidth, height: sigHeight });
-
-        // 4. Save modified PDF
         const modifiedPdfBytes = await pdfDoc.save();
-        const blob = new Blob([modifiedPdfBytes.buffer as ArrayBuffer], { type: 'application/pdf' });
-        const file = new File([blob], `signed-${doc.file_name ?? 'document.pdf'}`, { type: 'application/pdf' });
+        // Copy into a fresh owned ArrayBuffer — pdf-lib's internal allocator can
+        // return a Uint8Array backed by a shared/detached buffer, which causes
+        // "cannot perform construct on a detached ArrayBuffer" errors.
+        const ownedBytes = new Uint8Array(modifiedPdfBytes.byteLength);
+        ownedBytes.set(modifiedPdfBytes);
+        signedBuf = ownedBytes.buffer;
 
-        // 5. Upload as a new version
-        const form = new FormData();
-        form.append('file', file);
-        form.append('change_notes', `Signed by user on page ${page}`);
-        const versionRes = await fetchData('DOCUMENT_VERSIONS', 'POST', { id: request.document_id }, form);
-        signedVersionId = versionRes?.id;
+        // Best-effort: upload signed version. Don't fail signing if this errors.
+        try {
+          const blob = new Blob([ownedBytes], { type: 'application/pdf' });
+          const file = new File([blob], `signed-${doc.file_name ?? 'document.pdf'}`, { type: 'application/pdf' });
+          const form = new FormData();
+          form.append('file', file);
+          form.append('change_notes', `Signed by signer on page ${sigField.page}`);
+          const versionRes = await fetchData('DOCUMENT_VERSIONS', 'POST', { id: request.document_id }, form);
+          signedVersionId = versionRes?.id;
+          // Optionally notify the user the document version was updated!
+          toast.success('Document updated with signed version');
+        } catch (uploadErr: any) {
+          console.warn('Signed version upload failed:', uploadErr);
+          toast.error(`Failed to attach signed file to document versions: ${uploadErr.message}`);
+        }
       }
 
-      // 6. Record the signature on the backend
-      await signDocument(request.id, {
-        signed_version_id: signedVersionId,
-        signature_page: page,
-        signature_x: X_MAP[colPos],
-        signature_y: Y_MAP[rowPos],
-      });
+      await signDocument(request.id, { signed_version_id: signedVersionId });
 
+      if (signedBuf) {
+        setSignedPdfBuffer(signedBuf);
+        setSignedPdfUrl(URL.createObjectURL(new Blob([signedBuf], { type: 'application/pdf' })));
+      }
+      setActiveView('signed');
       toast.success('Document signed successfully');
-      onSigned();
     } catch (err: any) {
       toast.error(err.message || 'Failed to sign document');
     } finally {
@@ -119,111 +202,143 @@ export default function SignDocumentModal({ request, open, onClose, onSigned }: 
     }
   };
 
-  const positionGrid: { col: ColPos; row: RowPos; label: string }[] = [
-    { col: 'left',   row: 'top',    label: '↖' },
-    { col: 'center', row: 'top',    label: '↑' },
-    { col: 'right',  row: 'top',    label: '↗' },
-    { col: 'left',   row: 'middle', label: '←' },
-    { col: 'center', row: 'middle', label: '·' },
-    { col: 'right',  row: 'middle', label: '→' },
-    { col: 'left',   row: 'bottom', label: '↙' },
-    { col: 'center', row: 'bottom', label: '↓' },
-    { col: 'right',  row: 'bottom', label: '↘' },
-  ];
-
   return (
-    <Dialog open={open} onOpenChange={(v) => { if (!v && !isSigning) onClose(); }}>
-      <DialogContent className="max-w-2xl bg-white">
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      <DialogContent className="max-w-5xl bg-white">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <PenLine className="h-5 w-5 text-[#1e3c21]" />
-            Sign Document
+            {activeView === 'signed' ? (
+              <><CheckCircle2 className="h-5 w-5 text-green-600" />Signing Complete</>
+            ) : (
+              <><PenLine className="h-5 w-5 text-[#1e3c21]" />Sign Document</>
+            )}
           </DialogTitle>
           <DialogDescription>
-            Draw your signature, choose placement, then apply.
+            {activeView === 'signed'
+              ? 'Your signature has been embedded and the signed document is ready.'
+              : 'Review the signature field location, draw your signature, then apply.'}
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-5 py-2">
-          {/* Document info */}
-          <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-100">
-            <FileText className="h-5 w-5 text-gray-400 flex-shrink-0" />
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-gray-800 truncate">{doc?.title ?? 'Document'}</p>
-              <p className="text-xs text-gray-500 mt-0.5">
-                Requested by {request.requested_by?.first_name} {request.requested_by?.last_name}
-              </p>
+        {activeView === 'signed' ? (
+          <div className="space-y-4 py-2">
+            {/* Success banner */}
+            <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg border border-green-200">
+              <CheckCircle2 className="h-5 w-5 text-green-600 flex-shrink-0" />
+              <div>
+                <p className="text-sm font-semibold text-green-800">Signed successfully</p>
+                <p className="text-xs text-green-600 mt-0.5">
+                  Your signature was embedded on page {sigField.page} of &ldquo;{doc?.title ?? 'Document'}&rdquo;
+                </p>
+              </div>
             </div>
-            {!isPdf && (
-              <Badge variant="outline" className="text-amber-700 border-amber-300 bg-amber-50 flex-shrink-0 flex items-center gap-1">
-                <AlertCircle className="h-3 w-3" />
-                Click-to-sign only
-              </Badge>
+
+            {/* Signed PDF preview */}
+            {signedPdfUrl ? (
+              <div>
+                <p className="text-sm font-medium text-gray-700 mb-2">Signed document preview</p>
+                <PDFFieldPositioner file={signedPdfUrl} mode="preview" />
+              </div>
+            ) : (
+              <p className="text-sm text-gray-500 text-center py-6">Signature recorded successfully.</p>
             )}
           </div>
-
-          {request.message && (
-            <p className="text-sm text-gray-600 italic border-l-2 border-[#1e3c21] pl-3">
-              "{request.message}"
-            </p>
-          )}
-
-          {/* Signature pad */}
-          <div>
-            <Label className="text-sm font-medium text-gray-700 mb-2 block">Your Signature</Label>
-            <SignaturePad ref={sigPadRef} width={600} height={160} />
-          </div>
-
-          {/* PDF-only position controls */}
-          {isPdf && (
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label className="text-sm font-medium text-gray-700 mb-2 block">Page Number</Label>
-                <Input
-                  type="number"
-                  min={1}
-                  value={page}
-                  onChange={(e) => setPage(Math.max(1, parseInt(e.target.value) || 1))}
-                  className="w-full"
-                />
+        ) : (
+          <div className="flex gap-5 py-2">
+            {/* Left column — PDF preview */}
+            {isPdf && (
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-gray-700 mb-2">
+                  Signature field location <span className="text-[#1e3c21]">(highlighted)</span>
+                </p>
+                {loadingPdf ? (
+                  <div className="flex items-center justify-center h-64 gap-2 text-gray-400 border rounded-lg">
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                    <span className="text-sm">Loading document...</span>
+                  </div>
+                ) : pdfUrl ? (
+                  <PDFFieldPositioner
+                    file={pdfUrl}
+                    mode="preview"
+                    field={sigField}
+                    fieldLabel="Your signature goes here"
+                    pageWidth={420}
+                  />
+                ) : (
+                  <div className="flex flex-col items-center justify-center h-64 text-gray-400 border rounded-lg text-sm gap-2 px-4 text-center">
+                    <span>Document preview unavailable</span>
+                    {previewError && <span className="text-xs text-red-500">{previewError}</span>}
+                    <Button type="button" variant="outline" size="sm" onClick={() => void loadPreview()}>
+                      Retry Preview
+                    </Button>
+                  </div>
+                )}
               </div>
-              <div>
-                <Label className="text-sm font-medium text-gray-700 mb-2 block">Position on Page</Label>
-                <div className="grid grid-cols-3 gap-1 w-fit">
-                  {positionGrid.map(({ col, row, label }) => (
-                    <button
-                      key={`${col}-${row}`}
-                      type="button"
-                      onClick={() => { setColPos(col); setRowPos(row); }}
-                      className={cn(
-                        'w-9 h-9 rounded text-sm font-mono transition-colors',
-                        colPos === col && rowPos === row
-                          ? 'bg-[#1e3c21] text-white'
-                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                      )}
-                    >
-                      {label}
-                    </button>
-                  ))}
+            )}
+
+            {/* Right column — doc info + signature pad */}
+            <div className="flex flex-col gap-4" style={{ width: 340, flexShrink: 0 }}>
+              {/* Document info */}
+              <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg border border-gray-100">
+                <FileText className="h-5 w-5 text-gray-400 flex-shrink-0 mt-0.5" />
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-gray-800 truncate">{doc?.title ?? 'Document'}</p>
+                  <p className="text-xs text-gray-500 mt-0.5">
+                    Requested by {request.requested_by?.first_name} {request.requested_by?.last_name}
+                  </p>
+                  {!isPdf && (
+                    <Badge variant="outline" className="mt-1 text-amber-700 border-amber-300 bg-amber-50 flex items-center gap-1 w-fit">
+                      <AlertCircle className="h-3 w-3" />
+                      Non-PDF document
+                    </Badge>
+                  )}
                 </div>
               </div>
+
+              {request.message && (
+                <p className="text-sm text-gray-600 italic border-l-2 border-[#1e3c21] pl-3">
+                  &ldquo;{request.message}&rdquo;
+                </p>
+              )}
+
+              {/* Signature pad */}
+              <div className="flex-1">
+                <p className="text-sm font-medium text-gray-700 mb-2">Draw your signature</p>
+                <SignaturePad ref={sigPadRef} width={340} height={160} />
+              </div>
             </div>
-          )}
-        </div>
+          </div>
+        )}
 
         <DialogFooter>
-          <Button variant="outline" onClick={onClose} disabled={isSigning}>Cancel</Button>
-          <Button
-            onClick={handleSign}
-            disabled={isSigning}
-            className="bg-[#1e3c21] hover:bg-[#2a5230] text-white"
-          >
-            {isSigning ? (
-              <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Signing…</>
-            ) : (
-              <><PenLine className="mr-2 h-4 w-4" />Apply Signature</>
-            )}
-          </Button>
+          {activeView === 'signed' ? (
+            <>
+              {signedPdfBuffer && (
+                <Button variant="outline" onClick={downloadSignedPdf}>
+                  <Download className="mr-2 h-4 w-4" />
+                  Download
+                </Button>
+              )}
+              <Button onClick={onSigned} className="bg-[#1e3c21] hover:bg-[#2a5230] text-white">
+                Done
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button variant="outline" onClick={onClose} disabled={isSigning}>Cancel</Button>
+              <Button
+                onClick={handleSign}
+                disabled={isSigning}
+                className="bg-[#1e3c21] hover:bg-[#2a5230] text-white"
+              >
+                {isSigning ? (
+                  <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Signing...</>
+                ) : (
+                  <><PenLine className="mr-2 h-4 w-4" />Apply Signature</>
+                )}
+              </Button>
+            </>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>

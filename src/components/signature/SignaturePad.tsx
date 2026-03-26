@@ -14,6 +14,68 @@ interface SignaturePadProps {
   height?: number;
 }
 
+function trimCanvas(canvas: HTMLCanvasElement): HTMLCanvasElement {
+  const ctx = canvas.getContext('2d', { willReadFrequently: true });
+  if (!ctx) return canvas;
+
+  const width = canvas.width;
+  const height = canvas.height;
+  const imageData = ctx.getImageData(0, 0, width, height).data;
+
+  let top = 0, bottom = height - 1, left = 0, right = width - 1;
+
+  outTop: for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      if (imageData[(y * width + x) * 4 + 3] !== 0) {
+        top = y;
+        break outTop;
+      }
+    }
+  }
+
+  outBottom: for (let y = height - 1; y >= 0; y--) {
+    for (let x = 0; x < width; x++) {
+      if (imageData[(y * width + x) * 4 + 3] !== 0) {
+        bottom = y;
+        break outBottom;
+      }
+    }
+  }
+
+  outLeft: for (let x = 0; x < width; x++) {
+    for (let y = 0; y < height; y++) {
+      if (imageData[(y * width + x) * 4 + 3] !== 0) {
+        left = x;
+        break outLeft;
+      }
+    }
+  }
+
+  outRight: for (let x = width - 1; x >= 0; x--) {
+    for (let y = 0; y < height; y++) {
+      if (imageData[(y * width + x) * 4 + 3] !== 0) {
+        right = x;
+        break outRight;
+      }
+    }
+  }
+
+  const trimmedWidth = right - left + 1;
+  const trimmedHeight = bottom - top + 1;
+
+  if (trimmedWidth <= 0 || trimmedHeight <= 0) return canvas;
+
+  const trimmedCanvas = document.createElement('canvas');
+  trimmedCanvas.width = trimmedWidth;
+  trimmedCanvas.height = trimmedHeight;
+  const trimmedCtx = trimmedCanvas.getContext('2d');
+  if (trimmedCtx) {
+    trimmedCtx.putImageData(ctx.getImageData(left, top, trimmedWidth, trimmedHeight), 0, 0);
+  }
+
+  return trimmedCanvas;
+}
+
 const SignaturePad = forwardRef<SignaturePadHandle, SignaturePadProps>(
   ({ width = 500, height = 180 }, ref) => {
     const canvasRef = useRef<SignatureCanvas>(null);
@@ -22,8 +84,19 @@ const SignaturePad = forwardRef<SignaturePadHandle, SignaturePadProps>(
       clear: () => canvasRef.current?.clear(),
       isEmpty: () => canvasRef.current?.isEmpty() ?? true,
       getDataURL: () => {
-        const trimmed = canvasRef.current?.getTrimmedCanvas();
-        return trimmed ? trimmed.toDataURL('image/png') : '';
+        const rawCanvas = canvasRef.current?.getCanvas();
+        if (!rawCanvas) return '';
+        const trimmed = trimCanvas(rawCanvas);
+        // Adding a little padding around the signature for a cleaner look
+        const paddedCanvas = document.createElement('canvas');
+        const padCtx = paddedCanvas.getContext('2d');
+        const padding = 10;
+        paddedCanvas.width = trimmed.width + padding * 2;
+        paddedCanvas.height = trimmed.height + padding * 2;
+        if (padCtx) {
+          padCtx.drawImage(trimmed, padding, padding);
+        }
+        return paddedCanvas.toDataURL('image/png');
       },
     }));
 
@@ -32,7 +105,11 @@ const SignaturePad = forwardRef<SignaturePadHandle, SignaturePadProps>(
         <div className="border-2 border-dashed border-gray-300 rounded-lg bg-white overflow-hidden cursor-crosshair">
           <SignatureCanvas
             ref={canvasRef}
-            penColor="#1e3c21"
+            penColor="#000000"
+            dotSize={2}
+            minWidth={1}
+            maxWidth={2}
+            velocityFilterWeight={1.5}
             canvasProps={{
               width,
               height,
