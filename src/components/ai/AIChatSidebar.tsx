@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
-import { X, Send, Sparkles, FileSearch, MessageSquare, Loader2, Bot, Search, ChevronRight, RotateCcw, TrendingUp, Tag, Users, Smile, ListTodo, Globe, FileType } from 'lucide-react';
+import { X, Sparkles, FileSearch, MessageSquare, Loader2, Send, Search, ChevronRight, RotateCcw, TrendingUp, Tag, Users, Smile, ListTodo, Globe, FileType, Bot } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { list, post } from '@/lib/api/crud';
+import { sendChatMessage } from '@/lib/api/ai';
 import type { Document, AISummary, AIAnalysis } from '@/types/dms';
 
 interface Message {
@@ -14,6 +15,8 @@ interface Message {
 interface AIChatSidebarProps {
   isOpen: boolean;
   onClose: () => void;
+  pendingDoc?: Document | null;
+  onDocConsumed?: () => void;
 }
 
 const WELCOME_MESSAGE: Message = {
@@ -26,13 +29,14 @@ const WELCOME_MESSAGE: Message = {
 
 type AnalysisMode = 'summarize' | 'analyze';
 
-export function AIChatSidebar({ isOpen, onClose }: AIChatSidebarProps) {
+export function AIChatSidebar({ isOpen, onClose, pendingDoc, onDocConsumed }: AIChatSidebarProps) {
   const [messages, setMessages] = useState<Message[]>([WELCOME_MESSAGE]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState<'chat' | 'analyze'>('analyze');
+  const [activeTab, setActiveTab] = useState<'chat' | 'analyze'>('chat');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const shouldAutoRunRef = useRef(false);
 
   // Doc Analysis tab state
   const [documents, setDocuments] = useState<Document[]>([]);
@@ -58,6 +62,37 @@ export function AIChatSidebar({ isOpen, onClose }: AIChatSidebarProps) {
       .catch(() => setDocuments([]))
       .finally(() => setDocsLoading(false));
   }, [activeTab]);
+
+  // Pre-select a document and auto-run analysis when pendingDoc is provided
+  useEffect(() => {
+    if (!isOpen || !pendingDoc) return;
+    setActiveTab('analyze');
+    setSummary(null);
+    setAnalysis(null);
+    setAnalysisError(null);
+    setAnalysisMode('summarize');
+    setSelectedDoc(pendingDoc);
+    shouldAutoRunRef.current = true;
+    onDocConsumed?.();
+    // Ensure the document appears in the list
+    setDocuments((prev) =>
+      prev.some((d) => d.id === pendingDoc.id) ? prev : [pendingDoc, ...prev]
+    );
+  }, [pendingDoc, isOpen]);
+
+  // Auto-run analysis after selectedDoc is committed to state
+  useEffect(() => {
+    if (!shouldAutoRunRef.current || !selectedDoc) return;
+    shouldAutoRunRef.current = false;
+    setAnalysisLoading(true);
+    setAnalysisError(null);
+    setSummary(null);
+    setAnalysis(null);
+    post('DOCUMENT_SUMMARIZE', {}, { id: selectedDoc.id })
+      .then((result) => setSummary(result as AISummary))
+      .catch((err: any) => setAnalysisError(err?.message || 'AI analysis failed. Please try again.'))
+      .finally(() => setAnalysisLoading(false));
+  }, [selectedDoc]);
 
   const handleDocSelect = (doc: Document) => {
     setSelectedDoc(doc);
@@ -94,7 +129,7 @@ export function AIChatSidebar({ isOpen, onClose }: AIChatSidebarProps) {
     d.document_type?.toLowerCase().includes(docSearch.toLowerCase())
   );
 
-  // Auto-resize textarea
+  // Auto-resize textarea (used by chat tab)
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setInput(e.target.value);
     const el = e.target;
@@ -119,20 +154,35 @@ export function AIChatSidebar({ isOpen, onClose }: AIChatSidebarProps) {
     }
     setIsLoading(true);
 
-    // TODO: wire to POST /api/v1/ai/chat once backend endpoint is ready
-    setTimeout(() => {
+    try {
+      // Convert message history to format expected by API
+      const history = messages
+        .filter(m => m.id !== 'welcome') // Skip welcome message
+        .map(m => ({ role: m.role, content: m.content }));
+
+      const response = await sendChatMessage(userMsg.content, history);
       setMessages((prev) => [
         ...prev,
         {
           id: (Date.now() + 1).toString(),
           role: 'assistant',
-          content:
-            'The AI chat endpoint is not yet connected. Once the backend `/api/v1/ai/chat` endpoint is configured, I will respond with real AI-powered answers.',
+          content: response,
           timestamp: new Date(),
         },
       ]);
+    } catch {
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: (Date.now() + 1).toString(),
+          role: 'assistant',
+          content: 'Something went wrong. Please try again.',
+          timestamp: new Date(),
+        },
+      ]);
+    } finally {
       setIsLoading(false);
-    }, 900);
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -175,15 +225,120 @@ export function AIChatSidebar({ isOpen, onClose }: AIChatSidebarProps) {
         </button>
       </div>
 
-      {/* Tab header - hidden, only showing Doc Analysis */}
-      <div className="px-4 py-3 border-b border-gray-100 flex-shrink-0 bg-gray-50/60">
-        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider flex items-center gap-2">
+      {/* Tabs */}
+      <div className="flex border-b border-gray-100 flex-shrink-0">
+        <button
+          onClick={() => setActiveTab('chat')}
+          className={cn(
+            'flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-medium transition-colors',
+            activeTab === 'chat'
+              ? 'text-[#1e3c21] border-b-2 border-[#1e3c21] bg-[#1e3c21]/5'
+              : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'
+          )}
+        >
+          <MessageSquare className="h-3.5 w-3.5" />
+          Chat
+        </button>
+        <button
+          onClick={() => setActiveTab('analyze')}
+          className={cn(
+            'flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-medium transition-colors',
+            activeTab === 'analyze'
+              ? 'text-[#1e3c21] border-b-2 border-[#1e3c21] bg-[#1e3c21]/5'
+              : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'
+          )}
+        >
           <FileSearch className="h-3.5 w-3.5" />
-          Document Analysis
-        </p>
+          Doc Analysis
+        </button>
       </div>
 
+      {/* Chat Tab */}
+      {activeTab === 'chat' && (
+        <>
+          {/* Message List */}
+          <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4 scroll-smooth">
+            {messages.map((msg) => (
+              <div
+                key={msg.id}
+                className={cn('flex gap-2', msg.role === 'user' ? 'flex-row-reverse' : 'flex-row')}
+              >
+                {msg.role === 'assistant' && (
+                  <div className="w-7 h-7 rounded-full bg-gradient-to-br from-[#1e3c21] to-[#2a5230] flex items-center justify-center flex-shrink-0 mt-0.5 shadow-sm">
+                    <Bot className="h-3.5 w-3.5 text-white" />
+                  </div>
+                )}
+                <div className="flex flex-col gap-1 max-w-[82%]">
+                  <div
+                    className={cn(
+                      'rounded-2xl px-3 py-2 text-sm leading-relaxed',
+                      msg.role === 'user'
+                        ? 'bg-gradient-to-br from-[#D70F0E] to-[#E5600B] text-white rounded-tr-sm'
+                        : 'bg-gray-100 text-gray-800 rounded-tl-sm'
+                    )}
+                  >
+                    <p className="whitespace-pre-wrap break-words">{msg.content}</p>
+                  </div>
+                  <p
+                    className={cn(
+                      'text-[10px] text-gray-400',
+                      msg.role === 'user' ? 'text-right' : 'text-left'
+                    )}
+                  >
+                    {formatTime(msg.timestamp)}
+                  </p>
+                </div>
+              </div>
+            ))}
 
+            {isLoading && (
+              <div className="flex gap-2">
+                <div className="w-7 h-7 rounded-full bg-gradient-to-br from-[#1e3c21] to-[#2a5230] flex items-center justify-center flex-shrink-0 shadow-sm">
+                  <Bot className="h-3.5 w-3.5 text-white" />
+                </div>
+                <div className="bg-gray-100 rounded-2xl rounded-tl-sm px-3 py-2.5 flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce [animation-delay:0ms]" />
+                  <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce [animation-delay:150ms]" />
+                  <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce [animation-delay:300ms]" />
+                </div>
+              </div>
+            )}
+
+            <div ref={messagesEndRef} />
+          </div>
+
+          {/* Input Area */}
+          <div className="p-4 border-t border-gray-100 bg-gray-50/60 flex-shrink-0">
+            <div className="flex items-end gap-2">
+              <textarea
+                ref={textareaRef}
+                value={input}
+                onChange={handleInputChange}
+                onKeyDown={handleKeyDown}
+                placeholder="Ask anything about your documents…"
+                rows={1}
+                disabled={isLoading}
+                className="flex-1 resize-none rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#1e3c21]/25 focus:border-[#1e3c21] transition-all min-h-[38px] max-h-[120px] overflow-y-auto leading-relaxed disabled:opacity-50"
+              />
+              <button
+                onClick={handleSend}
+                disabled={!input.trim() || isLoading}
+                className="w-9 h-9 flex-shrink-0 rounded-xl bg-gradient-to-br from-[#1e3c21] to-[#2a5230] text-white flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed hover:opacity-90 active:scale-95 transition-all shadow-sm"
+                aria-label="Send message"
+              >
+                {isLoading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Send className="h-4 w-4" />
+                )}
+              </button>
+            </div>
+            <p className="text-[10px] text-gray-400 mt-1.5 text-center">
+              Enter to send · Shift+Enter for new line
+            </p>
+          </div>
+        </>
+      )}
 
       {/* Doc Analysis Tab */}
       {activeTab === 'analyze' && (

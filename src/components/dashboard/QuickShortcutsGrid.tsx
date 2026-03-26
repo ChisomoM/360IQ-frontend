@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ReactNode } from 'react';
+import type { ReactNode } from 'react';
 
 export interface Shortcut {
   id: string;

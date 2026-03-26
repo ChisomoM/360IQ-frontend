@@ -4,6 +4,8 @@ import { API, getRoute, pipe } from "./end_points";
 // import { getAuthHeader } from "./auth";
 
 const ROUTING_URL: string = import.meta.env.VITE_BACKEND_URL || "http://localhost:8032/api/v1/";
+// const ROUTING_URL: string = import.meta.env.VITE_BACKEND_URL || "http://102.211.186.58/api/v1/";
+
 // const ROUTING_URL = "http://102.211.186.58/api/v1/"
 // Storage key for auth tokens (matches AuthContext)
 const AUTH_TOKENS_KEY = 'auth_tokens';
@@ -230,6 +232,8 @@ export const file = async (
 ) => {
   const h = new Headers();
   h.append("Content-Type", "application/json");
+  const tenant = import.meta.env.VITE_TENANT_ID || "unilus_meta";
+  h.append("X-Tenant-ID", tenant);
 
   if (typeof window != "undefined" && !["LOGIN", "ADMIN_LOGIN"].includes(key)) {
     const accessToken = getAccessTokenFromStorage();
@@ -280,6 +284,36 @@ export const file = async (
   }
   const errorMessage = await res.json().then((res) => res.message);
   throw new Error(errorMessage);
+};
+
+/**
+ * Fetches a file from the backend and returns it as an ArrayBuffer.
+ * Useful when the caller needs raw bytes (e.g. for PDF manipulation before re-upload).
+ */
+export const fetchFileBuffer = async (
+  key: Endpoints,
+  params: Record<string, string> = {}
+): Promise<ArrayBuffer> => {
+  const h = new Headers();
+  const tenant = import.meta.env.VITE_TENANT_ID || "unilus_meta";
+  h.append("X-Tenant-ID", tenant);
+
+  if (typeof window !== "undefined") {
+    const accessToken = getAccessTokenFromStorage();
+    if (accessToken) {
+      h.append("Authorization", `Bearer ${accessToken}`);
+    }
+  }
+
+  const url = `${ROUTING_URL}${pipe(getRoute(key), params)}`;
+  const res = await fetch(url, { method: "GET", headers: h, credentials: "include" });
+
+  if (!res.ok) {
+    const errorMessage = await res.json().then((r) => r.message).catch(() => `Error ${res.status}`);
+    throw new Error(errorMessage);
+  }
+
+  return res.arrayBuffer();
 };
 
 export const get = async (path: string) => {

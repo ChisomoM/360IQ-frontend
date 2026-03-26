@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -114,6 +115,7 @@ const UPLOAD_DEFAULTS = {
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export default function Documents() {
+  const navigate = useNavigate();
   const [documents, setDocuments] = useState<Document[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
   const [loading, setLoading] = useState(true);
@@ -201,8 +203,7 @@ export default function Documents() {
   // ── view detail ──────────────────────────────────────────────────────────
 
   const openView = (doc: Document) => {
-    setSelectedDoc(doc);
-    setIsViewOpen(true);
+    navigate(`/admin/documents/${doc.id}`);
   };
 
   // ── download ─────────────────────────────────────────────────────────────
@@ -547,103 +548,8 @@ export default function Documents() {
         </Card>
       </div>
 
-      {/* ── View Detail Sheet ──────────────────────────────────────────────── */}
-      <Sheet open={isViewOpen} onOpenChange={setIsViewOpen}>
-        <SheetContent className="min-w-[480px] overflow-y-auto bg-white">
-          {selectedDoc && (
-            <>
-              <SheetHeader className="mb-6">
-                <div className="flex items-start gap-3">
-                  <div className="p-3 bg-blue-50 text-blue-600 rounded-xl mt-1">
-                    <FileText className="h-6 w-6" />
-                  </div>
-                  <div>
-                    <SheetTitle className="text-xl leading-tight">{selectedDoc.title}</SheetTitle>
-                    <SheetDescription className="mt-1">
-                      {selectedDoc.description || 'No description provided.'}
-                    </SheetDescription>
-                  </div>
-                </div>
-              </SheetHeader>
-
-              <div className="space-y-5">
-                {/* Quick stats */}
-                <div className="grid grid-cols-2 gap-3">
-                  {[
-                    { icon: <FileArchive className="h-4 w-4" />, label: 'File', value: selectedDoc.file_name },
-                    { icon: <Clock className="h-4 w-4" />, label: 'Size', value: formatBytes(selectedDoc.file_size) },
-                    { icon: <Building className="h-4 w-4" />, label: 'Department', value: deptName(selectedDoc.department_id) },
-                    { icon: <User className="h-4 w-4" />, label: 'Version', value: `v${selectedDoc.version}` },
-                  ].map(({ icon, label, value }) => (
-                    <div key={label} className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
-                      <span className="text-gray-400">{icon}</span>
-                      <div>
-                        <p className="text-xs text-gray-400">{label}</p>
-                        <p className="text-sm font-medium truncate max-w-[160px]">{value}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                <Separator />
-
-                {/* Metadata */}
-                <div className="space-y-3">
-                  {[
-                    { label: 'Type', value: selectedDoc.document_type },
-                    { label: 'Category', value: selectedDoc.category ?? '—' },
-                    { label: 'Status', value: <>{getStatusBadge(selectedDoc.status)}</> },
-                    {
-                      label: 'Visibility',
-                      value: (
-                        <span className="flex items-center gap-1 capitalize">
-                          {visibilityIcon(selectedDoc.visibility_level)}
-                          {selectedDoc.visibility_level}
-                        </span>
-                      ),
-                    },
-                    { label: 'Uploaded', value: dayjs(selectedDoc.created_at).format('DD MMM YYYY, HH:mm') },
-                    { label: 'Last Modified', value: dayjs(selectedDoc.updated_at).format('DD MMM YYYY, HH:mm') },
-                    { label: 'Encrypted', value: selectedDoc.is_encrypted ? 'Yes' : 'No' },
-                  ].map(({ label, value }) => (
-                    <div key={label} className="flex justify-between text-sm">
-                      <span className="text-gray-500 min-w-[110px]">{label}</span>
-                      <span className="font-medium text-right">{value}</span>
-                    </div>
-                  ))}
-                </div>
-
-                <Separator />
-
-                {/* Tags */}
-                {selectedDoc.tags && selectedDoc.tags.length > 0 && (
-                  <div className="space-y-2">
-                    <p className="text-xs text-gray-400 uppercase tracking-wide">Tags</p>
-                    <div className="flex flex-wrap gap-2">
-                      {selectedDoc.tags.map(tag => (
-                        <Badge key={tag} variant="outline">{tag}</Badge>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Actions */}
-                <div className="flex gap-2 pt-2">
-                  <Button className="flex-1" variant="outline" onClick={() => handleDownload(selectedDoc)}>
-                    <Download className="h-4 w-4 mr-2" /> Download
-                  </Button>
-                  <Button className="flex-1" variant="outline" onClick={() => { setIsViewOpen(false); openEdit(selectedDoc); }}>
-                    <Pencil className="h-4 w-4 mr-2" /> Edit
-                  </Button>
-                  <Button className="flex-1 text-red-500 hover:text-red-700" variant="outline" onClick={() => { setIsViewOpen(false); openDelete(selectedDoc); }}>
-                    <Trash2 className="h-4 w-4 mr-2" /> Delete
-                  </Button>
-                </div>
-              </div>
-            </>
-          )}
-        </SheetContent>
-      </Sheet>
+      {/* ── View Detail Sheet — hidden, replaced by dedicated page ──── */}
+      {/* Sheet removed: Eye/View button now navigates to /admin/documents/:id */}
 
       {/* ── Edit Metadata Dialog ───────────────────────────────────────────── */}
       <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>

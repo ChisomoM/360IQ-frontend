@@ -34,9 +34,10 @@ interface InboxSectionProps {
   onReview?: (id: string) => void;
   onDocumentClick?: (id: string) => void;
   onViewAll?: (type: 'approvals' | 'shared') => void;
+  onSignatureClick?: () => void;
 }
 
-function ApprovalCard({ item, onReview, onApprove }: { item: ApprovalItem; onReview: (id: string) => void; onApprove?: (id: string) => void }) {
+function ApprovalCard({ item, onReview, onApprove, onSignatureClick }: { item: ApprovalItem; onReview: (id: string) => void; onApprove?: (id: string) => void; onSignatureClick?: () => void }) {
   const getApprovalIcon = () => {
     if (item.type === 'signature') return <FileCheck className="h-5 w-5 text-amber-600" />;
     return <AlertCircle className="h-5 w-5 text-amber-600" />;
@@ -78,7 +79,7 @@ function ApprovalCard({ item, onReview, onApprove }: { item: ApprovalItem; onRev
           size="sm"
           variant="outline"
           className="flex-1"
-          onClick={() => onReview(item.id)}
+          onClick={() => item.type === 'signature' && onSignatureClick ? onSignatureClick() : onReview(item.id)}
         >
           Review
         </Button>
@@ -125,6 +126,7 @@ export function InboxSection({
   onReview,
   onDocumentClick,
   onViewAll,
+  onSignatureClick,
 }: InboxSectionProps) {
   const approvalCount = approvals.length;
   const sharedCount = sharedDocuments.length;
@@ -182,6 +184,7 @@ export function InboxSection({
                   item={approval}
                   onReview={onReview || (() => {})}
                   onApprove={onApprove}
+                  onSignatureClick={onSignatureClick}
                 />
               ))}
             </div>
