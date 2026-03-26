@@ -67,23 +67,19 @@ export default function AdminLayout() {
           }`}
         >
 
-          <div className="h-full flex flex-col bg-gradient-to-b from-[#1e5631] to-[#184626] text-white shadow-xl">
+          <div className="h-full flex flex-col bg-[#0d173b] text-white shadow-xl">
 
             <div className="flex items-center justify-center py-6 border-b border-green-800">
-
               <img
-                src="/logos/unilus-logo-3.png"
-                alt="UNILUS"
-                className={`transition-all duration-300 ${
-                  collapsed ? "h-8" : "h-14"
-                }`}
+                src={location.pathname.startsWith("/admin/controlhub") ? "/logos/avec-logo-light.png" : "/logos/unilus-logo-3.png"}
+                alt="Logo"
+                className={`transition-all duration-300 ${collapsed ? "h-8 w-8" : "h-12 w-auto"}`}
               />
-
             </div>
 
             <button
               onClick={toggleSidebar}
-              className="absolute -right-3 top-24 bg-white text-[#1e5631] rounded-full p-1 shadow-lg"
+              className="absolute -right-3 top-24 bg-white text-[#7c69ff] rounded-full p-1 shadow-lg"
             >
               {collapsed
                 ? <ChevronRight className="h-4 w-4"/>
@@ -238,7 +234,7 @@ export default function AdminLayout() {
                   <SidebarMenuButton
                     asChild
                     isActive={isActive("/admin/documents")}
-                    className="text-white hover:bg-green-700 data-[active=true]:bg-[#febb00] data-[active=true]:text-black rounded-md"
+                    className="text-white hover:bg-white/10 data-[active=true]:bg-[#7c69ff] data-[active=true]:text-white rounded-md"
                   >
 
                     <Link to="/admin/documents" className="flex items-center gap-3">
@@ -257,7 +253,7 @@ export default function AdminLayout() {
                   <SidebarMenuButton
                     asChild
                     isActive={isActive("/admin/signatures")}
-                    className="text-white hover:bg-green-700 data-[active=true]:bg-[#febb00] data-[active=true]:text-black rounded-md"
+                    className="text-white hover:bg-white/10 data-[active=true]:bg-[#7c69ff] data-[active=true]:text-white rounded-md"
                   >
                     <Link to="/admin/signatures" className="flex items-center gap-3">
                       <PenLine className="h-5 w-5"/>
@@ -395,11 +391,42 @@ export default function AdminLayout() {
 
                 )}
 
+                {/* ControlHub Section */}
+                <div className="px-3 pt-4 pb-1 text-xs text-yellow-200 uppercase tracking-wider">
+                  {!collapsed && "Avec ControlHub"}
+                </div>
+
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={isActive("/admin/controlhub/dashboard")}
+                    className="text-white hover:bg-white/10 data-[active=true]:bg-[#7c69ff] data-[active=true]:text-white rounded-md"
+                  >
+                    <Link to="/admin/controlhub/dashboard" className="flex items-center gap-3">
+                      <LayoutDashboard className="h-5 w-5"/>
+                      {!collapsed && <span>CH Dashboard</span>}
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={isActive("/admin/controlhub/tenants") || location.pathname.startsWith("/admin/controlhub/tenants/")}
+                    className="text-white hover:bg-white/10 data-[active=true]:bg-[#7c69ff] data-[active=true]:text-white rounded-md"
+                  >
+                    <Link to="/admin/controlhub/tenants" className="flex items-center gap-3">
+                      <Building2 className="h-5 w-5"/>
+                      {!collapsed && <span>Tenants</span>}
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+
               </SidebarMenu>
 
             </div>
 
-            <div className="p-4 border-t border-green-800">
+            <div className="p-4 border-t border-white/10">
 
               <SidebarMenu>
 

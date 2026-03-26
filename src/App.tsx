@@ -39,6 +39,9 @@ import StaffApplications from './(admin)/hr/StaffApplications';
 import MySignatures from './(admin)/admin/MySignatures';
 import StaffOnboarding from './(public)/staff-onboarding/StaffOnboarding';
 import DepartmentDetailPage from './(admin)/admin/DepartmentDetailPage';
+import ControlHubDashboard from './(admin)/controlhub/Dashboard';
+import TenantsList from './(admin)/controlhub/TenantsList';
+import TenantDetail from './(admin)/controlhub/TenantDetail';
 
 
 
@@ -105,6 +108,14 @@ function App() {
         <Route path="hr/leave" element={<LeaveManagement />} />
         <Route path="hr/applications" element={<StaffApplications />} />
         <Route path="signatures" element={<MySignatures />} />
+
+        {/* ControlHub Routes */}
+        <Route path="controlhub">
+          <Route index element={<Navigate to="/admin/controlhub/dashboard" replace />} />
+          <Route path="dashboard" element={<ControlHubDashboard />} />
+          <Route path="tenants" element={<TenantsList />} />
+          <Route path="tenants/:id" element={<TenantDetail />} />
+        </Route>
       </Route>
     </Routes>
     <Toaster position="top-right" richColors />

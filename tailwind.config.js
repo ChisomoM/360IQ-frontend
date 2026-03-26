@@ -9,15 +9,25 @@ export default {
 
       colors: {
         primary: {
-          green: '#1e3c21',
-          gold: '#febb00',
+          DEFAULT: "#1e5631", // Original Green
+          foreground: "hsl(var(--primary-foreground))",
         },
         secondary: {
-          green: '#1e3c21'
+          DEFAULT: "#febb00", // Original Gold
+          foreground: "hsl(var(--secondary-foreground))",
+        },
+        tertiary: {
+          DEFAULT: "#184626", // Original Dark Green
+        },
+        // ControlHub Scoped Colors
+        ch: {
+          primary: "#7c69ff",
+          secondary: "#03d8fd",
+          tertiary: "#0d173b",
         },
         gradient: {
-          from: '#1e3c21',
-          to: '#febb00',
+          from: '#7c69ff',
+          to: '#03d8fd',
         },
         sidebar: {
           DEFAULT: 'hsl(var(--sidebar-background))',

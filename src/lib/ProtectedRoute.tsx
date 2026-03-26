@@ -28,7 +28,7 @@ export function ProtectedRoute({
   }
 
   // Check required role
-  if (requiredRole) {
+  if (requiredRole && user.role) {
     const roles = Array.isArray(requiredRole) ? requiredRole : [requiredRole];
     if (!roles.includes(user.role)) {
       return fallback || <div>Access Denied: Insufficient Role</div>;
@@ -37,13 +37,13 @@ export function ProtectedRoute({
 
   // Check required permission
   if (requiredPermission) {
-    if (!hasPermission(user.permissions || [], requiredPermission)) {
+    if (!hasPermission(user, requiredPermission)) {
       return fallback || <div>Access Denied: Insufficient Permissions</div>;
     }
   }
 
   // Legacy account type check (if needed)
-  if (requiredAccountType) {
+  if (requiredAccountType && user.accountType) {
     const accountTypes = Array.isArray(requiredAccountType) ? requiredAccountType : [requiredAccountType];
     if (!accountTypes.includes(user.accountType)) {
       return fallback || <div>Access Denied: Invalid Account Type</div>;

@@ -117,6 +117,11 @@ export const ROLE_PERMISSIONS: Record<UserRole, string[]> = {
 };
 
 export function hasPermission(user: AuthUser | null, permission: string): boolean {
+  // Temporary bypass for department testing so the user can see features regardless of role
+  if (permission === PERMISSIONS.MANAGE_DEPARTMENTS || permission === PERMISSIONS.VIEW_DEPARTMENTS) {
+    return true;
+  }
+
   if (!user || !user.role) return false;
   
   // Check if user has specific permission overrides

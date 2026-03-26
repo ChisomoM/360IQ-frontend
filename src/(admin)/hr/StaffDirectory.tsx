@@ -216,7 +216,7 @@ export default function StaffDirectory() {
         <CardContent>
           {loading ? (
             <div className="flex justify-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin text-[#1e5631]" />
+              <Loader2 className="h-8 w-8 animate-spin text-[#7c69ff]" />
             </div>
           ) : filtered.length === 0 ? (
             <div className="text-center py-12">
@@ -521,7 +521,7 @@ export default function StaffDirectory() {
 
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowCreate(false)}>Cancel</Button>
-            <Button onClick={handleCreate} disabled={saving} className="bg-[#1e5631] hover:bg-[#1e5631]/90">
+            <Button onClick={handleCreate} disabled={saving} className="bg-[#7c69ff] hover:bg-[#6b5ae6]">
               {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Create Profile'}
             </Button>
           </DialogFooter>
