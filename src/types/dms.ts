@@ -10,6 +10,42 @@ export interface Department {
   updated_at: string;
 }
 
+// A lightweight user record returned inside department detail
+export interface DepartmentUser {
+  id: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  role?: string;
+  is_head?: boolean;
+}
+
+// Department with its assigned members (returned by GET /departments/:id)
+export interface DepartmentDetail extends Department {
+  users?: DepartmentUser[];
+}
+
+// Generic wrapper for paginated list responses from the backend
+export interface PaginatedResponse<T> {
+  data: T[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
+export interface DepartmentCreatePayload {
+  name: string;
+  code: string;
+  description?: string;
+}
+
+export interface DepartmentUpdatePayload {
+  name?: string;
+  code?: string;
+  description?: string;
+  head_of_dept_id?: string;
+}
+
 export interface Document {
   id: string;
   title: string;
