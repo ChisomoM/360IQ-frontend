@@ -1,4 +1,4 @@
-import type { UserRole } from '@/lib/constants';
+import type { RoleSlug, UserDepartment } from '@/types/rbac';
 
 /**
  * Auth Types - Adapted to the new login response shape used by the API.
@@ -49,7 +49,9 @@ export interface AuthUser extends Partial<LoginUser> {
   // convenience normalized names
   firstName?: string;
   lastName?: string;
-  role?: UserRole;
+  roleSlug?: RoleSlug; // assigned RBAC role
+  title?: string; // job title or designation
+  departments?: UserDepartment[]; // departments the user belongs to
   isVerified?: boolean;
   isActive?: boolean;
   myReferralCode?: string;
