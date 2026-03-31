@@ -20,9 +20,35 @@ export function ProtectedRoute({
   requiredPermission,
   fallback,
 }: ProtectedRouteProps) {
-  // TEMPORARILY DISABLED AUTHENTICATION - For Development Only
-  // TODO: Re-enable authentication checks before production
-  
-  // Simply return children without any authentication checks
+  const { user, isAuthenticated } = useAuth();
+
+  // Check if user is authenticated
+  if (!isAuthenticated || !user) {
+    return fallback || <Navigate to="/login" replace />;
+  }
+
+  // Check required role
+  if (requiredRole) {
+    const roles = Array.isArray(requiredRole) ? requiredRole : [requiredRole];
+    if (!roles.includes(user.role)) {
+      return fallback || <div>Access Denied: Insufficient Role</div>;
+    }
+  }
+
+  // Check required permission
+  if (requiredPermission) {
+    if (!hasPermission(user.permissions || [], requiredPermission)) {
+      return fallback || <div>Access Denied: Insufficient Permissions</div>;
+    }
+  }
+
+  // Legacy account type check (if needed)
+  if (requiredAccountType) {
+    const accountTypes = Array.isArray(requiredAccountType) ? requiredAccountType : [requiredAccountType];
+    if (!accountTypes.includes(user.accountType)) {
+      return fallback || <div>Access Denied: Invalid Account Type</div>;
+    }
+  }
+
   return <>{children}</>;
 }

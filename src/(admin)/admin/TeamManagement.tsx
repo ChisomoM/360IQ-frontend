@@ -27,13 +27,11 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Plus, Search, Loader2, MapPin } from 'lucide-react';
+import { Plus, Search, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { fetchData } from '@/lib/api/crud';
-import { USER_ROLES, type UserRole, ZAMBIAN_DISTRICTS, type District } from '@/lib/constants';
+import { USER_ROLES, type UserRole } from '@/lib/constants';
 import type { AdminProfile } from '@/types/admin';
 
 export default function TeamManagement() {
@@ -49,8 +47,7 @@ export default function TeamManagement() {
     lastName: '',
     email: '',
     password: '',
-    role: USER_ROLES.REGIONAL_ADMIN as UserRole,
-    assignedRegions: [] as District[],
+    role: 'super_admin' as UserRole,
   });
 
   const fetchUsers = async () => {
@@ -77,7 +74,7 @@ export default function TeamManagement() {
       setUsers(mappedUsers);
     } catch (error) {
       console.error('Error fetching users:', error);
-      toast.error('Failed to load team members');
+      toast.error('Failed to load administrators');
     } finally {
       setLoading(false);
     }
@@ -102,7 +99,6 @@ export default function TeamManagement() {
         email: formData.email,
         password: formData.password,
         role_name: formData.role,
-        assigned_regions: JSON.stringify(formData.assignedRegions),
         is_active: true,
         is_verified: true
       };
@@ -116,8 +112,7 @@ export default function TeamManagement() {
         lastName: '',
         email: '',
         password: '',
-        role: USER_ROLES.REGIONAL_ADMIN,
-        assignedRegions: [],
+        role: 'super_admin',
       });
       fetchUsers();
     } catch (error: any) {
@@ -126,17 +121,6 @@ export default function TeamManagement() {
     } finally {
       setIsSubmitting(false);
     }
-  };
-
-  const toggleRegion = (region: District) => {
-    setFormData(prev => {
-      const current = prev.assignedRegions;
-      if (current.includes(region)) {
-        return { ...prev, assignedRegions: current.filter(r => r !== region) };
-      } else {
-        return { ...prev, assignedRegions: [...current, region] };
-      }
-    });
   };
 
   const filteredUsers = users.filter(user => 
@@ -148,10 +132,12 @@ export default function TeamManagement() {
   const getRoleBadgeColor = (role: string) => {
     switch (role) {
       case USER_ROLES.SUPER_ADMIN: return 'bg-red-100 text-red-800 border-red-200';
-      case USER_ROLES.PRESIDENT: return 'bg-purple-100 text-purple-800 border-purple-200';
-      case USER_ROLES.VICE_PRESIDENT: return 'bg-indigo-100 text-indigo-800 border-indigo-200';
-      case USER_ROLES.REGIONAL_ADMIN: return 'bg-blue-100 text-blue-800 border-blue-200';
-      case USER_ROLES.FINANCE: return 'bg-green-100 text-green-800 border-green-200';
+      case USER_ROLES.RECORDS_AUTHORITY: return 'bg-purple-100 text-purple-800 border-purple-200';
+      case USER_ROLES.DEPT_HEAD: return 'bg-blue-100 text-blue-800 border-blue-200';
+      case USER_ROLES.STAFF_MEMBER: return 'bg-green-100 text-green-800 border-green-200';
+      case USER_ROLES.FINANCE_OFFICER: return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      case USER_ROLES.HR_OFFICER: return 'bg-pink-100 text-pink-800 border-pink-200';
+      case USER_ROLES.AUDITOR: return 'bg-gray-100 text-gray-800 border-gray-200';
       default: return 'bg-gray-100 text-gray-800 border-gray-200';
     }
   };
@@ -160,19 +146,19 @@ export default function TeamManagement() {
     <div className="w-full space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Team Management</h1>
-          <p className="text-gray-600 mt-1">Manage administrators and their roles</p>
+          <h1 className="text-3xl font-bold text-gray-900">Administrators</h1>
+          <p className="text-gray-600 mt-1">Manage system accounts and access levels</p>
         </div>
         <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
           <DialogTrigger asChild>
             <Button>
               <Plus className="h-4 w-4 mr-2" />
-              Add Team Member
+              Add Administrator
             </Button>
           </DialogTrigger>
           <DialogContent className="max-w-2xl bg-white max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Add New Team Member</DialogTitle>
+              <DialogTitle>Add New Administrator</DialogTitle>
               <DialogDescription>
                 Create a new administrator account with specific roles and permissions.
               </DialogDescription>
@@ -228,39 +214,16 @@ export default function TeamManagement() {
                     <SelectValue placeholder="Select a role" />
                   </SelectTrigger>
                   <SelectContent>
-                    {Object.values(USER_ROLES).filter(r => r !== 'teacher').map((role) => (
-                      <SelectItem key={role} value={role}>
-                        {role.replace('_', ' ').toUpperCase()}
-                      </SelectItem>
-                    ))}
+                    <SelectItem value="super_admin">System Administrator</SelectItem>
+                    <SelectItem value="records_authority">Records Authority</SelectItem>
+                    <SelectItem value="dept_head">Department Head</SelectItem>
+                    <SelectItem value="staff_member">Staff Member</SelectItem>
+                    <SelectItem value="finance">Finance Officer</SelectItem>
+                    <SelectItem value="hr_officer">HR Officer</SelectItem>
+                    <SelectItem value="auditor">Auditor</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
-
-              {(formData.role === USER_ROLES.REGIONAL_ADMIN || formData.role === USER_ROLES.OPERATIONS) && (
-                <div className="space-y-2">
-                  <Label>Assigned Regions (Districts)</Label>
-                  <ScrollArea className="h-48 border rounded-md p-4">
-                    <div className="grid grid-cols-2 gap-2">
-                      {ZAMBIAN_DISTRICTS.map((district) => (
-                        <div key={district} className="flex items-center space-x-2">
-                          <Checkbox 
-                            id={`district-${district}`} 
-                            checked={formData.assignedRegions.includes(district)}
-                            onCheckedChange={() => toggleRegion(district)}
-                          />
-                          <Label htmlFor={`district-${district}`} className="text-sm font-normal cursor-pointer">
-                            {district}
-                          </Label>
-                        </div>
-                      ))}
-                    </div>
-                  </ScrollArea>
-                  <p className="text-xs text-gray-500">
-                    Selected: {formData.assignedRegions.length} districts
-                  </p>
-                </div>
-              )}
             </div>
 
             <DialogFooter>
@@ -278,7 +241,7 @@ export default function TeamManagement() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Search className="h-5 w-5" />
-            Search Team
+            Search Administrators
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -316,7 +279,7 @@ export default function TeamManagement() {
               ) : filteredUsers.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={5} className="text-center py-8 text-gray-500">
-                    No team members found
+                    No administrators found
                   </TableCell>
                 </TableRow>
               ) : (

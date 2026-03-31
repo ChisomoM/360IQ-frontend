@@ -12,6 +12,7 @@ import type {
   AuthUser,
   AuthTokens,
   AuthContextValue,
+  AccountType,
 } from '@/types/auth';
 import { STORAGE_KEYS } from '../../types/auth';
 import { AuthContext } from './AuthContext';

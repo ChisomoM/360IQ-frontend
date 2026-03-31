@@ -1,67 +1,202 @@
-import React from "react";
-import { LoginForm } from "../../components/auth/loginForm";
-// import { seedDefaultAdmin } from "@/lib/firebase/seed";
-// import { toast } from "sonner";
+import React from "react"
+import { motion } from "framer-motion"
+import { LoginForm } from "../../components/auth/loginForm"
 
 interface LoginPageProps {
-  onSignUpClick: () => void;
+  onSignUpClick?: () => void
 }
 
-export const LoginPage: React.FC<LoginPageProps> = ({ onSignUpClick }) => {
-  // const handleSeed = async () => {
-  //   const result = await seedDefaultAdmin();
-  //   if (result.success) {
-  //     toast.success(result.message);
-  //   } else {
-  //     toast.error(result.message);
-  //   }
-  // };
+export const LoginPage: React.FC<LoginPageProps> = () => {
+
+  const container = {
+    hidden: {},
+    show: {
+      transition: {
+        staggerChildren: 0.25
+      }
+    }
+  }
+
+  const item = {
+    hidden: { opacity: 0, y: 20 },
+    show: {
+      opacity: 1,
+      y: 0,
+      transition: { duration: 0.6 }
+    }
+  }
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-[#1e3c21] relative overflow-hidden">
-      {/* Background Gradient Orbs */}
-      <div className="absolute inset-0">
-        <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-[#febb00]/10 blur-[120px]" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-[#febb00]/10 blur-[120px]" />
-      </div>
 
-      {/* Centered Content */}
-      <div className="relative z-10 w-full max-w-md mx-auto p-6">
-        {/* Branding */}
-        <div className="text-center mb-8">
-          {/* <h1 className="text-5xl font-bold tracking-tight mb-4 bg-clip-text text-transparent bg-gradient-to-r from-white to-slate-400">
-            Avec
-          </h1> */}
-          {/* <p className="text-slate-400 text-lg leading-relaxed font-light">
-            Admin Dashboard
-          </p> */}
-        </div>
+    <motion.div
+      className="min-h-screen w-full flex bg-[#1e3c21] relative overflow-hidden"
+      initial="hidden"
+      animate="show"
+      variants={container}
+    >
 
-        {/* Login Form */}
-        <LoginForm onSignUpClick={onSignUpClick} />
+      <div className="relative z-10 flex w-full min-h-screen">
 
-        <div className="text-center mt-6">
-          <p className="text-xs text-slate-500">
-            By signing in, you agree to our{" "}
-            <a href="#" className="underline hover:text-slate-400">
-              Terms of Service
-            </a>{" "}
-            and{" "}
-            <a href="#" className="underline hover:text-slate-400">
-              Privacy Policy
-            </a>.
-          </p>
-          {/* Temporary Seed Button */}
-          {/* <button 
-            onClick={handleSeed}
-            className="mt-4 text-[10px] text-slate-500 hover:text-slate-400 transition-colors"
+        {/* LEFT PANEL */}
+        <div
+          className="hidden lg:flex flex-col justify-between w-1/2 px-16 py-14 text-white bg-cover bg-center relative"
+          style={{ backgroundImage: "url('/campus.jpg')" }}
+        >
+
+          <div className="absolute inset-0 bg-[#1e3c21]/85" />
+
+          <motion.div
+            className="relative z-10 flex items-start"
+            variants={item}
           >
-            (Dev: Seed Admin)
-          </button> */}
-        </div>
-      </div>
-    </div>
-  );
-};
 
+            <img
+              src="/logos/unilus-logo-3.png"
+              alt="UNILUS Logo"
+              className="h-36 object-contain transition-transform duration-500 hover:scale-105"
+            />
+
+          </motion.div>
+
+          <motion.div
+            className="relative z-10 max-w-lg"
+            variants={item}
+          >
+
+            <div className="inline-flex items-center gap-2 bg-[#febb00]/20 backdrop-blur-md px-4 py-1.5 rounded-full border border-[#febb00]/40 mb-6">
+
+              <span className="text-[#febb00] font-semibold text-xs uppercase tracking-wider">
+                UNILUS DIMS
+              </span>
+
+            </div>
+
+            <h1 className="text-4xl font-bold leading-tight mb-5">
+
+              Document Intelligence &{" "}
+              <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#febb00] via-yellow-300 to-[#febb00]">
+                Management System
+              </span>
+
+            </h1>
+
+            <p className="text-base text-white/80 leading-relaxed">
+
+              A centralized digital platform built to manage institutional
+              documents, automate administrative processes, and generate
+              insights across the University of Lusaka.
+
+            </p>
+
+            <div className="mt-8 grid grid-cols-2 gap-4 text-sm text-white/75">
+
+              <div className="flex items-center gap-2">
+                <span className="text-[#febb00]">•</span>
+                Smart document indexing
+              </div>
+
+              <div className="flex items-center gap-2">
+                <span className="text-[#febb00]">•</span>
+                Secure digital archives
+              </div>
+
+              <div className="flex items-center gap-2">
+                <span className="text-[#febb00]">•</span>
+                Analytics & reporting
+              </div>
+
+              <div className="flex items-center gap-2">
+                <span className="text-[#febb00]">•</span>
+                Real-time institutional insights
+              </div>
+
+            </div>
+
+            <div className="mt-8 w-16 h-1 bg-[#febb00] rounded-full" />
+
+          </motion.div>
+
+        </div>
+
+
+        {/* LOGIN PANEL */}
+        <div className="flex items-center justify-center w-full lg:w-1/2 px-8 bg-white border-l border-gray-200">
+
+          <motion.div
+            className="w-full max-w-md"
+            variants={container}
+          >
+
+            <motion.div
+              className="lg:hidden flex justify-center mb-10"
+              variants={item}
+            >
+
+              <img
+                src="/logos/unilus-logo-3.png"
+                alt="UNILUS Logo"
+                className="h-28"
+              />
+
+            </motion.div>
+
+            <motion.div
+              className="bg-white border border-gray-200 rounded-2xl shadow-xl p-10"
+              variants={item}
+            >
+
+              <motion.h2
+                className="text-3xl font-bold text-[#1e3c21] mb-2"
+                variants={item}
+              >
+                Welcome Back
+              </motion.h2>
+
+              <motion.p
+                className="text-sm text-gray-500 mb-8"
+                variants={item}
+              >
+                Sign in to access the UNILUS Document Intelligence &
+                Management System.
+              </motion.p>
+
+              <motion.div variants={item}>
+                <LoginForm onSignUpClick={() => {}} />
+              </motion.div>
+
+              <motion.p
+                className="mt-8 text-center text-xs text-gray-400"
+                variants={item}
+              >
+
+                By signing in you agree to the{" "}
+
+                <a
+                  href="#"
+                  className="underline hover:text-gray-600 transition-colors"
+                >
+                  Terms of Service
+                </a>{" "}
+                and{" "}
+                <a
+                  href="#"
+                  className="underline hover:text-gray-600 transition-colors"
+                >
+                  Privacy Policy
+                </a>
+
+              </motion.p>
+
+            </motion.div>
+
+          </motion.div>
+
+        </div>
+
+      </div>
+
+    </motion.div>
+
+  )
+}
 
