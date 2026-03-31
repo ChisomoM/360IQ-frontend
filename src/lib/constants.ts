@@ -15,13 +15,8 @@ export type District = typeof ZAMBIAN_DISTRICTS[number];
 
 export const USER_ROLES = {
   SUPER_ADMIN: 'super_admin',
-  RECORDS_AUTHORITY: 'records_authority',
-  DEPT_HEAD: 'dept_head',
-  STAFF_MEMBER: 'staff_member',
-  FINANCE_OFFICER: 'finance',
-  HR_OFFICER: 'hr_officer',
-  AUDITOR: 'auditor',
-  TEACHER: 'teacher',
+  ADMIN: 'admin',
+  USER: 'user',
 } as const;
 
 export type UserRole = typeof USER_ROLES[keyof typeof USER_ROLES];
