@@ -3,8 +3,8 @@ import { Storage } from "../storage";
 import { API, getRoute, pipe } from "./end_points";
 // import { getAuthHeader } from "./auth";
 
-const ROUTING_URL: string = import.meta.env.VITE_BACKEND_URL || "http://localhost:8032/api/v1/";
-// const ROUTING_URL: string = import.meta.env.VITE_BACKEND_URL || "http://102.211.186.58/api/v1/";
+// const ROUTING_URL: string = import.meta.env.VITE_BACKEND_URL || "http://localhost:8032/api/v1/";
+const ROUTING_URL: string = import.meta.env.VITE_BACKEND_URL || "http://102.211.186.58/api/v1/";
 
 // const ROUTING_URL = "http://102.211.186.58/api/v1/"
 // Storage key for auth tokens (matches AuthContext)
@@ -78,7 +78,7 @@ export const fetchData = async (
 ) => {
   const h = new Headers();
   h.append("Content-Type", "application/json");
-  const tenant = import.meta.env.VITE_TENANT_ID || "unilus_meta";
+  const tenant = import.meta.env.VITE_TENANT_ID || "dims_meta";
   h.append("X-Tenant-ID", tenant);
 
   // Read tokens from localStorage (AuthContext storage)
