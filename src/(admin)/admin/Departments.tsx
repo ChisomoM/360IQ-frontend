@@ -116,7 +116,7 @@ export default function Departments() {
   const [deleteTarget, setDeleteTarget] = useState<Department | null>(null);
   const [isDeleteSubmitting, setIsDeleteSubmitting] = useState(false);
 
-  const canManage = hasPermission(user, PERMISSIONS.MANAGE_DEPARTMENTS);
+  const canManage = hasPermission(user, PERMISSIONS['departments.manage']);
 
   const fetchDepartments = useCallback(async (page: number = 1) => {
     try {
@@ -180,9 +180,9 @@ export default function Departments() {
   // ─────── EDIT ───────
   const openEditDialog = (dept: Department) => {
     setEditTarget(dept);
-    setEditFormData({ 
-      name: dept.name, 
-      code: dept.code, 
+    setEditFormData({
+      name: dept.name,
+      code: dept.code,
       description: dept.description ?? '',
       head_of_dept_id: dept.head_of_dept_id
     });
@@ -415,9 +415,8 @@ export default function Departments() {
                       {dept.description || '—'}
                     </TableCell>
                     <TableCell>
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        dept.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                      }`}>
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${dept.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                        }`}>
                         {dept.is_active ? 'Active' : 'Inactive'}
                       </span>
                     </TableCell>
@@ -512,9 +511,9 @@ export default function Departments() {
             setEditFormData(prev => ({ ...prev, [field]: value }));
             if (editFormErrors[field]) setEditFormErrors(prev => ({ ...prev, [field]: undefined }));
           })}
-          
+
           <div className="px-4">
-            <DepartmentAssignUsers 
+            <DepartmentAssignUsers
               departmentId={editTarget?.id ?? null}
               currentHeadId={editFormData.head_of_dept_id ?? null}
               onHeadChange={(userId) => setEditFormData(prev => ({ ...prev, head_of_dept_id: userId }))}

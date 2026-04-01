@@ -39,6 +39,9 @@ import StaffApplications from './(admin)/admin/hr/StaffApplications';
 import MySignatures from './(admin)/admin/MySignatures';
 import StaffOnboarding from './(public)/staff-onboarding/StaffOnboarding';
 import DepartmentDetailPage from './(admin)/admin/DepartmentDetailPage';
+// RBAC — Roles & Maker-Checker Pages
+import RolesManagement from './(admin)/admin/RolesManagement';
+import MakerCheckerPage from './(admin)/admin/MakerCheckerPage';
 
 
 
@@ -46,68 +49,72 @@ import DepartmentDetailPage from './(admin)/admin/DepartmentDetailPage';
 function App() {
   return (
     <>
-    <ScrollToTop/>
-    <ChangePasswordModal />
-    <Routes>
-      <Route path="/" element={<Login />} />
-      <Route path="/about" element={<AboutPage />} />
-      <Route path="/contact" element={<Contact />} />
-      <Route path="/login" element={<Login />} />
-      {/* Join page removed */}
-      <Route path="/blog" element={<BlogList />} />
-      <Route path="/blog/:id" element={<BlogDetail />} />
-      <Route path="/staff-onboarding" element={<StaffOnboarding />} />
-      <Route path="*" element={<div>Page Not Found</div>} />
+      <ScrollToTop />
+      <ChangePasswordModal />
+      <Routes>
+        <Route path="/" element={<Login />} />
+        <Route path="/about" element={<AboutPage />} />
+        <Route path="/contact" element={<Contact />} />
+        <Route path="/login" element={<Login />} />
+        {/* Join page removed */}
+        <Route path="/blog" element={<BlogList />} />
+        <Route path="/blog/:id" element={<BlogDetail />} />
+        <Route path="/staff-onboarding" element={<StaffOnboarding />} />
+        <Route path="*" element={<div>Page Not Found</div>} />
 
 
-      {/* Student routes removed */}
+        {/* Student routes removed */}
 
 
 
 
 
-      {/* Admin Routes */}
-      <Route path="/admin" element={
-        <ProtectedRoute>
-          <AdminLayout />
-        </ProtectedRoute>
-      }>
-        <Route index element={<Navigate to="/admin/dashboard" replace />} />
-        <Route path="dashboard" element={<AdminDashboard />} />
-        {/* Join applications admin page removed */}
-        <Route path="students" element={<Students />} />
-        <Route path="students/:id" element={<StudentProfile />} />
-        <Route path="approvals" element={<ApprovalsPage />} />
-        <Route path="regions" element={<RegionManagement />} />
-        <Route path="user-management" element={<TeamManagement />} />
-        <Route path="teacher-management" element={<TeacherManagement />} />
-        <Route path="financials" element={<FinancialsPage />} />
-        <Route path="referrals" element={<Referrals />} />
-        <Route path="reports" element={<AnalyticsDashboard />} />
-        <Route path="reports/document-charts" element={<DocumentCharts />} />
-        <Route path="partnerships" element={<PartnershipPage />} />
-        <Route path="blogs" element={<BlogPage />} />
-        <Route path="departments" element={<Departments />} />
-        <Route path="departments/:id" element={<DepartmentDetailPage />} />
-        <Route path="documents" element={<Documents />} />
-        <Route path="documents/:id" element={<DocumentDetail />} />
-        <Route path="workflows" element={<Workflows />} />
-        <Route path="audit-trails" element={<AuditTrails />} />
-        
-        {/* Finance Routes */}
-        <Route path="finance/dashboard" element={<FinanceDashboard />} />
-        <Route path="finance/payments" element={<PaymentManagement />} />
-        <Route path="finance/reports" element={<FinanceReports />} />
+        {/* Admin Routes */}
+        <Route path="/admin" element={
+          <ProtectedRoute>
+            <AdminLayout />
+          </ProtectedRoute>
+        }>
+          <Route index element={<Navigate to="/admin/dashboard" replace />} />
+          <Route path="dashboard" element={<AdminDashboard />} />
+          {/* Join applications admin page removed */}
+          <Route path="students" element={<Students />} />
+          <Route path="students/:id" element={<StudentProfile />} />
+          <Route path="approvals" element={<ApprovalsPage />} />
+          <Route path="regions" element={<RegionManagement />} />
+          <Route path="user-management" element={<TeamManagement />} />
+          <Route path="teacher-management" element={<TeacherManagement />} />
+          <Route path="financials" element={<FinancialsPage />} />
+          <Route path="referrals" element={<Referrals />} />
+          <Route path="reports" element={<AnalyticsDashboard />} />
+          <Route path="reports/document-charts" element={<DocumentCharts />} />
+          <Route path="partnerships" element={<PartnershipPage />} />
+          <Route path="blogs" element={<BlogPage />} />
+          <Route path="departments" element={<Departments />} />
+          <Route path="departments/:id" element={<DepartmentDetailPage />} />
+          <Route path="documents" element={<Documents />} />
+          <Route path="documents/:id" element={<DocumentDetail />} />
+          <Route path="workflows" element={<Workflows />} />
+          <Route path="audit-trails" element={<AuditTrails />} />
 
-        {/* HR Routes */}
-        <Route path="hr/dashboard" element={<HRDashboard />} />
-        <Route path="hr/staff" element={<StaffDirectory />} />
-        <Route path="hr/leave" element={<LeaveManagement />} />
-        <Route path="hr/applications" element={<StaffApplications />} />
-        <Route path="signatures" element={<MySignatures />} />
-      </Route>
-    </Routes>
-    <Toaster position="top-right" richColors />
+          {/* RBAC Routes */}
+          <Route path="roles" element={<RolesManagement />} />
+          <Route path="maker-checker" element={<MakerCheckerPage />} />
+
+          {/* Finance Routes */}
+          <Route path="finance/dashboard" element={<FinanceDashboard />} />
+          <Route path="finance/payments" element={<PaymentManagement />} />
+          <Route path="finance/reports" element={<FinanceReports />} />
+
+          {/* HR Routes */}
+          <Route path="hr/dashboard" element={<HRDashboard />} />
+          <Route path="hr/staff" element={<StaffDirectory />} />
+          <Route path="hr/leave" element={<LeaveManagement />} />
+          <Route path="hr/applications" element={<StaffApplications />} />
+          <Route path="signatures" element={<MySignatures />} />
+        </Route>
+      </Routes>
+      <Toaster position="top-right" richColors />
     </>
   );
 }

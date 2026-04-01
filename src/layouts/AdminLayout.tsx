@@ -29,6 +29,7 @@ import {
   ClipboardList,
   ClipboardCheck,
   PenLine,
+  ShieldCheck,
 } from "lucide-react"
 import { AIChatSidebar } from "@/components/ai/AIChatSidebar"
 import { RightSidebar } from "@/components/layout/RightSidebar"
@@ -285,6 +286,37 @@ export default function AdminLayout() {
                       <Link to="/admin/audit-trails" className="flex items-center gap-3">
                         <History className="h-5 w-5" />
                         {!collapsed && <span>Audit Trails</span>}
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                )}
+
+                {/* Roles & Maker-Checker — only visible to users with relevant permissions */}
+                {hasPermission(user, PERMISSIONS['roles.manage']) && (
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={isActive("/admin/roles")}
+                      className="text-white hover:bg-green-700 data-[active=true]:bg-[#febb00] data-[active=true]:text-black rounded-md"
+                    >
+                      <Link to="/admin/roles" className="flex items-center gap-3">
+                        <ShieldCheck className="h-5 w-5" />
+                        {!collapsed && <span>Roles</span>}
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                )}
+
+                {hasPermission(user, PERMISSIONS['maker_checker.manage']) && (
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={isActive("/admin/maker-checker")}
+                      className="text-white hover:bg-green-700 data-[active=true]:bg-[#febb00] data-[active=true]:text-black rounded-md"
+                    >
+                      <Link to="/admin/maker-checker" className="flex items-center gap-3">
+                        <ClipboardCheck className="h-5 w-5" />
+                        {!collapsed && <span>Maker-Checker</span>}
                       </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
