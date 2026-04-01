@@ -1,153 +1,217 @@
-import React, { useState, useEffect } from 'react';
-import { MakerCheckerRule, PermissionAction, RoleSlug } from '@/types/rbac';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
+import { post, update } from '@/lib/api/crud';
 
-// Omit 'id' and add any form-specific fields. 
-// Note: we add 'name' as requested, though it might be mapped to 'resource' or handled differently outside
-export type RuleFormData = Omit<MakerCheckerRule, 'id'> & { name?: string };
-
-export interface MakerCheckerRuleFormProps {
-  rule?: MakerCheckerRule & { name?: string };
-  onSubmit: (data: RuleFormData) => void;
-  isSubmitting: boolean;
-  onCancel: () => void;
+export interface MakerCheckerRule {
+    id?: string;
+    name: string;
+    actionCode: string;
+    resourceType: string;
+    requiredApprovals: number;
+    approverSlug: string;
+    isActive: boolean;
 }
 
-export default function MakerCheckerRuleForm({ rule, onSubmit, isSubmitting, onCancel }: MakerCheckerRuleFormProps) {
-  const [name, setName] = useState('');
-  const [actionCode, setActionCode] = useState<PermissionAction | ''>('');
-  const [resourceType, setResourceType] = useState('');
-  const [requiredApprovals, setRequiredApprovals] = useState<number | ''>('');
-  const [approverSlug, setApproverSlug] = useState<RoleSlug | ''>('');
-  const [isActive, setIsActive] = useState(true);
+interface MakerCheckerRuleFormProps {
+    isOpen: boolean;
+    onClose: () => void;
+    onSubmit: (data: Omit<MakerCheckerRule, 'id'>) => void;
+    rule?: MakerCheckerRule;
+    isSubmitting?: boolean;
+}
 
-  const [errors, setErrors] = useState<{ [key: string]: string }>({});
+const ACTION_CODE_OPTIONS = [
+    { value: 'user.delete', label: 'User Deletion' },
+    { value: 'user.create', label: 'User Creation' },
+    { value: 'document.approve', label: 'Document Approval' },
+    { value: 'payment.process', label: 'Payment Processing' },
+    { value: 'role.assign', label: 'Role Assignment' },
+];
 
-  useEffect(() => {
-    if (rule) {
-      setName(rule.name || '');
-      setActionCode(rule.action as PermissionAction || '');
-      setResourceType(rule.resource || '');
-      setRequiredApprovals(rule.requiredApprovals || '');
-      setApproverSlug((rule.approverRoles && rule.approverRoles[0]) || '');
-      setIsActive(rule.isActive !== false);
-    }
-  }, [rule]);
+const APPROVER_OPTIONS = [
+    { value: 'super_admin', label: 'Super Admin' },
+    { value: 'admin', label: 'Admin' },
+];
 
-  const validate = () => {
-    const newErrors: { [key: string]: string } = {};
+export function MakerCheckerRuleForm({
+    isOpen,
+    onClose,
+    onSubmit,
+    rule,
+}: MakerCheckerRuleFormProps) {
+    const [name, setName] = useState('');
+    const [actionCode, setActionCode] = useState('');
+    const [resourceType, setResourceType] = useState('');
+    const [requiredApprovals, setRequiredApprovals] = useState(1);
+    const [approverSlug, setApproverSlug] = useState('admin');
+    const [isActive, setIsActive] = useState(true);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [errors, setErrors] = useState<Record<string, string>>({});
 
-    if (!name || name.length < 3) {
-      newErrors.name = 'Name must be at least 3 characters';
-    }
-    if (!actionCode) {
-      newErrors.actionCode = 'Action code is required';
-    }
-    if (!resourceType) {
-      newErrors.resourceType = 'Resource type is required';
-    }
-    if (requiredApprovals === '' || requiredApprovals < 1 || requiredApprovals > 5) {
-      newErrors.requiredApprovals = 'Required approvals must be between 1 and 5';
-    }
-    if (!approverSlug) {
-      newErrors.approverSlug = 'Approver is required';
-    }
+    const isEditing = !!rule?.id;
 
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
+    // Pre-populate when editing
+    useEffect(() => {
+        if (rule) {
+            setName(rule.name);
+            setActionCode(rule.actionCode);
+            setResourceType(rule.resourceType);
+            setRequiredApprovals(rule.requiredApprovals);
+            setApproverSlug(rule.approverSlug);
+            setIsActive(rule.isActive);
+        } else {
+            setName('');
+            setActionCode('');
+            setResourceType('');
+            setRequiredApprovals(1);
+            setApproverSlug('admin');
+            setIsActive(true);
+        }
+    }, [rule]);
 
-  useEffect(() => {
-    validate();
-  }, [name, actionCode, resourceType, requiredApprovals, approverSlug, isActive]);
+    const validate = () => {
+        const newErrors: Record<string, string> = {};
+        if (!name || name.length < 3) newErrors.name = 'Name must be at least 3 characters';
+        if (!actionCode) newErrors.actionCode = 'Action code is required';
+        if (!resourceType) newErrors.resourceType = 'Resource type is required';
+        if (requiredApprovals < 1 || requiredApprovals > 5)
+            newErrors.requiredApprovals = 'Required approvals must be between 1 and 5';
+        return newErrors;
+    };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!validate()) return;
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        const newErrors = validate();
+        if (Object.keys(newErrors).length > 0) {
+            setErrors(newErrors);
+            return;
+        }
+        setIsSubmitting(true);
+        try {
+            const payload = { name, actionCode, resourceType, requiredApprovals, approverSlug, isActive };
+            if (isEditing) {
+                await update('MAKER_CHECKER_RULES', payload, { id: rule!.id! });
+            } else {
+                await post('MAKER_CHECKER_RULES', payload);
+            }
+            toast.success(`Rule ${isEditing ? 'updated' : 'created'} successfully`);
+            onSubmit(payload);
+            onClose();
+        } catch (err) {
+            toast.error(err instanceof Error ? err.message : 'Failed to save rule');
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
 
-    onSubmit({
-      name,
-      action: actionCode as PermissionAction,
-      resource: resourceType,
-      requiredApprovals: Number(requiredApprovals),
-      approverRoles: [approverSlug as RoleSlug],
-      isActive,
-    });
-  };
+    return (
+        <Dialog open={isOpen} onOpenChange={onClose}>
+            <DialogContent className="sm:max-w-md bg-white">
+                <DialogHeader>
+                    <DialogTitle>{isEditing ? 'Edit Rule' : 'New Rule'}</DialogTitle>
+                </DialogHeader>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                    <div>
+                        <Label htmlFor="rule-name">Name</Label>
+                        <Input
+                            id="rule-name"
+                            value={name}
+                            onChange={(e) => setName(e.target.value)}
+                            placeholder="e.g. User deletion requires 2 approvals"
+                            disabled={isSubmitting}
+                        />
+                        {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name}</p>}
+                    </div>
 
-  const hasErrors = Object.keys(errors).length > 0;
+                    <div>
+                        <Label htmlFor="action-code">Action Code</Label>
+                        <select
+                            id="action-code"
+                            title="Action code"
+                            value={actionCode}
+                            onChange={(e) => setActionCode(e.target.value)}
+                            disabled={isSubmitting}
+                            className="w-full h-10 border border-gray-300 rounded-md px-3 text-sm"
+                        >
+                            <option value="">Select action...</option>
+                            {ACTION_CODE_OPTIONS.map((a) => (
+                                <option key={a.value} value={a.value}>{a.label}</option>
+                            ))}
+                        </select>
+                        {errors.actionCode && <p className="text-red-500 text-xs mt-1">{errors.actionCode}</p>}
+                    </div>
 
-  return (
-    <form onSubmit={handleSubmit} className="space-y-4 max-w-md bg-white p-6 rounded-md border">
-      <div>
-        <Label htmlFor="rule-name">Name <span className="text-red-500">*</span></Label>
-        <Input id="rule-name" value={name} onChange={e => setName(e.target.value)} />
-        {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name}</p>}
-      </div>
+                    <div>
+                        <Label htmlFor="resource-type">Resource Type</Label>
+                        <Input
+                            id="resource-type"
+                            value={resourceType}
+                            onChange={(e) => setResourceType(e.target.value)}
+                            placeholder="e.g. user, document, payment"
+                            disabled={isSubmitting}
+                        />
+                        {errors.resourceType && <p className="text-red-500 text-xs mt-1">{errors.resourceType}</p>}
+                    </div>
 
-      <div>
-        <Label htmlFor="rule-action">Action Code <span className="text-red-500">*</span></Label>
-        <select
-          id="rule-action"
-          className="flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-          value={actionCode}
-          onChange={e => setActionCode(e.target.value as PermissionAction)}
-        >
-          <option value="" disabled>Select Action</option>
-          <option value="create">Create</option>
-          <option value="update">Update</option>
-          <option value="delete">Delete</option>
-        </select>
-        {errors.actionCode && <p className="text-red-500 text-sm mt-1">{errors.actionCode}</p>}
-      </div>
+                    <div>
+                        <Label htmlFor="required-approvals">Required Approvals (1-5)</Label>
+                        <Input
+                            id="required-approvals"
+                            type="number"
+                            min={1}
+                            max={5}
+                            value={requiredApprovals}
+                            onChange={(e) => setRequiredApprovals(Number(e.target.value))}
+                            disabled={isSubmitting}
+                        />
+                        {errors.requiredApprovals && <p className="text-red-500 text-xs mt-1">{errors.requiredApprovals}</p>}
+                    </div>
 
-      <div>
-        <Label htmlFor="rule-resource">Resource Type <span className="text-red-500">*</span></Label>
-        <Input id="rule-resource" value={resourceType} onChange={e => setResourceType(e.target.value)} />
-        {errors.resourceType && <p className="text-red-500 text-sm mt-1">{errors.resourceType}</p>}
-      </div>
+                    <div>
+                        <Label htmlFor="approver-slug">Approver Role</Label>
+                        <select
+                            id="approver-slug"
+                            title="Approver role"
+                            value={approverSlug}
+                            onChange={(e) => setApproverSlug(e.target.value)}
+                            disabled={isSubmitting}
+                            className="w-full h-10 border border-gray-300 rounded-md px-3 text-sm"
+                        >
+                            {APPROVER_OPTIONS.map((a) => (
+                                <option key={a.value} value={a.value}>{a.label}</option>
+                            ))}
+                        </select>
+                    </div>
 
-      <div>
-        <Label htmlFor="rule-approvals">Required Approvals <span className="text-red-500">*</span></Label>
-        <Input 
-          id="rule-approvals" 
-          type="number" 
-          min="1" 
-          max="5"
-          value={requiredApprovals} 
-          onChange={e => setRequiredApprovals(e.target.value ? Number(e.target.value) : '')} 
-        />
-        {errors.requiredApprovals && <p className="text-red-500 text-sm mt-1">{errors.requiredApprovals}</p>}
-      </div>
+                    <div className="flex items-center gap-2">
+                        <input
+                            id="is-active"
+                            type="checkbox"
+                            title="Toggle active status"
+                            checked={isActive}
+                            onChange={(e) => setIsActive(e.target.checked)}
+                            disabled={isSubmitting}
+                            className="h-4 w-4"
+                        />
+                        <Label htmlFor="is-active">Active</Label>
+                    </div>
 
-      <div>
-        <Label htmlFor="rule-approver">Approver Role <span className="text-red-500">*</span></Label>
-        <select
-          id="rule-approver"
-          className="flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-          value={approverSlug}
-          onChange={e => setApproverSlug(e.target.value as RoleSlug)}
-        >
-          <option value="" disabled>Select Role</option>
-          <option value="super_admin">Super Admin</option>
-          <option value="admin">Admin</option>
-        </select>
-        {errors.approverSlug && <p className="text-red-500 text-sm mt-1">{errors.approverSlug}</p>}
-      </div>
-
-      <div className="flex items-center space-x-2 pt-2">
-         <input type="checkbox" id="rule-active" checked={isActive} onChange={e => setIsActive(e.target.checked)} className="h-4 w-4 rounded border-gray-300" />
-         <Label htmlFor="rule-active">Is Active</Label>
-      </div>
-
-      <div className="flex justify-end space-x-2 pt-4">
-        <Button variant="outline" type="button" onClick={onCancel} disabled={isSubmitting}>Cancel</Button>
-        <Button type="submit" disabled={hasErrors || isSubmitting}>
-          {isSubmitting ? 'Saving...' : (rule ? 'Update Rule' : 'Create Rule')}
-        </Button>
-      </div>
-    </form>
-  );
+                    <div className="flex gap-2 justify-end">
+                        <Button type="button" variant="outline" onClick={onClose} disabled={isSubmitting}>
+                            Cancel
+                        </Button>
+                        <Button type="submit" disabled={isSubmitting}>
+                            {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                            {isEditing ? 'Update Rule' : 'Create Rule'}
+                        </Button>
+                    </div>
+                </form>
+            </DialogContent>
+        </Dialog>
+    );
 }

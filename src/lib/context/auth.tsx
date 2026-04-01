@@ -36,7 +36,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
- 
+
   const restoreSessionFromStorage = useCallback(() => {
     try {
       const storedTokens = localStorage.getItem(STORAGE_KEYS.TOKENS);
@@ -49,6 +49,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setTokens(parsedTokens);
         setUser(parsedUser);
       }
+      else if (import.meta.env.DEV) {
+        // Mock user for development to bypass authentication
+        const mockUser: AuthUser = {
+          id: 'mock-admin',
+          email: 'admin@example.com',
+          firstName: 'Mock',
+          lastName: 'Admin',
+          role: USER_ROLES.SUPER_ADMIN,
+          permissions: ['admin.view', 'admin.edit', 'user.manage', 'finance.view', 'analytics.view', 'documents.manage', 'approvals.manage'],
+          isActive: true,
+        };
+        const mockTokens: AuthTokens = { token: 'mock-token' };
+        setUser(mockUser);
+        setTokens(mockTokens);
+      }
+
     } catch (err) {
       console.error('Failed to restore session from storage:', err);
       clearStorage();
@@ -72,7 +88,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
     []
   );
-   
+
 
   const login = useCallback(
     async (email: string, password: string) => {
@@ -82,7 +98,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         // Go Backend Login
         const response: any = await post('LOGIN', { identifier: email, password });
-        
+
         // Backend returns: { token: string, user: models.User }
         const { token, user: backendUser } = response;
 
@@ -101,12 +117,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           isActive: backendUser.is_active,
           isVerified: backendUser.is_verified,
           myReferralCode: backendUser.my_referral_code,
-          assignedRegions: Array.isArray(backendUser.assigned_regions) 
-            ? backendUser.assigned_regions 
+          assignedRegions: Array.isArray(backendUser.assigned_regions)
+            ? backendUser.assigned_regions
             : typeof backendUser.assigned_regions === 'string'
               ? JSON.parse(backendUser.assigned_regions)
               : [],
-          accountType: (backendUser.account_type || 'admin') as AccountType, 
+          accountType: (backendUser.account_type || 'admin') as AccountType,
           is_superUser: backendUser.role?.name === USER_ROLES.SUPER_ADMIN,
 
           // Support both snake_case and camelCase for UI components

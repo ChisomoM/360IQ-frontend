@@ -7,6 +7,19 @@ export const API: Record<string, string> = {
   REFRESH_TOKEN: "auth/refresh-token",
   ME: "auth/me",
 
+  // Roles & Permissions
+  ROLES: "roles",
+  LIST_PERMISSIONS: "permissions",
+
+  // RBAC — Roles, Maker Checker & User Management
+  MAKER_CHECKER_RULES: "maker-checker/rules",
+  MAKER_CHECKER_REQUESTS: "maker-checker/requests",
+  MAKER_CHECKER_APPROVE: "maker-checker/requests/:id/approve",
+  MAKER_CHECKER_REJECT: "maker-checker/requests/:id/reject",
+  USER_DETAIL: "users/:id",
+  USER_PERMISSIONS: "users/:id/permissions",
+  USER_ROLE: "users/:id/role",
+
   // DMS — Departments
   DEPARTMENTS: "departments",
   DEPARTMENT_DETAIL: "departments/:id",
@@ -30,7 +43,7 @@ export const API: Record<string, string> = {
   WORKFLOW_STEP_REJECT: "workflows/steps/:id/reject",
   PENDING_APPROVALS: "workflows/pending",
   USERS: "users",
-  
+
   // Student & Applications
   STUDENT_APPLY: "students/apply",
   APPLICATIONS: "students/applications",
@@ -61,14 +74,14 @@ export const API: Record<string, string> = {
 
   // Audit
   AUDIT_LOGS: "audit",
-  
+
   // Signatures
   SIGNATURE_REQUEST: "signatures/request",
   SIGNATURE_MY: "signatures/my",
   SIGNATURE_SIGN: "signatures/:id/sign",
   SIGNATURE_DECLINE: "signatures/:id/decline",
   SIGNATURE_DOCUMENT: "signatures/document/:docId",
-  
+
   // Payments
   PAYMENTS: "payments",
   PAYMENT_VERIFY: "payments/:id/verify",

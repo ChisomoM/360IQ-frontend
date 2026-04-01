@@ -1,54 +1,31 @@
 import type { ReactNode } from 'react';
-import { Navigate } from 'react-router-dom';
-import { useAuth } from '@/lib/context/useAuth';
 import type { AccountType } from '@/types/auth';
 import { type UserRole } from './constants';
-import { hasPermission } from './permissions';
 
 interface ProtectedRouteProps {
   children: ReactNode;
-  requiredAccountType?: AccountType | AccountType[]; // Legacy
-  requiredRole?: UserRole | UserRole[];
+  requiredAccountType?: AccountType | AccountType[];
+  requiredSlug?: UserRole | UserRole[];
   requiredPermission?: string;
-  fallback?: ReactNode;
 }
 
 export function ProtectedRoute({
   children,
-  requiredAccountType,
-  requiredRole,
-  requiredPermission,
-  fallback,
 }: ProtectedRouteProps) {
-  const { user, isAuthenticated } = useAuth();
-
-  // Check if user is authenticated
-  if (!isAuthenticated || !user) {
-    return fallback || <Navigate to="/login" replace />;
-  }
-
-  // Check required role
-  if (requiredRole && user.role) {
-    const roles = Array.isArray(requiredRole) ? requiredRole : [requiredRole];
-    if (!roles.includes(user.role)) {
-      return fallback || <div>Access Denied: Insufficient Role</div>;
-    }
-  }
-
-  // Check required permission
-  if (requiredPermission) {
-    if (!hasPermission(user, requiredPermission)) {
-      return fallback || <div>Access Denied: Insufficient Permissions</div>;
-    }
-  }
-
-  // Legacy account type check (if needed)
-  if (requiredAccountType && user.accountType) {
-    const accountTypes = Array.isArray(requiredAccountType) ? requiredAccountType : [requiredAccountType];
-    if (!accountTypes.includes(user.accountType)) {
-      return fallback || <div>Access Denied: Invalid Account Type</div>;
-    }
-  }
-
+  // TODO: Re-enable auth checks once backend auth is working
+  // See Issue #23 for full implementation
   return <>{children}</>;
+}
+
+export function PermissionDenied() {
+  return (
+    <div className="flex flex-col items-center justify-center min-h-screen gap-4">
+      <h1 className="text-2xl font-semibold text-gray-800">
+        You do not have the right permissions to view this screen
+      </h1>
+      <a href="/admin/dashboard" className="px-4 py-2 bg-green-700 text-white rounded hover:bg-green-800">
+        Back to Dashboard
+      </a>
+    </div>
+  );
 }
