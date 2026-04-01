@@ -6,9 +6,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { ChevronLeft, Building2 } from "lucide-react";
 import type { Tenant } from "@/types/tenant";
-import TenantBrandingEditor from "@/(admin)/controlhub/components/TenantBrandingEditor";
-import TenantSettingsEditor from "@/(admin)/controlhub/components/TenantSettingsEditor";
-import TenantAdminsView from "@/(admin)/controlhub/components/TenantAdminsView";
+import TenantBrandingEditor from "@/(controlhub)/components/TenantBrandingEditor";
+import TenantSettingsEditor from "@/(controlhub)/components/TenantSettingsEditor";
+import TenantAdminsView from "@/(controlhub)/components/TenantAdminsView";
 
 // Mock Data (matches ID 1)
 const MOCK_TENANT: Tenant = {

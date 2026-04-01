@@ -29,19 +29,16 @@ import DocumentDetail from './(admin)/admin/DocumentDetail';
 import DocumentCharts from './(admin)/admin/DocumentCharts';
 import Workflows from './(admin)/admin/Workflows';
 import AuditTrails from './(admin)/admin/AuditTrails';
-import FinanceDashboard from './(admin)/finance/FinanceDashboard';
-import PaymentManagement from './(admin)/finance/PaymentManagement';
-import FinanceReports from './(admin)/finance/FinanceReports';
-import HRDashboard from './(admin)/hr/HRDashboard';
-import StaffDirectory from './(admin)/hr/StaffDirectory';
-import LeaveManagement from './(admin)/hr/LeaveManagement';
-import StaffApplications from './(admin)/hr/StaffApplications';
+import FinanceDashboard from './(admin)/admin/finance/FinanceDashboard';
+import PaymentManagement from './(admin)/admin/finance/PaymentManagement';
+import FinanceReports from './(admin)/admin/finance/FinanceReports';
+import HRDashboard from './(admin)/admin/hr/HRDashboard';
+import StaffDirectory from './(admin)/admin/hr/StaffDirectory';
+import LeaveManagement from './(admin)/admin/hr/LeaveManagement';
+import StaffApplications from './(admin)/admin/hr/StaffApplications';
 import MySignatures from './(admin)/admin/MySignatures';
 import StaffOnboarding from './(public)/staff-onboarding/StaffOnboarding';
 import DepartmentDetailPage from './(admin)/admin/DepartmentDetailPage';
-import ControlHubDashboard from './(admin)/controlhub/Dashboard';
-import TenantsList from './(admin)/controlhub/TenantsList';
-import TenantDetail from './(admin)/controlhub/TenantDetail';
 
 
 
@@ -108,14 +105,6 @@ function App() {
         <Route path="hr/leave" element={<LeaveManagement />} />
         <Route path="hr/applications" element={<StaffApplications />} />
         <Route path="signatures" element={<MySignatures />} />
-
-        {/* ControlHub Routes */}
-        <Route path="controlhub">
-          <Route index element={<Navigate to="/admin/controlhub/dashboard" replace />} />
-          <Route path="dashboard" element={<ControlHubDashboard />} />
-          <Route path="tenants" element={<TenantsList />} />
-          <Route path="tenants/:id" element={<TenantDetail />} />
-        </Route>
       </Route>
     </Routes>
     <Toaster position="top-right" richColors />

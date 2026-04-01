@@ -14,8 +14,7 @@ import { Plus, Search, MoreVertical, ExternalLink } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import type { Tenant } from "@/types/tenant";
-import CreateTenantModal from "./components/CreateTenantModal";
-// import CreateTenantModal from "@/(admin)/controlhub/CreateTenantModal";
+import CreateTenantModal from "@/(controlhub)/CreateTenantModal";
 
 // Mock Data
 const MOCK_TENANTS: Tenant[] = [
