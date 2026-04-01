@@ -114,13 +114,23 @@ export const ROLE_PERMISSIONS: Record<UserRole, string[]> = {
     PERMISSIONS.HR_LEAVE_REQUEST,
   ],
   [USER_ROLES.TEACHER]: [],
+  [USER_ROLES.ADMIN]: [
+    PERMISSIONS.VIEW_ALL_MEMBERS,
+    PERMISSIONS.MANAGE_USERS,
+    PERMISSIONS.VIEW_DEPARTMENTS,
+  ],
+  [USER_ROLES.USER]: [
+    PERMISSIONS.VIEW_ALL_MEMBERS,
+  ],
 };
 
 export function hasPermission(user: AuthUser | null, permission: string): boolean {
   // Temporary bypass for department testing so the user can see features regardless of role
+  /* 
   if (permission === PERMISSIONS.MANAGE_DEPARTMENTS || permission === PERMISSIONS.VIEW_DEPARTMENTS) {
     return true;
   }
+  */
 
   if (!user || !user.role) return false;
   

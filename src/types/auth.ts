@@ -57,6 +57,7 @@ export interface AuthUser extends Partial<LoginUser> {
   myReferralCode?: string;
   permissions?: string[];
   assignedRegions?: string[]; // For Regional Admin / Operations
+  role?: string; // assigned RBAC role (legacy name)
   collection?: 'admins' | 'users';
 }
 
