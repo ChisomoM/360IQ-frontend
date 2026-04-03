@@ -1,0 +1,276 @@
+﻿node.exe : npm warn 
+Unknown project config "
+strict-peer-dependencies
+". This will stop 
+working in the next 
+major version of npm.
+At line:1 char:1
++ & "C:\nvm4w\nodejs/nod
+e.exe" "C:\nvm4w\nodejs/
+node_modules/npm/bin/np 
+...
++ ~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo      
+        : NotSpecified: 
+(npm     warn 
+Unknow...version     of 
+npm.:String) [], R    
+emoteException
+    + 
+FullyQualifiedErrorI    
+d : NativeCommandError
+ 
+npm warn Unknown 
+project config 
+"public-hoist-pattern". 
+This will stop working 
+in the next major 
+version of npm.
+
+> c-react-template@0.0.0 lint
+> eslint .
+
+
+C:\Users\Samuel\Desktop\AVEC\unidims-frontend\src\(admin)\admin\AnalyticsDashboard.tsx
+    5:113  error  'LineChart' is defined but never used  @typescript-eslint/no-unused-vars
+    5:124  error  'Line' is defined but never used       @typescript-eslint/no-unused-vars
+    6:64   error  'Calendar' is defined but never used   @typescript-eslint/no-unused-vars
+  365:58   error  'index' is defined but never used      @typescript-eslint/no-unused-vars
+  408:62   error  'index' is defined but never used      @typescript-eslint/no-unused-vars
+
+C:\Users\Samuel\Desktop\AVEC\unidims-frontend\src\(admin)\admin\AuditTrails.tsx
+   7:3  error  'Table' is defined but never used        @typescript-eslint/no-unused-vars
+   8:3  error  'TableBody' is defined but never used    @typescript-eslint/no-unused-vars
+   9:3  error  'TableCell' is defined but never used    @typescript-eslint/no-unused-vars
+  10:3  error  'TableHead' is defined but never used    @typescript-eslint/no-unused-vars
+  11:3  error  'TableHeader' is defined but never used  @typescript-eslint/no-unused-vars
+  12:3  error  'TableRow' is defined but never used     @typescript-eslint/no-unused-vars
+
+C:\Users\Samuel\Desktop\AVEC\unidims-frontend\src\(admin)\admin\DepartmentAssignUsers.tsx
+   66:40  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  102:14  error  'error' is defined but never used         @typescript-eslint/no-unused-vars
+
+C:\Users\Samuel\Desktop\AVEC\unidims-frontend\src\(admin)\admin\DocumentDetail.tsx
+  193:49  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  194:29  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  209:19  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  223:19  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  259:19  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  670:84  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  681:74  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Samuel\Desktop\AVEC\unidims-frontend\src\(admin)\admin\Documents.tsx
+   34:3   error  'Sheet' is defined but never used                    @typescript-eslint/no-unused-vars
+   35:3   error  'SheetContent' is defined but never used             @typescript-eslint/no-unused-vars
+   36:3   error  'SheetDescription' is defined but never used         @typescript-eslint/no-unused-vars
+   37:3   error  'SheetHeader' is defined but never used              @typescript-eslint/no-unused-vars
+   38:3   error  'SheetTitle' is defined but never used               @typescript-eslint/no-unused-vars
+   63:3   error  'FileArchive' is defined but never used              @typescript-eslint/no-unused-vars
+   64:3   error  'Clock' is defined but never used                    @typescript-eslint/no-unused-vars
+   65:3   error  'User' is defined but never used                     @typescript-eslint/no-unused-vars
+   66:3   error  'Building' is defined but never used                 @typescript-eslint/no-unused-vars
+   86:7   error  'visibilityIcon' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  130:10  error  'isViewOpen' is assigned a value but never used      @typescript-eslint/no-unused-vars
+  130:22  error  'setIsViewOpen' is assigned a value but never used   @typescript-eslint/no-unused-vars
+  196:19  error  Unexpected any. Specify a different type             @typescript-eslint/no-explicit-any
+  233:49  error  Unexpected any. Specify a different type             @typescript-eslint/no-explicit-any
+  234:29  error  Unexpected any. Specify a different type             @typescript-eslint/no-explicit-any
+  254:19  error  Unexpected any. Specify a different type             @typescript-eslint/no-explicit-any
+  277:19  error  Unexpected any. Specify a different type             @typescript-eslint/no-explicit-any
+  320:19  error  Unexpected any. Specify a different type             @typescript-eslint/no-explicit-any
+  337:9   error  'deptName' is assigned a value but never used        @typescript-eslint/no-unused-vars
+  600:84  error  Unexpected any. Specify a different type             @typescript-eslint/no-explicit-any
+  611:74  error  Unexpected any. Specify a different type             @typescript-eslint/no-explicit-any
+
+C:\Users\Samuel\Desktop\AVEC\unidims-frontend\src\(admin)\admin\ManageUsers.tsx
+   67:25  error    Unexpected any. Specify a different type                                                                       @typescript-eslint/no-explicit-any
+   93:8   warning  React Hook useEffect has a missing dependency: 'fetchUsers'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  102:25  error    Unexpected any. Specify a different type                                                                       @typescript-eslint/no-explicit-any
+  292:50  error    Unexpected any. Specify a different type                                                                       @typescript-eslint/no-explicit-any
+
+C:\Users\Samuel\Desktop\AVEC\unidims-frontend\src\(admin)\admin\MySignatures.tsx
+  65:19  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Samuel\Desktop\AVEC\unidims-frontend\src\(admin)\admin\RolesManagement.tsx
+  33:18  error  'err' is defined but never used  @typescript-eslint/no-unused-vars
+  57:18  error  'err' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\Samuel\Desktop\AVEC\unidims-frontend\src\(admin)\admin\StudentProfile.tsx
+  28:3  error  'Calendar' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\Samuel\Desktop\AVEC\unidims-frontend\src\(admin)\admin\TeamManagement.tsx
+   60:45  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  118:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Samuel\Desktop\AVEC\unidims-frontend\src\(admin)\admin\Workflows.tsx
+   2:16  error  'CardHeader' is defined but never used     @typescript-eslint/no-unused-vars
+   2:28  error  'CardTitle' is defined but never used      @typescript-eslint/no-unused-vars
+  29:10  error  'ClipboardList' is defined but never used  @typescript-eslint/no-unused-vars
+  29:68  error  'MessageSquare' is defined but never used  @typescript-eslint/no-unused-vars
+  29:83  error  'User' is defined but never used           @typescript-eslint/no-unused-vars
+  84:21  error  Unexpected any. Specify a different type   @typescript-eslint/no-explicit-any
+
+C:\Users\Samuel\Desktop\AVEC\unidims-frontend\src\(admin)\admin\finance\FinanceDashboard.tsx
+  19:10  error  'format' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\Samuel\Desktop\AVEC\unidims-frontend\src\(admin)\admin\finance\FinanceReports.tsx
+  74:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  91:25  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Samuel\Desktop\AVEC\unidims-frontend\src\(admin)\admin\finance\PaymentManagement.tsx
+   41:3   error    'AlertCircle' is defined but never used                                                                          @typescript-eslint/no-unused-vars
+   76:6   warning  React Hook useEffect has a missing dependency: 'applyFilters'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  285:85  error    Unexpected any. Specify a different type                                                                         @typescript-eslint/no-explicit-any
+  304:91  error    Unexpected any. Specify a different type                                                                         @typescript-eslint/no-explicit-any
+  325:93  error    Unexpected any. Specify a different type                                                                         @typescript-eslint/no-explicit-any
+
+C:\Users\Samuel\Desktop\AVEC\unidims-frontend\src\(controlhub)\CreateTenantModal.tsx
+  63:14  error  'error' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\Samuel\Desktop\AVEC\unidims-frontend\src\(controlhub)\TenantDetail.tsx
+   42:11  error  'id' is assigned a value but never used   @typescript-eslint/no-unused-vars
+  105:33  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  105:60  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Samuel\Desktop\AVEC\unidims-frontend\src\(controlhub)\components\TenantAdminsView.tsx
+   64:32  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   79:88  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  142:78  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Samuel\Desktop\AVEC\unidims-frontend\src\(controlhub)\components\TenantBrandingEditor.tsx
+  26:14  error  'error' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\Samuel\Desktop\AVEC\unidims-frontend\src\(controlhub)\components\TenantSettingsEditor.tsx
+  26:14  error  'error' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\Samuel\Desktop\AVEC\unidims-frontend\src\components\ai\AIChatSidebar.tsx
+   61:20  error    Unexpected any. Specify a different type                                                                                                                                                                                                   @typescript-eslint/no-explicit-any
+   64:6   warning  React Hook useEffect has a missing dependency: 'documents.length'. Either include it or remove the dependency array                                                                                                                        react-hooks/exhaustive-deps
+   81:6   warning  React Hook useEffect has a missing dependency: 'onDocConsumed'. Either include it or remove the dependency array. If 'onDocConsumed' changes too often, find the parent component that defines it and wrap that definition in useCallback  react-hooks/exhaustive-deps
+   93:20  error    Unexpected any. Specify a different type                                                                                                                                                                                                   @typescript-eslint/no-explicit-any
+  115:19  error    Unexpected any. Specify a different type                                                                                                                                                                                                   @typescript-eslint/no-explicit-any
+
+C:\Users\Samuel\Desktop\AVEC\unidims-frontend\src\components\ai\ComparisonChartViewer.tsx
+  70:19  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Samuel\Desktop\AVEC\unidims-frontend\src\components\ai\ExcelChartViewer.tsx
+  145:19  error    Unexpected any. Specify a different type                                                                           @typescript-eslint/no-explicit-any
+  152:42  warning  React Hook useEffect has a missing dependency: 'fetchChartData'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+C:\Users\Samuel\Desktop\AVEC\unidims-frontend\src\components\rbac\UserPermissionsSheet.tsx
+  24:6   warning  React Hook useEffect has a missing dependency: 'loadData'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  36:14  error    'err' is defined but never used                                                                              @typescript-eslint/no-unused-vars
+
+C:\Users\Samuel\Desktop\AVEC\unidims-frontend\src\components\signature\RequestSignatureModal.tsx
+   58:10  error  'pdfBuffer' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  124:19  error  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+
+C:\Users\Samuel\Desktop\AVEC\unidims-frontend\src\components\signature\SignDocumentModal.tsx
+   62:27  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   73:31  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  184:29  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  198:19  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Samuel\Desktop\AVEC\unidims-frontend\src\components\ui\badge.tsx
+  36:17  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+
+C:\Users\Samuel\Desktop\AVEC\unidims-frontend\src\components\ui\button.tsx
+  58:18  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+
+C:\Users\Samuel\Desktop\AVEC\unidims-frontend\src\components\ui\form.tsx
+  170:3  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+
+C:\Users\Samuel\Desktop\AVEC\unidims-frontend\src\components\ui\navigation-menu.tsx
+  119:3  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+
+C:\Users\Samuel\Desktop\AVEC\unidims-frontend\src\components\ui\sidebar.tsx
+  762:3  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+
+C:\Users\Samuel\Desktop\AVEC\unidims-frontend\src\components\ui\sticky-scroll-reveal.tsx
+  14:37  error    Unexpected any. Specify a different type                                                                            @typescript-eslint/no-explicit-any
+  15:33  error    Unexpected any. Specify a different type                                                                            @typescript-eslint/no-explicit-any
+  20:22  error    Unexpected any. Specify a different type                                                                            @typescript-eslint/no-explicit-any
+  62:6   warning  React Hook useEffect has a missing dependency: 'linearGradients'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+C:\Users\Samuel\Desktop\AVEC\unidims-frontend\src\components\ui\table.tsx
+  170:28  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  172:22  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Samuel\Desktop\AVEC\unidims-frontend\src\components\ui\toggle.tsx
+  45:18  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+
+C:\Users\Samuel\Desktop\AVEC\unidims-frontend\src\hooks\use-toast.ts
+  18:7  error  'actionTypes' is assigned a value but only used as a type  @typescript-eslint/no-unused-vars
+
+C:\Users\Samuel\Desktop\AVEC\unidims-frontend\src\lib\apiClient.ts
+  1:50  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Samuel\Desktop\AVEC\unidims-frontend\src\lib\api\ai.ts
+  34:19  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  44:70  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  48:19  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  58:68  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  62:19  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Samuel\Desktop\AVEC\unidims-frontend\src\lib\audit.tsx
+  10:14  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Samuel\Desktop\AVEC\unidims-frontend\src\lib\auth\firebaseAuth.ts
+  10:42  error  '_email' is defined but never used        @typescript-eslint/no-unused-vars
+  10:58  error  '_password' is defined but never used     @typescript-eslint/no-unused-vars
+  15:42  error  '_email' is defined but never used        @typescript-eslint/no-unused-vars
+  15:58  error  '_password' is defined but never used     @typescript-eslint/no-unused-vars
+  15:77  error  '_displayName' is defined but never used  @typescript-eslint/no-unused-vars
+  24:35  error  '_callback' is defined but never used     @typescript-eslint/no-unused-vars
+  29:37  error  '_user' is defined but never used         @typescript-eslint/no-unused-vars
+  29:44  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Samuel\Desktop\AVEC\unidims-frontend\src\lib\context\RbacContext.tsx
+  84:17  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+
+C:\Users\Samuel\Desktop\AVEC\unidims-frontend\src\lib\context\user.tsx
+  39:14  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+
+C:\Users\Samuel\Desktop\AVEC\unidims-frontend\src\lib\csvExport.ts
+  1:50  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Samuel\Desktop\AVEC\unidims-frontend\src\lib\firebase\firestore.ts
+   5:28  error  '_collectionName' is defined but never used        @typescript-eslint/no-unused-vars
+   5:53  error  '_docId' is defined but never used                 @typescript-eslint/no-unused-vars
+   9:55  error  '_constraints' is assigned a value but never used  @typescript-eslint/no-unused-vars
+   9:69  error  Unexpected any. Specify a different type           @typescript-eslint/no-explicit-any
+  13:28  error  '_collectionName' is defined but never used        @typescript-eslint/no-unused-vars
+  13:53  error  '_data' is defined but never used                  @typescript-eslint/no-unused-vars
+  13:60  error  Unexpected any. Specify a different type           @typescript-eslint/no-explicit-any
+  18:31  error  '_collectionName' is defined but never used        @typescript-eslint/no-unused-vars
+  18:56  error  '_docId' is defined but never used                 @typescript-eslint/no-unused-vars
+  18:72  error  '_data' is defined but never used                  @typescript-eslint/no-unused-vars
+  18:79  error  Unexpected any. Specify a different type           @typescript-eslint/no-explicit-any
+  22:28  error  '_collectionName' is defined but never used        @typescript-eslint/no-unused-vars
+  22:53  error  '_docId' is defined but never used                 @typescript-eslint/no-unused-vars
+  22:69  error  '_data' is defined but never used                  @typescript-eslint/no-unused-vars
+  22:76  error  Unexpected any. Specify a different type           @typescript-eslint/no-explicit-any
+  26:31  error  '_collectionName' is defined but never used        @typescript-eslint/no-unused-vars
+  26:56  error  '_docId' is defined but never used                 @typescript-eslint/no-unused-vars
+  31:19  error  '_field' is defined but never used                 @typescript-eslint/no-unused-vars
+  31:35  error  '_op' is defined but never used                    @typescript-eslint/no-unused-vars
+  31:48  error  '_value' is defined but never used                 @typescript-eslint/no-unused-vars
+  31:56  error  Unexpected any. Specify a different type           @typescript-eslint/no-explicit-any
+  34:21  error  '_field' is defined but never used                 @typescript-eslint/no-unused-vars
+  34:37  error  '_dir' is defined but never used                   @typescript-eslint/no-unused-vars
+  37:19  error  '_n' is defined but never used                     @typescript-eslint/no-unused-vars
+
+C:\Users\Samuel\Desktop\AVEC\unidims-frontend\src\lib\permissions.tsx
+  63:17  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+  78:17  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+  82:17  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+
+C:\Users\Samuel\Desktop\AVEC\unidims-frontend\src\types\analytics.ts
+  208:18  error  An interface declaring no members is equivalent to its supertype  @typescript-eslint/no-empty-object-type
+  215:18  error  An interface declaring no members is equivalent to its supertype  @typescript-eslint/no-empty-object-type
+  258:29  error  Unexpected any. Specify a different type                          @typescript-eslint/no-explicit-any
+
+Γ£û 151 problems (133 errors, 18 warnings)
+
