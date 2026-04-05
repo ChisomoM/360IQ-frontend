@@ -34,6 +34,9 @@ function base64ToUint8Array(dataUrl: string): Uint8Array {
   return bytes;
 }
 
+const getErrorMessage = (error: unknown, fallback: string) =>
+  error instanceof Error ? error.message : fallback;
+
 export default function SignDocumentModal({ request, open, onClose, onSigned }: SignDocumentModalProps) {
   const sigPadRef = useRef<SignaturePadHandle>(null);
   const [pdfBuffer, setPdfBuffer] = useState<ArrayBuffer | null>(null);
@@ -59,7 +62,7 @@ export default function SignDocumentModal({ request, open, onClose, onSigned }: 
       setPdfBuffer(buf);
       setPdfUrl(URL.createObjectURL(new Blob([buf], { type: 'application/pdf' })));
       return;
-    } catch (downloadErr: any) {
+    } catch (downloadErr) {
       if (doc.file_url) {
         try {
           const res = await fetch(doc.file_url);
@@ -70,11 +73,11 @@ export default function SignDocumentModal({ request, open, onClose, onSigned }: 
           setPdfBuffer(buf);
           setPdfUrl(URL.createObjectURL(new Blob([buf], { type: 'application/pdf' })));
           return;
-        } catch (fallbackErr: any) {
-          setPreviewError(fallbackErr?.message || downloadErr?.message || 'Failed to load document preview');
+        } catch (fallbackErr) {
+          setPreviewError(getErrorMessage(fallbackErr, getErrorMessage(downloadErr, 'Failed to load document preview')));
         }
       } else {
-        setPreviewError(downloadErr?.message || 'Failed to load document preview');
+        setPreviewError(getErrorMessage(downloadErr, 'Failed to load document preview'));
       }
     } finally {
       setLoadingPdf(false);
@@ -181,9 +184,9 @@ export default function SignDocumentModal({ request, open, onClose, onSigned }: 
           signedVersionId = versionRes?.id;
           // Optionally notify the user the document version was updated!
           toast.success('Document updated with signed version');
-        } catch (uploadErr: any) {
+        } catch (uploadErr) {
           console.warn('Signed version upload failed:', uploadErr);
-          toast.error(`Failed to attach signed file to document versions: ${uploadErr.message}`);
+          toast.error(`Failed to attach signed file to document versions: ${getErrorMessage(uploadErr, 'Upload failed')}`);
         }
       }
 
@@ -195,8 +198,8 @@ export default function SignDocumentModal({ request, open, onClose, onSigned }: 
       }
       setActiveView('signed');
       toast.success('Document signed successfully');
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to sign document');
+    } catch (err) {
+      toast.error(getErrorMessage(err, 'Failed to sign document'));
     } finally {
       setIsSigning(false);
     }

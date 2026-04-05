@@ -64,6 +64,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import RequestSignatureModal from '@/components/signature/RequestSignatureModal';
+import DocumentPreview from '@/components/signature/DocumentPreview';
 import { getDocumentSignatureRequests } from '@/lib/api/signatures';
 import type { SignatureRequest } from '@/types/signatures';
 
@@ -104,6 +105,9 @@ const docTypeColor = (type: string) => {
   };
   return map[type] ?? 'bg-gray-100 text-gray-600';
 };
+
+const getErrorMessage = (error: unknown, fallback: string) =>
+  error instanceof Error ? error.message : fallback;
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
@@ -190,8 +194,8 @@ export default function DocumentDetail() {
     setEditData({
       title: doc.title,
       description: doc.description ?? '',
-      visibility_level: doc.visibility_level as any,
-      status: doc.status as any,
+      visibility_level: doc.visibility_level,
+      status: doc.status === 'active' || doc.status === 'archived' ? doc.status : undefined,
       category: doc.category ?? '',
       document_type: doc.document_type,
     });
@@ -206,8 +210,8 @@ export default function DocumentDetail() {
       setDoc({ ...doc, ...updated });
       toast.success('Document updated');
       setIsEditOpen(false);
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to update document');
+    } catch (err) {
+      toast.error(getErrorMessage(err, 'Failed to update document'));
     } finally {
       setIsUpdating(false);
     }
@@ -220,8 +224,8 @@ export default function DocumentDetail() {
       await fetchData('DOCUMENT_DELETE', 'DELETE', { id: doc.id });
       toast.success('Document deleted');
       navigate('/admin/documents');
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to delete document');
+    } catch (err) {
+      toast.error(getErrorMessage(err, 'Failed to delete document'));
     } finally {
       setIsDeleting(false);
     }
@@ -256,8 +260,8 @@ export default function DocumentDetail() {
       setNewVersionNotes('');
       const data = await fetchData('DOCUMENT_VERSIONS', 'GET', { id: doc.id });
       setVersions(Array.isArray(data) ? data : (data?.items ?? []));
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to upload version');
+    } catch (err) {
+      toast.error(getErrorMessage(err, 'Failed to upload version'));
     } finally {
       setIsUploadingVersion(false);
     }
@@ -364,6 +368,12 @@ export default function DocumentDetail() {
 
         {/* ── Left: main content ──────────────────────────────────────────── */}
         <div className="lg:col-span-8 space-y-6">
+
+          <DocumentPreview
+            document={doc}
+            signatureRequests={sigRequests}
+            loadingSignatures={loadingSigs}
+          />
 
           {/* Document Details */}
           <Card className="border-none shadow-md">
@@ -667,7 +677,12 @@ export default function DocumentDetail() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Visibility</Label>
-                <Select value={editData.visibility_level ?? ''} onValueChange={(v: any) => setEditData({ ...editData, visibility_level: v })}>
+                <Select
+                  value={editData.visibility_level ?? ''}
+                  onValueChange={(value: DocumentUpdatePayload['visibility_level']) =>
+                    setEditData({ ...editData, visibility_level: value })
+                  }
+                >
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="department">Department Only</SelectItem>
@@ -678,7 +693,12 @@ export default function DocumentDetail() {
               </div>
               <div className="space-y-2">
                 <Label>Status</Label>
-                <Select value={editData.status ?? ''} onValueChange={(v: any) => setEditData({ ...editData, status: v })}>
+                <Select
+                  value={editData.status ?? ''}
+                  onValueChange={(value: DocumentUpdatePayload['status']) =>
+                    setEditData({ ...editData, status: value })
+                  }
+                >
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="active">Active</SelectItem>
