@@ -17,14 +17,6 @@ export const USER_ROLES = {
   SUPER_ADMIN: 'super_admin',
   ADMIN: 'admin',
   USER: 'user',
-  // Restoring missing roles used in permissions logic and tests
-  RECORDS_AUTHORITY: 'records_authority',
-  DEPT_HEAD: 'dept_head',
-  HR_OFFICER: 'hr_officer',
-  FINANCE_OFFICER: 'finance_officer',
-  AUDITOR: 'auditor',
-  STAFF_MEMBER: 'staff_member',
-  TEACHER: 'teacher',
 } as const;
 
 export type UserRole = typeof USER_ROLES[keyof typeof USER_ROLES];

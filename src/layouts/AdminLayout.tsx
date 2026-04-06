@@ -273,20 +273,37 @@ export default function AdminLayout() {
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 )}
-                {hasPermission(user, PERMISSIONS['users.write']) && (
+                {hasPermission(user, PERMISSIONS['users.read']) && (
                   <SidebarMenuItem>
                     <SidebarMenuButton
                       asChild
                       isActive={isActive("/admin/user-management")}
                       className="text-white hover:bg-white/10 data-[active=true]:bg-secondary data-[active=true]:text-black rounded-md transition-colors"
                     >
-                      <Link to="/admin/user-management" className="flex items-center gap-3">
+                      <Link to="/admin/users" className="flex items-center gap-3">
                         <Users className="h-5 w-5" />
                         {!collapsed && <span>User Management</span>}
                       </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 )}
+                {/* 
+                  Preserving the old administrators link as requested, just disabled
+                  {hasPermission(user, PERMISSIONS['users.write']) && (
+                    <SidebarMenuItem>
+                      <SidebarMenuButton
+                        asChild
+                        isActive={isActive("/admin/user-management")}
+                        className="text-white hover:bg-green-700 data-[active=true]:bg-[#febb00] data-[active=true]:text-black rounded-md"
+                      >
+                        <Link to="/admin/user-management" className="flex items-center gap-3">
+                          <Users className="h-5 w-5" />
+                          {!collapsed && <span>Administrators</span>}
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  )} 
+                */}
                 {hasPermission(user, PERMISSIONS['audit.read']) && (
                   <SidebarMenuItem>
                     <SidebarMenuButton

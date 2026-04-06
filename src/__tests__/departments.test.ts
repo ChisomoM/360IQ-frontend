@@ -3,7 +3,7 @@
  * Covers: validation logic, API error mapping, filter, permission checks.
  * Uses vi.mock to avoid live network calls.
  */
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { hasPermission, PERMISSIONS } from '../lib/permissions';
 import { USER_ROLES } from '../lib/constants';
 import type { AuthUser } from '../types/auth';
@@ -155,34 +155,41 @@ describe('Department list filtering', () => {
   });
 });
 
-describe('Role-based permission check (MANAGE_DEPARTMENTS)', () => {
-  it('grants SUPER_ADMIN access', () => {
+// ─── Permission checks ───────────────────────────────────────────────────────
+// The system has exactly 3 roles: super_admin, admin, user.
+// Access to departments.manage is granted per the permissions[] array on the user
+// (assigned by the backend). Role slug alone does not grant access in the frontend.
+
+describe('Role-based permission check (departments.manage)', () => {
+  const PERM = PERMISSIONS['departments.manage'];
+
+  it('grants SUPER_ADMIN access when permission is explicitly assigned', () => {
+    const admin = makeUser(USER_ROLES.SUPER_ADMIN, [PERM]);
+    expect(hasPermission(admin, PERM)).toBe(true);
+  });
+
+  it('grants ADMIN access when permission is explicitly assigned', () => {
+    const admin = makeUser(USER_ROLES.ADMIN, [PERM]);
+    expect(hasPermission(admin, PERM)).toBe(true);
+  });
+
+  it('denies USER role when no explicit permission is assigned', () => {
+    const user = makeUser(USER_ROLES.USER);
+    expect(hasPermission(user, PERM)).toBe(false);
+  });
+
+  it('denies SUPER_ADMIN when permission array is empty', () => {
     const admin = makeUser(USER_ROLES.SUPER_ADMIN);
-    expect(hasPermission(admin, PERMISSIONS.MANAGE_DEPARTMENTS)).toBe(true);
-  });
-
-  it('grants RECORDS_AUTHORITY access', () => {
-    const recordsAuth = makeUser(USER_ROLES.RECORDS_AUTHORITY);
-    expect(hasPermission(recordsAuth, PERMISSIONS.MANAGE_DEPARTMENTS)).toBe(true);
-  });
-
-  it('denies FINANCE_OFFICER role', () => {
-    const finance = makeUser(USER_ROLES.FINANCE_OFFICER);
-    expect(hasPermission(finance, PERMISSIONS.MANAGE_DEPARTMENTS)).toBe(false);
-  });
-
-  it('denies STAFF_MEMBER role', () => {
-    const support = makeUser(USER_ROLES.STAFF_MEMBER);
-    expect(hasPermission(support, PERMISSIONS.MANAGE_DEPARTMENTS)).toBe(false);
+    expect(hasPermission(admin, PERM)).toBe(false);
   });
 
   it('denies null user', () => {
-    expect(hasPermission(null, PERMISSIONS.MANAGE_DEPARTMENTS)).toBe(false);
+    expect(hasPermission(null, PERM)).toBe(false);
   });
 
   it('grants access via explicit permission override regardless of role', () => {
-    // A support user who was explicitly given the permission should still pass
-    const escalated = makeUser(USER_ROLES.STAFF_MEMBER, [PERMISSIONS.MANAGE_DEPARTMENTS]);
-    expect(hasPermission(escalated, PERMISSIONS.MANAGE_DEPARTMENTS)).toBe(true);
+    // A user-role user who was explicitly given the permission should still pass
+    const escalated = makeUser(USER_ROLES.USER, [PERM]);
+    expect(hasPermission(escalated, PERM)).toBe(true);
   });
 });

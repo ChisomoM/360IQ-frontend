@@ -18,7 +18,7 @@ export default function DepartmentDetailPage() {
   const [dept, setDept] = useState<DepartmentDetail | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const canManage = hasPermission(user, PERMISSIONS.MANAGE_DEPARTMENTS);
+  const canManage = hasPermission(user, PERMISSIONS['departments.manage']);
 
   useEffect(() => {
     if (!id) return;

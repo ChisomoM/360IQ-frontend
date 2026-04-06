@@ -11,7 +11,9 @@ import DynamicDashboard from './(admin)/admin/DynamicDashboard';
 import RoleAwareDashboard from './(admin)/admin/RoleAwareDashboard';
 import DashboardConfiguration from './(admin)/admin/DashboardConfiguration';
 
-import TeamManagement from './(admin)/admin/TeamManagement';
+// Keeping this import just in case we need to roll back to the old user management
+// import TeamManagement from './(admin)/admin/TeamManagement';
+import ManageUsers from './(admin)/admin/ManageUsers'; // New User management page
 import TeacherManagement from './(admin)/admin/TeacherManagement';
 import Referrals from './(admin)/admin/Referrals';
 import FinancialsPage from './(admin)/admin/FinancialsPage';
@@ -72,7 +74,10 @@ function App() {
           <Route path="legacy-dashboard" element={<AdminDashboard />} />
           <Route path="approvals" element={<ApprovalsPage />} />
           <Route path="regions" element={<RegionManagement />} />
-          <Route path="user-management" element={<TeamManagement />} />
+          {/* We are replacing the old user-management with our shiny new 'users' route, 
+              but leaving this commented out just in case we need to roll back. */}
+          {/* <Route path="user-management" element={<TeamManagement />} /> */}
+          <Route path="users" element={<ManageUsers />} />
           <Route path="teacher-management" element={<TeacherManagement />} />
           <Route path="financials" element={<FinancialsPage />} />
           <Route path="referrals" element={<Referrals />} />

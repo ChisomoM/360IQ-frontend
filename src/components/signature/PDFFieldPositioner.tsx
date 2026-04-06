@@ -24,10 +24,17 @@ export interface SignatureField {
   h: number;
 }
 
+export interface PreviewField extends SignatureField {
+  id: string;
+  label: string;
+  status?: string;
+}
+
 interface PDFFieldPositionerProps {
   file: ArrayBuffer | string;
   mode: 'place' | 'preview';
   field?: SignatureField;
+  previewFields?: PreviewField[];
   onFieldChange?: (field: SignatureField) => void;
   fieldLabel?: string;
   pageWidth?: number;
@@ -40,12 +47,13 @@ export default function PDFFieldPositioner({
   file,
   mode,
   field,
+  previewFields,
   onFieldChange,
   fieldLabel = 'Sign here',
   pageWidth = 680,
 }: PDFFieldPositionerProps) {
   const [numPages, setNumPages] = useState<number>(0);
-  const [currentPage, setCurrentPage] = useState<number>(field?.page ?? 1);
+  const [currentPage, setCurrentPage] = useState<number>(field?.page ?? previewFields?.[0]?.page ?? 1);
   const [pageSize, setPageSize] = useState<{ width: number; height: number } | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [dragging, setDragging] = useState(false);
@@ -57,6 +65,12 @@ export default function PDFFieldPositioner({
   useEffect(() => {
     if (field?.page) setCurrentPage(field.page);
   }, [field?.page]);
+
+  useEffect(() => {
+    if (mode === 'preview' && !field && previewFields?.length && currentPage === 1) {
+      setCurrentPage(previewFields[0].page);
+    }
+  }, [currentPage, field, mode, previewFields]);
 
   const handleDocumentLoad = ({ numPages }: { numPages: number }) => {
     setNumPages(numPages);
@@ -144,6 +158,39 @@ export default function PDFFieldPositioner({
     : undefined;
 
   const showField = !!field && field.page === currentPage;
+  const activePreviewFields =
+    mode === 'preview'
+      ? (previewFields?.filter((previewField) => previewField.page === currentPage) ??
+        (showField
+          ? [{ id: 'preview-field', label: fieldLabel, status: 'pending', ...field }]
+          : []))
+      : [];
+
+  const getPreviewFieldClasses = (status?: string) => {
+    switch (status) {
+      case 'signed':
+        return {
+          frame: 'border-green-500 bg-green-500/10',
+          badge: 'bg-green-600 text-white',
+        };
+      case 'declined':
+        return {
+          frame: 'border-red-500 bg-red-500/10',
+          badge: 'bg-red-600 text-white',
+        };
+      case 'expired':
+        return {
+          frame: 'border-slate-400 bg-slate-400/10',
+          badge: 'bg-slate-600 text-white',
+        };
+      default:
+        return {
+          frame: 'border-amber-500 bg-amber-500/10',
+          badge: 'bg-amber-600 text-white',
+        };
+    }
+  };
+
   return (
     <div className="flex flex-col gap-2">
       <div className="flex items-center justify-between bg-gray-50 border border-gray-200 rounded-t-lg px-3 py-1.5">
@@ -211,7 +258,7 @@ export default function PDFFieldPositioner({
             <div ref={containerRef} className="absolute inset-0 pointer-events-none" />
           )}
 
-          {showField && renderedHeight && (
+          {showField && mode === 'place' && renderedHeight && (
             <div
               className={cn(
                 'absolute border-2 rounded flex items-center justify-center',
@@ -238,6 +285,35 @@ export default function PDFFieldPositioner({
               )}
             </div>
           )}
+
+          {mode === 'preview' && renderedHeight && activePreviewFields.map((previewField) => {
+            const previewStyles = getPreviewFieldClasses(previewField.status);
+            return (
+              <div
+                key={previewField.id}
+                className={cn(
+                  'absolute rounded-md border-2 shadow-sm pointer-events-none',
+                  previewStyles.frame,
+                )}
+                style={{
+                  left: `${previewField.x * 100}%`,
+                  top: `${previewField.y * 100}%`,
+                  width: `${previewField.w * 100}%`,
+                  height: `${previewField.h * 100}%`,
+                  zIndex: 20,
+                }}
+              >
+                <span
+                  className={cn(
+                    'absolute left-1 top-1 max-w-[calc(100%-8px)] truncate rounded-full px-2 py-0.5 text-[10px] font-semibold shadow-sm',
+                    previewStyles.badge,
+                  )}
+                >
+                  {previewField.label}
+                </span>
+              </div>
+            );
+          })}
         </div>
       </div>
 
