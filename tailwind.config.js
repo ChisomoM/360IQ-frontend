@@ -9,15 +9,15 @@ export default {
 
       colors: {
         primary: {
-          DEFAULT: "#1e5631", // Original Green
+          DEFAULT: "var(--tenant-primary)",
           foreground: "hsl(var(--primary-foreground))",
         },
         secondary: {
-          DEFAULT: "#febb00", // Original Gold
+          DEFAULT: "var(--tenant-secondary)",
           foreground: "hsl(var(--secondary-foreground))",
         },
         tertiary: {
-          DEFAULT: "#184626", // Original Dark Green
+          DEFAULT: "var(--tenant-accent)",
         },
         // ControlHub Scoped Colors
         ch: {
@@ -74,12 +74,33 @@ export default {
         glow: {
           '0%,100%': { filter: 'drop-shadow(0 0 8px rgba(254,187,0,0.4))' },
           '50%': { filter: 'drop-shadow(0 0 18px rgba(254,187,0,0.8))' },
-        }
+        },
+        fadeInUp: {
+          '0%': { opacity: '0', transform: 'translateY(12px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
+        'card-hover': {
+          '0%': { transform: 'translateY(0px)', boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)' },
+          '100%': { transform: 'translateY(-2px)', boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12)' },
+        },
       },
 
       animation: {
         float: 'float 6s ease-in-out infinite',
         glow: 'glow 4s ease-in-out infinite',
+        'fade-in-up': 'fadeInUp 500ms cubic-bezier(0.4, 0, 0.2, 1)',
+      },
+
+      boxShadow: {
+        'premium-sm': '0 2px 8px rgba(0, 0, 0, 0.05)',
+        'premium-md': '0 4px 16px rgba(0, 0, 0, 0.08)',
+        'premium-lg': '0 8px 32px rgba(0, 0, 0, 0.12)',
+        'premium-xl': '0 12px 48px rgba(0, 0, 0, 0.15)',
+        'premium-inner': 'inset 0 1px 2px rgba(0, 0, 0, 0.05)',
+      },
+
+      borderColor: {
+        'premium': 'rgba(var(--tenant-primary-rgb, 99 102 241) / 0.15)',
       },
 
     },

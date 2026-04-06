@@ -1,230 +1,270 @@
 import React, { useState } from "react";
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuTrigger 
-} from "@/components/ui/dropdown-menu";
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogDescription, 
-  DialogFooter, 
-  DialogHeader, 
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
   DialogTitle,
-  DialogTrigger
+  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
-import { MoreVertical, UserPlus, Shield, Loader2 } from "lucide-react";
+import { Loader2, Plus, Search } from "lucide-react";
 import { toast } from "sonner";
-import type { TenantAdmin } from "@/types/tenant";
+import { chPost } from "@/lib/api/controlhub";
 
 interface TenantAdminsViewProps {
-  admins: TenantAdmin[];
-  onUpdate: (admins: TenantAdmin[]) => void;
+  tenantId: string;
+  admins: any[];
+  loading?: boolean;
+  onUpdate: (admins: any[]) => void;
 }
 
-const TenantAdminsView: React.FC<TenantAdminsViewProps> = ({ admins, onUpdate }) => {
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [newAdmin, setNewAdmin] = useState<Partial<TenantAdmin>>({
-    role: "admin",
-    status: "active"
+const getRoleBadgeColor = (roleSlug: string) => {
+  switch (roleSlug) {
+    case "super_admin": return "bg-red-100 text-red-800 border-red-200";
+    case "admin": return "bg-blue-100 text-blue-800 border-blue-200";
+    case "manager": return "bg-purple-100 text-purple-800 border-purple-200";
+    case "records_authority": return "bg-indigo-100 text-indigo-800 border-indigo-200";
+    case "finance_officer": return "bg-yellow-100 text-yellow-800 border-yellow-200";
+    case "hr_officer": return "bg-pink-100 text-pink-800 border-pink-200";
+    default: return "bg-gray-100 text-gray-800 border-gray-200";
+  }
+};
+
+const TenantAdminsView: React.FC<TenantAdminsViewProps> = ({ tenantId, admins, loading = false, onUpdate }) => {
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [formData, setFormData] = useState({
+    firstName: "",
+    lastName: "",
+    email: "",
+    password: "",
+    role: "super_admin",
   });
 
-  const handleAddAdmin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    
-    // Simulate API call
-    setTimeout(() => {
-      const admin: TenantAdmin = {
-        id: Math.random().toString(36).substr(2, 9),
-        name: newAdmin.name || "",
-        email: newAdmin.email || "",
-        phone: newAdmin.phone,
-        role: newAdmin.role as any,
-        status: "active",
-        last_login: "Never"
-      };
-      
-      onUpdate([...admins, admin]);
-      setLoading(false);
-      setIsAddModalOpen(false);
-      setNewAdmin({ role: "admin", status: "active" });
-      toast.success("Administrator added successfully");
-    }, 800);
+  const handleAddAdmin = async () => {
+    if (!formData.firstName || !formData.lastName || !formData.email || !formData.password) {
+      toast.error("Please fill in all required fields");
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const created = await chPost(
+        "CH_CLIENT_ADMINS",
+        {
+          first_name: formData.firstName,
+          last_name: formData.lastName,
+          email: formData.email,
+          password: formData.password,
+          role_slug: formData.role,
+        },
+        { id: tenantId }
+      );
+      onUpdate([...admins, created]);
+      setIsAddDialogOpen(false);
+      setFormData({ firstName: "", lastName: "", email: "", password: "", role: "super_admin" });
+      toast.success("Administrator created successfully");
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to create administrator");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const toggleAdminStatus = (id: string) => {
-    const updated = admins.map(a => 
-      a.id === id ? { ...a, status: (a.status === "active" ? "inactive" : "active") as any } : a
+  const filteredAdmins = admins.filter((a) => {
+    const q = searchQuery.toLowerCase();
+    return (
+      (a.first_name || "").toLowerCase().includes(q) ||
+      (a.last_name || "").toLowerCase().includes(q) ||
+      (a.email || "").toLowerCase().includes(q)
     );
-    onUpdate(updated);
-    toast.info("Administrator status updated");
-  };
+  });
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      {/* Header */}
+      <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-lg font-medium">Tenant Administrators</h3>
-          <p className="text-sm text-muted-foreground">Manage users with administrative access to this tenant.</p>
+          <h3 className="text-xl font-bold text-gray-900">Administrators</h3>
+          <p className="text-gray-600 mt-1">Manage users with administrative access to this tenant.</p>
         </div>
-        
-        <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
+        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
           <DialogTrigger asChild>
-            <Button className="bg-ch-primary hover:bg-ch-tertiary">
-              <UserPlus className="mr-2 h-4 w-4" /> Add Administrator
+            <Button>
+              <Plus className="h-4 w-4 mr-2" />
+              Add Administrator
             </Button>
           </DialogTrigger>
-          <DialogContent>
-            <form onSubmit={handleAddAdmin}>
-              <DialogHeader>
-                <DialogTitle>Add Tenant Admin</DialogTitle>
-                <DialogDescription>
-                  Invite a new user to manage this tenant's resources.
-                </DialogDescription>
-              </DialogHeader>
-              <div className="grid gap-4 py-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="name">Full Name</Label>
-                  <Input 
-                    id="name" 
-                    placeholder="John Doe" 
-                    required 
-                    value={newAdmin.name || ""} 
-                    onChange={e => setNewAdmin({...newAdmin, name: e.target.value})}
+          <DialogContent className="max-w-2xl bg-white max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Add New Administrator</DialogTitle>
+              <DialogDescription>
+                Create a new administrator account for this tenant.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="grid gap-4 py-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>First Name</Label>
+                  <Input
+                    value={formData.firstName}
+                    onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                    placeholder="John"
                   />
                 </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="email">Email Address</Label>
-                  <Input 
-                    id="email" 
-                    type="email" 
-                    placeholder="john@example.com" 
-                    required 
-                    value={newAdmin.email || ""} 
-                    onChange={e => setNewAdmin({...newAdmin, email: e.target.value})}
+                <div className="space-y-2">
+                  <Label>Last Name</Label>
+                  <Input
+                    value={formData.lastName}
+                    onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                    placeholder="Doe"
                   />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="phone">Phone Number (Optional)</Label>
-                  <Input 
-                    id="phone" 
-                    placeholder="+260..." 
-                    value={newAdmin.phone || ""} 
-                    onChange={e => setNewAdmin({...newAdmin, phone: e.target.value})}
-                  />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="role">System Role</Label>
-                  <Select 
-                    value={newAdmin.role} 
-                    onValueChange={v => setNewAdmin({...newAdmin, role: v as any})}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select role" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="super-admin">Super Admin</SelectItem>
-                      <SelectItem value="admin">Administrator</SelectItem>
-                      <SelectItem value="manager">Manager</SelectItem>
-                    </SelectContent>
-                  </Select>
                 </div>
               </div>
-              <DialogFooter>
-                <Button variant="outline" type="button" onClick={() => setIsAddModalOpen(false)}>Cancel</Button>
-                <Button type="submit" className="bg-ch-primary hover:bg-ch-tertiary" disabled={loading}>
-                  {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Invite Admin"}
-                </Button>
-              </DialogFooter>
-            </form>
+
+              <div className="space-y-2">
+                <Label>Email Address</Label>
+                <Input
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  placeholder="john.doe@example.com"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>Password</Label>
+                <Input
+                  type="password"
+                  value={formData.password}
+                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                  placeholder="••••••••"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>Role</Label>
+                <Select
+                  value={formData.role}
+                  onValueChange={(val) => setFormData({ ...formData, role: val })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a role" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="super_admin">Super Administrator</SelectItem>
+                    <SelectItem value="admin">Administrator</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleAddAdmin} disabled={isSubmitting}>
+                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Create Account
+              </Button>
+            </DialogFooter>
           </DialogContent>
         </Dialog>
       </div>
 
-      <div className="border rounded-md">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Administrator</TableHead>
-              <TableHead>Role</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Last Login</TableHead>
-              <TableHead className="w-[50px]"></TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {admins.length === 0 ? (
+      {/* Search */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Search className="h-5 w-5" />
+            Search Administrators
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <Input
+              placeholder="Search by name or email..."
+              className="pl-10"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Table */}
+      <Card>
+        <CardContent className="p-0">
+          <Table>
+            <TableHeader>
               <TableRow>
-                <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                  No administrators assigned yet.
-                </TableCell>
+                <TableHead>Name</TableHead>
+                <TableHead>Role</TableHead>
+                <TableHead>Email</TableHead>
+                <TableHead>Status</TableHead>
               </TableRow>
-            ) : (
-              admins.map((admin) => (
-                <TableRow key={admin.id}>
-                  <TableCell>
-                    <div className="flex flex-col">
-                      <span className="font-medium">{admin.name}</span>
-                      <span className="text-xs text-muted-foreground">{admin.email}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-1.5 capitalize text-sm">
-                      <Shield className="h-3.5 w-3.5 text-muted-foreground" />
-                      {admin.role.replace("-", " ")}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={admin.status === "active" ? "default" : "secondary"}>
-                      {admin.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-sm text-muted-foreground">
-                    {admin.last_login}
-                  </TableCell>
-                  <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
-                          <MoreVertical className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => toggleAdminStatus(admin.id)}>
-                          {admin.status === "active" ? "Deactivate" : "Reactivate"} Account
-                        </DropdownMenuItem>
-                        <DropdownMenuItem className="text-destructive">Remove Access</DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+            </TableHeader>
+            <TableBody>
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={4} className="text-center py-8">
+                    <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
                   </TableCell>
                 </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </div>
+              ) : filteredAdmins.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={4} className="text-center py-8 text-gray-500">
+                    No administrators found
+                  </TableCell>
+                </TableRow>
+              ) : (
+                filteredAdmins.map((admin) => (
+                  <TableRow key={admin.id}>
+                    <TableCell className="font-medium">
+                      {admin.first_name} {admin.last_name}
+                    </TableCell>
+                    <TableCell>
+                      <Badge className={getRoleBadgeColor(admin.role_slug || admin.role?.slug || "")}>
+                        {(admin.role?.name || admin.role_slug || "—").replace(/_/g, " ").toUpperCase()}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>{admin.email}</TableCell>
+                    <TableCell>
+                      <Badge variant={admin.is_active ? "default" : "secondary"}>
+                        {admin.is_active ? "Active" : "Inactive"}
+                      </Badge>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
     </div>
   );
 };

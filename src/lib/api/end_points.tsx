@@ -6,13 +6,17 @@ export const API: Record<string, string> = {
   REGISTER: "auth/register",
   REFRESH_TOKEN: "auth/refresh-token",
   ME: "auth/me",
+  TENANT_CONFIG: "tenant/config",
 
   // Roles & Permissions
-  ROLES: "roles",
-  LIST_PERMISSIONS: "permissions",
+  ROLES: "admin/roles",
+  LIST_PERMISSIONS: "admin/permissions",
+  ADMIN_ROLES: "admin/roles",
+  ADMIN_PERMISSIONS: "admin/permissions",
+  ADMIN_ROLE_PERMISSIONS: "admin/roles/:slug/permissions",
 
   // RBAC — Roles, Maker Checker & User Management
-  MAKER_CHECKER_RULES: "maker-checker/rules",
+  MAKER_CHECKER_RULES: "admin/maker-checker/rules",
   MAKER_CHECKER_REQUESTS: "maker-checker/requests",
   MAKER_CHECKER_APPROVE: "maker-checker/requests/:id/approve",
   MAKER_CHECKER_REJECT: "maker-checker/requests/:id/reject",
@@ -44,16 +48,6 @@ export const API: Record<string, string> = {
   PENDING_APPROVALS: "workflows/pending",
   USERS: "users",
 
-  // Student & Applications
-  STUDENT_APPLY: "students/apply",
-  APPLICATIONS: "students/applications",
-  MY_APPLICATION: "students/my-application",
-  APPLICATION_DETAIL: "students/applications/:id",
-  APPLICATION_STATUS: "students/applications/:id/status",
-  APPLICATION_APPROVE: "students/applications/:id/approve",
-  STUDENTS: "students",
-  STUDENT_DETAIL: "students/:id",
-
   // HR Module
   HR_STAFF: "hr/staff",
   HR_STAFF_DETAIL: "hr/staff/:id",
@@ -82,10 +76,23 @@ export const API: Record<string, string> = {
   SIGNATURE_DECLINE: "signatures/:id/decline",
   SIGNATURE_DOCUMENT: "signatures/document/:docId",
 
-  // Payments
-  PAYMENTS: "payments",
-  PAYMENT_VERIFY: "payments/:id/verify",
-  PAYMENT_REJECT: "payments/:id/reject",
+  // Dashboard
+  DASHBOARD_CARDS: "dashboard/cards",
+  DASHBOARD_ESCALATIONS: "dashboard/escalations",
+  DASHBOARD_CARD_CONFIG: "dashboard/config",
+  DASHBOARD_UPDATE_CONFIG: "dashboard/cards/config",
+  DASHBOARD_CARD_DEFINITIONS: "dashboard/cards/definitions",
+
+
+  // ControlHub — Platform admin endpoints (meta-DB, no tenant scoping)
+  CH_LOGIN: "controlhub/auth/login",
+  CH_CLIENTS: "controlhub/clients",
+  CH_CLIENT_DETAIL: "controlhub/clients/:id",
+  CH_CLIENT_ADMINS: "controlhub/clients/:id/admins",
+  CH_CLIENT_ONBOARD: "controlhub/clients/onboard",
+  CH_CLIENT_BRANDING: "controlhub/clients/:id/branding",
+  CH_CLIENT_BRANDING_LOGO: "controlhub/clients/:id/branding/logo",
+  CH_CLIENT_SETTINGS: "controlhub/clients/:id/settings",
 };
 
 export const getRoute = (val: string): string => {

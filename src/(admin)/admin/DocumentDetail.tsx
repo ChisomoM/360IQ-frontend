@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, useOutletContext } from 'react-router-dom';
-import { fetchData, file as downloadFile } from '@/lib/api/crud';
+import { fetchData, file as downloadFile, fetchFileBuffer } from '@/lib/api/crud';
 import type { Document, Department, DocumentVersion, DocumentUpdatePayload } from '@/types/dms';
 import type { AdminLayoutContext } from '@/layouts/AdminLayout';
 import { toast } from 'sonner';
@@ -182,6 +182,15 @@ export default function DocumentDetail() {
       await downloadFile('DOCUMENT_DOWNLOAD', { id: doc.id });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Download failed');
+    }
+  };
+
+  const handleVersionDownload = async (version: DocumentVersion) => {
+    if (!doc) { toast.error('No document available'); return; }
+    try {
+      await downloadFile('DOCUMENT_DOWNLOAD', { id: doc.id }, { version_id: version.id });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Version download failed');
     }
   };
 
@@ -754,11 +763,9 @@ export default function DocumentDetail() {
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-xs text-gray-400">{dayjs(v.created_at).format('MMM DD, YYYY')}</span>
-                    {v.file_url && (
-                      <Button variant="ghost" size="sm" onClick={() => window.open(v.file_url, '_blank')}>
-                        <Download className="h-3 w-3" />
-                      </Button>
-                    )}
+                    <Button variant="ghost" size="sm" onClick={() => handleVersionDownload(v)}>
+                      <Download className="h-3 w-3" />
+                    </Button>
                   </div>
                 </div>
               ))

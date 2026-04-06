@@ -21,12 +21,12 @@ import {
 } from "lucide-react"
 import { AIChatSidebar } from "@/components/ai/AIChatSidebar"
 import { RightSidebar } from "@/components/layout/RightSidebar"
-import { useControlHubAuth } from "@/lib/context/useControlHubAuth"
+import { useAuth } from "@/lib/context/useAuth"
 
 export default function ControlHubLayout() {
 
   const location = useLocation()
-  const { user, tokens, isLoading, logout } = useControlHubAuth()
+  const { user, isLoading, isAuthenticated, logout } = useAuth()
   const [collapsed, setCollapsed] = useState(false)
   const [isChatOpen, setIsChatOpen] = useState(false)
   const [isDocDetailsOpen, setIsDocDetailsOpen] = useState(false)
@@ -42,7 +42,7 @@ export default function ControlHubLayout() {
   }
 
   // Redirect to login if not authenticated
-  if (!user || !tokens) {
+  if (!isAuthenticated) {
     return <Navigate to="/controlhub/login" replace state={{ from: location }} />
   }
 
@@ -59,7 +59,7 @@ export default function ControlHubLayout() {
 
   return (
 
-    <div className="min-h-screen flex bg-gradient-to-br from-gray-50 via-white to-gray-100 controlhub-theme">
+    <div className="min-h-screen flex bg-white controlhub-theme">
 
       <SidebarProvider>
 
@@ -168,7 +168,7 @@ export default function ControlHubLayout() {
           } mr-20`}
         >
 
-          <main className="px-10 py-10 min-h-screen">
+          <main className="px-8 py-8 min-h-screen">
 
             <Outlet context={{ analyzeDocument } as AdminLayoutContext} />
 
@@ -179,7 +179,6 @@ export default function ControlHubLayout() {
       </SidebarProvider>
 
       <AIChatSidebar
-        variant="avec"
         isOpen={isChatOpen}
         onClose={() => setIsChatOpen(false)}
         pendingDoc={pendingAnalysisDoc}
@@ -187,8 +186,6 @@ export default function ControlHubLayout() {
       />
 
       <RightSidebar
-        variant="avec"
-        user={user}
         isChatOpen={isChatOpen}
         onToggleChat={() => setIsChatOpen(!isChatOpen)}
         onToggleDocDetails={() => setIsDocDetailsOpen(!isDocDetailsOpen)}

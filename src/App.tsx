@@ -1,7 +1,3 @@
-import Contact from './(public)/contact/contact-us'
-import AboutPage from './(public)/about/AboutPage';
-import BlogList from './(public)/blog/BlogList';
-import BlogDetail from './(public)/blog/BlogDetail';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import ScrollToTop from './components/ScrollToTop'
 import { Toaster } from 'sonner';
@@ -9,10 +5,11 @@ import Login from './components/Login';
 import { ProtectedRoute } from './lib/ProtectedRoute';
 import { ChangePasswordModal } from './components/auth/ChangePasswordModal';
 import AdminLayout from './layouts/AdminLayout';
+
 import { AdminDashboard } from './(admin)/admin/Admin';
-// Join application removed after pivot
-import Students from './(admin)/admin/students';
-import StudentProfile from './(admin)/admin/StudentProfile';
+import DynamicDashboard from './(admin)/admin/DynamicDashboard';
+import RoleAwareDashboard from './(admin)/admin/RoleAwareDashboard';
+import DashboardConfiguration from './(admin)/admin/DashboardConfiguration';
 
 import TeamManagement from './(admin)/admin/TeamManagement';
 import TeacherManagement from './(admin)/admin/TeacherManagement';
@@ -29,9 +26,6 @@ import DocumentDetail from './(admin)/admin/DocumentDetail';
 import DocumentCharts from './(admin)/admin/DocumentCharts';
 import Workflows from './(admin)/admin/Workflows';
 import AuditTrails from './(admin)/admin/AuditTrails';
-import FinanceDashboard from './(admin)/admin/finance/FinanceDashboard';
-import PaymentManagement from './(admin)/admin/finance/PaymentManagement';
-import FinanceReports from './(admin)/admin/finance/FinanceReports';
 import HRDashboard from './(admin)/admin/hr/HRDashboard';
 import StaffDirectory from './(admin)/admin/hr/StaffDirectory';
 import LeaveManagement from './(admin)/admin/hr/LeaveManagement';
@@ -43,6 +37,13 @@ import DepartmentDetailPage from './(admin)/admin/DepartmentDetailPage';
 import RolesManagement from './(admin)/admin/RolesManagement';
 import MakerCheckerPage from './(admin)/admin/MakerCheckerPage';
 
+// ControlHub
+import ControlHubLayout from './layouts/ControlHubLayout';
+import ControlHubLoginPage from './(controlhub)/ControlHubLoginPage';
+import ControlHubDashboard from './(controlhub)/Dashboard';
+import TenantsList from './(controlhub)/TenantsList';
+import TenantDetail from './(controlhub)/TenantDetail';
+
 
 
 
@@ -53,21 +54,11 @@ function App() {
       <ChangePasswordModal />
       <Routes>
         <Route path="/" element={<Login />} />
-        <Route path="/about" element={<AboutPage />} />
-        <Route path="/contact" element={<Contact />} />
+
         <Route path="/login" element={<Login />} />
-        {/* Join page removed */}
-        <Route path="/blog" element={<BlogList />} />
-        <Route path="/blog/:id" element={<BlogDetail />} />
+
         <Route path="/staff-onboarding" element={<StaffOnboarding />} />
         <Route path="*" element={<div>Page Not Found</div>} />
-
-
-        {/* Student routes removed */}
-
-
-
-
 
         {/* Admin Routes */}
         <Route path="/admin" element={
@@ -76,10 +67,9 @@ function App() {
           </ProtectedRoute>
         }>
           <Route index element={<Navigate to="/admin/dashboard" replace />} />
-          <Route path="dashboard" element={<AdminDashboard />} />
-          {/* Join applications admin page removed */}
-          <Route path="students" element={<Students />} />
-          <Route path="students/:id" element={<StudentProfile />} />
+          <Route path="dashboard" element={<RoleAwareDashboard />} />
+          <Route path="newdashboard" element={<RoleAwareDashboard />} />
+          <Route path="legacy-dashboard" element={<AdminDashboard />} />
           <Route path="approvals" element={<ApprovalsPage />} />
           <Route path="regions" element={<RegionManagement />} />
           <Route path="user-management" element={<TeamManagement />} />
@@ -96,15 +86,11 @@ function App() {
           <Route path="documents/:id" element={<DocumentDetail />} />
           <Route path="workflows" element={<Workflows />} />
           <Route path="audit-trails" element={<AuditTrails />} />
+          <Route path="settings/dashboard-config" element={<DashboardConfiguration />} />
 
           {/* RBAC Routes */}
           <Route path="roles" element={<RolesManagement />} />
           <Route path="maker-checker" element={<MakerCheckerPage />} />
-
-          {/* Finance Routes */}
-          <Route path="finance/dashboard" element={<FinanceDashboard />} />
-          <Route path="finance/payments" element={<PaymentManagement />} />
-          <Route path="finance/reports" element={<FinanceReports />} />
 
           {/* HR Routes */}
           <Route path="hr/dashboard" element={<HRDashboard />} />
@@ -112,6 +98,15 @@ function App() {
           <Route path="hr/leave" element={<LeaveManagement />} />
           <Route path="hr/applications" element={<StaffApplications />} />
           <Route path="signatures" element={<MySignatures />} />
+        </Route>
+
+        {/* ControlHub Routes */}
+        <Route path="/controlhub/login" element={<ControlHubLoginPage />} />
+        <Route path="/controlhub" element={<ControlHubLayout />}>
+          <Route index element={<Navigate to="/controlhub/dashboard" replace />} />
+          <Route path="dashboard" element={<ControlHubDashboard />} />
+          <Route path="tenants" element={<TenantsList />} />
+          <Route path="tenants/:id" element={<TenantDetail />} />
         </Route>
       </Routes>
       <Toaster position="top-right" richColors />

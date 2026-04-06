@@ -67,9 +67,15 @@ import {
   Lock,
   Globe,
   Shield,
+  FileUp,
+  Tag,
+  CheckCircle2,
+  AlertCircle,
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { fetchData } from '@/lib/api/crud';
+import { useDropzone } from 'react-dropzone';
+import { Switch } from '@/components/ui/switch';
+import { fetchData, file } from '@/lib/api/crud';
 import type { Document, Department, DocumentVersion, DocumentUpdatePayload } from '@/types/dms';
 import dayjs from 'dayjs';
 
@@ -91,13 +97,13 @@ const visibilityIcon = (level: string) => {
 
 const getStatusBadge = (status: string) => {
   const map: Record<string, string> = {
-    active: 'bg-green-100 text-green-800',
+    active: 'bg-primary/10 text-primary border-primary/20',
     archived: 'bg-gray-100 text-gray-700',
     approved: 'bg-blue-100 text-blue-800',
     rejected: 'bg-red-100 text-red-800',
-    pending: 'bg-yellow-100 text-yellow-800',
+    pending: 'bg-secondary/20 text-secondary-foreground border-secondary/20',
   };
-  return <Badge className={map[status] ?? ''}>{status}</Badge>;
+  return <Badge variant="outline" className={map[status] ?? ''}>{status}</Badge>;
 };
 
 // ─── Upload form defaults ────────────────────────────────────────────────────
@@ -108,7 +114,9 @@ const UPLOAD_DEFAULTS = {
   document_type: 'policy',
   category: 'administrative',
   department_id: '',
-  visibility_level: 'department',
+  visibility_level: 'department' as 'public' | 'department' | 'restricted',
+  tags: [] as string[],
+  is_encrypted: false,
   file: null as File | null,
 };
 
@@ -188,6 +196,12 @@ export default function Documents() {
       form.append('category', uploadData.category);
       form.append('department_id', uploadData.department_id);
       form.append('visibility_level', uploadData.visibility_level);
+      form.append('is_encrypted', String(uploadData.is_encrypted));
+      
+      if (uploadData.tags.length > 0) {
+        form.append('tags', JSON.stringify(uploadData.tags));
+      }
+
       await fetchData('DOCUMENTS', 'POST', {}, form);
       toast.success('Document uploaded successfully');
       setIsUploadOpen(false);
@@ -200,28 +214,67 @@ export default function Documents() {
     }
   };
 
+  // ── dropzone logic ────────────────────────────────────────────────────────
+
+  const onDrop = (acceptedFiles: File[]) => {
+    if (acceptedFiles.length > 0) {
+      const file = acceptedFiles[0];
+      // Auto-fill title if empty
+      const fileNameWithoutExt = file.name.split('.').slice(0, -1).join('.');
+      setUploadData(prev => ({
+        ...prev,
+        file,
+        title: prev.title.trim() === '' ? fileNameWithoutExt : prev.title
+      }));
+    }
+  };
+
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop,
+    multiple: false,
+    maxSize: 50 * 1024 * 1024, // 50MB
+  });
+
+  // ── download ─────────────────────────────────────────────────────────────
+ 
+  const handleDownload = async (doc: Document) => {
+    try {
+      await file('DOCUMENT_DOWNLOAD', { id: doc.id });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Download failed');
+    }
+  };
+
+  const handleVersionDownload = async (docId: string, version: DocumentVersion) => {
+    try {
+      await file('DOCUMENT_DOWNLOAD', { id: docId }, { version_id: version.id });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Version download failed');
+    }
+  };
+
+  // ── tags logic ───────────────────────────────────────────────────────────
+
+  const [tagInput, setTagInput] = useState('');
+  const addTag = () => {
+    const val = tagInput.trim().toLowerCase();
+    if (val && !uploadData.tags.includes(val)) {
+      setUploadData(prev => ({ ...prev, tags: [...prev.tags, val] }));
+      setTagInput('');
+    }
+  };
+
+  const removeTag = (t: string) => {
+    setUploadData(prev => ({ ...prev, tags: prev.tags.filter(tag => tag !== t) }));
+  };
+
   // ── view detail ──────────────────────────────────────────────────────────
 
   const openView = (doc: Document) => {
     navigate(`/admin/documents/${doc.id}`);
   };
 
-  // ── download ─────────────────────────────────────────────────────────────
 
-  const handleDownload = (doc: Document) => {
-    if (!doc.file_url) {
-      toast.error('No download URL available for this document');
-      return;
-    }
-    const a = window.document.createElement('a');
-    a.href = doc.file_url;
-    a.download = doc.file_name;
-    a.target = '_blank';
-    a.rel = 'noopener noreferrer';
-    window.document.body.appendChild(a);
-    a.click();
-    window.document.body.removeChild(a);
-  };
 
   // ── edit ─────────────────────────────────────────────────────────────────
 
@@ -352,86 +405,232 @@ export default function Documents() {
         </div>
         <Dialog open={isUploadOpen} onOpenChange={setIsUploadOpen}>
           <DialogTrigger asChild>
-            <Button className="bg-[#febb00] text-[#1e3c21] hover:bg-[#e8a900] font-bold">
+            <Button variant="tenantPrimary" className="shadow-lg hover:shadow-xl transition-all">
               <Upload className="h-4 w-4 mr-2" />
               Upload Document
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-lg bg-white overflow-y-auto max-h-[90vh]">
-            <DialogHeader>
-              <DialogTitle>Upload New Document</DialogTitle>
-              <DialogDescription>Upload a file and assign metadata for proper indexing.</DialogDescription>
-            </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="space-y-2">
-                <Label>File *</Label>
-                <Input type="file" onChange={(e) => setUploadData({ ...uploadData, file: e.target.files?.[0] ?? null })} />
-              </div>
-              <div className="space-y-2">
-                <Label>Title *</Label>
-                <Input value={uploadData.title} onChange={(e) => setUploadData({ ...uploadData, title: e.target.value })} placeholder="e.g., Q3 Financial Report 2025" />
-              </div>
-              <div className="space-y-2">
-                <Label>Description</Label>
-                <Textarea value={uploadData.description} onChange={(e) => setUploadData({ ...uploadData, description: e.target.value })} placeholder="Brief summary..." rows={2} />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Type</Label>
-                  <Select value={uploadData.document_type} onValueChange={(v) => setUploadData({ ...uploadData, document_type: v })}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="policy">Policy</SelectItem>
-                      <SelectItem value="minutes">Minutes</SelectItem>
-                      <SelectItem value="report">Report</SelectItem>
-                      <SelectItem value="form">Form</SelectItem>
-                      <SelectItem value="memo">Memo</SelectItem>
-                    </SelectContent>
-                  </Select>
+          <DialogContent className="max-w-4xl bg-white p-0 overflow-hidden border-none shadow-2xl">
+            <div className="flex h-full max-h-[90vh]">
+              {/* Left Column: File Dropzone & Preview */}
+              <div className="w-2/5 bg-slate-50 p-8 border-r border-slate-100 flex flex-col justify-center">
+                <div className="mb-8">
+                  <h3 className="text-xl font-bold text-slate-800">File Ingestion</h3>
+                  <p className="text-sm text-slate-500 mt-1">Upload your document to safely archive it in the DIMS vault.</p>
                 </div>
-                <div className="space-y-2">
-                  <Label>Category</Label>
-                  <Select value={uploadData.category} onValueChange={(v) => setUploadData({ ...uploadData, category: v })}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="academic">Academic</SelectItem>
-                      <SelectItem value="financial">Financial</SelectItem>
-                      <SelectItem value="hr">Human Resources</SelectItem>
-                      <SelectItem value="administrative">Administrative</SelectItem>
-                    </SelectContent>
-                  </Select>
+
+                {!uploadData.file ? (
+                  <div
+                    {...getRootProps()}
+                    className={`
+                      border-2 border-dashed rounded-2xl p-10 transition-all cursor-pointer
+                      flex flex-col items-center justify-center text-center space-y-4
+                      ${isDragActive ? 'border-primary bg-primary/5 scale-[1.02]' : 'border-slate-300 hover:border-primary hover:bg-white'}
+                    `}
+                  >
+                    <input {...getInputProps()} />
+                    <div className="p-4 bg-white rounded-full shadow-sm text-primary">
+                      <FileUp className="h-10 w-10" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-slate-700">Click or drag file</p>
+                      <p className="text-xs text-slate-400 mt-1">Supports PDF, DOCX, XLSX (Max 50MB)</p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 relative group">
+                    <button 
+                      onClick={() => setUploadData(prev => ({ ...prev, file: null }))}
+                      className="absolute -top-2 -right-2 p-1.5 bg-red-500 text-white rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                    <div className="flex items-center gap-4">
+                      <div className="p-3 bg-blue-50 text-blue-600 rounded-xl">
+                        <FileText className="h-8 w-8" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-bold text-slate-800 truncate" title={uploadData.file.name}>
+                          {uploadData.file.name}
+                        </p>
+                        <p className="text-xs text-slate-500">
+                          {formatBytes(uploadData.file.size)} • {uploadData.file.type.split('/').pop()?.toUpperCase()}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="mt-4 flex items-center gap-2 text-green-600 text-[10px] font-bold uppercase tracking-wider bg-green-50 px-3 py-1 rounded-full w-fit">
+                      <CheckCircle2 className="h-3 w-3" /> Ready for upload
+                    </div>
+                  </div>
+                )}
+
+                <div className="mt-auto pt-8">
+                  <div className="flex items-center gap-2 text-xs text-slate-400">
+                    <Shield className="h-3 w-3" />
+                    <span>Secure end-to-end encryption available</span>
+                  </div>
                 </div>
               </div>
-              <div className="space-y-2">
-                <Label>Department</Label>
-                <Select value={uploadData.department_id} onValueChange={(v) => setUploadData({ ...uploadData, department_id: v })}>
-                  <SelectTrigger><SelectValue placeholder="Select Department" /></SelectTrigger>
-                  <SelectContent>
-                    {departments.filter(d => d.id?.trim()).map(d => (
-                      <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Visibility</Label>
-                <Select value={uploadData.visibility_level} onValueChange={(v) => setUploadData({ ...uploadData, visibility_level: v })}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="department">Department Only</SelectItem>
-                    <SelectItem value="public">Public (All Staff)</SelectItem>
-                    <SelectItem value="restricted">Restricted / Private</SelectItem>
-                  </SelectContent>
-                </Select>
+
+              {/* Right Column: Metadata Form */}
+              <div className="flex-1 p-8 overflow-y-auto bg-white">
+                <DialogHeader className="mb-6">
+                  <DialogTitle className="text-2xl font-black text-slate-900 leading-none">Metadata & Settings</DialogTitle>
+                  <DialogDescription>Index your document with precision for easy retrieval.</DialogDescription>
+                </DialogHeader>
+
+                <div className="grid gap-6">
+                  {/* Basic Info */}
+                  <div className="space-y-4 pt-2">
+                    <div className="space-y-2">
+                      <Label className="text-slate-700 font-bold">Document Title *</Label>
+                      <Input 
+                        value={uploadData.title} 
+                        onChange={(e) => setUploadData({ ...uploadData, title: e.target.value })} 
+                        placeholder="e.g., Annual Financial Audit 2024"
+                        className="h-11 border-slate-200 focus:ring-primary shadow-sm"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label className="text-slate-700 font-bold">Description</Label>
+                      <Textarea 
+                        value={uploadData.description} 
+                        onChange={(e) => setUploadData({ ...uploadData, description: e.target.value })} 
+                        placeholder="Provide deep context for this record..." 
+                        rows={3}
+                        className="resize-none border-slate-200 shadow-sm"
+                      />
+                    </div>
+                  </div>
+
+                  <Separator />
+
+                  {/* Classification */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label className="text-slate-700 font-bold text-xs uppercase tracking-wider">Document Type</Label>
+                      <Select value={uploadData.document_type} onValueChange={(v) => setUploadData({ ...uploadData, document_type: v })}>
+                        <SelectTrigger className="h-10 border-slate-200 bg-slate-50/50"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="policy">Policy</SelectItem>
+                          <SelectItem value="minutes">Minutes</SelectItem>
+                          <SelectItem value="report">Report</SelectItem>
+                          <SelectItem value="form">Form</SelectItem>
+                          <SelectItem value="memo">Memo</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-slate-700 font-bold text-xs uppercase tracking-wider">Classification</Label>
+                      <Select value={uploadData.category} onValueChange={(v) => setUploadData({ ...uploadData, category: v })}>
+                        <SelectTrigger className="h-10 border-slate-200 bg-slate-50/50"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="academic">Academic</SelectItem>
+                          <SelectItem value="financial">Financial</SelectItem>
+                          <SelectItem value="hr">Human Resources</SelectItem>
+                          <SelectItem value="administrative">Administrative</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  {/* Organization & Sensitivity */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label className="text-slate-700 font-bold text-xs uppercase tracking-wider text-primary flex items-center gap-1">
+                        <Building className="h-3 w-3" /> Owning Department
+                      </Label>
+                      <Select value={uploadData.department_id} onValueChange={(v) => setUploadData({ ...uploadData, department_id: v })}>
+                        <SelectTrigger className="h-10 border-slate-200 bg-slate-50/50"><SelectValue placeholder="Global / Central" /></SelectTrigger>
+                        <SelectContent>
+                          {departments.filter(d => d.id?.trim()).map(d => (
+                            <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-slate-700 font-bold text-xs uppercase tracking-wider flex items-center gap-1">
+                        <Lock className="h-3 w-3" /> Visibility Level
+                      </Label>
+                      <Select value={uploadData.visibility_level} onValueChange={(v: any) => setUploadData({ ...uploadData, visibility_level: v })}>
+                        <SelectTrigger className="h-10 border-slate-200 bg-slate-50/50"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="department">Department Internal</SelectItem>
+                          <SelectItem value="public">Tenant Public</SelectItem>
+                          <SelectItem value="restricted">Restricted Access</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  {/* Tags */}
+                  <div className="space-y-2">
+                    <Label className="text-slate-700 font-bold text-xs uppercase tracking-wider flex items-center gap-1">
+                      <Tag className="h-3 w-3" /> Tags
+                    </Label>
+                    <div className="flex gap-2 mb-2 flex-wrap">
+                      {uploadData.tags.map(t => (
+                        <Badge key={t} variant="secondary" className="px-2 py-0.5 rounded-md flex items-center gap-1 bg-slate-100 text-slate-600 hover:bg-slate-200 group">
+                          {t}
+                          <X className="h-3 w-3 cursor-pointer opacity-50 group-hover:opacity-100" onClick={() => removeTag(t)} />
+                        </Badge>
+                      ))}
+                    </div>
+                    <div className="flex gap-2">
+                      <Input 
+                        placeholder="Add tag and press Enter..." 
+                        value={tagInput} 
+                        onChange={(e) => setTagInput(e.target.value)} 
+                        onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addTag())}
+                        className="h-9 border-slate-200 text-sm"
+                      />
+                      <Button variant="outline" size="sm" onClick={addTag} disabled={!tagInput.trim()}>Add</Button>
+                    </div>
+                  </div>
+
+                  {/* Vault Encryption */}
+                  <div className="flex items-center justify-between p-4 rounded-2xl bg-blue-50/50 border border-blue-100">
+                    <div className="flex gap-3">
+                      <div className="p-2 bg-blue-100 text-blue-600 rounded-lg h-fit">
+                        <Shield className="h-5 w-5" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-bold text-slate-800">Zero-Trust Encryption</p>
+                        <p className="text-xs text-slate-500">Encrypt this file before storing it in the persistent vault.</p>
+                      </div>
+                    </div>
+                    <Switch 
+                      checked={uploadData.is_encrypted} 
+                      onCheckedChange={(checked) => setUploadData({ ...uploadData, is_encrypted: checked })}
+                    />
+                  </div>
+                </div>
+
+                <div className="mt-10 flex gap-3">
+                  <Button variant="ghost" className="flex-1 h-12 text-slate-500" onClick={() => setIsUploadOpen(false)}>Discard</Button>
+                  <Button 
+                    variant="tenantPrimary" 
+                    className="flex-[2] h-12 shadow-md shadow-primary/20 text-lg font-bold" 
+                    onClick={handleUpload} 
+                    disabled={isUploading || !uploadData.file}
+                  >
+                    {isUploading ? (
+                      <>
+                        <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                        Archiving Document...
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle2 className="mr-2 h-5 w-5" />
+                        Finalize & Archive
+                      </>
+                    )}
+                  </Button>
+                </div>
               </div>
             </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setIsUploadOpen(false)}>Cancel</Button>
-              <Button onClick={handleUpload} disabled={isUploading} className="bg-[#febb00] text-[#1e3c21] hover:bg-[#e8a900] font-bold">
-                {isUploading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Upload & Save
-              </Button>
-            </DialogFooter>
           </DialogContent>
         </Dialog>
       </div>
@@ -485,7 +684,7 @@ export default function Documents() {
                 {loading ? (
                   <TableRow>
                     <TableCell colSpan={5} className="text-center py-20">
-                      <Loader2 className="h-10 w-10 animate-spin mx-auto text-[#E5600B]" />
+                      <Loader2 className="h-10 w-10 animate-spin mx-auto text-primary" />
                     </TableCell>
                   </TableRow>
                 ) : filtered.length === 0 ? (
@@ -620,7 +819,7 @@ export default function Documents() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsEditOpen(false)}>Cancel</Button>
-            <Button onClick={handleUpdate} disabled={isUpdating} className="bg-[#febb00] text-[#1e3c21] hover:bg-[#e8a900] font-bold">
+            <Button variant="tenantPrimary" onClick={handleUpdate} disabled={isUpdating}>
               {isUpdating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Save Changes
             </Button>
@@ -684,11 +883,9 @@ export default function Documents() {
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-xs text-gray-400">{dayjs(v.created_at).format('MMM DD, YYYY')}</span>
-                    {v.file_url && (
-                      <Button variant="ghost" size="sm" onClick={() => window.open(v.file_url, '_blank')}>
-                        <Download className="h-3 w-3" />
-                      </Button>
-                    )}
+                    <Button variant="ghost" size="sm" onClick={() => selectedDoc && handleVersionDownload(selectedDoc.id, v)}>
+                      <Download className="h-3 w-3" />
+                    </Button>
                   </div>
                 </div>
               ))
@@ -716,7 +913,7 @@ export default function Documents() {
                 <Button variant="outline" className="flex-1" onClick={() => setIsNewVersionOpen(false)}>
                   <X className="h-4 w-4 mr-1" /> Cancel
                 </Button>
-                <Button className="flex-1 bg-[#febb00] text-[#1e3c21] hover:bg-[#e8a900] font-bold" onClick={handleUploadVersion} disabled={isUploadingVersion}>
+                <Button variant="tenantPrimary" className="flex-1" onClick={handleUploadVersion} disabled={isUploadingVersion}>
                   {isUploadingVersion && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   Upload
                 </Button>

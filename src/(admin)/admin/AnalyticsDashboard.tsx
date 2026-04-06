@@ -98,7 +98,7 @@ const dummyApplicationFunnel = {
 
 const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
 const STATUS_COLORS: Record<string, string> = {
-  active: '#10b981',
+  active: 'hsl(var(--primary))',
   suspended: '#f59e0b',
   graduated: '#3b82f6',
   withdrawn: '#ef4444',
@@ -106,7 +106,7 @@ const STATUS_COLORS: Record<string, string> = {
   under_review: '#f59e0b',
   approved: '#10b981',
   rejected: '#ef4444',
-  enrolled: '#3b82f6',
+  enrolled: 'hsl(var(--primary))',
 };
 
 export const AnalyticsDashboard: React.FC = () => {
@@ -118,7 +118,7 @@ export const AnalyticsDashboard: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white rounded-xl p-6 shadow-sm border border-gray-100">
         <div>
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-[#D70F0E] to-[#E5600B] bg-clip-text text-transparent">
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
             Analytics Dashboard
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
@@ -148,7 +148,7 @@ export const AnalyticsDashboard: React.FC = () => {
               <SelectItem value="math">Mathematics</SelectItem>
             </SelectContent>
           </Select>
-          <Button variant="outline" size="sm">
+          <Button variant="tenantPrimary" size="sm">
             <Download className="h-4 w-4 mr-2" />
             Export
           </Button>
@@ -157,7 +157,7 @@ export const AnalyticsDashboard: React.FC = () => {
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-lg hover:shadow-xl transition-shadow border-0">
+        <Card className="bg-gradient-to-br from-primary to-primary/80 text-white shadow-lg hover:shadow-xl transition-shadow border-0">
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
               <div className="text-sm font-medium opacity-90">Total Students</div>
@@ -183,7 +183,7 @@ export const AnalyticsDashboard: React.FC = () => {
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-purple-500 to-purple-600 text-white shadow-lg hover:shadow-xl transition-shadow border-0">
+        <Card className="bg-gradient-to-br from-secondary to-secondary/80 text-secondary-foreground shadow-lg hover:shadow-xl transition-shadow border-0">
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
               <div className="text-sm font-medium opacity-90">Approval Rate</div>
@@ -216,7 +216,7 @@ export const AnalyticsDashboard: React.FC = () => {
         <Card className="shadow-md border-gray-200">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <TrendingUp className="h-5 w-5 text-blue-600" />
+              <TrendingUp className="h-5 w-5 text-primary" />
               Enrollment Trends
             </CardTitle>
             <CardDescription>Monthly enrollment over time</CardDescription>
@@ -225,16 +225,16 @@ export const AnalyticsDashboard: React.FC = () => {
             <ResponsiveContainer width="100%" height={300}>
               <AreaChart data={dummyEnrollmentTrends.series}>
                 <defs>
-                  <linearGradient id="colorCount" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8} />
-                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0.1} />
+                   <linearGradient id="colorCount" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.8} />
+                    <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0.1} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="period" tick={{ fontSize: 12 }} />
                 <YAxis />
                 <Tooltip />
-                <Area type="monotone" dataKey="count" stroke="#3b82f6" fill="url(#colorCount)" />
+                <Area type="monotone" dataKey="count" stroke="hsl(var(--primary))" fill="url(#colorCount)" />
               </AreaChart>
             </ResponsiveContainer>
             <div className="mt-4 grid grid-cols-3 gap-4 text-sm">
@@ -407,7 +407,7 @@ export const AnalyticsDashboard: React.FC = () => {
             <div className="space-y-4">
               {dummyProgramPopularity.programs.map((program, index) => (
                 <div key={program.programme} className="flex items-center gap-4">
-                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-sm">
+                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white font-bold text-sm">
                     {program.rank}
                   </div>
                   <div className="flex-1 min-w-0">

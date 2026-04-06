@@ -42,6 +42,11 @@ export const PERMISSIONS = {
   'analytics.read': 'analytics.read',
   'analytics.export': 'analytics.export',
 
+  // Dashboard
+  'view_analytics': 'view_analytics',
+  'view_escalations': 'view_escalations',
+  'configure_dashboard_cards': 'configure_dashboard_cards',
+
   // Payments
   'payments.read': 'payments.read',
   'payments.write': 'payments.write',

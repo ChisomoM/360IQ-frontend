@@ -40,7 +40,7 @@ export function RbacProvider({ children }: { children: ReactNode }) {
         try {
             setIsLoading(true);
             setError(null);
-            const data = await list('ROLES');
+            const data = await list('ADMIN_ROLES');
             setRoles(data ?? []);
         } catch (err) {
             setError(err instanceof Error ? err : new Error('Failed to load roles'));
@@ -53,7 +53,7 @@ export function RbacProvider({ children }: { children: ReactNode }) {
         try {
             setIsLoading(true);
             setError(null);
-            const data = await list('LIST_PERMISSIONS');
+            const data = await list('ADMIN_PERMISSIONS');
             setPermissions(data ?? []);
         } catch (err) {
             setError(err instanceof Error ? err : new Error('Failed to load permissions'));

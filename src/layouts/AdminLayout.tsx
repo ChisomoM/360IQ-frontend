@@ -30,16 +30,22 @@ import {
   ClipboardCheck,
   PenLine,
   ShieldCheck,
+  Settings,
 } from "lucide-react"
 import { AIChatSidebar } from "@/components/ai/AIChatSidebar"
 import { RightSidebar } from "@/components/layout/RightSidebar"
 import { useAuth } from "@/lib/context/useAuth"
 import { hasPermission, PERMISSIONS } from "@/lib/permissions"
+import { useTenantBranding, useTenantBrandingEffect } from "@/lib/hooks/useTenantBranding"
 
 export default function AdminLayout() {
 
   const location = useLocation()
   const { user, logout } = useAuth()
+  const { logo, logoUrl, tenantName } = useTenantBranding()
+  
+  // Apply tenant branding colors to CSS variables
+  useTenantBrandingEffect()
   const [collapsed, setCollapsed] = useState(false)
   const [isChatOpen, setIsChatOpen] = useState(false)
   const [isDocDetailsOpen, setIsDocDetailsOpen] = useState(false)
@@ -61,19 +67,25 @@ export default function AdminLayout() {
           className={`fixed left-0 top-0 h-screen z-40 transition-all duration-300 ${collapsed ? "w-20" : "w-64"
             }`}
         >
-          <div className="h-full flex flex-col bg-[#0d173b] text-white shadow-xl">
+          <div className="h-full flex flex-col bg-primary text-white shadow-xl">
 
-            <div className="flex items-center justify-center py-6 border-b border-green-800">
-              <img
-                src={location.pathname.startsWith("/admin/controlhub") ? "/logos/avec-logo-light.png" : "/logos/unilus-logo-3.png"}
-                alt="Logo"
-                className={`transition-all duration-300 ${collapsed ? "h-8 w-8" : "h-12 w-auto"}`}
-              />
+            <div className="flex items-center justify-center py-6 border-b border-white/10">
+              {logoUrl ? (
+                <img
+                  src={logo}
+                  alt={tenantName}
+                  className={`transition-all duration-300 ${collapsed ? "h-8 w-8" : "h-12 w-auto"}`}
+                />
+              ) : (
+                <div className={`transition-all duration-300 text-white font-extrabold uppercase tracking-wider ${collapsed ? "text-xs" : "text-xl"}`}>
+                  {tenantName}
+                </div>
+              )}
             </div>
 
             <button
               onClick={toggleSidebar}
-              className="absolute -right-3 top-24 bg-white text-[#7c69ff] rounded-full p-1 shadow-lg"
+              className="absolute -right-3 top-24 bg-white text-primary rounded-full p-1 shadow-lg border border-primary/20"
             >
               {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
             </button>
@@ -86,7 +98,7 @@ export default function AdminLayout() {
                   <SidebarMenuButton
                     asChild
                     isActive={isActive("/admin") || isActive("/admin/dashboard")}
-                    className="text-white hover:bg-green-700 data-[active=true]:bg-[#febb00] data-[active=true]:text-black rounded-md"
+                    className="text-white hover:bg-white/10 data-[active=true]:bg-secondary data-[active=true]:text-black rounded-md transition-colors"
                   >
                     <Link to="/admin/dashboard" className="flex items-center gap-3">
                       <LayoutDashboard className="h-5 w-5" />
@@ -97,14 +109,14 @@ export default function AdminLayout() {
 
                 {/* Financials Section */}
                 {hasPermission(user, PERMISSIONS['payments.read']) && (<>
-                  <div className="px-3 pt-4 pb-1 text-xs text-yellow-200 uppercase tracking-wider">
+                  <div className="px-3 pt-4 pb-1 text-xs text-secondary/80 uppercase tracking-wider">
                     {!collapsed && "Financials"}
                   </div>
                   <SidebarMenuItem>
                     <SidebarMenuButton
                       asChild
                       isActive={isActive("/admin/finance/dashboard")}
-                      className="text-white hover:bg-green-700 data-[active=true]:bg-[#febb00] data-[active=true]:text-black rounded-md"
+                      className="text-white hover:bg-white/10 data-[active=true]:bg-secondary data-[active=true]:text-black rounded-md transition-colors"
                     >
                       <Link to="/admin/finance/dashboard" className="flex items-center gap-3">
                         <Wallet className="h-5 w-5" />
@@ -116,7 +128,7 @@ export default function AdminLayout() {
                     <SidebarMenuButton
                       asChild
                       isActive={isActive("/admin/finance/reports")}
-                      className="text-white hover:bg-green-700 data-[active=true]:bg-[#febb00] data-[active=true]:text-black rounded-md"
+                      className="text-white hover:bg-white/10 data-[active=true]:bg-secondary data-[active=true]:text-black rounded-md transition-colors"
                     >
                       <Link to="/admin/finance/reports" className="flex items-center gap-3">
                         <PieChart className="h-5 w-5" />
@@ -129,14 +141,14 @@ export default function AdminLayout() {
                 {/* HR Section */}
                 {(hasPermission(user, PERMISSIONS['hr.staff.read']) ||
                   hasPermission(user, PERMISSIONS['hr.leave.read'])) && (<>
-                    <div className="px-3 pt-4 pb-1 text-xs text-yellow-200 uppercase tracking-wider">
+                    <div className="px-3 pt-4 pb-1 text-xs text-secondary/80 uppercase tracking-wider">
                       {!collapsed && "Human Resources"}
                     </div>
                     <SidebarMenuItem>
                       <SidebarMenuButton
                         asChild
                         isActive={isActive("/admin/hr/dashboard")}
-                        className="text-white hover:bg-green-700 data-[active=true]:bg-[#febb00] data-[active=true]:text-black rounded-md"
+                        className="text-white hover:bg-white/10 data-[active=true]:bg-secondary data-[active=true]:text-black rounded-md transition-colors"
                       >
                         <Link to="/admin/hr/dashboard" className="flex items-center gap-3">
                           <BarChart3 className="h-5 w-5" />
@@ -148,7 +160,7 @@ export default function AdminLayout() {
                       <SidebarMenuButton
                         asChild
                         isActive={isActive("/admin/hr/staff")}
-                        className="text-white hover:bg-green-700 data-[active=true]:bg-[#febb00] data-[active=true]:text-black rounded-md"
+                        className="text-white hover:bg-white/10 data-[active=true]:bg-secondary data-[active=true]:text-black rounded-md transition-colors"
                       >
                         <Link to="/admin/hr/staff" className="flex items-center gap-3">
                           <UserCog className="h-5 w-5" />
@@ -160,7 +172,7 @@ export default function AdminLayout() {
                       <SidebarMenuButton
                         asChild
                         isActive={isActive("/admin/hr/leave")}
-                        className="text-white hover:bg-green-700 data-[active=true]:bg-[#febb00] data-[active=true]:text-black rounded-md"
+                        className="text-white hover:bg-white/10 data-[active=true]:bg-secondary data-[active=true]:text-black rounded-md transition-colors"
                       >
                         <Link to="/admin/hr/leave" className="flex items-center gap-3">
                           <ClipboardList className="h-5 w-5" />
@@ -173,7 +185,7 @@ export default function AdminLayout() {
                         <SidebarMenuButton
                           asChild
                           isActive={isActive("/admin/hr/applications")}
-                          className="text-white hover:bg-green-700 data-[active=true]:bg-[#febb00] data-[active=true]:text-black rounded-md"
+                          className="text-white hover:bg-white/10 data-[active=true]:bg-secondary data-[active=true]:text-black rounded-md transition-colors"
                         >
                           <Link to="/admin/hr/applications" className="flex items-center gap-3">
                             <ClipboardCheck className="h-5 w-5" />
@@ -185,14 +197,14 @@ export default function AdminLayout() {
                   </>)}
 
                 {/* Documents Section */}
-                <div className="px-3 pt-4 pb-1 text-xs text-yellow-200 uppercase tracking-wider">
+                <div className="px-3 pt-4 pb-1 text-xs text-secondary/80 uppercase tracking-wider">
                   {!collapsed && "Documents"}
                 </div>
                 <SidebarMenuItem>
                   <SidebarMenuButton
                     asChild
                     isActive={isActive("/admin/documents")}
-                    className="text-white hover:bg-white/10 data-[active=true]:bg-[#7c69ff] data-[active=true]:text-white rounded-md"
+                    className="text-white hover:bg-white/10 data-[active=true]:bg-secondary data-[active=true]:text-black rounded-md transition-colors"
                   >
                     <Link to="/admin/documents" className="flex items-center gap-3">
                       <FileText className="h-5 w-5" />
@@ -204,7 +216,7 @@ export default function AdminLayout() {
                   <SidebarMenuButton
                     asChild
                     isActive={isActive("/admin/signatures")}
-                    className="text-white hover:bg-white/10 data-[active=true]:bg-[#7c69ff] data-[active=true]:text-white rounded-md"
+                    className="text-white hover:bg-white/10 data-[active=true]:bg-secondary data-[active=true]:text-black rounded-md transition-colors"
                   >
                     <Link to="/admin/signatures" className="flex items-center gap-3">
                       <PenLine className="h-5 w-5" />
@@ -215,14 +227,14 @@ export default function AdminLayout() {
 
                 {/* Reports & Analytics Section */}
                 {hasPermission(user, PERMISSIONS['analytics.read']) && (<>
-                  <div className="px-3 pt-4 pb-1 text-xs text-yellow-200 uppercase tracking-wider">
+                  <div className="px-3 pt-4 pb-1 text-xs text-secondary/80 uppercase tracking-wider">
                     {!collapsed && "Reports & Analytics"}
                   </div>
                   <SidebarMenuItem>
                     <SidebarMenuButton
                       asChild
                       isActive={isActive("/admin/reports")}
-                      className="text-white hover:bg-green-700 data-[active=true]:bg-[#febb00] data-[active=true]:text-black rounded-md"
+                      className="text-white hover:bg-white/10 data-[active=true]:bg-secondary data-[active=true]:text-black rounded-md transition-colors"
                     >
                       <Link to="/admin/reports" className="flex items-center gap-3">
                         <BarChart3 className="h-5 w-5" />
@@ -234,7 +246,7 @@ export default function AdminLayout() {
                     <SidebarMenuButton
                       asChild
                       isActive={isActive("/admin/reports/document-charts")}
-                      className="text-white hover:bg-green-700 data-[active=true]:bg-[#febb00] data-[active=true]:text-black rounded-md"
+                      className="text-white hover:bg-white/10 data-[active=true]:bg-secondary data-[active=true]:text-black rounded-md transition-colors"
                     >
                       <Link to="/admin/reports/document-charts" className="flex items-center gap-3">
                         <BarChart2 className="h-5 w-5" />
@@ -243,9 +255,8 @@ export default function AdminLayout() {
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 </>)}
-
                 {/* System Section */}
-                <div className="px-3 pt-4 pb-1 text-xs text-yellow-200 uppercase tracking-wider">
+                <div className="px-3 pt-4 pb-1 text-xs text-secondary/80 uppercase tracking-wider">
                   {!collapsed && "System"}
                 </div>
                 {hasPermission(user, PERMISSIONS['users.write']) && (
@@ -253,7 +264,7 @@ export default function AdminLayout() {
                     <SidebarMenuButton
                       asChild
                       isActive={isActive("/admin/departments")}
-                      className="text-white hover:bg-green-700 data-[active=true]:bg-[#febb00] data-[active=true]:text-black rounded-md"
+                      className="text-white hover:bg-white/10 data-[active=true]:bg-secondary data-[active=true]:text-black rounded-md transition-colors"
                     >
                       <Link to="/admin/departments" className="flex items-center gap-3">
                         <Building2 className="h-5 w-5" />
@@ -267,11 +278,11 @@ export default function AdminLayout() {
                     <SidebarMenuButton
                       asChild
                       isActive={isActive("/admin/user-management")}
-                      className="text-white hover:bg-green-700 data-[active=true]:bg-[#febb00] data-[active=true]:text-black rounded-md"
+                      className="text-white hover:bg-white/10 data-[active=true]:bg-secondary data-[active=true]:text-black rounded-md transition-colors"
                     >
                       <Link to="/admin/user-management" className="flex items-center gap-3">
                         <Users className="h-5 w-5" />
-                        {!collapsed && <span>Administrators</span>}
+                        {!collapsed && <span>User Management</span>}
                       </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
@@ -281,7 +292,7 @@ export default function AdminLayout() {
                     <SidebarMenuButton
                       asChild
                       isActive={isActive("/admin/audit-trails")}
-                      className="text-white hover:bg-green-700 data-[active=true]:bg-[#febb00] data-[active=true]:text-black rounded-md"
+                      className="text-white hover:bg-white/10 data-[active=true]:bg-secondary data-[active=true]:text-black rounded-md transition-colors"
                     >
                       <Link to="/admin/audit-trails" className="flex items-center gap-3">
                         <History className="h-5 w-5" />
@@ -297,7 +308,7 @@ export default function AdminLayout() {
                     <SidebarMenuButton
                       asChild
                       isActive={isActive("/admin/roles")}
-                      className="text-white hover:bg-green-700 data-[active=true]:bg-[#febb00] data-[active=true]:text-black rounded-md"
+                      className="text-white hover:bg-white/10 data-[active=true]:bg-secondary data-[active=true]:text-black rounded-md transition-colors"
                     >
                       <Link to="/admin/roles" className="flex items-center gap-3">
                         <ShieldCheck className="h-5 w-5" />
@@ -312,7 +323,7 @@ export default function AdminLayout() {
                     <SidebarMenuButton
                       asChild
                       isActive={isActive("/admin/maker-checker")}
-                      className="text-white hover:bg-green-700 data-[active=true]:bg-[#febb00] data-[active=true]:text-black rounded-md"
+                      className="text-white hover:bg-white/10 data-[active=true]:bg-secondary data-[active=true]:text-black rounded-md transition-colors"
                     >
                       <Link to="/admin/maker-checker" className="flex items-center gap-3">
                         <ClipboardCheck className="h-5 w-5" />
@@ -322,15 +333,34 @@ export default function AdminLayout() {
                   </SidebarMenuItem>
                 )}
 
+                {/* Admin Settings Section */}
+                {hasPermission(user, PERMISSIONS['configure_dashboard_cards']) && (<>
+                  <div className="px-3 pt-4 pb-1 text-xs text-secondary/80 uppercase tracking-wider">
+                    {!collapsed && "Administration"}
+                  </div>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={isActive("/admin/settings/dashboard-config")}
+                      className="text-white hover:bg-white/10 data-[active=true]:bg-secondary data-[active=true]:text-black rounded-md transition-colors"
+                    >
+                      <Link to="/admin/settings/dashboard-config" className="flex items-center gap-3">
+                        <Settings className="h-5 w-5" />
+                        {!collapsed && <span>Dashboard Config</span>}
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                </>)}
+
                 {/* ControlHub Section */}
-                <div className="px-3 pt-4 pb-1 text-xs text-yellow-200 uppercase tracking-wider">
+                {/* <div className="px-3 pt-4 pb-1 text-xs text-yellow-200 uppercase tracking-wider">
                   {!collapsed && "Avec ControlHub"}
-                </div>
+                </div> 
                 <SidebarMenuItem>
                   <SidebarMenuButton
                     asChild
                     isActive={isActive("/admin/controlhub/dashboard")}
-                    className="text-white hover:bg-white/10 data-[active=true]:bg-[#7c69ff] data-[active=true]:text-white rounded-md"
+                    className="text-white hover:bg-green-700 data-[active=true]:bg-[#febb00] data-[active=true]:text-black rounded-md"
                   >
                     <Link to="/admin/controlhub/dashboard" className="flex items-center gap-3">
                       <LayoutDashboard className="h-5 w-5" />
@@ -342,14 +372,14 @@ export default function AdminLayout() {
                   <SidebarMenuButton
                     asChild
                     isActive={isActive("/admin/controlhub/tenants") || location.pathname.startsWith("/admin/controlhub/tenants/")}
-                    className="text-white hover:bg-white/10 data-[active=true]:bg-[#7c69ff] data-[active=true]:text-white rounded-md"
+                    className="text-white hover:bg-green-700 data-[active=true]:bg-[#febb00] data-[active=true]:text-black rounded-md"
                   >
                     <Link to="/admin/controlhub/tenants" className="flex items-center gap-3">
                       <Building2 className="h-5 w-5" />
                       {!collapsed && <span>Tenants</span>}
                     </Link>
                   </SidebarMenuButton>
-                </SidebarMenuItem>
+                </SidebarMenuItem> */}
 
               </SidebarMenu>
             </div>
@@ -359,7 +389,7 @@ export default function AdminLayout() {
                 <SidebarMenuItem>
                   <SidebarMenuButton
                     onClick={handleLogout}
-                    className="text-white hover:bg-green-700 rounded-md"
+                    className="text-white hover:bg-white/10 rounded-md transition-colors"
                   >
                     <LogOut className="h-5 w-5" />
                     {!collapsed && <span>Log Out</span>}

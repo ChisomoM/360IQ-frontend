@@ -6,25 +6,27 @@ import { Switch } from "@/components/ui/switch";
 import { Settings, ShieldCheck, UserPlus } from "lucide-react";
 import type { TenantSettings } from "@/types/tenant";
 import { toast } from "sonner";
+import { chPatch } from "@/lib/api/controlhub";
 
 interface TenantSettingsEditorProps {
+  tenantId: string;
   settings: TenantSettings;
   onChange: (updated: Partial<TenantSettings>) => void;
 }
 
-export default function TenantSettingsEditor({ settings, onChange }: TenantSettingsEditorProps) {
+export default function TenantSettingsEditor({ tenantId, settings, onChange }: TenantSettingsEditorProps) {
   const [loading, setLoading] = useState(false);
   const [localSettings, setLocalSettings] = useState(settings);
 
   const handleSave = async () => {
     setLoading(true);
     try {
-      // Mock API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await chPatch("CH_CLIENT_SETTINGS", localSettings, { id: tenantId });
       onChange(localSettings);
       toast.success("Settings updated successfully");
-    } catch (error) {
-      toast.error("Failed to update settings");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Failed to update settings";
+      toast.error(msg);
     } finally {
       setLoading(false);
     }

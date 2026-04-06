@@ -6,33 +6,50 @@
 
 :root {
   --font-size: 16px;
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-    --primary: 142.1 47.6% 22.7%; /* #1e5631 */
-    --primary-foreground: 210 40% 98%;
-    --secondary: 44.4 100% 49.4%; /* #febb00 */
-    --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 142.1 47.6% 22.7%;
-    --radius: 0.5rem;
-    --sidebar: 144 48% 18%; /* #184626 */
-    --sidebar-foreground: 210 40% 98%;
+  
+  /* Tenant-specific brand colors (dynamically injected by JavaScript from tenant config) */
+  --tenant-primary: #1e5631;      /* Default: Green */
+  --tenant-secondary: #febb00;    /* Default: Gold/Yellow */
+  --tenant-accent: #172E70;       /* Default: Dark Blue */
+  --tenant-destructive: #dc2626;  /* Default: Red */
+  --tenant-success: #10b981;      /* Default: Emerald */
+  
+  /* Standard shadcn/ui variables - these will be overridden by JS in HSL space */
+  --background: 0 0% 100%;
+  --foreground: 222.2 84% 4.9%;
+  --card: 0 0% 100%;
+  --card-foreground: 222.2 84% 4.9%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 222.2 84% 4.9%;
+  --primary: 142.1 47.6% 22.7%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 44.4 100% 49.4%;
+  --secondary-foreground: 0 0% 0%;
+  --muted: 210 40% 96.1%;
+  --muted-foreground: 215.4 16.3% 46.9%;
+  --accent: 210 40% 96.1%;
+  --accent-foreground: 222.2 47.4% 11.2%;
+  --destructive: 0 84.2% 60.2%;
+  --destructive-foreground: 210 40% 98%;
+  --border: 214.3 31.8% 91.4%;
+  --input: 214.3 31.8% 91.4%;
+  --ring: 142.1 47.6% 22.7%;
+  --radius: 0.5rem;
+  
+  /* Sidebar Specific (linked to primary/secondary via JS) */
+  --sidebar: 142.1 47.6% 22.7%;
+  --sidebar-foreground: 0 0% 100%;
+  --sidebar-primary: 44.4 100% 49.4%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 0 0% 100% / 0.1;
+  --sidebar-accent-foreground: 0 0% 100%;
+  --sidebar-border: 0 0% 100% / 0.1;
+  --sidebar-ring: 142.1 47.6% 22.7%;
 
-    /* ControlHub Scoped Variables */
-    --ch-primary: 257 100% 71%; /* #7c69ff */
-    --ch-secondary: 189 98% 50%; /* #03d8fd */
-    --ch-tertiary: 233 63% 14%; /* #0d173b */
+  /* ControlHub Scoped Variables */
+  --ch-primary: 257 100% 71%; 
+  --ch-secondary: 189 98% 50%;
+  --ch-tertiary: 233 63% 14%;
   --font-weight-medium: 500;
   --font-weight-normal: 400;
   --chart-1: #7c69ff;
@@ -40,15 +57,6 @@
   --chart-3: #0d173b;
   --chart-4: #a78bfa;
   --chart-5: #22d3ee;
-  --radius: 0.625rem;
-  --sidebar: #0d173b;
-  --sidebar-foreground: #ffffff;
-  --sidebar-primary: #7c69ff;
-  --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: rgba(255, 255, 255, 0.1);
-  --sidebar-accent-foreground: #03d8fd;
-  --sidebar-border: rgba(255, 255, 255, 0.1);
-  --sidebar-ring: #7c69ff;
 }
 
 .dark {

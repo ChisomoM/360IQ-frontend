@@ -3,6 +3,10 @@ export type TenantType = "parastetal" | "higher-academic" | "company";
 export interface TenantBranding {
   logo_url: string;
   primary_color: string;
+  secondary_color?: string;
+  accent_color?: string;
+  destructive_color?: string;
+  success_color?: string;
   short_name: string;
   long_name: string;
   tagline: string;
@@ -42,8 +46,10 @@ export interface TenantAdmin {
 
 export interface CreateTenantPayload {
   name: string;
-  db_name: string;
   type: TenantType;
+  primary_color: string;
+  secondary_color: string;
+  accent_color: string;
   admin_email: string;
   admin_password: string;
 }
@@ -51,6 +57,10 @@ export interface CreateTenantPayload {
 export interface UpdateTenantBrandingPayload {
   logo_url?: string;
   primary_color?: string;
+  secondary_color?: string;
+  accent_color?: string;
+  destructive_color?: string;
+  success_color?: string;
   short_name?: string;
   long_name?: string;
   tagline?: string;

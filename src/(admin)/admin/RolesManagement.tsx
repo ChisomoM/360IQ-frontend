@@ -25,8 +25,8 @@ export default function RolesManagement() {
         setIsLoading(true);
         try {
             const [rolesData, permsData] = await Promise.all([
-                list('ROLES'),
-                list('LIST_PERMISSIONS'),
+                list('ADMIN_ROLES'),
+                list('ADMIN_PERMISSIONS'),
             ]);
             setRoles(rolesData ?? []);
             setAllPermissions(permsData ?? []);
@@ -87,7 +87,7 @@ export default function RolesManagement() {
 
             {isLoading ? (
                 <div className="flex items-center justify-center py-20">
-                    <Loader2 className="h-10 w-10 animate-spin text-[#1e3c21]" />
+                    <Loader2 className="h-10 w-10 animate-spin text-primary" />
                     <p className="ml-4 text-gray-500">Loading roles...</p>
                 </div>
             ) : roles.length === 0 ? (
@@ -98,20 +98,17 @@ export default function RolesManagement() {
                     </CardContent>
                 </Card>
             ) : (
-                <div className="flex gap-6">
+                <>
                     {/* Role Cards */}
-                    <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         {roles.map((role) => (
                             <Card
                                 key={String(role.id)}
-                                className={`border-2 transition-all ${selectedRole?.id === role.id
-                                        ? 'border-[#1e3c21]'
-                                        : 'border-gray-200 hover:border-gray-300'
-                                    }`}
+                                className="border-2 border-gray-200 hover:border-gray-300 transition-all"
                             >
                                 <CardContent className="p-6 space-y-4">
                                     <div className="flex items-start justify-between">
-                                        <ShieldCheck className="h-8 w-8 text-[#1e3c21]" />
+                                        <ShieldCheck className="h-8 w-8 text-primary" />
                                         <span
                                             className={`text-xs px-2 py-1 rounded-full font-medium ${ROLE_COLORS[role.slug] ?? 'bg-gray-100 text-gray-700'
                                                 }`}
@@ -134,7 +131,7 @@ export default function RolesManagement() {
                                         <Button
                                             size="sm"
                                             onClick={() => openPanel(role)}
-                                            className="bg-[#1e3c21] hover:bg-[#2a5230] text-white"
+                                            variant="tenantPrimary"
                                         >
                                             <Edit2 className="h-3 w-3 mr-1" />
                                             Edit Permissions
@@ -145,16 +142,16 @@ export default function RolesManagement() {
                         ))}
                     </div>
 
-                    {/* Permissions Panel */}
-                    {isPanelOpen && selectedRole && (
-                        <RolePermissionsPanel
-                            role={selectedRole}
-                            allPermissions={allPermissions}
-                            onSave={handleSave}
-                            isSaving={isSaving}
-                        />
-                    )}
-                </div>
+                    {/* Permissions Modal */}
+                    <RolePermissionsPanel
+                        role={selectedRole}
+                        allPermissions={allPermissions}
+                        onSave={handleSave}
+                        isSaving={isSaving}
+                        isOpen={isPanelOpen}
+                        onOpenChange={setIsPanelOpen}
+                    />
+                </>
             )}
         </div>
     );
