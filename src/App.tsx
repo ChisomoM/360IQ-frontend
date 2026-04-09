@@ -18,6 +18,7 @@ import TeacherManagement from './(admin)/admin/TeacherManagement';
 import Referrals from './(admin)/admin/Referrals';
 import FinancialsPage from './(admin)/admin/FinancialsPage';
 import { AnalyticsDashboard } from './(admin)/admin/AnalyticsDashboard';
+import ReportsPage from './(admin)/admin/ReportsPage';
 import ApprovalsPage from './(admin)/admin/ApprovalsPage';
 import RegionManagement from './(admin)/admin/RegionManagement';
 import PartnershipPage from './(admin)/admin/PartnershipPage';
@@ -26,6 +27,7 @@ import Departments from './(admin)/admin/Departments';
 import Documents from './(admin)/admin/Documents';
 import DocumentDetail from './(admin)/admin/DocumentDetail';
 import DocumentCharts from './(admin)/admin/DocumentCharts';
+import FinancialCharts from './(admin)/admin/FinancialCharts';
 import Workflows from './(admin)/admin/Workflows';
 import AuditTrails from './(admin)/admin/AuditTrails';
 import HRDashboard from './(admin)/admin/hr/HRDashboard';
@@ -45,6 +47,7 @@ import ControlHubLoginPage from './(controlhub)/ControlHubLoginPage';
 import ControlHubDashboard from './(controlhub)/Dashboard';
 import TenantsList from './(controlhub)/TenantsList';
 import TenantDetail from './(controlhub)/TenantDetail';
+import TeamManagement from './(admin)/admin/TeamManagement';
 
 
 
@@ -81,8 +84,10 @@ function App() {
           <Route path="teacher-management" element={<TeacherManagement />} />
           <Route path="financials" element={<FinancialsPage />} />
           <Route path="referrals" element={<Referrals />} />
-          <Route path="reports" element={<AnalyticsDashboard />} />
+          <Route path="analytics" element={<AnalyticsDashboard />} />
+          <Route path="reports" element={<ReportsPage />} />
           <Route path="reports/document-charts" element={<DocumentCharts />} />
+          <Route path="reports/financial-charts" element={<FinancialCharts />} />
           <Route path="partnerships" element={<PartnershipPage />} />
           <Route path="blogs" element={<BlogPage />} />
           <Route path="departments" element={<Departments />} />
@@ -96,7 +101,10 @@ function App() {
           {/* RBAC Routes */}
           <Route path="roles" element={<RolesManagement />} />
           <Route path="maker-checker" element={<MakerCheckerPage />} />
-
+{/* Finance Routes */}
+          {/* <Route path="finance/dashboard" element={<FinanceDashboard />} />
+          <Route path="finance/payments" element={<PaymentManagement />} />
+          <Route path="finance/reports" element={<FinanceReports />} /> */}
           {/* HR Routes */}
           <Route path="hr/dashboard" element={<HRDashboard />} />
           <Route path="hr/staff" element={<StaffDirectory />} />

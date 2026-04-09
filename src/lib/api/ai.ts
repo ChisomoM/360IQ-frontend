@@ -63,3 +63,30 @@ export const analyzeDocument = async (documentId: string): Promise<any> => {
     throw new Error(error?.message || 'Failed to analyze document');
   }
 };
+
+/**
+ * Generate predictive analysis from chart/spreadsheet data
+ * @param chartData - The chart or spreadsheet data to analyze
+ * @param documentTitle - Title of the document/data source
+ * @param metricsContext - Description of what metrics are being analyzed
+ * @param analysisContext - Additional context for the analysis
+ * @returns The predictive analysis results
+ */
+export const generatePredictiveAnalysis = async (
+  chartData: any,
+  documentTitle: string = 'Spreadsheet Data',
+  metricsContext: string = 'Document metrics',
+  analysisContext?: string
+): Promise<any> => {
+  try {
+    const result = await post('DOCUMENT_PREDICTIVE_ANALYSIS', {
+      chart_data: chartData,
+      document_title: documentTitle,
+      metrics_context: metricsContext,
+      analysis_context: analysisContext || '',
+    });
+    return result;
+  } catch (error: any) {
+    throw new Error(error?.message || 'Failed to generate predictive analysis');
+  }
+};

@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
-import { FileSpreadsheet, Search, BarChart2, TableProperties, GitCompare } from 'lucide-react';
+import { FileSpreadsheet, Search, BarChart2, TableProperties, GitCompare, Sparkles } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { fetchData } from '@/lib/api/crud';
 import { ExcelChartViewer } from '@/components/ai/ExcelChartViewer';
 import { ComparisonChartViewer } from '@/components/ai/ComparisonChartViewer';
+import { PredictiveAnalysisPanel } from '@/components/ai/PredictiveAnalysisPanel';
+import { generatePredictiveAnalysis } from '@/lib/api/ai';
 import type { Document } from '@/types/dms';
 import { toast } from 'sonner';
 
@@ -103,6 +105,11 @@ export default function DocumentCharts() {
   const [isCompareMode, setIsCompareMode] = useState(false);
   const [compareSelected, setCompareSelected] = useState<Document[]>([]);
 
+  // Predictive analysis mode
+  const [predictiveResult, setPredictiveResult] = useState<any>(null);
+  const [isPredictiveLoading, setIsPredictiveLoading] = useState(false);
+  const [predictiveError, setPredictiveError] = useState<string | null>(null);
+
   // ── Fetch ─────────────────────────────────────────────────────────────────
   useEffect(() => {
     (async () => {
@@ -138,10 +145,85 @@ export default function DocumentCharts() {
     });
   };
 
+  const handleGeneratePredictiveAnalysis = async () => {
+    setPredictiveError(null);
+    setPredictiveResult(null);
+    setIsPredictiveLoading(true);
+
+    try {
+      // Collect data from either single or compare mode
+      let chartData: any = {};
+      let docTitle = '';
+
+      if (isCompareMode && compareSelected.length > 0) {
+        // Compare mode: collect data from multiple documents
+        docTitle = `Comparison: ${compareSelected.map((d) => d.title).join(', ')}`;
+        
+        // Try to fetch comparison data
+        try {
+          const comparisonData = await fetchData('DOCUMENT_COMPARE', 'POST', {}, {
+            document_ids: compareSelected.map((d) => d.id),
+          });
+          chartData = comparisonData;
+        } catch (err) {
+          // If comparison API fails, just send basic info
+          chartData = {
+            documents: compareSelected.map((d) => ({
+              id: d.id,
+              title: d.title,
+              file_name: d.file_name,
+            })),
+            mode: 'comparison',
+          };
+        }
+      } else if (!isCompareMode && selected) {
+        // Single mode: collect data from selected document
+        docTitle = selected.title;
+        
+        try {
+          const chartDataResult = await fetchData('DOCUMENT_CHART_DATA', 'GET', { id: selected.id });
+          chartData = chartDataResult;
+        } catch (err) {
+          // If chart data API fails, just send basic info
+          chartData = {
+            document: {
+              id: selected.id,
+              title: selected.title,
+              file_name: selected.file_name,
+            },
+            mode: 'single',
+          };
+        }
+      } else {
+        toast.error('Please select a document or documents to analyze');
+        setIsPredictiveLoading(false);
+        return;
+      }
+
+      // Call predictive analysis API
+      const analysis = await generatePredictiveAnalysis(
+        chartData,
+        docTitle,
+        'Document spreadsheet metrics - analyzing trends and patterns',
+        isCompareMode ? `Comparing ${compareSelected.length} documents` : 'Single document analysis'
+      );
+
+      setPredictiveResult(analysis);
+      toast.success('Predictive analysis generated successfully');
+    } catch (error: any) {
+      const errorMsg = error?.message || 'Failed to generate predictive analysis';
+      setPredictiveError(errorMsg);
+      toast.error(errorMsg);
+    } finally {
+      setIsPredictiveLoading(false);
+    }
+  };
+
   const filtered = documents.filter((d) => {
     const q = search.toLowerCase();
     return d.title?.toLowerCase().includes(q) || d.file_name?.toLowerCase().includes(q);
   });
+
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
@@ -157,16 +239,29 @@ export default function DocumentCharts() {
               <BarChart2 className="h-5 w-5 text-[#febb00]" />
               <h1 className="text-base font-semibold text-gray-900">Document Charts</h1>
             </div>
-            <Button
-              variant={isCompareMode ? 'default' : 'outline'}
-              size="sm"
-              className={`h-7 px-2 gap-1 text-xs ${isCompareMode ? 'bg-[#febb00] text-black hover:bg-[#febb00]/90 border-[#febb00]' : 'text-gray-500'}`}
-              onClick={toggleCompareMode}
-              title="Toggle compare mode"
-            >
-              <GitCompare className="h-3.5 w-3.5" />
-              {isCompareMode ? 'Done' : 'Compare'}
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-7 px-2 gap-1 text-xs text-gray-600 hover:bg-purple-50 hover:text-purple-700 border-gray-300"
+                onClick={handleGeneratePredictiveAnalysis}
+                disabled={isPredictiveLoading || (!selected && !isCompareMode) || (isCompareMode && compareSelected.length < 2)}
+                title="Generate AI-powered predictive analysis from chart data"
+              >
+                <Sparkles className="h-3.5 w-3.5" />
+                {isPredictiveLoading ? 'Analyzing...' : 'Predict'}
+              </Button>
+              <Button
+                variant={isCompareMode ? 'default' : 'outline'}
+                size="sm"
+                className={`h-7 px-2 gap-1 text-xs ${isCompareMode ? 'bg-[#febb00] text-black hover:bg-[#febb00]/90 border-[#febb00]' : 'text-gray-500'}`}
+                onClick={toggleCompareMode}
+                title="Toggle compare mode"
+              >
+                <GitCompare className="h-3.5 w-3.5" />
+                {isCompareMode ? 'Done' : 'Compare'}
+              </Button>
+            </div>
           </div>
           <div className="relative">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
@@ -245,21 +340,43 @@ export default function DocumentCharts() {
 
         {/* Compare mode: ready */}
         {isCompareMode && compareSelected.length >= 2 && (
-          <div className="p-6">
+          <div className="p-6 flex flex-col space-y-6">
             <ComparisonChartViewer
               docs={compareSelected}
               onClearAll={() => setCompareSelected([])}
             />
+            {(predictiveResult || isPredictiveLoading || predictiveError) && (
+              <PredictiveAnalysisPanel
+                result={predictiveResult}
+                isLoading={isPredictiveLoading}
+                error={predictiveError}
+                onClose={() => {
+                  setPredictiveResult(null);
+                  setPredictiveError(null);
+                }}
+              />
+            )}
           </div>
         )}
 
         {/* Single-view mode */}
         {!isCompareMode && selected && (
-          <div className="p-6">
+          <div className="p-6 flex flex-col space-y-6">
             <ExcelChartViewer
               document={selected}
               onClose={() => setSelected(null)}
             />
+            {(predictiveResult || isPredictiveLoading || predictiveError) && (
+              <PredictiveAnalysisPanel
+                result={predictiveResult}
+                isLoading={isPredictiveLoading}
+                error={predictiveError}
+                onClose={() => {
+                  setPredictiveResult(null);
+                  setPredictiveError(null);
+                }}
+              />
+            )}
           </div>
         )}
 

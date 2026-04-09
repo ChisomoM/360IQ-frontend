@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { useAuth } from '@/lib/context/useAuth';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -40,6 +41,9 @@ interface DocumentDetails {
 type UIStep = 'search' | 'results' | 'details' | 'calendar' | 'success' | 'error';
 
 export function DocumentChat() {
+  const { tokens, user } = useAuth();
+  const token = tokens?.token || '';
+  const tenantId = user?.tenantId || localStorage.getItem('tenantId') || '';
   // State
   const [step, setStep] = useState<UIStep>('search');
   const [query, setQuery] = useState('');
@@ -76,7 +80,8 @@ export function DocumentChat() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'X-Tenant-ID': localStorage.getItem('tenantId') || '',
+          'X-Tenant-ID': tenantId || '',
+          'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({ query, limit: 5 }),
       });
@@ -107,7 +112,8 @@ export function DocumentChat() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'X-Tenant-ID': localStorage.getItem('tenantId') || '',
+          'X-Tenant-ID': tenantId || '',
+          'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({ document_id: doc.id }),
       });
@@ -138,7 +144,8 @@ export function DocumentChat() {
       // Check if calendar is connected (simplified check)
       const statusResponse = await fetch('/api/v1/chat/calendar-status', {
         headers: {
-          'X-Tenant-ID': localStorage.getItem('tenantId') || '',
+          'X-Tenant-ID': tenantId || '',
+          'Authorization': `Bearer ${token}`,
         },
       });
 
@@ -153,7 +160,8 @@ export function DocumentChat() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'X-Tenant-ID': localStorage.getItem('tenantId') || '',
+          'X-Tenant-ID': tenantId || '',
+          'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({
           document_id: selectedDoc.id,

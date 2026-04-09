@@ -12,6 +12,7 @@ import {
   SidebarMenuItem,
   SidebarMenuButton,
 } from "@/components/ui/sidebar"
+import { CollapsibleSidebarSection } from "@/components/layout/CollapsibleSidebarSection"
 import {
   LogOut,
   LayoutDashboard,
@@ -72,11 +73,13 @@ export default function ControlHubLayout() {
           <div className="h-full flex flex-col bg-[#0d173b] text-white shadow-xl">
 
             <div className="flex items-center justify-center py-6 border-b border-[#7c69ff]/20">
-              <img
-                src="/logos/avec-logo-light.png"
-                alt="Avec Logo"
-                className={`transition-all duration-300 ${collapsed ? "h-8 w-8" : "h-12 w-auto"}`}
-              />
+              {!collapsed && (
+                <img
+                  src="/logos/avec-logo-light.png"
+                  alt="Avec Logo"
+                  className="h-12 w-auto"
+                />
+              )}
             </div>
 
             <button
@@ -91,7 +94,7 @@ export default function ControlHubLayout() {
 
             <div className="flex-1 overflow-y-auto p-4">
 
-              <SidebarMenu className="space-y-1">
+              <SidebarMenu className="space-y-3">
 
                 <SidebarMenuItem>
 
@@ -114,22 +117,27 @@ export default function ControlHubLayout() {
                 </SidebarMenuItem>
 
                 {/* Avec ControlHub Section */}
-                <div className="px-3 pt-4 pb-1 text-xs text-[#03d8fd] uppercase tracking-wider">
-                  {!collapsed && "Avec ControlHub"}
-                </div>
-
-                <SidebarMenuItem>
-                  <SidebarMenuButton
-                    asChild
-                    isActive={isActive("/controlhub/tenants") || location.pathname.startsWith("/controlhub/tenants/")}
-                    className="text-white hover:bg-white/10 data-[active=true]:bg-[#7c69ff] data-[active=true]:text-white rounded-md"
-                  >
-                    <Link to="/controlhub/tenants" className="flex items-center gap-3">
-                      <Building2 className="h-5 w-5"/>
-                      {!collapsed && <span>Tenants</span>}
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
+                <CollapsibleSidebarSection
+                  title="Avec ControlHub"
+                  icon={<Building2 className="h-5 w-5" />}
+                  collapsed={collapsed}
+                  activePaths={["/controlhub/tenants"]}
+                >
+                  <SidebarMenu className="space-y-1">
+                    <SidebarMenuItem>
+                      <SidebarMenuButton
+                        asChild
+                        isActive={isActive("/controlhub/tenants") || location.pathname.startsWith("/controlhub/tenants/")}
+                        className="text-white hover:bg-white/10 data-[active=true]:bg-[#7c69ff] data-[active=true]:text-white rounded-md"
+                      >
+                        <Link to="/controlhub/tenants" className="flex items-center gap-3">
+                          <Building2 className="h-5 w-5"/>
+                          {!collapsed && <span>Tenants</span>}
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  </SidebarMenu>
+                </CollapsibleSidebarSection>
 
               </SidebarMenu>
 

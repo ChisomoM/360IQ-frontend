@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
-import { Loader2, X } from 'lucide-react';
+import { Loader2, Check } from 'lucide-react';
 import { toast } from 'sonner';
 import { post, remove } from '@/lib/api/crud';
 import type { Permission, UserPermissionOverride } from '@/types/rbac';
@@ -20,125 +20,133 @@ export function UserPermissionOverrides({
     onAssign,
     onRevoke,
 }: UserPermissionOverridesProps) {
-    const [selectedPerm, setSelectedPerm] = useState('');
-    const [granted, setGranted] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const handleAdd = async () => {
-        if (!selectedPerm) return;
+    // Group permissions by resource
+    const groupedPermissions = useMemo(() => {
+        const groups: Record<string, Permission[]> = {};
+        allPermissions.forEach((perm) => {
+            if (!groups[perm.resource]) {
+                groups[perm.resource] = [];
+            }
+            groups[perm.resource].push(perm);
+        });
+        return groups;
+    }, [allPermissions]);
+
+    // Track selected permissions
+    const selectedPermIds = new Set(userPermissions.map((p) => String(p.permission.id)));
+
+    const handleTogglePermission = async (permission: Permission) => {
+        const permId = String(permission.id);
+        const isCurrentlySelected = selectedPermIds.has(permId);
+
         setIsSubmitting(true);
         try {
-            await post('USER_PERMISSIONS', { permissionId: selectedPerm, granted }, { id: userId });
-            toast.success('Permission override added');
-            onAssign(selectedPerm, granted);
-            setSelectedPerm('');
+            if (isCurrentlySelected) {
+                // Remove override
+                await remove('USER_PERMISSIONS', { userId, permId });
+                toast.success('Permission removed');
+                onRevoke(permId);
+            } else {
+                // Add override (grant by default)
+                await post('USER_PERMISSIONS', { permissionId: permId, granted: true }, { userId });
+                toast.success('Permission granted');
+                onAssign(permId, true);
+            }
         } catch (err) {
-            toast.error(err instanceof Error ? err.message : 'Failed to add override');
+            toast.error(err instanceof Error ? err.message : 'Failed to update permission');
         } finally {
             setIsSubmitting(false);
         }
     };
 
-    const handleRevoke = async (permId: string) => {
-        setIsSubmitting(true);
-        try {
-            await remove('USER_PERMISSIONS', { id: userId, permId });
-            toast.success('Override removed');
-            onRevoke(permId);
-        } catch (err) {
-            toast.error(err instanceof Error ? err.message : 'Failed to remove override');
-        } finally {
-            setIsSubmitting(false);
-        }
-    };
+    const resourceOrder = ['document', 'user', 'role', 'department', 'workflow', 'report', 'admin'];
+    const sortedResources = Object.keys(groupedPermissions).sort((a, b) => {
+        const aIndex = resourceOrder.indexOf(a.toLowerCase());
+        const bIndex = resourceOrder.indexOf(b.toLowerCase());
+        if (aIndex === -1) return 1;
+        if (bIndex === -1) return -1;
+        return aIndex - bIndex;
+    });
 
     return (
-        <div className="space-y-4">
-            {/* Current overrides table */}
-            {userPermissions.length === 0 ? (
-                <p className="text-sm text-gray-500">
-                    No individual overrides. User inherits role permissions.
-                </p>
+        <div className="space-y-6">
+            {sortedResources.length === 0 ? (
+                <p className="text-sm text-gray-500">No permissions available</p>
             ) : (
-                <table className="w-full text-sm">
-                    <thead>
-                        <tr className="border-b border-gray-200">
-                            <th className="text-left py-2 text-gray-500 font-medium">Permission</th>
-                            <th className="text-left py-2 text-gray-500 font-medium">Type</th>
-                            <th className="py-2" />
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {userPermissions.map((override) => (
-                            <tr key={String(override.id)} className="border-b border-gray-100">
-                                <td className="py-2">
-                                    {override.permission.resource}.{override.permission.action}
-                                </td>
-                                <td className="py-2">
-                                    <span
-                                        className={`px-2 py-0.5 rounded-full text-xs ${override.granted
-                                                ? 'bg-green-100 text-green-700'
-                                                : 'bg-red-100 text-red-700'
-                                            }`}
-                                    >
-                                        {override.granted ? 'Granted' : 'Denied'}
-                                    </span>
-                                </td>
-                                <td className="py-2 text-right">
-                                    <button
-                                        title="Revoke override"
-                                        onClick={() => handleRevoke(String(override.permission.id))}
-                                        disabled={isSubmitting}
-                                        className="text-gray-400 hover:text-red-500"
-                                    >
-                                        <X className="h-4 w-4" />
-                                    </button>
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
+                sortedResources.map((resource) => {
+                    const permissions = groupedPermissions[resource];
+                    return (
+                        <div key={resource} className="space-y-3">
+                            {/* Section Header */}
+                            <div className="flex items-center gap-2 mb-3">
+                                <div className="h-1 w-6 bg-primary rounded-full"></div>
+                                <h3 className="text-sm font-semibold text-gray-900 capitalize">
+                                    {resource}
+                                </h3>
+                                <span className="text-xs text-gray-500 ml-auto">
+                                    {permissions.filter((p) => selectedPermIds.has(String(p.id))).length} of{' '}
+                                    {permissions.length}
+                                </span>
+                            </div>
+
+                            {/* Permissions Grid */}
+                            <div className="bg-gray-50 rounded-lg p-4 space-y-2">
+                                {permissions.map((permission) => {
+                                    const isSelected = selectedPermIds.has(String(permission.id));
+                                    return (
+                                        <label
+                                            key={String(permission.id)}
+                                            className="flex items-center gap-3 p-2.5 rounded-md hover:bg-white transition-colors cursor-pointer group"
+                                        >
+                                            <div className="relative">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={isSelected}
+                                                    onChange={() => handleTogglePermission(permission)}
+                                                    disabled={isSubmitting}
+                                                    className="sr-only"
+                                                />
+                                                <div
+                                                    className={`w-5 h-5 rounded border-2 transition-all ${
+                                                        isSelected
+                                                            ? 'bg-primary border-primary'
+                                                            : 'border-gray-300 bg-white group-hover:border-primary'
+                                                    }`}
+                                                >
+                                                    {isSelected && (
+                                                        <Check className="h-3.5 w-3.5 text-white absolute top-0.5 left-0.5" />
+                                                    )}
+                                                </div>
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <p className="text-sm font-medium text-gray-900">
+                                                    {permission.action}
+                                                </p>
+                                                {permission.description && (
+                                                    <p className="text-xs text-gray-500 line-clamp-1">
+                                                        {permission.description}
+                                                    </p>
+                                                )}
+                                            </div>
+                                        </label>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    );
+                })
             )}
 
-            {/* Add override form */}
-            <div className="flex gap-2 items-end">
-                <div className="flex-1">
-                    <select
-                        title="Select permission"
-                        value={selectedPerm}
-                        onChange={(e) => setSelectedPerm(e.target.value)}
-                        disabled={isSubmitting}
-                        className="w-full h-9 border border-gray-300 rounded-md px-3 text-sm"
-                    >
-                        <option value="">Select permission...</option>
-                        {allPermissions.map((p) => (
-                            <option key={String(p.id)} value={String(p.id)}>
-                                {p.resource}.{p.action}
-                            </option>
-                        ))}
-                    </select>
+            {/* Info message */}
+            {userPermissions.length > 0 && (
+                <div className="bg-blue-50 rounded-lg p-3 border border-blue-100">
+                    <p className="text-xs text-blue-700">
+                        ✓ Selected permissions override the user's role permissions
+                    </p>
                 </div>
-                <div>
-                    <select
-                        title="Grant or deny"
-                        value={granted ? 'grant' : 'deny'}
-                        onChange={(e) => setGranted(e.target.value === 'grant')}
-                        disabled={isSubmitting}
-                        className="h-9 border border-gray-300 rounded-md px-3 text-sm"
-                    >
-                        <option value="grant">Grant</option>
-                        <option value="deny">Deny</option>
-                    </select>
-                </div>
-                <Button
-                    onClick={handleAdd}
-                    disabled={isSubmitting || !selectedPerm}
-                    size="sm"
-                >
-                    {isSubmitting && <Loader2 className="h-3 w-3 mr-1 animate-spin" />}
-                    Add
-                </Button>
-            </div>
+            )}
         </div>
     );
 }

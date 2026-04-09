@@ -4,14 +4,6 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -30,13 +22,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-} from '@/components/ui/sheet';
 import {
   Select,
   SelectContent,
@@ -71,6 +56,8 @@ import {
   Tag,
   CheckCircle2,
   AlertCircle,
+  ChevronDown,
+  Sparkles,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useDropzone } from 'react-dropzone';
@@ -78,6 +65,9 @@ import { Switch } from '@/components/ui/switch';
 import { fetchData, file } from '@/lib/api/crud';
 import type { Document, Department, DocumentVersion, DocumentUpdatePayload } from '@/types/dms';
 import dayjs from 'dayjs';
+import DocumentCard from '@/components/DocumentCard';
+import { DocumentSearchModal } from '@/components/DocumentSearchModal';
+import { DocumentChat } from '@/components/DocumentChat';
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 
@@ -129,13 +119,13 @@ export default function Documents() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [deptFilter, setDeptFilter] = useState('all');
+  const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
 
   // Selected document (shared across dialogs)
   const [selectedDoc, setSelectedDoc] = useState<Document | null>(null);
 
   // Dialog / sheet open states
   const [isUploadOpen, setIsUploadOpen] = useState(false);
-  const [isViewOpen, setIsViewOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [isVersionsOpen, setIsVersionsOpen] = useState(false);
@@ -395,6 +385,19 @@ export default function Documents() {
 
   // ── render ───────────────────────────────────────────────────────────────
 
+  // ── Get department and owner info for display ──────────────────────────────
+
+  const getOwnerName = (ownerId: string) => {
+    // In a real app, you'd fetch user details. For now, return placeholder
+    return 'Staff Member';
+  };
+
+  // ── Open document details page ─────────────────────────────────────────
+
+  const openPreview = (doc: Document) => {
+    navigate(`/admin/documents/${doc.id}`);
+  };
+
   return (
     <div className="w-full space-y-6">
       {/* Header */}
@@ -624,7 +627,7 @@ export default function Documents() {
                     ) : (
                       <>
                         <CheckCircle2 className="mr-2 h-5 w-5" />
-                        Finalize & Archive
+                        Upload
                       </>
                     )}
                   </Button>
@@ -635,120 +638,140 @@ export default function Documents() {
         </Dialog>
       </div>
 
-      {/* Main content grid */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        {/* Filters */}
-        <Card className="md:col-span-1 border-none shadow-md">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <Filter className="h-5 w-5" />
-              Filters
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label>Search</Label>
-              <Input placeholder="Title or keywords..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
-            </div>
-            <div className="space-y-2">
-              <Label>Department</Label>
-              <Select value={deptFilter} onValueChange={setDeptFilter}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Departments</SelectItem>
-                  {departments.filter(d => d.id?.trim()).map(d => (
-                    <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <Separator />
-            <p className="text-xs text-gray-400">{filtered.length} document{filtered.length !== 1 ? 's' : ''} shown</p>
-          </CardContent>
-        </Card>
+      {/* Modern Toolbar */}
+      <div className="space-y-4">
+        {/* Primary toolbar: Search, Sort, Filter toggle */}
+        <div className="flex items-center gap-3">
+          <div className="flex-1 relative">
+            <Input
+              placeholder="Search documents by title, description, or tags..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="h-11 pl-4 pr-4 border-gray-200 focus:ring-tenant-primary/30 bg-white shadow-sm rounded-lg"
+            />
+          </div>
 
-        {/* Table */}
-        <Card className="md:col-span-3 border-none shadow-lg overflow-hidden">
-          <CardContent className="p-0">
-            <Table>
-              <TableHeader className="bg-gray-900">
-                <TableRow>
-                  <TableHead className="text-white">Document</TableHead>
-                  <TableHead className="text-white">Department</TableHead>
-                  <TableHead className="text-white">Status</TableHead>
-                  <TableHead className="text-white">Modified</TableHead>
-                  <TableHead className="text-white text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {loading ? (
-                  <TableRow>
-                    <TableCell colSpan={5} className="text-center py-20">
-                      <Loader2 className="h-10 w-10 animate-spin mx-auto text-primary" />
-                    </TableCell>
-                  </TableRow>
-                ) : filtered.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={5} className="text-center py-20 text-gray-500">
-                      <FileText className="h-12 w-12 mx-auto mb-4 opacity-10" />
-                      No documents found.
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  filtered.map((doc) => (
-                    <TableRow key={doc.id} className="hover:bg-gray-50 transition-colors">
-                      <TableCell className="py-4">
-                        <div className="flex items-center gap-3">
-                          <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">
-                            <FileText className="h-5 w-5" />
-                          </div>
-                          <div>
-                            <p className="font-semibold text-gray-900 max-w-[220px] truncate">{doc.title}</p>
-                            <p className="text-xs text-gray-500 uppercase font-mono">
-                              {doc.file_type?.split('/').pop() ?? 'file'} • {formatBytes(doc.file_size)} • v{doc.version}
-                            </p>
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className="border-gray-200 text-gray-600">
-                          {deptCode(doc.department_id)}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>{getStatusBadge(doc.status)}</TableCell>
-                      <TableCell className="text-sm text-gray-600">
-                        {dayjs(doc.updated_at).format('MMM DD, YYYY')}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-1">
-                          <Button variant="ghost" size="sm" title="View Details" onClick={() => openView(doc)}>
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                          <Button variant="ghost" size="sm" title="Download" onClick={() => handleDownload(doc)}>
-                            <Download className="h-4 w-4" />
-                          </Button>
-                          <Button variant="ghost" size="sm" title="Version History" onClick={() => openVersions(doc)}>
-                            <History className="h-4 w-4" />
-                          </Button>
-                          <Button variant="ghost" size="sm" title="Edit Metadata" onClick={() => openEdit(doc)}>
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                          <Button variant="ghost" size="sm" title="Delete Document" className="text-red-500 hover:text-red-700" onClick={() => openDelete(doc)}>
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+          {/* AI Search button */}
+          <Button
+            onClick={() => setIsSearchModalOpen(true)}
+            variant="outline"
+            className="h-11 gap-2 border-blue-200 bg-blue-50 hover:bg-blue-100 text-blue-700"
+          >
+            <Sparkles className="h-4 w-4" />
+            AI Search
+          </Button>
+
+          {/* Sort dropdown */}
+          <Select defaultValue="modified">
+            <SelectTrigger className="w-40 h-11 border-gray-200 shadow-sm">
+              <SelectValue placeholder="Sort by" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="modified">Recently Modified</SelectItem>
+              <SelectItem value="name">Name (A-Z)</SelectItem>
+              <SelectItem value="oldest">Oldest First</SelectItem>
+              <SelectItem value="size">Largest First</SelectItem>
+            </SelectContent>
+          </Select>
+
+          {/* Clear filters button (show only if filters active) */}
+          {(searchQuery || deptFilter !== 'all') && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setSearchQuery('');
+                setDeptFilter('all');
+              }}
+              className="h-11"
+            >
+              Clear
+            </Button>
+          )}
+        </div>
+
+        {/* Filter pills row */}
+        <div className="flex items-center gap-2 flex-wrap">
+          {deptFilter !== 'all' && (
+            <Badge variant="secondary" className="px-3 py-1.5 flex items-center gap-2 bg-tenant-primary/10 text-tenant-primary border-tenant-primary/20">
+              <Building className="h-3 w-3" />
+              {departments.find((d) => d.id === deptFilter)?.name}
+              <X
+                className="h-3 w-3 cursor-pointer hover:opacity-70"
+                onClick={() => setDeptFilter('all')}
+              />
+            </Badge>
+          )}
+
+          {searchQuery && (
+            <Badge variant="secondary" className="px-3 py-1.5 flex items-center gap-2 bg-blue-50 text-blue-700 border-blue-100">
+              <span className="text-xs font-mono">"{searchQuery}"</span>
+              <X
+                className="h-3 w-3 cursor-pointer hover:opacity-70"
+                onClick={() => setSearchQuery('')}
+              />
+            </Badge>
+          )}
+
+          {/* Department filter selector */}
+          <Select value={deptFilter} onValueChange={setDeptFilter}>
+            <SelectTrigger className="w-auto h-9 border-gray-200 px-3 text-xs">
+              <Filter className="h-3 w-3 mr-1" />
+              <SelectValue placeholder="Filter by Dept" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Departments</SelectItem>
+              {departments.filter((d) => d.id?.trim()).map((d) => (
+                <SelectItem key={d.id} value={d.id}>
+                  {d.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          {/* Results counter */}
+          <div className="ml-auto text-xs text-gray-500">
+            {filtered.length} document{filtered.length !== 1 ? 's' : ''}
+          </div>
+        </div>
       </div>
 
-      {/* ── View Detail Sheet — hidden, replaced by dedicated page ──── */}
-      {/* Sheet removed: Eye/View button now navigates to /admin/documents/:id */}
+      {/* Documents Grid */}
+      <div className="space-y-3">
+        {loading ? (
+          <div className="flex justify-center py-20">
+            <Loader2 className="h-10 w-10 animate-spin text-tenant-primary" />
+          </div>
+        ) : filtered.length === 0 ? (
+          <div className="bg-gray-50 rounded-lg border border-gray-200 p-12 text-center">
+            <FileText className="h-16 w-16 mx-auto mb-4 text-gray-300" />
+            <h3 className="text-lg font-semibold text-gray-900 mb-1">No documents found</h3>
+            <p className="text-gray-600">Try adjusting your search or filters</p>
+          </div>
+        ) : (
+          <div className="grid gap-3">
+            {filtered.map((doc) => (
+              <DocumentCard
+                key={doc.id}
+                document={doc}
+                department={departments.find((d) => d.id === doc.department_id)}
+                ownerName={getOwnerName(doc.owner_id)}
+                onPreview={openPreview}
+                onDownload={handleDownload}
+                onArchive={(doc) => {
+                  setSelectedDoc(doc);
+                  setEditData({ ...editData, status: 'archived' });
+                  setIsEditOpen(true);
+                }}
+                onDelete={(doc) => {
+                  setSelectedDoc(doc);
+                  setIsDeleteOpen(true);
+                }}
+              />
+            ))}
+          </div>
+        )}
+      </div>
 
       {/* ── Edit Metadata Dialog ───────────────────────────────────────────── */}
       <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
@@ -922,6 +945,16 @@ export default function Documents() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Document Search Modal */}
+      <DocumentSearchModal 
+        isOpen={isSearchModalOpen}
+        onClose={() => setIsSearchModalOpen(false)}
+        onSelect={(doc) => {
+          // Navigate to the document or show it in the detail view
+          navigate(`/admin/documents/${doc.id}`);
+        }}
+      />
     </div>
   );
 }

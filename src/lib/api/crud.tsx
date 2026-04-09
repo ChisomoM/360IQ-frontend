@@ -5,8 +5,8 @@ import { useTenantStore } from "@/lib/store/tenantStore";
 import { validateResponseTenant } from "@/lib/api/interceptors/responseInterceptor";
 // import { getAuthHeader } from "./auth";
 
-const ROUTING_URL: string = import.meta.env.VITE_BACKEND_URL || "http://localhost:8032/api/v1/";
-// const ROUTING_URL: string = import.meta.env.VITE_BACKEND_URL || "http://102.211.186.58/api/v1/";
+// const ROUTING_URL: string = import.meta.env.VITE_BACKEND_URL || "http://localhost:8032/api/v1/";
+const ROUTING_URL: string = import.meta.env.VITE_BACKEND_URL || "http://102.211.186.58/api/v1/";
 
 // const ROUTING_URL = "http://102.211.186.58/api/v1/"
 // Storage key for auth tokens (matches AuthContext)

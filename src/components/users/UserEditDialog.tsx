@@ -100,81 +100,165 @@ export function UserEditDialog({ user, isOpen, onClose, onSubmit }: UserEditDial
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md bg-white">
-        <DialogHeader>
-          <DialogTitle>Edit User</DialogTitle>
+      <DialogContent className="sm:max-w-2xl bg-white">
+        <DialogHeader className="border-b pb-4">
+          <DialogTitle className="text-2xl font-bold text-gray-900">Edit User</DialogTitle>
+          <p className="text-sm text-gray-600 mt-1">Update user role, position, and access settings</p>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Role */}
-          <div>
-            <Label htmlFor="edit-role">Role</Label>
-            <select
-              id="edit-role"
-              title="User role"
-              value={roleSlug}
-              onChange={(e) => { setRoleSlug(e.target.value as RoleSlug); setErrors({}); }}
-              disabled={isSubmitting}
-              className="w-full h-10 border border-gray-300 rounded-md px-3 text-sm"
-            >
-              {ROLE_OPTIONS.map((r) => (
-                <option key={r.value} value={r.value}>{r.label}</option>
-              ))}
-            </select>
-            {errors.roleSlug && <p className="text-red-500 text-xs mt-1">{errors.roleSlug}</p>}
+
+        <form onSubmit={handleSubmit} className="space-y-6 py-4">
+          {/* Role & Permissions Section */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 mb-4">
+              <div className="h-1 w-6 bg-primary rounded-full"></div>
+              <h3 className="text-sm font-semibold text-gray-900">Role & Permissions</h3>
+            </div>
+
+            {/* Role Selection */}
+            <div>
+              <Label htmlFor="edit-role" className="text-sm font-medium text-gray-700">
+                Role <span className="text-red-500">*</span>
+              </Label>
+              <select
+                id="edit-role"
+                title="User role"
+                value={roleSlug}
+                onChange={(e) => {
+                  setRoleSlug(e.target.value as RoleSlug);
+                  setErrors({});
+                }}
+                disabled={isSubmitting}
+                className="w-full h-10 border border-gray-300 rounded-md px-3 text-sm mt-1.5 font-medium bg-white hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+              >
+                {ROLE_OPTIONS.map((r) => (
+                  <option key={r.value} value={r.value}>
+                    {r.label}
+                  </option>
+                ))}
+              </select>
+              <p className="text-xs text-gray-500 mt-2">
+                {roleSlug === 'super_admin'
+                  ? 'Full platform access and system administration'
+                  : roleSlug === 'admin'
+                    ? 'Organizational management and user administration'
+                    : 'Standard user permissions'}
+              </p>
+              {errors.roleSlug && (
+                <p className="text-red-500 text-xs mt-2 flex items-center gap-1">
+                  <span className="inline-block w-1 h-1 bg-red-500 rounded-full"></span>
+                  {errors.roleSlug}
+                </p>
+              )}
+            </div>
           </div>
 
-          {/* Admin-only: Title */}
+          {/* Admin Additional Info Section */}
           {roleSlug === 'admin' && (
-            <div>
-              <Label htmlFor="edit-title">Title <span className="text-gray-400 text-xs">(max 60 chars)</span></Label>
-              <Input
-                id="edit-title"
-                value={title}
-                onChange={(e) => { setTitle(e.target.value); setErrors({}); }}
-                placeholder="e.g. Department Manager"
-                disabled={isSubmitting}
-                maxLength={60}
-              />
-              {errors.title && <p className="text-red-500 text-xs mt-1">{errors.title}</p>}
+            <div className="space-y-4 bg-blue-50 border border-blue-100 rounded-lg p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="h-1 w-6 bg-primary rounded-full"></div>
+                <h3 className="text-sm font-semibold text-gray-900">Admin Details</h3>
+              </div>
+
+              {/* Title */}
+              <div>
+                <Label htmlFor="edit-title" className="text-sm font-medium text-gray-700">
+                  Job Title <span className="text-red-500">*</span>
+                </Label>
+                <p className="text-xs text-gray-500 mt-0.5">Maximum 60 characters</p>
+                <Input
+                  id="edit-title"
+                  value={title}
+                  onChange={(e) => {
+                    setTitle(e.target.value);
+                    setErrors({});
+                  }}
+                  placeholder="e.g. Department Manager"
+                  disabled={isSubmitting}
+                  maxLength={60}
+                  className="mt-1.5 h-10"
+                />
+                {errors.title && (
+                  <p className="text-red-500 text-xs mt-2 flex items-center gap-1">
+                    <span className="inline-block w-1 h-1 bg-red-500 rounded-full"></span>
+                    {errors.title}
+                  </p>
+                )}
+              </div>
+
+              {/* Departments */}
+              <div>
+                <Label htmlFor="edit-departments" className="text-sm font-medium text-gray-700">
+                  Departments <span className="text-red-500">*</span>
+                </Label>
+                <p className="text-xs text-gray-500 mt-0.5">Comma-separated list (e.g. Finance, HR)</p>
+                <Input
+                  id="edit-departments"
+                  value={departments}
+                  onChange={(e) => {
+                    setDepartments(e.target.value);
+                    setErrors({});
+                  }}
+                  placeholder="Finance, HR, Registry"
+                  disabled={isSubmitting}
+                  className="mt-1.5 h-10"
+                />
+                {errors.departments && (
+                  <p className="text-red-500 text-xs mt-2 flex items-center gap-1">
+                    <span className="inline-block w-1 h-1 bg-red-500 rounded-full"></span>
+                    {errors.departments}
+                  </p>
+                )}
+              </div>
             </div>
           )}
 
-          {/* Admin-only: Departments */}
-          {roleSlug === 'admin' && (
-            <div>
-              <Label htmlFor="edit-departments">Departments <span className="text-gray-400 text-xs">(comma-separated)</span></Label>
-              <Input
-                id="edit-departments"
-                value={departments}
-                onChange={(e) => { setDepartments(e.target.value); setErrors({}); }}
-                placeholder="e.g. Finance, HR, Registry"
-                disabled={isSubmitting}
-              />
-              {errors.departments && <p className="text-red-500 text-xs mt-1">{errors.departments}</p>}
+          {/* Account Status Section */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 mb-4">
+              <div className="h-1 w-6 bg-primary rounded-full"></div>
+              <h3 className="text-sm font-semibold text-gray-900">Account Status</h3>
             </div>
-          )}
 
-          {/* Status */}
-          <div>
-            <Label htmlFor="edit-status">Status</Label>
-            <select
-              id="edit-status"
-              title="User status"
-              value={status}
-              onChange={(e) => setStatus(e.target.value as 'active' | 'inactive')}
-              disabled={isSubmitting}
-              className="w-full h-10 border border-gray-300 rounded-md px-3 text-sm"
-            >
-              <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
-            </select>
+            <div>
+              <Label htmlFor="edit-status" className="text-sm font-medium text-gray-700">
+                Status <span className="text-red-500">*</span>
+              </Label>
+              <select
+                id="edit-status"
+                title="User status"
+                value={status}
+                onChange={(e) => setStatus(e.target.value as 'active' | 'inactive')}
+                disabled={isSubmitting}
+                className="w-full h-10 border border-gray-300 rounded-md px-3 text-sm mt-1.5 font-medium bg-white hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+              >
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
+              </select>
+              <p className="text-xs text-gray-500 mt-2">
+                {status === 'active'
+                  ? 'User can access the system'
+                  : 'User is temporarily disabled and cannot access the system'}
+              </p>
+            </div>
           </div>
 
-          <div className="flex gap-2 justify-end">
-            <Button type="button" variant="outline" onClick={onClose} disabled={isSubmitting}>
+          {/* Action Buttons */}
+          <div className="flex gap-2 justify-end pt-4 border-t">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onClose}
+              disabled={isSubmitting}
+              className="px-6"
+            >
               Cancel
             </Button>
-            <Button type="submit" disabled={isSubmitting || hasErrors}>
+            <Button
+              type="submit"
+              disabled={isSubmitting || hasErrors}
+              className="bg-primary hover:bg-primary/90 text-white px-6"
+            >
               {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Update User
             </Button>

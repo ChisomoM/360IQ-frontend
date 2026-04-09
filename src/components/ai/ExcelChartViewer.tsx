@@ -132,18 +132,33 @@ export function ExcelChartViewer({ document, onClose }: ExcelChartViewerProps) {
     try {
       const result = await list('DOCUMENT_CHART_DATA', { id: document.id });
       const spreadsheet = result as SpreadsheetData;
+      
+      console.log('ExcelChartViewer: Sheet data loaded', {
+        sheetCount: spreadsheet.sheets.length,
+        sheets: spreadsheet.sheets.map(s => ({ name: s.name, columns: s.columns.length, rows: s.rows.length }))
+      });
+      
       setData(spreadsheet);
 
       // Auto-select first sheet and sensible axes
       if (spreadsheet.sheets.length > 0) {
         const first = spreadsheet.sheets[0];
+        console.log('ExcelChartViewer: Processing first sheet', {
+          name: first.name,
+          columns: first.columns.map(c => ({ name: c.name, kind: c.kind })),
+          rowCount: first.rows.length
+        });
+        
         setSelectedSheet(first.name);
         const { xKey: ax, yKeys: ay } = defaultAxes(first.columns);
+        console.log('ExcelChartViewer: Axes inferred', { xKey: ax, yKeys: ay });
         setXKey(ax);
         setYKeys(ay);
       }
     } catch (err: any) {
-      setError(err?.message || 'Failed to load spreadsheet data');
+      const message = err?.message || 'Failed to load spreadsheet data';
+      console.error('ExcelChartViewer: Error loading data', { error: message, fullError: err });
+      setError(message);
     } finally {
       setIsLoading(false);
     }
@@ -186,11 +201,31 @@ export function ExcelChartViewer({ document, onClose }: ExcelChartViewerProps) {
   // ── chart rendering ──────────────────────────────────────────────────────
 
   const renderChart = () => {
-    if (!currentSheet || chartData.length === 0 || xKey === '' || yKeys.length === 0) {
+    const currentSheet = data?.sheets.find(s => s.name === selectedSheet);
+    const hasData = currentSheet && chartData.length > 0;
+    const hasAxes = xKey !== '' && yKeys.length > 0;
+    
+    console.log('ExcelChartViewer: renderChart conditions', {
+      hasSheet: !!currentSheet,
+      hasChartData: chartData.length > 0,
+      xKeySet: xKey !== '',
+      yKeysSet: yKeys.length > 0,
+      conditions: { currentSheet, chartData: chartData.length, xKey, yKeys }
+    });
+    
+    if (!hasData || !hasAxes) {
+      let message = 'Select X and Y axes to render the chart';
+      if (!currentSheet) message = 'No sheet selected or data not loaded';
+      if (chartData.length === 0 && currentSheet) message = 'Sheet has no data rows';
+      if (xKey === '' && currentSheet) message = 'Please select an X axis column';
+      if (yKeys.length === 0 && currentSheet && xKey) message = 'Please select at least one Y axis column';
+      
+      console.log('ExcelChartViewer: Showing fallback message', { message });
+      
       return (
         <div className="flex flex-col items-center justify-center h-64 text-gray-400 gap-2">
           <BarChart2 className="h-12 w-12 opacity-20" />
-          <p className="text-sm">Select X and Y axes to render the chart</p>
+          <p className="text-sm">{message}</p>
         </div>
       );
     }
@@ -318,7 +353,7 @@ export function ExcelChartViewer({ document, onClose }: ExcelChartViewerProps) {
   // ── render ────────────────────────────────────────────────────────────────
 
   return (
-    <div className="flex flex-col gap-5">
+    <div className="flex flex-col gap-5 w-full">
       {/* Header */}
       <div className="flex items-start justify-between gap-3">
         <div>
@@ -429,8 +464,8 @@ export function ExcelChartViewer({ document, onClose }: ExcelChartViewerProps) {
       </Card>
 
       {/* Chart */}
-      <Card className="border border-gray-100 shadow-none">
-        <CardContent className="p-4 pt-5">
+      <Card className="border border-gray-100 shadow-none w-full overflow-visible">
+        <CardContent className="p-4 pt-5 w-full min-h-96 overflow-visible">
           {renderChart()}
         </CardContent>
       </Card>

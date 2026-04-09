@@ -25,7 +25,7 @@ export interface TenantConfig {
 export interface Tenant {
   id: string;
   name: string;
-  db_name: string;
+  
   type: TenantType;
   status: "active" | "inactive";
   config: TenantConfig;

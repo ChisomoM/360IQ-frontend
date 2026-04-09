@@ -1,62 +1,120 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=JetBrains+Mono:wght@400;500&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-@custom-variant dark (&:is(.dark *));
+/* ─────────────────────────────────────────────────────────────────────────────
+   DIMS — index.css
+   ControlHub brand colours live here as CSS variables.
+   JS injects tenant-specific values at runtime.
+   ControlHub defaults serve as the system fallback.
+───────────────────────────────────────────────────────────────────────────── */
 
+/* ── ControlHub / DIMS Default Theme ─────────────────────────────────────── */
 :root {
-  --font-size: 16px;
-  
-  /* Tenant-specific brand colors (dynamically injected by JavaScript from tenant config) */
-  --tenant-primary: #1e5631;      /* Default: Green */
-  --tenant-secondary: #febb00;    /* Default: Gold/Yellow */
-  --tenant-accent: #172E70;       /* Default: Dark Blue */
-  --tenant-destructive: #dc2626;  /* Default: Red */
-  --tenant-success: #10b981;      /* Default: Emerald */
-  
-  /* Standard shadcn/ui variables - these will be overridden by JS in HSL space */
-  --background: 0 0% 100%;
-  --foreground: 222.2 84% 4.9%;
-  --card: 0 0% 100%;
-  --card-foreground: 222.2 84% 4.9%;
-  --popover: 0 0% 100%;
-  --popover-foreground: 222.2 84% 4.9%;
-  --primary: 142.1 47.6% 22.7%;
-  --primary-foreground: 0 0% 100%;
-  --secondary: 44.4 100% 49.4%;
-  --secondary-foreground: 0 0% 0%;
-  --muted: 210 40% 96.1%;
-  --muted-foreground: 215.4 16.3% 46.9%;
-  --accent: 210 40% 96.1%;
-  --accent-foreground: 222.2 47.4% 11.2%;
-  --destructive: 0 84.2% 60.2%;
-  --destructive-foreground: 210 40% 98%;
-  --border: 214.3 31.8% 91.4%;
-  --input: 214.3 31.8% 91.4%;
-  --ring: 142.1 47.6% 22.7%;
-  --radius: 0.5rem;
-  
-  /* Sidebar Specific (linked to primary/secondary via JS) */
-  --sidebar: 142.1 47.6% 22.7%;
-  --sidebar-foreground: 0 0% 100%;
-  --sidebar-primary: 44.4 100% 49.4%;
-  --sidebar-primary-foreground: 0 0% 100%;
-  --sidebar-accent: 0 0% 100% / 0.1;
-  --sidebar-accent-foreground: 0 0% 100%;
-  --sidebar-border: 0 0% 100% / 0.1;
-  --sidebar-ring: 142.1 47.6% 22.7%;
+  /* Tenant-injected colours — JS overwrites on mount. Fallback = ControlHub. */
+  --tenant-primary:        #7C69FF;
+  --tenant-primary-hover:  #6352E8;
+  --tenant-primary-light:  rgba(124, 105, 255, 0.12);
+  --tenant-primary-fg:     #FFFFFF;
 
-  /* ControlHub Scoped Variables */
-  --ch-primary: 257 100% 71%; 
-  --ch-secondary: 189 98% 50%;
-  --ch-tertiary: 233 63% 14%;
-  --font-weight-medium: 500;
-  --font-weight-normal: 400;
-  --chart-1: #7c69ff;
-  --chart-2: #03d8fd;
-  --chart-3: #0d173b;
-  --chart-4: #a78bfa;
-  --chart-5: #22d3ee;
+  --tenant-secondary:      #03D8FD;
+  --tenant-secondary-hover:#02B8DA;
+  --tenant-secondary-fg:   #063B4D;
+
+  --tenant-accent:         #0D173B;
+
+  /* Semantic — never overridden by tenants */
+  --tenant-destructive:    #EF4444;
+  --tenant-success:        #10B981;
+  --tenant-warning:        #F59E0B;
+
+  /* ── shadcn / Untitled UI compatible variables ── */
+  --background:            0 0% 100%;
+  --foreground:            233 63% 8%;
+
+  --card:                  0 0% 100%;
+  --card-foreground:       233 63% 8%;
+
+  --popover:               0 0% 100%;
+  --popover-foreground:    233 63% 8%;
+
+  --primary:               252 100% 71%;       /* #7C69FF */
+  --primary-foreground:    0 0% 100%;
+
+  --secondary:             189 98% 50%;         /* #03D8FD */
+  --secondary-foreground:  210 95% 14%;
+
+  --muted:                 240 5% 96%;
+  --muted-foreground:      240 4% 46%;
+
+  --accent:                252 100% 71%;
+  --accent-foreground:     0 0% 100%;
+
+  --destructive:           0 84% 60%;
+  --destructive-foreground:0 0% 100%;
+
+  --border:                240 6% 90%;
+  --input:                 240 6% 90%;
+  --ring:                  252 100% 71%;
+
+  --radius:                0.5rem;
+
+  /* ── Sidebar (ControlHub navy) ── */
+  --sidebar-background:    233 63% 14%;         /* #0D173B */
+  --sidebar-foreground:    0 0% 96%;
+  --sidebar-primary:       189 98% 50%;         /* cyan — active items */
+  --sidebar-primary-foreground: 210 95% 14%;
+  --sidebar-accent:        0 0% 100% / 0.07;    /* white ghost hover */
+  --sidebar-accent-foreground: 0 0% 100%;
+  --sidebar-border:        0 0% 100% / 0.07;
+  --sidebar-ring:          189 98% 50%;
+
+  /* ── ControlHub colour scales ── */
+  --ch-primary-50:   252 100% 98%;
+  --ch-primary-100:  252 100% 95%;
+  --ch-primary-200:  252 100% 89%;
+  --ch-primary-300:  252 100% 83%;
+  --ch-primary-400:  252 100% 74%;
+  --ch-primary-500:  252 100% 71%;
+  --ch-primary-600:  252 100% 64%;
+  --ch-primary-700:  252 100% 57%;
+  --ch-primary-800:  252 100% 47%;
+  --ch-primary-900:  252 100% 39%;
+  --ch-primary-950:  252 100% 31%;
+
+  --ch-secondary-50:   189 98% 98%;
+  --ch-secondary-100:  189 98% 95%;
+  --ch-secondary-200:  189 98% 89%;
+  --ch-secondary-300:  189 98% 83%;
+  --ch-secondary-400:  189 98% 74%;
+  --ch-secondary-500:  189 98% 50%;
+  --ch-secondary-600:  189 98% 44%;
+  --ch-secondary-700:  189 98% 37%;
+  --ch-secondary-800:  189 98% 30%;
+  --ch-secondary-900:  189 98% 23%;
+  --ch-secondary-950:  189 98% 15%;
+
+  --ch-tertiary-50:   233 63% 98%;
+  --ch-tertiary-100:  233 63% 95%;
+  --ch-tertiary-200:  233 63% 89%;
+  --ch-tertiary-300:  233 63% 83%;
+  --ch-tertiary-400:  233 63% 74%;
+  --ch-tertiary-500:  233 63% 64%;
+  --ch-tertiary-600:  233 63% 57%;
+  --ch-tertiary-700:  233 63% 47%;
+  --ch-tertiary-800:  233 63% 39%;
+  --ch-tertiary-900:  233 63% 31%;
+  --ch-tertiary-950:  233 63% 23%;
+
+  /* ── Chart palette ── */
+  --chart-1:  #7C69FF;   /* ch-primary */
+  --chart-2:  #03D8FD;   /* ch-secondary */
+  --chart-3:  #B8AEFF;   /* ch-primary-300 */
+  --chart-4:  #67F0FC;   /* ch-secondary-300 */
+  --chart-5:  #4ADE80;
+  --chart-6:  #FB923C;
 }
 
 .dark {
@@ -168,85 +226,6 @@
 
 html {
   font-size: var(--font-size);
-}
-
-/* Orange theme colors for SmartHub */
-@layer utilities {
-  .bg-orange-25 {
-    background-color: #fffcf5;
-  }
-  
-  .bg-orange-50 {
-    background-color: #fff7ed;
-  }
-  
-  .bg-orange-100 {
-    background-color: #ffedd5;
-  }
-  
-  .bg-orange-500 {
-    background-color: #f97316;
-  }
-  
-  .bg-orange-600 {
-    background-color: #ea580c;
-  }
-  
-  .text-orange-500 {
-    color: #f97316;
-  }
-  
-  .text-orange-600 {
-    color: #ea580c;
-  }
-  
-  .text-orange-700 {
-    color: #c2410c;
-  }
-  
-  .border-orange-100 {
-    border-color: #ffedd5;
-  }
-  
-  .border-orange-200 {
-    border-color: #fed7aa;
-  }
-  
-  .border-orange-300 {
-    border-color: #fdba74;
-  }
-  
-  .border-orange-500 {
-    border-color: #f97316;
-  }
-  
-  .hover\:bg-orange-50:hover {
-    background-color: #fff7ed;
-  }
-  
-  .hover\:bg-orange-100:hover {
-    background-color: #ffedd5;
-  }
-  
-  .hover\:bg-orange-600:hover {
-    background-color: #ea580c;
-  }
-  
-  .hover\:text-orange-500:hover {
-    color: #f97316;
-  }
-  
-  .hover\:border-orange-200:hover {
-    border-color: #fed7aa;
-  }
-  
-  .hover\:border-orange-300:hover {
-    border-color: #fdba74;
-  }
-  
-  .ring-orange-200 {
-    --tw-ring-color: #fed7aa;
-  }
 }
 
 /* Trusted logos marquee styles */

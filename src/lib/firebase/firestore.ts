@@ -1,40 +1,49 @@
-// Stub Firebase Firestore adapter — returns safe empty values after removing Firebase.
-// This keeps existing imports working while the project migrates away from Firebase.
-
+// Stub Firebase implementation - legacy code to be removed
 export class FirebaseFirestore {
-  static async getDocument(_collectionName: string, _docId: string) {
-    return null;
+  static async addDoc(collection: string, data: any) {
+    console.warn('FirebaseFirestore.addDoc called - legacy implementation');
+    return { id: 'stub-' + Date.now() };
   }
 
-  static async getCollection(_collectionName: string, _constraints: any[] = []) {
-    return [];
+  static async updateDoc(docRef: any, data: any) {
+    console.warn('FirebaseFirestore.updateDoc called - legacy implementation');
   }
 
-  static async addDocument(_collectionName: string, _data: any) {
-    console.warn('Firebase removed: addDocument no-op');
-    return null;
+  static async deleteDoc(docRef: any) {
+    console.warn('FirebaseFirestore.deleteDoc called - legacy implementation');
   }
 
-  static async updateDocument(_collectionName: string, _docId: string, _data: any) {
-    console.warn('Firebase removed: updateDocument no-op');
+  static async getDoc(docRef: any) {
+    console.warn('FirebaseFirestore.getDoc called - legacy implementation');
+    return { exists: () => false, data: () => null };
   }
 
-  static async setDocument(_collectionName: string, _docId: string, _data: any) {
-    console.warn('Firebase removed: setDocument no-op');
+  static async getDocs(query: any) {
+    console.warn('FirebaseFirestore.getDocs called - legacy implementation');
+    return { docs: [] };
   }
 
-  static async deleteDocument(_collectionName: string, _docId: string) {
-    console.warn('Firebase removed: deleteDocument no-op');
+  static collection(db: any, path: string) {
+    return { path };
   }
 
-  // Query helpers placeholders
-  static where = (_field: string, _op: string, _value: any) => {
-    return null;
-  };
-  static orderBy = (_field: string, _dir?: string) => {
-    return null;
-  };
-  static limit = (_n: number) => {
-    return null;
-  };
+  static doc(db: any, path: string) {
+    return { path };
+  }
+
+  static query(collection: any, ...constraints: any[]) {
+    return { collection, constraints };
+  }
+
+  static where(field: string, op: string, value: any) {
+    return { field, op, value };
+  }
+
+  static orderBy(field: string, direction: string = 'asc') {
+    return { field, direction };
+  }
+
+  static limit(n: number) {
+    return { n };
+  }
 }

@@ -3,6 +3,7 @@ import { X, Sparkles, FileSearch, MessageSquare, Loader2, Send, Search, ChevronR
 import { cn } from '@/lib/utils';
 import { list, post } from '@/lib/api/crud';
 import { sendChatMessage } from '@/lib/api/ai';
+import { AddToCalendarButton } from '@/components/AddToCalendarButton';
 import type { Document, AISummary, AIAnalysis } from '@/types/dms';
 
 interface Message {
@@ -38,6 +39,13 @@ export function AIChatSidebar({ isOpen, onClose, pendingDoc, onDocConsumed }: AI
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const shouldAutoRunRef = useRef(false);
 
+  // Chat tab state - document selection
+  const [chatDocuments, setChatDocuments] = useState<Document[]>([]);
+  const [chatDocsLoading, setChatDocsLoading] = useState(false);
+  const [chatDocSearch, setChatDocSearch] = useState('');
+  const [selectedChatDoc, setSelectedChatDoc] = useState<Document | null>(null);
+  const [showChatDocPicker, setShowChatDocPicker] = useState(false);
+
   // Doc Analysis tab state
   const [documents, setDocuments] = useState<Document[]>([]);
   const [docsLoading, setDocsLoading] = useState(false);
@@ -53,15 +61,28 @@ export function AIChatSidebar({ isOpen, onClose, pendingDoc, onDocConsumed }: AI
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // Fetch documents when analyze tab is opened
+  // Fetch documents for both chat and analyze tabs
   useEffect(() => {
-    if (activeTab !== 'analyze' || documents.length > 0) return;
-    setDocsLoading(true);
-    list('DOCUMENTS')
-      .then((data: any) => setDocuments(Array.isArray(data) ? data : []))
-      .catch(() => setDocuments([]))
-      .finally(() => setDocsLoading(false));
-  }, [activeTab]);
+    if (!isOpen) return;
+    
+    // Fetch for analyze tab if not already loaded
+    if (activeTab === 'analyze' && documents.length === 0) {
+      setDocsLoading(true);
+      list('DOCUMENTS')
+        .then((data: any) => setDocuments(Array.isArray(data) ? data : []))
+        .catch(() => setDocuments([]))
+        .finally(() => setDocsLoading(false));
+    }
+    
+    // Fetch for chat tab if not already loaded
+    if (activeTab === 'chat' && chatDocuments.length === 0 && showChatDocPicker) {
+      setChatDocsLoading(true);
+      list('DOCUMENTS')
+        .then((data: any) => setChatDocuments(Array.isArray(data) ? data : []))
+        .catch(() => setChatDocuments([]))
+        .finally(() => setChatDocsLoading(false));
+    }
+  }, [activeTab, showChatDocPicker, isOpen]);
 
   // Pre-select a document and auto-run analysis when pendingDoc is provided
   useEffect(() => {
@@ -160,7 +181,7 @@ export function AIChatSidebar({ isOpen, onClose, pendingDoc, onDocConsumed }: AI
         .filter(m => m.id !== 'welcome') // Skip welcome message
         .map(m => ({ role: m.role, content: m.content }));
 
-      const response = await sendChatMessage(userMsg.content, history);
+      const response = await sendChatMessage(userMsg.content, history, selectedChatDoc?.id);
       setMessages((prev) => [
         ...prev,
         {
@@ -256,6 +277,97 @@ export function AIChatSidebar({ isOpen, onClose, pendingDoc, onDocConsumed }: AI
       {/* Chat Tab */}
       {activeTab === 'chat' && (
         <>
+          {/* Document Context Bar */}
+          {selectedChatDoc && (
+            <div className="px-4 py-2.5 bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-blue-100 flex items-center gap-2 flex-shrink-0">
+              <FileSearch className="h-3.5 w-3.5 text-blue-600 flex-shrink-0" />
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-medium text-blue-900 truncate">Analyzing: {selectedChatDoc.title}</p>
+              </div>
+              <button
+                onClick={() => setSelectedChatDoc(null)}
+                className="text-blue-500 hover:text-blue-700 transition-colors p-1"
+                aria-label="Remove document context"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          )}
+
+          {/* Quick Document Picker Button (when no doc selected) */}
+          {!selectedChatDoc && !showChatDocPicker && (
+            <div className="px-4 py-2 bg-gray-50 border-b border-gray-100 flex-shrink-0">
+              <button
+                onClick={() => setShowChatDocPicker(true)}
+                className="w-full flex items-center justify-center gap-1.5 py-1.5 rounded-lg border border-gray-200 text-xs font-medium text-gray-600 hover:bg-white hover:border-gray-300 transition-all"
+              >
+                <FileSearch className="h-3 w-3" />
+                Add Document Context
+              </button>
+            </div>
+          )}
+
+          {/* Document Picker */}
+          {showChatDocPicker && (
+            <div className="px-4 py-3 border-b border-gray-100 bg-gray-50/60 flex-shrink-0 space-y-2.5">
+              <div className="flex items-center justify-between">
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Pick a document</p>
+                <button
+                  onClick={() => setShowChatDocPicker(false)}
+                  className="text-gray-400 hover:text-gray-600 transition-colors p-1"
+                  aria-label="Close document picker"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              </div>
+
+              {/* Search */}
+              <div className="relative">
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400 pointer-events-none" />
+                <input
+                  type="text"
+                  placeholder="Search documents…"
+                  value={chatDocSearch}
+                  onChange={(e) => setChatDocSearch(e.target.value)}
+                  className="w-full pl-8 pr-3 py-1.5 text-xs rounded-lg border border-gray-200 bg-white focus:outline-none focus:ring-2 focus:ring-[#1e3c21]/25 focus:border-[#1e3c21] transition-all"
+                />
+              </div>
+
+              {/* Document List */}
+              <div className="max-h-48 overflow-y-auto space-y-1">
+                {chatDocsLoading && (
+                  <div className="flex items-center justify-center py-6">
+                    <Loader2 className="h-4 w-4 animate-spin text-[#1e3c21]" />
+                  </div>
+                )}
+                {!chatDocsLoading && chatDocuments.length === 0 && (
+                  <div className="text-center py-4 text-xs text-gray-400">No documents found.</div>
+                )}
+                {!chatDocsLoading && chatDocuments
+                  .filter((d) =>
+                    d.title.toLowerCase().includes(chatDocSearch.toLowerCase()) ||
+                    d.document_type?.toLowerCase().includes(chatDocSearch.toLowerCase())
+                  )
+                  .map((doc) => (
+                    <button
+                      key={doc.id}
+                      onClick={() => {
+                        setSelectedChatDoc(doc);
+                        setShowChatDocPicker(false);
+                      }}
+                      className="w-full text-left flex items-center gap-2 px-2 py-1.5 rounded-lg border border-gray-100 hover:border-[#1e3c21]/30 hover:bg-[#1e3c21]/5 transition-all group text-xs"
+                    >
+                      <FileSearch className="h-3 w-3 text-gray-400 group-hover:text-[#1e3c21] flex-shrink-0 transition-colors" />
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-gray-800 truncate">{doc.title}</p>
+                        <p className="text-[10px] text-gray-400 truncate">{doc.document_type || doc.file_type}</p>
+                      </div>
+                    </button>
+                  ))}
+              </div>
+            </div>
+          )}
+
           {/* Message List */}
           <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4 scroll-smooth">
             {messages.map((msg) => (
@@ -315,7 +427,7 @@ export function AIChatSidebar({ isOpen, onClose, pendingDoc, onDocConsumed }: AI
                 value={input}
                 onChange={handleInputChange}
                 onKeyDown={handleKeyDown}
-                placeholder="Ask anything about your documents…"
+                placeholder={selectedChatDoc ? `Ask about ${selectedChatDoc.title}…` : "Ask anything about your documents…"}
                 rows={1}
                 disabled={isLoading}
                 className="flex-1 resize-none rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#1e3c21]/25 focus:border-[#1e3c21] transition-all min-h-[38px] max-h-[120px] overflow-y-auto leading-relaxed disabled:opacity-50"
@@ -426,21 +538,26 @@ export function AIChatSidebar({ isOpen, onClose, pendingDoc, onDocConsumed }: AI
                 ))}
               </div>
 
-              {/* Run button */}
-              {!summary && !analysis && !analysisLoading && (
-                <div className="px-4 pb-3 flex-shrink-0">
-                  <button
-                    onClick={handleRunAnalysis}
-                    className="w-full flex items-center justify-center gap-2 py-2 rounded-xl bg-gradient-to-r from-[#1e3c21] to-[#2a5230] text-white text-sm font-medium hover:opacity-90 transition-opacity shadow-sm"
-                  >
-                    <Sparkles className="h-3.5 w-3.5" />
-                    {analysisMode === 'summarize' ? 'Generate Summary' : 'Run Deep Analysis'}
-                  </button>
-                  {analysisError && (
-                    <p className="mt-2 text-xs text-red-500 text-center">{analysisError}</p>
-                  )}
-                </div>
-              )}
+              {/* Action buttons */}
+              <div className="px-4 pb-3 flex-shrink-0 space-y-2">
+                {!summary && !analysis && !analysisLoading && (
+                  <>
+                    <button
+                      onClick={handleRunAnalysis}
+                      className="w-full flex items-center justify-center gap-2 py-2 rounded-xl bg-gradient-to-r from-[#1e3c21] to-[#2a5230] text-white text-sm font-medium hover:opacity-90 transition-opacity shadow-sm"
+                    >
+                      <Sparkles className="h-3.5 w-3.5" />
+                      {analysisMode === 'summarize' ? 'Generate Summary' : 'Run Deep Analysis'}
+                    </button>
+                    {analysisError && (
+                      <p className="text-xs text-red-500 text-center">{analysisError}</p>
+                    )}
+                  </>
+                )}
+                {(summary || analysis) && (
+                  <AddToCalendarButton document={selectedDoc} />
+                )}
+              </div>
 
               {/* Loading */}
               {analysisLoading && (

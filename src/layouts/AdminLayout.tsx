@@ -12,6 +12,7 @@ import {
   SidebarMenuItem,
   SidebarMenuButton,
 } from "@/components/ui/sidebar"
+import { CollapsibleSidebarSection } from "@/components/layout/CollapsibleSidebarSection"
 import {
   LogOut,
   LayoutDashboard,
@@ -70,16 +71,20 @@ export default function AdminLayout() {
           <div className="h-full flex flex-col bg-primary text-white shadow-xl">
 
             <div className="flex items-center justify-center py-6 border-b border-white/10">
-              {logoUrl ? (
-                <img
-                  src={logo}
-                  alt={tenantName}
-                  className={`transition-all duration-300 ${collapsed ? "h-8 w-8" : "h-12 w-auto"}`}
-                />
-              ) : (
-                <div className={`transition-all duration-300 text-white font-extrabold uppercase tracking-wider ${collapsed ? "text-xs" : "text-xl"}`}>
-                  {tenantName}
-                </div>
+              {!collapsed && (
+                <>
+                  {logoUrl ? (
+                    <img
+                      src={logo}
+                      alt={tenantName}
+                      className="h-12 w-auto"
+                    />
+                  ) : (
+                    <div className="text-white font-extrabold uppercase tracking-wider text-xl">
+                      {tenantName}
+                    </div>
+                  )}
+                </>
               )}
             </div>
 
@@ -91,7 +96,7 @@ export default function AdminLayout() {
             </button>
 
             <div className="flex-1 overflow-y-auto p-4">
-              <SidebarMenu className="space-y-1">
+              <SidebarMenu className="space-y-3">
 
                 {/* Dashboard */}
                 <SidebarMenuItem>
@@ -108,141 +113,175 @@ export default function AdminLayout() {
                 </SidebarMenuItem>
 
                 {/* Financials Section */}
-                {hasPermission(user, PERMISSIONS['payments.read']) && (<>
-                  <div className="px-3 pt-4 pb-1 text-xs text-secondary/80 uppercase tracking-wider">
-                    {!collapsed && "Financials"}
-                  </div>
-                  <SidebarMenuItem>
-                    <SidebarMenuButton
-                      asChild
-                      isActive={isActive("/admin/finance/dashboard")}
-                      className="text-white hover:bg-white/10 data-[active=true]:bg-secondary data-[active=true]:text-black rounded-md transition-colors"
-                    >
-                      <Link to="/admin/finance/dashboard" className="flex items-center gap-3">
-                        <Wallet className="h-5 w-5" />
-                        {!collapsed && <span>Finance Dashboard</span>}
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                  <SidebarMenuItem>
-                    <SidebarMenuButton
-                      asChild
-                      isActive={isActive("/admin/finance/reports")}
-                      className="text-white hover:bg-white/10 data-[active=true]:bg-secondary data-[active=true]:text-black rounded-md transition-colors"
-                    >
-                      <Link to="/admin/finance/reports" className="flex items-center gap-3">
-                        <PieChart className="h-5 w-5" />
-                        {!collapsed && <span>Finance Reports</span>}
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                </>)}
-
-                {/* HR Section */}
-                {(hasPermission(user, PERMISSIONS['hr.staff.read']) ||
-                  hasPermission(user, PERMISSIONS['hr.leave.read'])) && (<>
-                    <div className="px-3 pt-4 pb-1 text-xs text-secondary/80 uppercase tracking-wider">
-                      {!collapsed && "Human Resources"}
-                    </div>
-                    <SidebarMenuItem>
-                      <SidebarMenuButton
-                        asChild
-                        isActive={isActive("/admin/hr/dashboard")}
-                        className="text-white hover:bg-white/10 data-[active=true]:bg-secondary data-[active=true]:text-black rounded-md transition-colors"
-                      >
-                        <Link to="/admin/hr/dashboard" className="flex items-center gap-3">
-                          <BarChart3 className="h-5 w-5" />
-                          {!collapsed && <span>HR Dashboard</span>}
-                        </Link>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                    <SidebarMenuItem>
-                      <SidebarMenuButton
-                        asChild
-                        isActive={isActive("/admin/hr/staff")}
-                        className="text-white hover:bg-white/10 data-[active=true]:bg-secondary data-[active=true]:text-black rounded-md transition-colors"
-                      >
-                        <Link to="/admin/hr/staff" className="flex items-center gap-3">
-                          <UserCog className="h-5 w-5" />
-                          {!collapsed && <span>Staff Directory</span>}
-                        </Link>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                    <SidebarMenuItem>
-                      <SidebarMenuButton
-                        asChild
-                        isActive={isActive("/admin/hr/leave")}
-                        className="text-white hover:bg-white/10 data-[active=true]:bg-secondary data-[active=true]:text-black rounded-md transition-colors"
-                      >
-                        <Link to="/admin/hr/leave" className="flex items-center gap-3">
-                          <ClipboardList className="h-5 w-5" />
-                          {!collapsed && <span>Leave Management</span>}
-                        </Link>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                    {hasPermission(user, PERMISSIONS['hr.staff.read']) && (
+                {hasPermission(user, PERMISSIONS['payments.read']) && (
+                  <CollapsibleSidebarSection
+                    title="Financials"
+                    icon={<Wallet className="h-5 w-5" />}
+                    collapsed={collapsed}
+                    activePaths={["/admin/finance"]}
+                  >
+                    <SidebarMenu className="space-y-2">
                       <SidebarMenuItem>
                         <SidebarMenuButton
                           asChild
-                          isActive={isActive("/admin/hr/applications")}
+                          isActive={isActive("/admin/finance/dashboard")}
                           className="text-white hover:bg-white/10 data-[active=true]:bg-secondary data-[active=true]:text-black rounded-md transition-colors"
                         >
-                          <Link to="/admin/hr/applications" className="flex items-center gap-3">
-                            <ClipboardCheck className="h-5 w-5" />
-                            {!collapsed && <span>Staff Applications</span>}
+                          <Link to="/admin/finance/dashboard" className="flex items-center gap-3">
+                            <Wallet className="h-5 w-5" />
+                            {!collapsed && <span>Finance Dashboard</span>}
                           </Link>
                         </SidebarMenuButton>
                       </SidebarMenuItem>
-                    )}
-                  </>)}
+                      <SidebarMenuItem>
+                        <SidebarMenuButton
+                          asChild
+                          isActive={isActive("/admin/finance/reports")}
+                          className="text-white hover:bg-white/10 data-[active=true]:bg-secondary data-[active=true]:text-black rounded-md transition-colors"
+                        >
+                          <Link to="/admin/finance/reports" className="flex items-center gap-3">
+                            <PieChart className="h-5 w-5" />
+                            {!collapsed && <span>Finance Reports</span>}
+                          </Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    </SidebarMenu>
+                  </CollapsibleSidebarSection>
+                )}
+
+                {/* HR Section */}
+                {/* {(hasPermission(user, PERMISSIONS['hr.staff.read']) ||
+                  hasPermission(user, PERMISSIONS['hr.leave.read'])) && (
+                    <CollapsibleSidebarSection
+                      title="Human Resources"
+                      icon={<BarChart3 className="h-5 w-5" />}
+                      collapsed={collapsed}
+                      activePaths={["/admin/hr"]}
+                    >
+                      <SidebarMenu className="space-y-1">
+                        <SidebarMenuItem>
+                          <SidebarMenuButton
+                            asChild
+                            isActive={isActive("/admin/hr/dashboard")}
+                            className="text-white hover:bg-white/10 data-[active=true]:bg-secondary data-[active=true]:text-black rounded-md transition-colors"
+                          >
+                            <Link to="/admin/hr/dashboard" className="flex items-center gap-3">
+                              <BarChart3 className="h-5 w-5" />
+                              {!collapsed && <span>HR Dashboard</span>}
+                            </Link>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                        <SidebarMenuItem>
+                          <SidebarMenuButton
+                            asChild
+                            isActive={isActive("/admin/hr/staff")}
+                            className="text-white hover:bg-white/10 data-[active=true]:bg-secondary data-[active=true]:text-black rounded-md transition-colors"
+                          >
+                            <Link to="/admin/hr/staff" className="flex items-center gap-3">
+                              <UserCog className="h-5 w-5" />
+                              {!collapsed && <span>Staff Directory</span>}
+                            </Link>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                        <SidebarMenuItem>
+                          <SidebarMenuButton
+                            asChild
+                            isActive={isActive("/admin/hr/leave")}
+                            className="text-white hover:bg-white/10 data-[active=true]:bg-secondary data-[active=true]:text-black rounded-md transition-colors"
+                          >
+                            <Link to="/admin/hr/leave" className="flex items-center gap-3">
+                              <ClipboardList className="h-5 w-5" />
+                              {!collapsed && <span>Leave Management</span>}
+                            </Link>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                        {hasPermission(user, PERMISSIONS['hr.staff.read']) && (
+                          <SidebarMenuItem>
+                            <SidebarMenuButton
+                              asChild
+                              isActive={isActive("/admin/hr/applications")}
+                              className="text-white hover:bg-white/10 data-[active=true]:bg-secondary data-[active=true]:text-black rounded-md transition-colors"
+                            >
+                              <Link to="/admin/hr/applications" className="flex items-center gap-3">
+                                <ClipboardCheck className="h-5 w-5" />
+                                {!collapsed && <span>Staff Applications</span>}
+                              </Link>
+                            </SidebarMenuButton>
+                          </SidebarMenuItem>
+                        )}
+                      </SidebarMenu>
+                    </CollapsibleSidebarSection>
+                  )} */}
 
                 {/* Documents Section */}
-                <div className="px-3 pt-4 pb-1 text-xs text-secondary/80 uppercase tracking-wider">
-                  {!collapsed && "Documents"}
-                </div>
-                <SidebarMenuItem>
-                  <SidebarMenuButton
-                    asChild
-                    isActive={isActive("/admin/documents")}
-                    className="text-white hover:bg-white/10 data-[active=true]:bg-secondary data-[active=true]:text-black rounded-md transition-colors"
-                  >
-                    <Link to="/admin/documents" className="flex items-center gap-3">
-                      <FileText className="h-5 w-5" />
-                      {!collapsed && <span>Documents</span>}
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                  <SidebarMenuButton
-                    asChild
-                    isActive={isActive("/admin/signatures")}
-                    className="text-white hover:bg-white/10 data-[active=true]:bg-secondary data-[active=true]:text-black rounded-md transition-colors"
-                  >
-                    <Link to="/admin/signatures" className="flex items-center gap-3">
-                      <PenLine className="h-5 w-5" />
-                      {!collapsed && <span>My Signatures</span>}
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
+                <CollapsibleSidebarSection
+                  title="Documents"
+                  icon={<FileText className="h-5 w-5" />}
+                  collapsed={collapsed}
+                  activePaths={["/admin/documents", "/admin/signatures"]}
+                >
+                  <SidebarMenu className="space-y-2">
+                    <SidebarMenuItem>
+                      <SidebarMenuButton
+                        asChild
+                        isActive={isActive("/admin/documents")}
+                        className="text-white hover:bg-white/10 data-[active=true]:bg-secondary data-[active=true]:text-black rounded-md transition-colors"
+                      >
+                        <Link to="/admin/documents" className="flex items-center gap-3">
+                          <FileText className="h-5 w-5" />
+                          {!collapsed && <span>Documents</span>}
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                    <SidebarMenuItem>
+                      <SidebarMenuButton
+                        asChild
+                        isActive={isActive("/admin/signatures")}
+                        className="text-white hover:bg-white/10 data-[active=true]:bg-secondary data-[active=true]:text-black rounded-md transition-colors"
+                      >
+                        <Link to="/admin/signatures" className="flex items-center gap-3">
+                          <PenLine className="h-5 w-5" />
+                          {!collapsed && <span>My Signatures</span>}
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  </SidebarMenu>
+                </CollapsibleSidebarSection>
 
                 {/* Reports & Analytics Section */}
-                {hasPermission(user, PERMISSIONS['analytics.read']) && (<>
-                  <div className="px-3 pt-4 pb-1 text-xs text-secondary/80 uppercase tracking-wider">
-                    {!collapsed && "Reports & Analytics"}
-                  </div>
-                  <SidebarMenuItem>
-                    <SidebarMenuButton
-                      asChild
-                      isActive={isActive("/admin/reports")}
-                      className="text-white hover:bg-white/10 data-[active=true]:bg-secondary data-[active=true]:text-black rounded-md transition-colors"
-                    >
-                      <Link to="/admin/reports" className="flex items-center gap-3">
-                        <BarChart3 className="h-5 w-5" />
-                        {!collapsed && <span>Reports</span>}
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                  <SidebarMenuItem>
+                {hasPermission(user, PERMISSIONS['analytics.read']) && (
+                  <CollapsibleSidebarSection
+                    title="Reports & Analytics"
+                    icon={<BarChart2 className="h-5 w-5" />}
+                    collapsed={collapsed}
+                    activePaths={["/admin/analytics", "/admin/reports"]}
+                  >
+                    <SidebarMenu className="space-y-2">
+                      <SidebarMenuItem>
+                        <SidebarMenuButton
+                          asChild
+                          isActive={isActive("/admin/analytics")}
+                          className="text-white hover:bg-white/10 data-[active=true]:bg-secondary data-[active=true]:text-black rounded-md transition-colors"
+                        >
+                          <Link to="/admin/analytics" className="flex items-center gap-3">
+                            <BarChart2 className="h-5 w-5" />
+                            {!collapsed && <span>Analytics</span>}
+                          </Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                      <SidebarMenuItem>
+                        <SidebarMenuButton
+                          asChild
+                          isActive={isActive("/admin/reports")}
+                          className="text-white hover:bg-white/10 data-[active=true]:bg-secondary data-[active=true]:text-black rounded-md transition-colors"
+                        >
+                          <Link to="/admin/reports" className="flex items-center gap-3">
+                            <BarChart3 className="h-5 w-5" />
+                            {!collapsed && <span>Reports Builder</span>}
+                          </Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                      <SidebarMenuItem>
                     <SidebarMenuButton
                       asChild
                       isActive={isActive("/admin/reports/document-charts")}
@@ -254,120 +293,120 @@ export default function AdminLayout() {
                       </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
-                </>)}
+                    </SidebarMenu>
+                  </CollapsibleSidebarSection>
+                )}
                 {/* System Section */}
-                <div className="px-3 pt-4 pb-1 text-xs text-secondary/80 uppercase tracking-wider">
-                  {!collapsed && "System"}
-                </div>
-                {hasPermission(user, PERMISSIONS['users.write']) && (
-                  <SidebarMenuItem>
-                    <SidebarMenuButton
-                      asChild
-                      isActive={isActive("/admin/departments")}
-                      className="text-white hover:bg-white/10 data-[active=true]:bg-secondary data-[active=true]:text-black rounded-md transition-colors"
+                {(hasPermission(user, PERMISSIONS['users.write']) ||
+                  hasPermission(user, PERMISSIONS['users.read']) ||
+                  hasPermission(user, PERMISSIONS['audit.read']) ||
+                  hasPermission(user, PERMISSIONS['roles.manage']) ||
+                  hasPermission(user, PERMISSIONS['maker_checker.manage'])) && (
+                    <CollapsibleSidebarSection
+                      title="System"
+                      icon={<ShieldCheck className="h-5 w-5" />}
+                      collapsed={collapsed}
+                      activePaths={["/admin/departments", "/admin/users", "/admin/user-management", "/admin/audit-trails", "/admin/roles", "/admin/maker-checker"]}
                     >
-                      <Link to="/admin/departments" className="flex items-center gap-3">
-                        <Building2 className="h-5 w-5" />
-                        {!collapsed && <span>Departments</span>}
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                )}
-                {hasPermission(user, PERMISSIONS['users.read']) && (
-                  <SidebarMenuItem>
-                    <SidebarMenuButton
-                      asChild
-                      isActive={isActive("/admin/user-management")}
-                      className="text-white hover:bg-white/10 data-[active=true]:bg-secondary data-[active=true]:text-black rounded-md transition-colors"
-                    >
-                      <Link to="/admin/users" className="flex items-center gap-3">
-                        <Users className="h-5 w-5" />
-                        {!collapsed && <span>User Management</span>}
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                )}
-                {/* 
-                  Preserving the old administrators link as requested, just disabled
-                  {hasPermission(user, PERMISSIONS['users.write']) && (
-                    <SidebarMenuItem>
-                      <SidebarMenuButton
-                        asChild
-                        isActive={isActive("/admin/user-management")}
-                        className="text-white hover:bg-green-700 data-[active=true]:bg-[#febb00] data-[active=true]:text-black rounded-md"
-                      >
-                        <Link to="/admin/user-management" className="flex items-center gap-3">
-                          <Users className="h-5 w-5" />
-                          {!collapsed && <span>Administrators</span>}
-                        </Link>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  )} 
-                */}
-                {hasPermission(user, PERMISSIONS['audit.read']) && (
-                  <SidebarMenuItem>
-                    <SidebarMenuButton
-                      asChild
-                      isActive={isActive("/admin/audit-trails")}
-                      className="text-white hover:bg-white/10 data-[active=true]:bg-secondary data-[active=true]:text-black rounded-md transition-colors"
-                    >
-                      <Link to="/admin/audit-trails" className="flex items-center gap-3">
-                        <History className="h-5 w-5" />
-                        {!collapsed && <span>Audit Trails</span>}
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                )}
-
-                {/* Roles & Maker-Checker — only visible to users with relevant permissions */}
-                {hasPermission(user, PERMISSIONS['roles.manage']) && (
-                  <SidebarMenuItem>
-                    <SidebarMenuButton
-                      asChild
-                      isActive={isActive("/admin/roles")}
-                      className="text-white hover:bg-white/10 data-[active=true]:bg-secondary data-[active=true]:text-black rounded-md transition-colors"
-                    >
-                      <Link to="/admin/roles" className="flex items-center gap-3">
-                        <ShieldCheck className="h-5 w-5" />
-                        {!collapsed && <span>Roles</span>}
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                )}
-
-                {hasPermission(user, PERMISSIONS['maker_checker.manage']) && (
-                  <SidebarMenuItem>
-                    <SidebarMenuButton
-                      asChild
-                      isActive={isActive("/admin/maker-checker")}
-                      className="text-white hover:bg-white/10 data-[active=true]:bg-secondary data-[active=true]:text-black rounded-md transition-colors"
-                    >
-                      <Link to="/admin/maker-checker" className="flex items-center gap-3">
-                        <ClipboardCheck className="h-5 w-5" />
-                        {!collapsed && <span>Maker-Checker</span>}
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                )}
+                      <SidebarMenu className="space-y-2">
+                        {hasPermission(user, PERMISSIONS['users.write']) && (
+                          <SidebarMenuItem>
+                            <SidebarMenuButton
+                              asChild
+                              isActive={isActive("/admin/departments")}
+                              className="text-white hover:bg-white/10 data-[active=true]:bg-secondary data-[active=true]:text-black rounded-md transition-colors"
+                            >
+                              <Link to="/admin/departments" className="flex items-center gap-3">
+                                <Building2 className="h-5 w-5" />
+                                {!collapsed && <span>Departments</span>}
+                              </Link>
+                            </SidebarMenuButton>
+                          </SidebarMenuItem>
+                        )}
+                        {hasPermission(user, PERMISSIONS['users.read']) && (
+                          <SidebarMenuItem>
+                            <SidebarMenuButton
+                              asChild
+                              isActive={isActive("/admin/user-management")}
+                              className="text-white hover:bg-white/10 data-[active=true]:bg-secondary data-[active=true]:text-black rounded-md transition-colors"
+                            >
+                              <Link to="/admin/users" className="flex items-center gap-3">
+                                <Users className="h-5 w-5" />
+                                {!collapsed && <span>User Management</span>}
+                              </Link>
+                            </SidebarMenuButton>
+                          </SidebarMenuItem>
+                        )}
+                        {hasPermission(user, PERMISSIONS['audit.read']) && (
+                          <SidebarMenuItem>
+                            <SidebarMenuButton
+                              asChild
+                              isActive={isActive("/admin/audit-trails")}
+                              className="text-white hover:bg-white/10 data-[active=true]:bg-secondary data-[active=true]:text-black rounded-md transition-colors"
+                            >
+                              <Link to="/admin/audit-trails" className="flex items-center gap-3">
+                                <History className="h-5 w-5" />
+                                {!collapsed && <span>Audit Trails</span>}
+                              </Link>
+                            </SidebarMenuButton>
+                          </SidebarMenuItem>
+                        )}
+                        {hasPermission(user, PERMISSIONS['roles.manage']) && (
+                          <SidebarMenuItem>
+                            <SidebarMenuButton
+                              asChild
+                              isActive={isActive("/admin/roles")}
+                              className="text-white hover:bg-white/10 data-[active=true]:bg-secondary data-[active=true]:text-black rounded-md transition-colors"
+                            >
+                              <Link to="/admin/roles" className="flex items-center gap-3">
+                                <ShieldCheck className="h-5 w-5" />
+                                {!collapsed && <span>Roles</span>}
+                              </Link>
+                            </SidebarMenuButton>
+                          </SidebarMenuItem>
+                        )}
+                        {hasPermission(user, PERMISSIONS['maker_checker.manage']) && (
+                          <SidebarMenuItem>
+                            <SidebarMenuButton
+                              asChild
+                              isActive={isActive("/admin/maker-checker")}
+                              className="text-white hover:bg-white/10 data-[active=true]:bg-secondary data-[active=true]:text-black rounded-md transition-colors"
+                            >
+                              <Link to="/admin/maker-checker" className="flex items-center gap-3">
+                                <ClipboardCheck className="h-5 w-5" />
+                                {!collapsed && <span>Maker-Checker</span>}
+                              </Link>
+                            </SidebarMenuButton>
+                          </SidebarMenuItem>
+                        )}
+                      </SidebarMenu>
+                    </CollapsibleSidebarSection>
+                  )}
 
                 {/* Admin Settings Section */}
-                {hasPermission(user, PERMISSIONS['configure_dashboard_cards']) && (<>
-                  <div className="px-3 pt-4 pb-1 text-xs text-secondary/80 uppercase tracking-wider">
-                    {!collapsed && "Administration"}
-                  </div>
-                  <SidebarMenuItem>
-                    <SidebarMenuButton
-                      asChild
-                      isActive={isActive("/admin/settings/dashboard-config")}
-                      className="text-white hover:bg-white/10 data-[active=true]:bg-secondary data-[active=true]:text-black rounded-md transition-colors"
-                    >
-                      <Link to="/admin/settings/dashboard-config" className="flex items-center gap-3">
-                        <Settings className="h-5 w-5" />
-                        {!collapsed && <span>Dashboard Config</span>}
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                </>)}
+                {/* {hasPermission(user, PERMISSIONS['configure_dashboard_cards']) && (
+                  <CollapsibleSidebarSection
+                    title="Administration"
+                    icon={<Settings className="h-5 w-5" />}
+                    collapsed={collapsed}
+                    activePaths={["/admin/settings"]}
+                  >
+                    <SidebarMenu className="space-y-1">
+                      <SidebarMenuItem>
+                        <SidebarMenuButton
+                          asChild
+                          isActive={isActive("/admin/settings/dashboard-config")}
+                          className="text-white hover:bg-white/10 data-[active=true]:bg-secondary data-[active=true]:text-black rounded-md transition-colors"
+                        >
+                          <Link to="/admin/settings/dashboard-config" className="flex items-center gap-3">
+                            <Settings className="h-5 w-5" />
+                            {!collapsed && <span>Dashboard Config</span>}
+                          </Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    </SidebarMenu>
+                  </CollapsibleSidebarSection>
+                )} */}
 
                 {/* ControlHub Section */}
                 {/* <div className="px-3 pt-4 pb-1 text-xs text-yellow-200 uppercase tracking-wider">

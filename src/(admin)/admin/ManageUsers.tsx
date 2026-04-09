@@ -1,24 +1,19 @@
 import { useState, useEffect } from 'react';
+import { motion } from 'framer-motion'
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Search, Pencil, Trash, Key, UserPlus } from 'lucide-react';
 import { toast } from 'sonner';
 import { list, remove } from '@/lib/api/crud';
 import { useAuth } from '@/lib/context/useAuth';
 import { hasPermission, PERMISSIONS } from '@/lib/permissions';
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
 
+import { PageTransition } from '@/components/PageTransition'
 import { UserCreateDialog } from '@/components/users/UserCreateDialog';
 import { UserEditDialog } from '@/components/users/UserEditDialog';
-import { UserPermissionsSheet } from '@/components/rbac/UserPermissionsSheet';
+import { UserPermissionsModal } from '@/components/rbac/UserPermissionsModal';
+import { UserListHeader } from '@/components/users/UserListHeader';
+import { UserCard } from '@/components/users/UserCard';
+import { UserManagementEmptyState } from '@/components/users/UserManagementEmptyState';
 
 interface User {
     id: string;
@@ -104,205 +99,155 @@ export default function ManageUsers() {
         }
     };
 
-    const renderRole = (u: User) => {
-        if (typeof u.role === 'string') return u.role;
-        return u.role?.name || 'N/A';
-    };
-
-    const renderDepartments = (u: User) => {
-        if (typeof u.departments === 'string') return u.departments;
-        if (Array.isArray(u.departments)) return u.departments.map(d => d.name).join(', ');
-        return 'N/A';
-    };
+    const activeUsersCount = users.filter((u) => u.status === 'active' || u.status === 1).length;
 
     return (
-        <div className="space-y-6">
-            <div className="flex justify-between items-center whitespace-nowrap overflow-auto mb-6">
-                <div>
-                    <h1 className="text-2xl font-bold tracking-tight text-[#0d173b]">Users Management</h1>
-                    <p className="text-muted-foreground text-sm mt-1">Manage system administrators and user roles.</p>
-                </div>
-                {hasPermission(currentUser, PERMISSIONS['users.write']) && (
-                    <Button onClick={() => setIsCreateOpen(true)} className="bg-primary text-white">
-                        <UserPlus className="mr-2 h-4 w-4" />
-                        Create User
-                    </Button>
-                )}
-            </div>
+        <PageTransition>
+            <div className="space-y-6">
+                {/* Header with title, stats, search, and filters */}
+                <UserListHeader
+                searchQuery={searchQuery}
+                onSearchChange={setSearchQuery}
+                totalUsers={total}
+                activeUsers={activeUsersCount}
+                onCreateClick={() => setIsCreateOpen(true)}
+                canCreate={hasPermission(currentUser, PERMISSIONS['users.write'])}
+            />
 
-            <div className="bg-white rounded-lg shadow border overflow-hidden">
-                <div className="p-4 border-b">
-                    <div className="relative w-full max-w-sm">
-                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
-                        <Input
-                            placeholder="Search by name or email..."
-                            className="pl-9"
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                        />
-                    </div>
-                </div>
-
-                <div className="overflow-x-auto min-h-[400px]">
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>Name</TableHead>
-                                <TableHead>Email</TableHead>
-                                <TableHead>Role</TableHead>
-                                <TableHead>Title</TableHead>
-                                <TableHead>Departments</TableHead>
-                                <TableHead>Status</TableHead>
-                                <TableHead>Created Date</TableHead>
-                                <TableHead className="text-right">Actions</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {isLoading ? (
-                                Array.from({ length: 5 }).map((_, i) => (
-                                    <TableRow key={i}>
-                                        <TableCell><Skeleton className="h-4 w-24" /></TableCell>
-                                        <TableCell><Skeleton className="h-4 w-32" /></TableCell>
-                                        <TableCell><Skeleton className="h-4 w-16" /></TableCell>
-                                        <TableCell><Skeleton className="h-4 w-20" /></TableCell>
-                                        <TableCell><Skeleton className="h-4 w-24" /></TableCell>
-                                        <TableCell><Skeleton className="h-4 w-16" /></TableCell>
-                                        <TableCell><Skeleton className="h-4 w-24" /></TableCell>
-                                        <TableCell><Skeleton className="h-8 w-8 ml-auto" /></TableCell>
-                                    </TableRow>
-                                ))
-                            ) : users.length === 0 ? (
-                                <TableRow>
-                                    <TableCell colSpan={8} className="text-center h-48 text-muted-foreground">
-                                        <div className="flex flex-col items-center justify-center">
-                                            <p className="mb-4">No users found.</p>
-                                            {hasPermission(currentUser, PERMISSIONS['users.write']) && (
-                                                <Button variant="outline" onClick={() => setIsCreateOpen(true)}>
-                                                    Create User
-                                                </Button>
-                                            )}
-                                        </div>
-                                    </TableCell>
-                                </TableRow>
-                            ) : (
-                                users.map((u) => (
-                                    <TableRow key={u.id}>
-                                        <TableCell className="font-medium whitespace-nowrap">
-                                            {u.name || `${u.first_name || ''} ${u.last_name || ''}`.trim() || 'N/A'}
-                                        </TableCell>
-                                        <TableCell>{u.email}</TableCell>
-                                        <TableCell className="capitalize">{renderRole(u)}</TableCell>
-                                        <TableCell>{u.title || 'N/A'}</TableCell>
-                                        <TableCell className="max-w-[200px] truncate" title={renderDepartments(u)}>
-                                            {renderDepartments(u)}
-                                        </TableCell>
-                                        <TableCell>
-                                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                                u.status === 'active' || u.status === 1 ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-                                            }`}>
-                                                {u.status === 'active' || u.status === 1 ? 'Active' : 'Inactive'}
-                                            </span>
-                                        </TableCell>
-                                        <TableCell className="whitespace-nowrap">
-                                            {u.created_at ? new Date(u.created_at).toLocaleDateString() : 'N/A'}
-                                        </TableCell>
-                                        <TableCell className="text-right whitespace-nowrap">
-                                            <div className="flex justify-end gap-2">
-                                                {/* Edit Button */}
-                                                <Button 
-                                                    variant="ghost" 
-                                                    size="icon" 
-                                                    onClick={() => setSelectedUserForEdit(u)}
-                                                    title="Edit User"
-                                                >
-                                                    <Pencil className="h-4 w-4 text-blue-600" />
-                                                </Button>
-
-                                                {/* Manage Permissions */}
-                                                {hasPermission(currentUser, PERMISSIONS['roles.manage']) && (
-                                                    <Button 
-                                                        variant="ghost" 
-                                                        size="icon" 
-                                                        onClick={() => setSelectedUserForPerms(u)}
-                                                        title="Manage Permissions"
-                                                    >
-                                                        <Key className="h-4 w-4 text-amber-600" />
-                                                    </Button>
-                                                )}
-
-                                                {/* Delete Button */}
-                                                {hasPermission(currentUser, PERMISSIONS['users.delete']) && (
-                                                    <Button 
-                                                        variant="ghost" 
-                                                        size="icon" 
-                                                        onClick={() => handleDelete(u)}
-                                                        title="Delete User"
-                                                    >
-                                                        <Trash className="h-4 w-4 text-red-600" />
-                                                    </Button>
-                                                )}
-                                            </div>
-                                        </TableCell>
-                                    </TableRow>
-                                ))
+            {/* User Cards Grid - Staggered Animation */}
+            {isLoading ? (
+                <motion.div
+                    variants={{
+                        hidden: {},
+                        visible: {
+                            transition: { staggerChildren: 0.06 },
+                        },
+                    }}
+                    initial="hidden"
+                    animate="visible"
+                    className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
+                >
+                    {Array.from({ length: 6 }).map((_, i) => (
+                        <motion.div
+                            key={i}
+                            variants={{
+                                hidden: { opacity: 0, y: 10 },
+                                visible: {
+                                    opacity: 1,
+                                    y: 0,
+                                    transition: { duration: 0.35, ease: [0.16, 1, 0.3, 1] },
+                                },
+                            }}
+                            className="bg-card rounded-lg border border-border p-4"
+                        >
+                            <div className="flex items-center gap-3 mb-3">
+                                <Skeleton className="h-10 w-10 rounded-full" />
+                                <div className="flex-1">
+                                    <Skeleton className="h-4 w-24 mb-2" />
+                                    <Skeleton className="h-3 w-32" />
+                                </div>
+                            </div>
+                            <Skeleton className="h-3 w-16 mb-4" />
+                            <Skeleton className="h-20 w-full" />
+                        </motion.div>
+                    ))}
+                </motion.div>
+            ) : users.length === 0 ? (
+                <UserManagementEmptyState
+                    onCreateClick={() => setIsCreateOpen(true)}
+                    canCreate={hasPermission(currentUser, PERMISSIONS['users.write'])}
+                />
+            ) : (
+                <motion.div
+                    variants={{
+                        hidden: {},
+                        visible: {
+                            transition: { staggerChildren: 0.06 },
+                        },
+                    }}
+                    initial="hidden"
+                    animate="visible"
+                    className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
+                >
+                    {users.map((u) => (
+                        <UserCard
+                            key={u.id}
+                            user={u}
+                            onEdit={() => setSelectedUserForEdit(u)}
+                            onDelete={handleDelete}
+                            onManagePermissions={() => setSelectedUserForPerms(u)}
+                            canEdit={hasPermission(currentUser, PERMISSIONS['users.write'])}
+                            canDelete={hasPermission(currentUser, PERMISSIONS['users.delete'])}
+                            canManagePermissions={hasPermission(
+                                currentUser,
+                                PERMISSIONS['roles.manage']
                             )}
-                        </TableBody>
-                    </Table>
-                </div>
+                        />
+                    ))}
+                </motion.div>
+            )}
 
-                {/* Pagination Controls */}
-                {!isLoading && users.length > 0 && (
-                    <div className="flex items-center justify-between p-4 border-t text-sm">
-                        <div className="text-muted-foreground">
-                            Showing {(page - 1) * limit + 1} to {Math.min(page * limit, total || page * limit)} of {total || "many"} entries
-                        </div>
-                        <div className="flex gap-2">
-                            <Button 
-                                variant="outline" 
-                                size="sm" 
-                                disabled={page === 1} 
-                                onClick={() => setPage(page - 1)}
-                            >
-                                Previous
-                            </Button>
-                            <Button 
-                                variant="outline" 
-                                size="sm" 
-                                disabled={users.length < limit && total <= page * limit} 
-                                onClick={() => setPage(page + 1)}
-                            >
-                                Next
-                            </Button>
-                        </div>
+            {/* Pagination Controls */}
+            {!isLoading && users.length > 0 && (
+                <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{
+                        duration: 0.35,
+                        ease: [0.16, 1, 0.3, 1],
+                    }}
+                    className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 rounded-lg border-t border-gray-200"
+                >
+                    <div className="font-sans text-text-sm text-muted-foreground">
+                        Showing {(page - 1) * limit + 1} to {Math.min(page * limit, total || page * limit)} of{' '}
+                        {total || 'many'} entries
                     </div>
-                )}
-            </div>
+                    <div className="flex gap-2">
+                        <Button
+                            className="h-9 px-3 text-xs"
+                            disabled={page === 1}
+                            onClick={() => setPage(page - 1)}
+                        >
+                            Previous
+                        </Button>
+                        <Button
+                            className="h-9 px-3 text-xs"
+                            disabled={users.length < limit && total <= page * limit}
+                            onClick={() => setPage(page + 1)}
+                        >
+                            Next
+                        </Button>
+                    </div>
+                </motion.div>
+            )}
 
             {/* Dialogs */}
             {isCreateOpen && (
-                <UserCreateDialog 
-                    isOpen={isCreateOpen} 
-                    onClose={() => setIsCreateOpen(false)} 
-                    onSubmit={() => fetchUsers()} 
+                <UserCreateDialog
+                    isOpen={isCreateOpen}
+                    onClose={() => setIsCreateOpen(false)}
+                    onSubmit={() => fetchUsers()}
                 />
             )}
 
             {selectedUserForEdit && (
-                <UserEditDialog 
-                    user={selectedUserForEdit as any} 
-                    isOpen={!!selectedUserForEdit} 
-                    onClose={() => setSelectedUserForEdit(null)} 
-                    onSubmit={() => fetchUsers()} 
+                <UserEditDialog
+                    user={selectedUserForEdit as any}
+                    isOpen={!!selectedUserForEdit}
+                    onClose={() => setSelectedUserForEdit(null)}
+                    onSubmit={() => fetchUsers()}
                 />
             )}
 
             {selectedUserForPerms && (
-                <UserPermissionsSheet 
-                    userId={selectedUserForPerms.id} 
+                <UserPermissionsModal 
+                    userId={selectedUserForPerms.id}
+                    userName={`${selectedUserForPerms.first_name || ''} ${selectedUserForPerms.last_name || ''}`.trim() || selectedUserForPerms.email}
                     isOpen={!!selectedUserForPerms} 
                     onClose={() => setSelectedUserForPerms(null)} 
                 />
             )}
-        </div>
+            </div>
+        </PageTransition>
     );
 }

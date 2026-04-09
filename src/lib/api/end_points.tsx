@@ -14,6 +14,8 @@ export const API: Record<string, string> = {
   ADMIN_ROLES: "admin/roles",
   ADMIN_PERMISSIONS: "admin/permissions",
   ADMIN_ROLE_PERMISSIONS: "admin/roles/:slug/permissions",
+  ADMIN_ROLE_PERMISSION_GRANT: "admin/roles/:slug/permissions/:permissionId",
+  ADMIN_ROLE_PERMISSION_REVOKE: "admin/roles/:slug/permissions/:permissionId",
 
   // RBAC — Roles, Maker Checker & User Management
   MAKER_CHECKER_RULES: "admin/maker-checker/rules",
@@ -21,7 +23,8 @@ export const API: Record<string, string> = {
   MAKER_CHECKER_APPROVE: "maker-checker/requests/:id/approve",
   MAKER_CHECKER_REJECT: "maker-checker/requests/:id/reject",
   USER_DETAIL: "users/:id",
-  USER_PERMISSIONS: "users/:id/permissions",
+  USER_PERMISSIONS: "admin/users/:userId/overrides",
+  USER_PERMISSIONS_RESOLVED: "admin/users/:userId/permissions/resolved",
   USER_ROLE: "users/:id/role",
 
   // DMS — Departments
@@ -40,6 +43,7 @@ export const API: Record<string, string> = {
   DOCUMENT_ANALYZE: "documents/:id/analyze",
   DOCUMENT_CHART_DATA: "documents/:id/chart-data",
   DOCUMENT_COMPARE: "documents/compare",
+  DOCUMENT_PREDICTIVE_ANALYSIS: "ai/predictive-analysis",
   AI_CHAT: "ai/chat",
   WORKFLOWS: "workflows",
   WORKFLOW_DETAIL: "workflows/:id",

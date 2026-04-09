@@ -7,33 +7,74 @@ export default {
   theme: {
     extend: {
 
+      // ─────────────────────────────────────────────────────────────────────
+      // CONTROLHUB BRAND COLOURS
+      // These are the DIMS / ControlHub identity colours.
+      // Full shade scales generated from the three base values so you can
+      // use ch-primary-100, ch-secondary-500, ch-tertiary-800 etc. anywhere.
+      // ─────────────────────────────────────────────────────────────────────
       colors: {
+        'ch-primary': {
+          50: 'hsl(var(--ch-primary-50))',
+          100: 'hsl(var(--ch-primary-100))',
+          200: 'hsl(var(--ch-primary-200))',
+          300: 'hsl(var(--ch-primary-300))',
+          400: 'hsl(var(--ch-primary-400))',
+          500: 'hsl(var(--ch-primary-500))',
+          600: 'hsl(var(--ch-primary-600))',
+          700: 'hsl(var(--ch-primary-700))',
+          800: 'hsl(var(--ch-primary-800))',
+          900: 'hsl(var(--ch-primary-900))',
+          950: 'hsl(var(--ch-primary-950))',
+        },
+        'ch-secondary': {
+          50: 'hsl(var(--ch-secondary-50))',
+          100: 'hsl(var(--ch-secondary-100))',
+          200: 'hsl(var(--ch-secondary-200))',
+          300: 'hsl(var(--ch-secondary-300))',
+          400: 'hsl(var(--ch-secondary-400))',
+          500: 'hsl(var(--ch-secondary-500))',
+          600: 'hsl(var(--ch-secondary-600))',
+          700: 'hsl(var(--ch-secondary-700))',
+          800: 'hsl(var(--ch-secondary-800))',
+          900: 'hsl(var(--ch-secondary-900))',
+          950: 'hsl(var(--ch-secondary-950))',
+        },
+        'ch-tertiary': {
+          50: 'hsl(var(--ch-tertiary-50))',
+          100: 'hsl(var(--ch-tertiary-100))',
+          200: 'hsl(var(--ch-tertiary-200))',
+          300: 'hsl(var(--ch-tertiary-300))',
+          400: 'hsl(var(--ch-tertiary-400))',
+          500: 'hsl(var(--ch-tertiary-500))',
+          600: 'hsl(var(--ch-tertiary-600))',
+          700: 'hsl(var(--ch-tertiary-700))',
+          800: 'hsl(var(--ch-tertiary-800))',
+          900: 'hsl(var(--ch-tertiary-900))',
+          950: 'hsl(var(--ch-tertiary-950))',
+        },
         primary: {
           DEFAULT: "var(--tenant-primary)",
           foreground: "hsl(var(--primary-foreground))",
+          hover: "var(--tenant-primary-hover)",
+          light: "var(--tenant-primary-light)",
         },
         secondary: {
           DEFAULT: "var(--tenant-secondary)",
           foreground: "hsl(var(--secondary-foreground))",
+          hover: "var(--tenant-secondary-hover)",
         },
         tertiary: {
           DEFAULT: "var(--tenant-accent)",
         },
-        // ControlHub Scoped Colors
-        ch: {
-          primary: "#7c69ff",
-          secondary: "#03d8fd",
-          tertiary: "#0d173b",
-        },
-        gradient: {
-          from: '#7c69ff',
-          to: '#03d8fd',
-        },
+        destructive: "hsl(var(--destructive))",
+        success: "hsl(var(--tenant-success))",
+        warning: "hsl(var(--tenant-warning))",
         sidebar: {
           DEFAULT: 'hsl(var(--sidebar-background))',
           foreground: 'hsl(var(--sidebar-foreground))',
           primary: 'hsl(var(--sidebar-primary))',
-          'primary-foreground': 'hsl(var(--sidebar-accent))',
+          'primary-foreground': 'hsl(var(--sidebar-primary-foreground))',
           accent: 'hsl(var(--sidebar-accent))',
           'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
           border: 'hsl(var(--sidebar-border))',
@@ -41,66 +82,135 @@ export default {
         }
       },
 
+      // ─────────────────────────────────────────────────────────────────────
+      // TYPOGRAPHY
+      // Outfit           — headings, display, section titles, stat numbers
+      // Plus Jakarta Sans — body text, UI labels, form inputs, descriptions
+      // JetBrains Mono   — document IDs, timestamps, hashes, code snippets
+      // ─────────────────────────────────────────────────────────────────────
       fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
-        myriad: ['Myriad Pro', 'system-ui', 'sans-serif'],
-        montserrat: ['Montserrat', 'ui-sans-serif', 'system-ui', '-apple-system', 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', 'sans-serif'],
-        outfit: ['Outfit', 'system-ui', 'sans-serif'],
-        poppins: ['Poppins', 'system-ui', 'sans-serif'],
-        'space-grotesk': ['Space Grotesk', 'system-ui', 'monospace'],
+        display: ['Outfit', 'system-ui', 'sans-serif'],
+        sans:    ['Plus Jakarta Sans', 'system-ui', 'sans-serif'],
+        mono:    ['JetBrains Mono', 'Fira Code', 'monospace'],
       },
 
       fontSize: {
-        'hero-title': ['clamp(2.5rem, 8vw, 4.5rem)', { lineHeight: '1.1', fontWeight: '700' }],
-        'hero-subtitle': ['clamp(1rem, 2vw, 1.25rem)', { lineHeight: '1.6', fontWeight: '400' }],
-        'section-title': ['clamp(1.875rem, 5vw, 3rem)', { lineHeight: '1.2', fontWeight: '700' }],
-        'stats-number': ['clamp(2rem, 4vw, 2.25rem)', { lineHeight: '1', fontWeight: '700' }],
-        'stats-label': ['clamp(0.875rem, 2vw, 1.25rem)', { lineHeight: '1.4', fontWeight: '500' }],
+        // Display scale — Outfit, large headings
+        'display-2xl': ['4.5rem', { lineHeight: '1.1', fontWeight: '700' }],
+        'display-xl':  ['3.75rem', { lineHeight: '1.1', fontWeight: '700' }],
+        'display-lg':  ['3rem', { lineHeight: '1.1', fontWeight: '700' }],
+        'display-md':  ['2.25rem', { lineHeight: '1.1', fontWeight: '700' }],
+        'display-sm':  ['1.875rem', { lineHeight: '1.1', fontWeight: '700' }],
+        'display-xs':  ['1.5rem', { lineHeight: '1.1', fontWeight: '700' }],
+
+        // Text scale — Plus Jakarta Sans, body text
+        'text-xl': ['1.25rem', { lineHeight: '1.5', fontWeight: '400' }],
+        'text-lg': ['1.125rem', { lineHeight: '1.5', fontWeight: '400' }],
+        'text-md': ['1rem', { lineHeight: '1.5', fontWeight: '400' }],
+        'text-sm': ['0.875rem', { lineHeight: '1.5', fontWeight: '400' }],
+        'text-xs': ['0.75rem', { lineHeight: '1.125rem', fontWeight: '400' }],
       },
 
+      // ─────────────────────────────────────────────────────────────────────
+      // SPACING — 4px base grid
+      // Tailwind's default scale covers most cases (1=4px, 2=8px, 4=16px…)
+      // Only extend values the default scale doesn't cover.
+      // ─────────────────────────────────────────────────────────────────────
       spacing: {
-        '18': '4.5rem',
-        '88': '22rem',
-        '128': '32rem',
-        'hero-top': '200px',
+        '4.5': '1.125rem',  // 18px — icon container sizing
+        '15':  '3.75rem',   // 60px — card padding
+        '18':  '4.5rem',    // 72px — large gaps
+        '72':  '18rem',     // 288px — sidebar expanded width
       },
 
+      // ─────────────────────────────────────────────────────────────────────
+      // ANIMATIONS & KEYFRAMES
+      // ─────────────────────────────────────────────────────────────────────
       keyframes: {
-        float: {
-          '0%': { transform: 'translateY(0px)' },
-          '50%': { transform: 'translateY(-10px)' },
-          '100%': { transform: 'translateY(0px)' },
+        'fade-in': {
+          '0%': { opacity: '0' },
+          '100%': { opacity: '1' },
         },
-        glow: {
-          '0%,100%': { filter: 'drop-shadow(0 0 8px rgba(254,187,0,0.4))' },
-          '50%': { filter: 'drop-shadow(0 0 18px rgba(254,187,0,0.8))' },
-        },
-        fadeInUp: {
-          '0%': { opacity: '0', transform: 'translateY(12px)' },
+        'fade-in-up': {
+          '0%': { opacity: '0', transform: 'translateY(10px)' },
           '100%': { opacity: '1', transform: 'translateY(0)' },
         },
-        'card-hover': {
-          '0%': { transform: 'translateY(0px)', boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)' },
-          '100%': { transform: 'translateY(-2px)', boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12)' },
+        'fade-in-down': {
+          '0%': { opacity: '0', transform: 'translateY(-10px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
+        'slide-in-left': {
+          '0%': { opacity: '0', transform: 'translateX(-10px)' },
+          '100%': { opacity: '1', transform: 'translateX(0)' },
+        },
+        'slide-in-right': {
+          '0%': { opacity: '0', transform: 'translateX(10px)' },
+          '100%': { opacity: '1', transform: 'translateX(0)' },
+        },
+        'scale-in': {
+          '0%': { opacity: '0', transform: 'scale(0.95)' },
+          '100%': { opacity: '1', transform: 'scale(1)' },
+        },
+        'skeleton': {
+          '0%': { opacity: '1' },
+          '50%': { opacity: '0.4' },
+          '100%': { opacity: '1' },
+        },
+        'pulse-ring': {
+          '0%': { transform: 'scale(0.33)', opacity: '1' },
+          '40%,50%': { opacity: '0.7' },
+          '100%': { transform: 'scale(0.9)', opacity: '0' },
         },
       },
 
       animation: {
-        float: 'float 6s ease-in-out infinite',
-        glow: 'glow 4s ease-in-out infinite',
-        'fade-in-up': 'fadeInUp 500ms cubic-bezier(0.4, 0, 0.2, 1)',
+        'fade-in': 'fade-in 0.5s ease-out',
+        'fade-in-up': 'fade-in-up 0.5s ease-out',
+        'fade-in-down': 'fade-in-down 0.5s ease-out',
+        'slide-in-left': 'slide-in-left 0.5s ease-out',
+        'slide-in-right': 'slide-in-right 0.5s ease-out',
+        'scale-in': 'scale-in 0.5s ease-out',
+        'skeleton': 'skeleton 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+        'pulse-ring': 'pulse-ring 1.5s cubic-bezier(0.455, 0.03, 0.515, 0.955) infinite',
       },
 
+      // ─────────────────────────────────────────────────────────────────────
+      // SHADOWS
+      // ─────────────────────────────────────────────────────────────────────
       boxShadow: {
-        'premium-sm': '0 2px 8px rgba(0, 0, 0, 0.05)',
-        'premium-md': '0 4px 16px rgba(0, 0, 0, 0.08)',
-        'premium-lg': '0 8px 32px rgba(0, 0, 0, 0.12)',
-        'premium-xl': '0 12px 48px rgba(0, 0, 0, 0.15)',
-        'premium-inner': 'inset 0 1px 2px rgba(0, 0, 0, 0.05)',
+        'xs':  '0 1px 2px rgba(16, 24, 40, 0.05)',
+        'sm':  '0 1px 3px rgba(16, 24, 40, 0.1), 0 1px 2px rgba(16, 24, 40, 0.06)',
+        'md':  '0 4px 8px -2px rgba(16, 24, 40, 0.1), 0 2px 4px -2px rgba(16, 24, 40, 0.06)',
+        'lg':  '0 12px 16px -4px rgba(16, 24, 40, 0.1), 0 4px 6px -2px rgba(16, 24, 40, 0.05)',
+        'xl':  '0 20px 25px -5px rgba(16, 24, 40, 0.1), 0 10px 10px -5px rgba(16, 24, 40, 0.04)',
+        '2xl': '0 25px 50px -12px rgba(16, 24, 40, 0.25)',
+        'focus-ring': '0 0 0 4px hsl(var(--ch-secondary-500) / 0.12)',
+        'cyan-glow': '0 0 20px hsl(var(--ch-secondary-500) / 0.3)',
+        'purple-glow': '0 0 20px hsl(var(--ch-primary-500) / 0.3)',
+        'inner': 'inset 0 2px 4px 0 rgba(0, 0, 0, 0.06)',
+        'none': '0 0 #0000',
       },
 
-      borderColor: {
-        'premium': 'rgba(var(--tenant-primary-rgb, 99 102 241) / 0.15)',
+      // ─────────────────────────────────────────────────────────────────────
+      // BORDER RADIUS — Untitled UI standard scale
+      // ─────────────────────────────────────────────────────────────────────
+      borderRadius: {
+        'none': '0px',
+        'sm': '0.125rem',   // 2px
+        'DEFAULT': '0.25rem', // 4px
+        'md': '0.375rem',   // 6px
+        'lg': '0.5rem',     // 8px
+        'xl': '0.75rem',    // 12px
+        '2xl': '1rem',      // 16px
+        '3xl': '1.5rem',    // 24px
+        'full': '9999px',
+      },
+
+      // ─────────────────────────────────────────────────────────────────────
+      // EASING
+      // ─────────────────────────────────────────────────────────────────────
+      transitionTimingFunction: {
+        'spring': 'cubic-bezier(0.16, 1, 0.3, 1)',
       },
 
     },

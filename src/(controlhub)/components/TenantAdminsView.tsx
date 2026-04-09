@@ -76,7 +76,7 @@ const TenantAdminsView: React.FC<TenantAdminsViewProps> = ({ tenantId, admins, l
         {
           first_name: formData.firstName,
           last_name: formData.lastName,
-          email: formData.email,
+          identifier: formData.email,
           password: formData.password,
           role_slug: formData.role,
         },
