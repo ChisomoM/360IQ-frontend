@@ -1,7 +1,12 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import {
   Dialog,
   DialogContent,
@@ -28,17 +33,27 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Label } from '@/components/ui/label';
-import { Plus, Search, Loader2, Building2, X, MoreVertical, ArrowUpDown, Users, Pencil, Trash2, Eye, ChevronRight } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
+import {
+  Plus,
+  Search,
+  Loader2,
+  Building2,
+  X,
+  MoreVertical,
+  Users,
+  Pencil,
+  Trash2,
+  Eye,
+} from 'lucide-react';
 import { toast } from 'sonner';
 import { fetchData } from '@/lib/api/crud';
 import { hasPermission, PERMISSIONS } from '@/lib/permissions';
 import { useAuth } from '@/lib/context/useAuth';
-import type { Department } from '@/types/dms';
+import { PageTransition } from '@/components/PageTransition';
 import { DepartmentAssignUsers } from './DepartmentAssignUsers';
+import type { Department } from '@/types/dms';
 
-// Field validation runs before any network call
+// ─── Types ────────────────────────────────────────────────────────────────────
 interface FormErrors {
   name?: string;
   code?: string;
@@ -46,7 +61,6 @@ interface FormErrors {
   head_of_dept_id?: string;
 }
 
-// Shape of both create and edit forms
 interface DeptFormData {
   name: string;
   code: string;
@@ -54,40 +68,252 @@ interface DeptFormData {
   head_of_dept_id?: string;
 }
 
+// ─── Constants ────────────────────────────────────────────────────────────────
 const EMPTY_FORM: DeptFormData = { name: '', code: '', description: '' };
-const PAGE_SIZE = 10;
+const PAGE_SIZE = 12; // 3-col grid looks better with multiples of 3
 
-// Maps common backend error strings to messages a normal person can understand
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 function mapApiError(err: unknown): string {
   const msg = err instanceof Error ? err.message : String(err);
-  if (msg.toLowerCase().includes('duplicate') || msg.toLowerCase().includes('already exists')) {
+  if (msg.toLowerCase().includes('duplicate') || msg.toLowerCase().includes('already exists'))
     return 'A department with that code already exists.';
-  }
-  if (msg.toLowerCase().includes('not found')) {
+  if (msg.toLowerCase().includes('not found'))
     return 'Department not found — it may have already been removed.';
-  }
-  if (msg.toLowerCase().includes('unauthorized') || msg.toLowerCase().includes('forbidden')) {
+  if (msg.toLowerCase().includes('unauthorized') || msg.toLowerCase().includes('forbidden'))
     return 'You do not have permission to perform this action.';
-  }
   return msg || 'Something went wrong. Please try again.';
 }
 
 function validateForm(data: DeptFormData): FormErrors {
   const errors: FormErrors = {};
-  if (!data.name.trim()) {
-    errors.name = 'Department name is required.';
-  }
+  if (!data.name.trim()) errors.name = 'Department name is required.';
   if (!data.code.trim()) {
     errors.code = 'Department code is required.';
   } else if (!/^[A-Z]{2,8}$/.test(data.code.trim())) {
     errors.code = 'Code must be 2–8 uppercase letters (e.g. CS, FIN, REGIS).';
   }
-  if (data.description && data.description.length > 200) {
+  if (data.description && data.description.length > 200)
     errors.description = 'Description must be 200 characters or fewer.';
-  }
   return errors;
 }
 
+// ─── Stagger animation variants (matches ManageUsers pattern) ─────────────────
+const listVariants = {
+  hidden: {},
+  visible: { transition: { staggerChildren: 0.06 } },
+};
+
+const cardVariants = {
+  hidden: { opacity: 0, y: 10 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.35, ease: [0.16, 1, 0.3, 1] } },
+};
+
+// ─── Department Card ──────────────────────────────────────────────────────────
+interface DeptCardProps {
+  dept: Department;
+  index: number;
+  canManage: boolean;
+  onView: () => void;
+  onEdit: () => void;
+  onDelete: () => void;
+  onAssignUsers: () => void;
+}
+
+function DeptCard({ dept, canManage, onView, onEdit, onDelete, onAssignUsers }: DeptCardProps) {
+  // Pick a consistent color from the code initials
+  const colors = [
+    { ring: 'from-ch-primary-500 to-ch-primary-600', bg: 'bg-ch-primary-50', badgeBg: 'bg-ch-primary/[0.12]', badgeText: 'text-ch-primary-700', dot: 'bg-ch-primary-600' },
+    { ring: 'from-ch-secondary-500 to-ch-secondary-600', bg: 'bg-ch-secondary-50', badgeBg: 'bg-ch-secondary/[0.12]', badgeText: 'text-ch-secondary-700', dot: 'bg-ch-secondary-600' },
+    { ring: 'from-emerald-400 to-emerald-500', bg: 'bg-emerald-50', badgeBg: 'bg-emerald-500/[0.12]', badgeText: 'text-emerald-700', dot: 'bg-emerald-500' },
+    { ring: 'from-amber-400 to-amber-500', bg: 'bg-amber-50', badgeBg: 'bg-amber-500/[0.12]', badgeText: 'text-amber-700', dot: 'bg-amber-500' },
+  ];
+  const color = colors[dept.code.charCodeAt(0) % colors.length];
+
+  return (
+    <motion.div
+      variants={cardVariants}
+      className="group relative bg-card rounded-xl border border-border p-5 hover:border-primary/30 hover:shadow-md transition-all duration-200 cursor-pointer"
+      onClick={onView}
+    >
+      {/* Top row: Avatar + Actions menu */}
+      <div className="flex items-start justify-between mb-4">
+        {/* Avatar with gradient ring */}
+        <div className={`p-0.5 rounded-full bg-gradient-to-br ${color.ring}`}>
+          <Avatar className={`h-11 w-11 ${color.bg}`}>
+            <AvatarFallback className={`font-bold text-sm font-mono ${color.badgeText} bg-transparent`}>
+              {dept.code.slice(0, 2)}
+            </AvatarFallback>
+          </Avatar>
+        </div>
+
+        {/* Actions dropdown */}
+        {canManage && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild onClick={e => e.stopPropagation()}>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-foreground hover:bg-muted"
+              >
+                <MoreVertical className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-44">
+              <DropdownMenuItem
+                onClick={e => { e.stopPropagation(); onView(); }}
+                className="cursor-pointer gap-2 text-xs"
+              >
+                <Eye className="h-3.5 w-3.5 text-primary" />
+                View Details
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={e => { e.stopPropagation(); onAssignUsers(); }}
+                className="cursor-pointer gap-2 text-xs"
+              >
+                <Users className="h-3.5 w-3.5 text-blue-500" />
+                Assign Users
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={e => { e.stopPropagation(); onEdit(); }}
+                className="cursor-pointer gap-2 text-xs"
+              >
+                <Pencil className="h-3.5 w-3.5 text-amber-500" />
+                Edit
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={e => { e.stopPropagation(); onDelete(); }}
+                className="cursor-pointer gap-2 text-xs text-destructive focus:bg-destructive/10 focus:text-destructive"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+                Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
+      </div>
+
+      {/* Name & Code */}
+      <h3 className="font-semibold text-sm text-foreground group-hover:text-primary transition-colors truncate mb-1">
+        {dept.name}
+      </h3>
+      <code className={`inline-block text-xs px-2 py-0.5 rounded font-mono font-bold ${color.badgeBg} ${color.badgeText} mb-3`}>
+        {dept.code}
+      </code>
+
+      {/* Description */}
+      {dept.description && (
+        <p className="text-xs text-muted-foreground line-clamp-2 mb-3">
+          {dept.description}
+        </p>
+      )}
+
+      {/* Status badge */}
+      <div className="flex items-center justify-between mt-auto pt-3 border-t border-border">
+        <div className="flex items-center gap-1.5">
+          <div className={`w-1.5 h-1.5 rounded-full ${dept.is_active ? 'bg-emerald-500' : 'bg-muted-foreground'}`} />
+          <span className={`text-xs font-medium ${dept.is_active ? 'text-emerald-600' : 'text-muted-foreground'}`}>
+            {dept.is_active ? 'Active' : 'Inactive'}
+          </span>
+        </div>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={e => { e.stopPropagation(); onView(); }}
+          className="h-6 px-2 text-xs text-muted-foreground hover:text-primary opacity-0 group-hover:opacity-100 transition-opacity"
+        >
+          View →
+        </Button>
+      </div>
+    </motion.div>
+  );
+}
+
+// ─── Skeleton Card ────────────────────────────────────────────────────────────
+function DeptCardSkeleton() {
+  return (
+    <motion.div variants={cardVariants} className="bg-card rounded-xl border border-border p-5">
+      <div className="flex items-start justify-between mb-4">
+        <Skeleton className="h-12 w-12 rounded-full" />
+      </div>
+      <Skeleton className="h-4 w-3/4 mb-2" />
+      <Skeleton className="h-5 w-14 mb-3" />
+      <Skeleton className="h-3 w-full mb-1" />
+      <Skeleton className="h-3 w-2/3 mb-4" />
+      <div className="pt-3 border-t border-border">
+        <Skeleton className="h-3 w-12" />
+      </div>
+    </motion.div>
+  );
+}
+
+// ─── Form Fields ──────────────────────────────────────────────────────────────
+function DeptFormFields({
+  data,
+  errors,
+  onChange,
+}: {
+  data: DeptFormData;
+  errors: FormErrors;
+  onChange: (field: keyof DeptFormData, value: string) => void;
+}) {
+  return (
+    <div className="grid gap-5 py-4">
+      {/* Name */}
+      <div className="space-y-2">
+        <Label className="text-sm font-semibold text-foreground">
+          Department Name <span className="text-destructive">*</span>
+        </Label>
+        <Input
+          value={data.name}
+          onChange={e => onChange('name', e.target.value)}
+          placeholder="e.g., Registry, Finance, HR"
+          className={errors.name ? 'border-destructive focus-visible:ring-destructive/50' : ''}
+        />
+        {errors.name && <p className="text-xs text-destructive font-medium">{errors.name}</p>}
+      </div>
+
+      {/* Code */}
+      <div className="space-y-2">
+        <Label className="text-sm font-semibold text-foreground">
+          Department Code <span className="text-destructive">*</span>
+        </Label>
+        <Input
+          value={data.code}
+          onChange={e => onChange('code', e.target.value.toUpperCase())}
+          placeholder="e.g., REG, FIN, HR"
+          maxLength={8}
+          className={`font-mono tracking-widest uppercase ${errors.code ? 'border-destructive focus-visible:ring-destructive/50' : ''}`}
+        />
+        {errors.code
+          ? <p className="text-xs text-destructive font-medium">{errors.code}</p>
+          : <p className="text-xs text-muted-foreground">2–8 uppercase letters</p>
+        }
+      </div>
+
+      {/* Description */}
+      <div className="space-y-2">
+        <Label className="text-sm font-semibold text-foreground">
+          Description{' '}
+          <span className="text-muted-foreground font-normal text-xs">(optional)</span>
+        </Label>
+        <Input
+          value={data.description}
+          onChange={e => onChange('description', e.target.value)}
+          placeholder="Brief description of the department..."
+          maxLength={200}
+          className={errors.description ? 'border-destructive focus-visible:ring-destructive/50' : ''}
+        />
+        {errors.description && (
+          <p className="text-xs text-destructive font-medium">{errors.description}</p>
+        )}
+        <p className="text-xs text-muted-foreground text-right">{data.description.length}/200</p>
+      </div>
+    </div>
+  );
+}
+
+// ─── Main Page ────────────────────────────────────────────────────────────────
 export default function Departments() {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -120,17 +346,17 @@ export default function Departments() {
   const [assignUsersTarget, setAssignUsersTarget] = useState<Department | null>(null);
 
   const canManage = hasPermission(user, PERMISSIONS['departments.manage']);
+  const activeCount = departments.filter(d => d.is_active).length;
+  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
 
+  // ─── Fetch ────────────────────────────────────────────────────────────────
   const fetchDepartments = useCallback(async (page: number = 1) => {
     try {
       setLoading(true);
-      // Server handles pagination — pass page and limit as query params
       const res = await fetchData('DEPARTMENTS', 'GET', {}, null, {
         page: String(page),
         limit: String(PAGE_SIZE),
       });
-
-      // Backend may return { data: [], total: N } or just an array
       if (Array.isArray(res)) {
         setDepartments(res);
         setTotalCount(res.length);
@@ -142,7 +368,6 @@ export default function Departments() {
         setTotalCount(0);
       }
     } catch (error) {
-      console.error('Error fetching departments:', error);
       toast.error(mapApiError(error));
     } finally {
       setLoading(false);
@@ -153,14 +378,10 @@ export default function Departments() {
     fetchDepartments(currentPage);
   }, [currentPage, fetchDepartments]);
 
-  // ─────── CREATE ───────
+  // ─── Create ───────────────────────────────────────────────────────────────
   const handleCreateDepartment = async () => {
     const errors = validateForm(formData);
-    if (Object.keys(errors).length > 0) {
-      setFormErrors(errors);
-      return;
-    }
-
+    if (Object.keys(errors).length > 0) { setFormErrors(errors); return; }
     try {
       setIsSubmitting(true);
       await fetchData('DEPARTMENTS', 'POST', {}, {
@@ -180,28 +401,18 @@ export default function Departments() {
     }
   };
 
-  // ─────── EDIT ───────
+  // ─── Edit ─────────────────────────────────────────────────────────────────
   const openEditDialog = (dept: Department) => {
     setEditTarget(dept);
-    setEditFormData({
-      name: dept.name,
-      code: dept.code,
-      description: dept.description ?? '',
-      head_of_dept_id: dept.head_of_dept_id
-    });
+    setEditFormData({ name: dept.name, code: dept.code, description: dept.description ?? '', head_of_dept_id: dept.head_of_dept_id });
     setEditFormErrors({});
     setIsEditDialogOpen(true);
   };
 
   const handleUpdateDepartment = async () => {
     if (!editTarget) return;
-
     const errors = validateForm(editFormData);
-    if (Object.keys(errors).length > 0) {
-      setEditFormErrors(errors);
-      return;
-    }
-
+    if (Object.keys(errors).length > 0) { setEditFormErrors(errors); return; }
     try {
       setIsEditSubmitting(true);
       await fetchData('DEPARTMENT_UPDATE', 'PUT', { id: editTarget.id }, {
@@ -221,16 +432,14 @@ export default function Departments() {
     }
   };
 
-  // ─────── DELETE ───────
+  // ─── Delete ───────────────────────────────────────────────────────────────
   const handleDeleteDepartment = async () => {
     if (!deleteTarget) return;
-
     try {
       setIsDeleteSubmitting(true);
       await fetchData('DEPARTMENT_DELETE', 'DELETE', { id: deleteTarget.id });
       toast.success(`"${deleteTarget.name}" removed.`);
       setDeleteTarget(null);
-      // If we just deleted the last item on the page, go back one page
       const remainingOnPage = departments.length - 1;
       const nextPage = remainingOnPage === 0 && currentPage > 1 ? currentPage - 1 : currentPage;
       setCurrentPage(nextPage);
@@ -242,115 +451,66 @@ export default function Departments() {
     }
   };
 
-  // Client-side search filter on the current page's data only
+  // Client-side search filter
   const filteredDepartments = departments.filter(dept =>
     dept.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     dept.code.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
-
-  // ─────── SHARED FORM FIELDS ───────
-  const renderFormFields = (
-    data: DeptFormData,
-    errors: FormErrors,
-    onChange: (field: keyof DeptFormData, value: string) => void
-  ) => (
-    <div className="grid gap-6 py-6">
-      <div className="space-y-2.5">
-        <Label className="text-sm font-bold text-slate-900">
-          Department Name <span className="text-red-500">*</span>
-        </Label>
-        <Input
-          value={data.name}
-          onChange={e => onChange('name', e.target.value)}
-          placeholder="e.g., Registry, Finance, HR"
-          className={`h-10 border-slate-200 bg-white text-slate-900 placeholder:text-slate-500 shadow-sm transition-all ${
-            errors.name ? 'border-red-300 focus-visible:ring-red-500/50' : 'focus-visible:ring-primary/50'
-          }`}
-        />
-        {errors.name && <p className="text-xs text-red-600 font-medium">{errors.name}</p>}
-      </div>
-
-      <div className="space-y-2.5">
-        <Label className="text-sm font-bold text-slate-900">
-          Department Code <span className="text-red-500">*</span>
-        </Label>
-        <Input
-          value={data.code}
-          onChange={e => onChange('code', e.target.value.toUpperCase())}
-          placeholder="e.g., REG, FIN, HR"
-          maxLength={8}
-          className={`h-10 font-mono tracking-widest uppercase border-slate-200 bg-white text-slate-900 placeholder:text-slate-500 shadow-sm transition-all ${
-            errors.code ? 'border-red-300 focus-visible:ring-red-500/50' : 'focus-visible:ring-primary/50'
-          }`}
-        />
-        {errors.code ? (
-          <p className="text-xs text-red-600 font-medium">{errors.code}</p>
-        ) : (
-          <p className="text-xs text-slate-500">2–8 uppercase letters</p>
-        )}
-      </div>
-
-      <div className="space-y-2.5">
-        <Label className="text-sm font-bold text-slate-900">
-          Description <span className="text-slate-500 font-normal text-xs">(optional)</span>
-        </Label>
-        <Input
-          value={data.description}
-          onChange={e => onChange('description', e.target.value)}
-          placeholder="Brief description of the department..."
-          maxLength={200}
-          className={`h-10 border-slate-200 bg-white text-slate-900 placeholder:text-slate-500 shadow-sm transition-all ${
-            errors.description ? 'border-red-300 focus-visible:ring-red-500/50' : 'focus-visible:ring-primary/50'
-          }`}
-        />
-        {errors.description && <p className="text-xs text-red-600 font-medium">{errors.description}</p>}
-        <p className="text-xs text-slate-500 text-right">{data.description.length}/200</p>
-      </div>
-    </div>
-  );
-
+  // ─── Render ───────────────────────────────────────────────────────────────
   return (
-    <div className="w-full">
-      {/* ───── HEADER & ACTIONS ───── */}
-      <div className="mb-8">
-        <div className="flex items-end justify-between gap-6 mb-6">
+    <PageTransition>
+      <div className="space-y-6">
+
+        {/* ── Page Header ── */}
+        <div className="flex items-start justify-between gap-4">
           <div>
-            <h1 className="text-4xl font-bold text-slate-900 tracking-tight">Departments</h1>
-            <p className="text-base text-slate-600 mt-2 font-normal">
-              {loading ? 'Loading departments...' : `${totalCount} organizational ${totalCount === 1 ? 'unit' : 'units'}`}
+            <h1 className="font-display font-bold text-display-sm text-gray-900">
+              Departments
+            </h1>
+            <p className="font-sans text-text-sm text-muted-foreground mt-1">
+              {loading
+                ? 'Loading departments...'
+                : `${totalCount} organizational ${totalCount === 1 ? 'unit' : 'units'} · ${activeCount} active`}
             </p>
           </div>
 
+          {/* Add Department button */}
           {canManage && (
             <Dialog open={isAddDialogOpen} onOpenChange={(open) => {
               setIsAddDialogOpen(open);
-              if (!open) {
-                setFormData(EMPTY_FORM);
-                setFormErrors({});
-              }
+              if (!open) { setFormData(EMPTY_FORM); setFormErrors({}); }
             }}>
               <DialogTrigger asChild>
-                <Button className="bg-primary hover:bg-primary/90 text-white font-semibold shadow-md hover:shadow-lg transition-all h-10 px-5">
+                <Button className="bg-primary text-primary-foreground hover:bg-primary/90 font-semibold shadow-sm">
                   <Plus className="h-4 w-4 mr-2" />
                   Add Department
                 </Button>
               </DialogTrigger>
               <DialogContent className="max-w-md bg-white">
                 <DialogHeader>
-                  <DialogTitle className="text-xl font-bold text-slate-900">Create Department</DialogTitle>
-                  <DialogDescription className="text-slate-600">Add a new organizational unit.</DialogDescription>
+                  <DialogTitle className="font-display font-bold text-lg text-foreground">
+                    Create Department
+                  </DialogTitle>
+                  <DialogDescription className="font-sans text-text-sm text-muted-foreground">
+                    Add a new organizational unit to the system.
+                  </DialogDescription>
                 </DialogHeader>
-                {renderFormFields(formData, formErrors, (field, value) => {
-                  setFormData(prev => ({ ...prev, [field]: value }));
-                  if (formErrors[field]) setFormErrors(prev => ({ ...prev, [field]: undefined }));
-                })}
-                <DialogFooter className="gap-3">
-                  <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>Cancel</Button>
+                <DeptFormFields
+                  data={formData}
+                  errors={formErrors}
+                  onChange={(field, value) => {
+                    setFormData(prev => ({ ...prev, [field]: value }));
+                    if (formErrors[field]) setFormErrors(prev => ({ ...prev, [field]: undefined }));
+                  }}
+                />
+                <DialogFooter className="gap-2">
+                  <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
+                    Cancel
+                  </Button>
                   <Button
                     onClick={handleCreateDepartment}
-                    className="bg-primary hover:bg-primary/90 text-white font-semibold"
+                    className="bg-primary text-primary-foreground hover:bg-primary/90 font-semibold"
                     disabled={isSubmitting}
                   >
                     {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
@@ -362,318 +522,254 @@ export default function Departments() {
           )}
         </div>
 
-        {/* ───── SEARCH BAR ───── */}
-        <div className="relative max-w-md">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
+        {/* ── Stat Cards ── */}
+        <motion.div
+          variants={listVariants}
+          initial="hidden"
+          animate="visible"
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"
+        >
+          {[
+            { label: 'Total Departments', value: loading ? '—' : totalCount, icon: Building2, color: 'text-ch-primary-600', bg: 'bg-ch-primary/[0.08]' },
+            { label: 'Active', value: loading ? '—' : activeCount, icon: Building2, color: 'text-emerald-600', bg: 'bg-emerald-500/[0.08]' },
+            { label: 'Inactive', value: loading ? '—' : totalCount - activeCount, icon: Building2, color: 'text-muted-foreground', bg: 'bg-muted' },
+            { label: 'This Page', value: loading ? '—' : filteredDepartments.length, icon: Building2, color: 'text-ch-secondary-600', bg: 'bg-ch-secondary/[0.08]' },
+          ].map(({ label, value, icon: Icon, color, bg }) => (
+            <motion.div
+              key={label}
+              variants={cardVariants}
+              className="bg-card rounded-xl border border-border p-4 flex items-center gap-3"
+            >
+              <div className={`p-2.5 rounded-lg ${bg}`}>
+                <Icon className={`h-5 w-5 ${color}`} />
+              </div>
+              <div>
+                <p className="font-sans text-text-xs text-muted-foreground">{label}</p>
+                <p className={`font-display font-bold text-xl ${color}`}>{value}</p>
+              </div>
+            </motion.div>
+          ))}
+        </motion.div>
+
+        {/* ── Search Bar ── */}
+        <div className="relative max-w-sm">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Search by name or code..."
-            className="pl-10 pr-10 h-10 border-slate-200 bg-white text-slate-900 placeholder:text-slate-500 focus-visible:ring-primary/50 transition-all shadow-sm rounded-lg"
+            className="pl-10 pr-10"
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
           />
           {searchQuery && (
             <button
               onClick={() => setSearchQuery('')}
-              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
             >
               <X className="h-4 w-4" />
             </button>
           )}
         </div>
-      </div>
 
-      {/* ───── LIST VIEW ───── */}
-      {loading ? (
-        <div className="space-y-3">
-          {[...Array(5)].map((_, i) => (
-            <div
-              key={i}
-              className="h-16 bg-slate-100 border border-slate-200 rounded-lg animate-pulse"
-            />
-          ))}
-        </div>
-      ) : filteredDepartments.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 px-6 text-center rounded-xl border-2 border-dashed border-slate-200 bg-slate-50/50">
-          <div className="rounded-full bg-slate-200 p-6 mb-4">
-            <Building2 className="h-10 w-10 text-slate-400" />
-          </div>
-          <h3 className="text-lg font-bold text-slate-900 mb-2">
-            {searchQuery ? 'No departments found' : 'No departments yet'}
-          </h3>
-          <p className="text-sm text-slate-600 mb-6 max-w-sm">
-            {searchQuery
-              ? `No departments match "${searchQuery}". Try adjusting your search.`
-              : 'Create your first department to organize your institution.'}
-          </p>
-          <div className="flex gap-3">
-            {!searchQuery && canManage && (
-              <Button
-                onClick={() => setIsAddDialogOpen(true)}
-                className="bg-primary hover:bg-primary/90 text-white font-semibold"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Create First Department
-              </Button>
-            )}
-            {searchQuery && (
-              <Button variant="outline" onClick={() => setSearchQuery('')}>
-                Clear Search
-              </Button>
-            )}
-          </div>
-        </div>
-      ) : (
-        <div className="space-y-2">
-          {filteredDepartments.map((dept, idx) => (
-            <div
-              key={dept.id}
-              className="group flex items-center gap-4 p-4 rounded-lg border border-slate-200 bg-white hover:bg-slate-50/75 hover:border-slate-300 hover:shadow-sm transition-all duration-200 cursor-pointer"
-              onClick={() => navigate(`/admin/departments/${dept.id}`)}
-            >
-              {/* Leading Index */}
-              <div className="flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 group-hover:bg-primary/10 text-slate-600 group-hover:text-primary text-xs font-bold transition-colors">
-                {idx + 1}
-              </div>
-
-              {/* Icon + Name + Code */}
-              <div className="flex items-center gap-3 flex-1 min-w-0">
-                <div className="flex-shrink-0 p-2 rounded-lg bg-primary/8 group-hover:bg-primary/12 transition-colors">
-                  <Building2 className="h-4 w-4 text-primary" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-semibold text-sm text-slate-900 group-hover:text-primary transition-colors truncate">
-                    {dept.name}
-                  </h3>
-                  <div className="flex items-center gap-2 mt-0.5">
-                    <code className="text-xs px-2 py-0.5 bg-slate-100 text-slate-700 rounded font-mono font-bold border border-slate-200">
-                      {dept.code}
-                    </code>
-                    {dept.description && (
-                      <p className="text-xs text-slate-500 truncate max-w-xs">
-                        {dept.description}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* Status Badge - Right side */}
-              <div className="flex-shrink-0 flex items-center gap-3">
-                <Badge
-                  variant="outline"
-                  className={`flex items-center gap-1.5 px-2.5 py-0.5 text-xs font-medium border transition-all ${
-                    dept.is_active
-                      ? 'bg-emerald-50/60 text-emerald-700 border-emerald-200/50'
-                      : 'bg-slate-50/60 text-slate-600 border-slate-200/50'
-                  }`}
-                >
-                  <div className={`w-1.5 h-1.5 rounded-full ${dept.is_active ? 'bg-emerald-500' : 'bg-slate-400'}`} />
-                  {dept.is_active ? 'Active' : 'Inactive'}
-                </Badge>
-
-                {/* View Button + Menu */}
-                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={e => {
-                      e.stopPropagation();
-                      navigate(`/admin/departments/${dept.id}`);
-                    }}
-                    className="h-8 px-2.5 text-xs font-medium text-slate-600 hover:text-primary hover:bg-primary/8 transition-all"
-                  >
-                    View
-                    <ChevronRight className="h-3.5 w-3.5 ml-1" />
-                  </Button>
-
-                  {canManage && (
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild onClick={e => e.stopPropagation()}>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 w-8 p-0 text-slate-400 hover:text-slate-700 hover:bg-slate-200 transition-all"
-                        >
-                          <MoreVertical className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-44">
-                        <DropdownMenuItem
-                          onClick={e => {
-                            e.stopPropagation();
-                            navigate(`/admin/departments/${dept.id}`);
-                          }}
-                          className="cursor-pointer gap-2 text-xs"
-                        >
-                          <Eye className="h-4 w-4 text-primary" />
-                          <span>View Details</span>
-                        </DropdownMenuItem>
-
-                        <DropdownMenuSeparator />
-
-                        <DropdownMenuItem
-                          onClick={e => {
-                            e.stopPropagation();
-                            setAssignUsersTarget(dept);
-                            setIsAssignUsersOpen(true);
-                          }}
-                          className="cursor-pointer gap-2 text-xs"
-                        >
-                          <Users className="h-4 w-4 text-blue-500" />
-                          <span>Assign Users</span>
-                        </DropdownMenuItem>
-
-                        <DropdownMenuItem
-                          onClick={e => {
-                            e.stopPropagation();
-                            openEditDialog(dept);
-                          }}
-                          className="cursor-pointer gap-2 text-xs"
-                        >
-                          <Pencil className="h-4 w-4 text-amber-500" />
-                          <span>Edit</span>
-                        </DropdownMenuItem>
-
-                        <DropdownMenuItem
-                          onClick={e => {
-                            e.stopPropagation();
-                            setDeleteTarget(dept);
-                          }}
-                          className="cursor-pointer gap-2 text-xs text-red-600 focus:bg-red-50 focus:text-red-600"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                          <span>Delete</span>
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  )}
-                </div>
-              </div>
+        {/* ── Department Cards Grid ── */}
+        {loading ? (
+          <motion.div
+            variants={listVariants}
+            initial="hidden"
+            animate="visible"
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
+          >
+            {Array.from({ length: 6 }).map((_, i) => (
+              <DeptCardSkeleton key={i} />
+            ))}
+          </motion.div>
+        ) : filteredDepartments.length === 0 ? (
+          /* Empty State */
+          <div className="flex flex-col items-center justify-center py-20 px-6 text-center rounded-xl border-2 border-dashed border-border bg-muted/30">
+            <div className="rounded-full bg-muted p-6 mb-4">
+              <Building2 className="h-10 w-10 text-muted-foreground" />
             </div>
-          ))}
-        </div>
-      )}
-
-      {/* ───── PAGINATION ───── */}
-      {!loading && totalPages > 1 && (
-        <div className="flex items-center justify-between mt-8 pt-6 border-t border-slate-200">
-          <p className="text-sm text-slate-600 font-medium">
-            Page <span className="text-slate-900 font-bold">{currentPage}</span> of{' '}
-            <span className="text-slate-900 font-bold">{totalPages}</span> • {totalCount} total
-          </p>
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={currentPage === 1}
-              onClick={() => setCurrentPage(p => p - 1)}
-              className="border-slate-300 hover:bg-slate-50 disabled:opacity-50"
-            >
-              Previous
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={currentPage === totalPages}
-              onClick={() => setCurrentPage(p => p + 1)}
-              className="border-slate-300 hover:bg-slate-50 disabled:opacity-50"
-            >
-              Next
-            </Button>
+            <h3 className="font-display font-bold text-lg text-foreground mb-2">
+              {searchQuery ? 'No departments found' : 'No departments yet'}
+            </h3>
+            <p className="font-sans text-text-sm text-muted-foreground mb-6 max-w-sm">
+              {searchQuery
+                ? `No departments match "${searchQuery}". Try adjusting your search.`
+                : 'Create your first department to start organizing your institution.'}
+            </p>
+            <div className="flex gap-3">
+              {!searchQuery && canManage && (
+                <Button
+                  onClick={() => setIsAddDialogOpen(true)}
+                  className="bg-primary text-primary-foreground hover:bg-primary/90 font-semibold"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Create First Department
+                </Button>
+              )}
+              {searchQuery && (
+                <Button variant="outline" onClick={() => setSearchQuery('')}>
+                  Clear Search
+                </Button>
+              )}
+            </div>
           </div>
-        </div>
-      )}
+        ) : (
+          <motion.div
+            variants={listVariants}
+            initial="hidden"
+            animate="visible"
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
+          >
+            {filteredDepartments.map((dept, idx) => (
+              <DeptCard
+                key={dept.id}
+                dept={dept}
+                index={idx}
+                canManage={canManage}
+                onView={() => navigate(`/admin/departments/${dept.id}`)}
+                onEdit={() => openEditDialog(dept)}
+                onDelete={() => setDeleteTarget(dept)}
+                onAssignUsers={() => {
+                  setAssignUsersTarget(dept);
+                  setIsAssignUsersOpen(true);
+                }}
+              />
+            ))}
+          </motion.div>
+        )}
 
-      {/* ───── EDIT DIALOG ───── */}
-      <Dialog open={isEditDialogOpen} onOpenChange={(open) => {
-        setIsEditDialogOpen(open);
-        if (!open) {
-          setEditTarget(null);
-          setEditFormErrors({});
-        }
-      }}>
-        <DialogContent className="max-w-md bg-white">
-          <DialogHeader>
-            <DialogTitle className="text-xl font-bold text-slate-900">Edit Department</DialogTitle>
-            <DialogDescription className="text-slate-600">
-              Update <span className="font-semibold text-slate-900">{editTarget?.name}</span>.
-            </DialogDescription>
-          </DialogHeader>
-          {renderFormFields(editFormData, editFormErrors, (field, value) => {
-            setEditFormData(prev => ({ ...prev, [field]: value }));
-            if (editFormErrors[field]) setEditFormErrors(prev => ({ ...prev, [field]: undefined }));
-          })}
+        {/* ── Pagination ── */}
+        {!loading && totalPages > 1 && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+            className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pt-4 border-t border-border"
+          >
+            <p className="font-sans text-text-sm text-muted-foreground">
+              Page <span className="font-semibold text-foreground">{currentPage}</span> of{' '}
+              <span className="font-semibold text-foreground">{totalPages}</span> · {totalCount} total
+            </p>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage(p => p - 1)}
+              >
+                Previous
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={currentPage === totalPages}
+                onClick={() => setCurrentPage(p => p + 1)}
+              >
+                Next
+              </Button>
+            </div>
+          </motion.div>
+        )}
 
-          <DialogFooter className="gap-3">
-            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>Cancel</Button>
-            <Button
-              onClick={handleUpdateDepartment}
-              className="bg-primary hover:bg-primary/90 text-white font-semibold"
-              disabled={isEditSubmitting}
-            >
-              {isEditSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Save
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* ───── DELETE DIALOG ───── */}
-      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => {
-        if (!open) setDeleteTarget(null);
-      }}>
-        <AlertDialogContent className="bg-white">
-          <AlertDialogHeader>
-            <AlertDialogTitle className="text-lg font-bold text-slate-900">Delete Department?</AlertDialogTitle>
-            <AlertDialogDescription className="text-slate-600 text-sm">
-              This will deactivate <span className="font-semibold text-slate-900">{deleteTarget?.name}</span>. This action can be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter className="gap-3">
-            <AlertDialogCancel disabled={isDeleteSubmitting} className="border-slate-300">Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDeleteDepartment}
-              disabled={isDeleteSubmitting}
-              className="bg-red-600 hover:bg-red-700 text-white font-semibold"
-            >
-              {isDeleteSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      {/* ───── ASSIGN USERS MODAL ───── */}
-      <Dialog open={isAssignUsersOpen} onOpenChange={(open) => {
-        setIsAssignUsersOpen(open);
-        if (!open) {
-          setAssignUsersTarget(null);
-        }
-      }}>
-        <DialogContent className="max-w-md bg-white">
-          <DialogHeader>
-            <DialogTitle className="text-xl font-bold text-slate-900">Assign Users</DialogTitle>
-            <DialogDescription className="text-slate-600">
-              Set the department head for <span className="font-semibold text-slate-900">{assignUsersTarget?.name}</span>.
-            </DialogDescription>
-          </DialogHeader>
-
-          {assignUsersTarget && (
-            <DepartmentAssignUsers
-              departmentId={assignUsersTarget.id}
-              currentHeadId={assignUsersTarget.head_of_dept_id ?? null}
-              onHeadChange={() => {
-                // Refresh departments to update UI
-                fetchDepartments(currentPage);
+        {/* ── Edit Dialog ── */}
+        <Dialog open={isEditDialogOpen} onOpenChange={(open) => {
+          setIsEditDialogOpen(open);
+          if (!open) { setEditTarget(null); setEditFormErrors({}); }
+        }}>
+          <DialogContent className="max-w-md bg-white">
+            <DialogHeader>
+              <DialogTitle className="font-display font-bold text-lg text-foreground">
+                Edit Department
+              </DialogTitle>
+              <DialogDescription className="font-sans text-text-sm text-muted-foreground">
+                Update <span className="font-semibold text-foreground">{editTarget?.name}</span>.
+              </DialogDescription>
+            </DialogHeader>
+            <DeptFormFields
+              data={editFormData}
+              errors={editFormErrors}
+              onChange={(field, value) => {
+                setEditFormData(prev => ({ ...prev, [field]: value }));
+                if (editFormErrors[field]) setEditFormErrors(prev => ({ ...prev, [field]: undefined }));
               }}
             />
-          )}
+            <div className="px-0 pb-0">
+              <DepartmentAssignUsers
+                departmentId={editTarget?.id ?? null}
+                currentHeadId={editFormData.head_of_dept_id ?? null}
+                onHeadChange={(userId) => setEditFormData(prev => ({ ...prev, head_of_dept_id: userId }))}
+              />
+            </div>
+            <DialogFooter className="gap-2">
+              <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>Cancel</Button>
+              <Button
+                onClick={handleUpdateDepartment}
+                className="bg-primary text-primary-foreground hover:bg-primary/90 font-semibold"
+                disabled={isEditSubmitting}
+              >
+                {isEditSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Save Changes
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsAssignUsersOpen(false)}>Close</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </div>
+        {/* ── Delete Dialog ── */}
+        <AlertDialog open={!!deleteTarget} onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}>
+          <AlertDialogContent className="bg-white">
+            <AlertDialogHeader>
+              <AlertDialogTitle className="font-display font-bold text-foreground">
+                Delete Department?
+              </AlertDialogTitle>
+              <AlertDialogDescription className="font-sans text-text-sm text-muted-foreground">
+                This will deactivate{' '}
+                <span className="font-semibold text-foreground">{deleteTarget?.name}</span>{' '}
+                ({deleteTarget?.code}). Existing documents will not be affected.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter className="gap-2">
+              <AlertDialogCancel disabled={isDeleteSubmitting}>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleDeleteDepartment}
+                disabled={isDeleteSubmitting}
+                className="bg-destructive hover:bg-destructive/90 text-destructive-foreground font-semibold"
+              >
+                {isDeleteSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        {/* ── Assign Users Modal ── */}
+        <Dialog open={isAssignUsersOpen} onOpenChange={(open) => {
+          setIsAssignUsersOpen(open);
+          if (!open) setAssignUsersTarget(null);
+        }}>
+          <DialogContent className="max-w-md bg-white">
+            <DialogHeader>
+              <DialogTitle className="font-display font-bold text-lg text-foreground">
+                Assign Users
+              </DialogTitle>
+              <DialogDescription className="font-sans text-text-sm text-muted-foreground">
+                Set the department head for{' '}
+                <span className="font-semibold text-foreground">{assignUsersTarget?.name}</span>.
+              </DialogDescription>
+            </DialogHeader>
+            {assignUsersTarget && (
+              <DepartmentAssignUsers
+                departmentId={assignUsersTarget.id}
+                currentHeadId={assignUsersTarget.head_of_dept_id ?? null}
+                onHeadChange={() => fetchDepartments(currentPage)}
+              />
+            )}
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsAssignUsersOpen(false)}>Close</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+      </div>
+    </PageTransition>
   );
 }
