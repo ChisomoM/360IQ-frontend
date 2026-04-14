@@ -1,10 +1,17 @@
-import { useState, useEffect } from 'react';
+// src/(admin)/admin/DocumentDetail.tsx
+// Document detail page — shows preview, metadata, comments, audit trail,
+// workflow stage, related documents, print/share controls, and owner info.
+
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, useOutletContext } from 'react-router-dom';
-import { fetchData, file as downloadFile, fetchFileBuffer } from '@/lib/api/crud';
+import { fetchData, file as downloadFile } from '@/lib/api/crud';
 import type { Document, Department, DocumentVersion, DocumentUpdatePayload } from '@/types/dms';
 import type { AdminLayoutContext } from '@/layouts/AdminLayout';
 import { toast } from 'sonner';
 import dayjs from 'dayjs';
+import relativeTime from 'dayjs/plugin/relativeTime';
+
+dayjs.extend(relativeTime);
 
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -13,6 +20,7 @@ import { Separator } from '@/components/ui/separator';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import {
   Select,
   SelectContent,
@@ -61,6 +69,17 @@ import {
   Activity,
   PenLine,
   CheckCircle,
+  Printer,
+  Share2,
+  Copy,
+  Check,
+  MessageSquare,
+  CornerDownRight,
+  Send,
+  User,
+  GitBranch,
+  Eye,
+  ChevronRight,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import RequestSignatureModal from '@/components/signature/RequestSignatureModal';
@@ -68,7 +87,142 @@ import DocumentPreview from '@/components/signature/DocumentPreview';
 import { getDocumentSignatureRequests } from '@/lib/api/signatures';
 import type { SignatureRequest } from '@/types/signatures';
 
-// ─── helpers ────────────────────────────────────────────────────────────────
+// ─── Types for mock data ───────────────────────────────────────────────────────
+
+interface Comment {
+  id: string;
+  document_id: string;
+  user_id: string;
+  user: { id: string; first_name: string; last_name: string; avatar_url?: string };
+  content: string;
+  parent_id: string | null; // null = top-level, string = reply to another comment
+  created_at: string;
+  updated_at: string;
+}
+
+interface DocumentAccessLog {
+  id: string;
+  document_id: string;
+  user_id: string;
+  user: { id: string; first_name: string; last_name: string };
+  action: string; // 'viewed' | 'downloaded' | 'edited' | 'approved' | 'rejected'
+  timestamp: string;
+  details: string | null;
+}
+
+interface WorkflowStep {
+  id: string;
+  step_number: number;
+  approver_user: { id: string; first_name: string; last_name: string };
+  status: 'pending' | 'approved' | 'rejected';
+  approved_at: string | null;
+  comments: string | null;
+}
+
+interface DocumentWorkflow {
+  id: string;
+  document_id: string;
+  status: string;
+  current_step_index: number;
+  total_steps: number;
+  steps: WorkflowStep[];
+}
+
+// ─── Mock data factories ───────────────────────────────────────────────────────
+// All mock data is keyed by document ID so the same doc always shows the same data.
+// Replace these with real API calls once endpoints are ready.
+
+function getMockComments(documentId: string): Comment[] {
+  return [
+    {
+      id: 'c-001',
+      document_id: documentId,
+      user_id: 'u-001',
+      user: { id: 'u-001', first_name: 'Tendai', last_name: 'Moyo' },
+      content: 'This policy needs to be reviewed before the board meeting on Friday. A few clauses in section 3 are outdated.',
+      parent_id: null,
+      created_at: dayjs().subtract(2, 'day').toISOString(),
+      updated_at: dayjs().subtract(2, 'day').toISOString(),
+    },
+    {
+      id: 'c-002',
+      document_id: documentId,
+      user_id: 'u-002',
+      user: { id: 'u-002', first_name: 'Amara', last_name: 'Banda' },
+      content: 'Agreed. I\'ve flagged section 3.2 specifically — the fee structure referenced there changed in January.',
+      parent_id: 'c-001', // reply to c-001
+      created_at: dayjs().subtract(1, 'day').toISOString(),
+      updated_at: dayjs().subtract(1, 'day').toISOString(),
+    },
+    {
+      id: 'c-003',
+      document_id: documentId,
+      user_id: 'u-003',
+      user: { id: 'u-003', first_name: 'Chanda', last_name: 'Phiri' },
+      content: 'Approved the document with minor notes. Please update the revision date on the cover page.',
+      parent_id: null,
+      created_at: dayjs().subtract(3, 'hour').toISOString(),
+      updated_at: dayjs().subtract(3, 'hour').toISOString(),
+    },
+  ];
+}
+
+function getMockAuditLogs(documentId: string): DocumentAccessLog[] {
+  return [
+    { id: 'l-001', document_id: documentId, user_id: 'u-003', user: { id: 'u-003', first_name: 'Chanda', last_name: 'Phiri' }, action: 'approved', timestamp: dayjs().subtract(3, 'hour').toISOString(), details: 'Approved at workflow step 2' },
+    { id: 'l-002', document_id: documentId, user_id: 'u-002', user: { id: 'u-002', first_name: 'Amara', last_name: 'Banda' }, action: 'viewed', timestamp: dayjs().subtract(5, 'hour').toISOString(), details: null },
+    { id: 'l-003', document_id: documentId, user_id: 'u-001', user: { id: 'u-001', first_name: 'Tendai', last_name: 'Moyo' }, action: 'edited', timestamp: dayjs().subtract(1, 'day').toISOString(), details: 'Updated description and visibility' },
+    { id: 'l-004', document_id: documentId, user_id: 'u-004', user: { id: 'u-004', first_name: 'Kemi', last_name: 'Dlamini' }, action: 'downloaded', timestamp: dayjs().subtract(2, 'day').toISOString(), details: null },
+    { id: 'l-005', document_id: documentId, user_id: 'u-001', user: { id: 'u-001', first_name: 'Tendai', last_name: 'Moyo' }, action: 'viewed', timestamp: dayjs().subtract(3, 'day').toISOString(), details: null },
+  ];
+}
+
+function getMockWorkflow(documentId: string): DocumentWorkflow {
+  return {
+    id: 'wf-001',
+    document_id: documentId,
+    status: 'in_progress',
+    current_step_index: 1, // 0-based, so step 2 is active
+    total_steps: 3,
+    steps: [
+      {
+        id: 'ws-001',
+        step_number: 1,
+        approver_user: { id: 'u-001', first_name: 'Tendai', last_name: 'Moyo' },
+        status: 'approved',
+        approved_at: dayjs().subtract(1, 'day').toISOString(),
+        comments: 'Looks good, forwarding to department head.',
+      },
+      {
+        id: 'ws-002',
+        step_number: 2,
+        approver_user: { id: 'u-003', first_name: 'Chanda', last_name: 'Phiri' },
+        status: 'pending',
+        approved_at: null,
+        comments: null,
+      },
+      {
+        id: 'ws-003',
+        step_number: 3,
+        approver_user: { id: 'u-005', first_name: 'Bongani', last_name: 'Ncube' },
+        status: 'pending',
+        approved_at: null,
+        comments: null,
+      },
+    ],
+  };
+}
+
+function getMockRelatedDocuments(currentId: string): Partial<Document>[] {
+  // Returns documents that share tags/category — in production this would be an API call
+  return [
+    { id: 'rel-001', title: 'Finance Policy 2023', file_name: 'finance_policy_2023.pdf', document_type: 'policy', status: 'approved', created_at: dayjs().subtract(6, 'month').toISOString() },
+    { id: 'rel-002', title: 'Budget Allocation Report Q1', file_name: 'budget_q1.pdf', document_type: 'report', status: 'active', created_at: dayjs().subtract(3, 'month').toISOString() },
+    { id: 'rel-003', title: 'Procurement Guidelines', file_name: 'procurement_guidelines.pdf', document_type: 'policy', status: 'active', created_at: dayjs().subtract(1, 'month').toISOString() },
+  ].filter(d => d.id !== currentId);
+}
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 
 const formatBytes = (bytes: number) => {
   if (bytes === 0) return '0 B';
@@ -86,11 +240,11 @@ const visibilityConfig = (level: string) => {
 
 const statusConfig = (status: string) => {
   const map: Record<string, { cls: string; label: string }> = {
-    active:   { cls: 'bg-green-50 text-green-700 border-green-200',  label: 'Active' },
-    archived: { cls: 'bg-gray-100 text-gray-600 border-gray-200',    label: 'Archived' },
-    approved: { cls: 'bg-blue-50 text-blue-700 border-blue-200',     label: 'Approved' },
-    rejected: { cls: 'bg-red-50 text-red-700 border-red-200',        label: 'Rejected' },
-    pending:  { cls: 'bg-yellow-50 text-yellow-700 border-yellow-200', label: 'Pending' },
+    active: { cls: 'bg-green-50 text-green-700 border-green-200', label: 'Active' },
+    archived: { cls: 'bg-gray-100 text-gray-600 border-gray-200', label: 'Archived' },
+    approved: { cls: 'bg-blue-50 text-blue-700 border-blue-200', label: 'Approved' },
+    rejected: { cls: 'bg-red-50 text-red-700 border-red-200', label: 'Rejected' },
+    pending: { cls: 'bg-yellow-50 text-yellow-700 border-yellow-200', label: 'Pending' },
   };
   return map[status] ?? { cls: 'bg-gray-100 text-gray-600 border-gray-200', label: status };
 };
@@ -106,10 +260,26 @@ const docTypeColor = (type: string) => {
   return map[type] ?? 'bg-gray-100 text-gray-600';
 };
 
+// Color + icon for each audit action type
+const actionConfig = (action: string) => {
+  const map: Record<string, { cls: string; icon: React.ReactNode; label: string }> = {
+    viewed: { cls: 'bg-blue-50 text-blue-600', icon: <Eye className="h-3 w-3" />, label: 'Viewed' },
+    downloaded: { cls: 'bg-purple-50 text-purple-600', icon: <Download className="h-3 w-3" />, label: 'Downloaded' },
+    edited: { cls: 'bg-amber-50 text-amber-600', icon: <Pencil className="h-3 w-3" />, label: 'Edited' },
+    approved: { cls: 'bg-green-50 text-green-600', icon: <CheckCircle className="h-3 w-3" />, label: 'Approved' },
+    rejected: { cls: 'bg-red-50 text-red-600', icon: <XCircle className="h-3 w-3" />, label: 'Rejected' },
+  };
+  return map[action] ?? { cls: 'bg-gray-50 text-gray-500', icon: <Activity className="h-3 w-3" />, label: action };
+};
+
+// Initials from first + last name for avatar fallbacks
+const initials = (first: string, last: string) =>
+  `${first.charAt(0)}${last.charAt(0)}`.toUpperCase();
+
 const getErrorMessage = (error: unknown, fallback: string) =>
   error instanceof Error ? error.message : fallback;
 
-// ─── Component ───────────────────────────────────────────────────────────────
+// ─── Component ────────────────────────────────────────────────────────────────
 
 export default function DocumentDetail() {
   const { id } = useParams<{ id: string }>();
@@ -121,16 +291,16 @@ export default function DocumentDetail() {
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
 
-  // Edit
+  // Edit dialog
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [editData, setEditData] = useState<DocumentUpdatePayload>({});
   const [isUpdating, setIsUpdating] = useState(false);
 
-  // Delete
+  // Delete dialog
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  // Version history
+  // Version history dialog
   const [isVersionsOpen, setIsVersionsOpen] = useState(false);
   const [versions, setVersions] = useState<DocumentVersion[]>([]);
   const [loadingVersions, setLoadingVersions] = useState(false);
@@ -144,7 +314,29 @@ export default function DocumentDetail() {
   const [loadingSigs, setLoadingSigs] = useState(false);
   const [isRequestSigOpen, setIsRequestSigOpen] = useState(false);
 
-  // ── data fetching ────────────────────────────────────────────────────────
+  // Share modal
+  const [isShareOpen, setIsShareOpen] = useState(false);
+  const [urlCopied, setUrlCopied] = useState(false);
+
+  // Owner ID copy
+  const [ownerIdCopied, setOwnerIdCopied] = useState(false);
+
+  // Comments
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [newComment, setNewComment] = useState('');
+  const [replyingTo, setReplyingTo] = useState<string | null>(null); // comment ID being replied to
+  const [replyText, setReplyText] = useState('');
+
+  // Audit log
+  const [auditLogs, setAuditLogs] = useState<DocumentAccessLog[]>([]);
+
+  // Workflow
+  const [workflow, setWorkflow] = useState<DocumentWorkflow | null>(null);
+
+  // Related documents
+  const [relatedDocs, setRelatedDocs] = useState<Partial<Document>[]>([]);
+
+  // ── Data fetching ──────────────────────────────────────────────────────────
 
   useEffect(() => {
     if (!id) return;
@@ -156,6 +348,12 @@ export default function DocumentDetail() {
       .then(([docData, deptsData]) => {
         setDoc(docData);
         setDepartments(Array.isArray(deptsData) ? deptsData : (deptsData?.items ?? []));
+
+        // Load mock data for the new sections using the document ID
+        setComments(getMockComments(id));
+        setAuditLogs(getMockAuditLogs(id));
+        setWorkflow(getMockWorkflow(id));
+        setRelatedDocs(getMockRelatedDocuments(id));
       })
       .catch(() => {
         setNotFound(true);
@@ -165,16 +363,15 @@ export default function DocumentDetail() {
   }, [id]);
 
   useEffect(() => {
-    if (loading) return;
-    if (!id) return;
+    if (loading || !id) return;
     setLoadingSigs(true);
     getDocumentSignatureRequests(id)
       .then(setSigRequests)
-      .catch(() => {/* silent — signatures are optional */})
+      .catch(() => {/* signatures are optional — silent fail is fine */ })
       .finally(() => setLoadingSigs(false));
   }, [id, loading]);
 
-  // ── actions ──────────────────────────────────────────────────────────────
+  // ── Actions ────────────────────────────────────────────────────────────────
 
   const handleAnalyzeWithAI = () => {
     if (doc) analyzeDocument(doc);
@@ -186,6 +383,34 @@ export default function DocumentDetail() {
       await downloadFile('DOCUMENT_DOWNLOAD', { id: doc.id });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Download failed');
+    }
+  };
+
+  // Opens the browser print dialog — CSS media queries hide the sidebar/nav
+  const handlePrint = () => {
+    window.print();
+  };
+
+  // Copies the current page URL to clipboard
+  const handleCopyUrl = async () => {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      setUrlCopied(true);
+      setTimeout(() => setUrlCopied(false), 2000);
+    } catch {
+      toast.error('Could not copy link');
+    }
+  };
+
+  // Copies the owner_id string to clipboard
+  const handleCopyOwnerId = async () => {
+    if (!doc?.owner_id) return;
+    try {
+      await navigator.clipboard.writeText(doc.owner_id);
+      setOwnerIdCopied(true);
+      setTimeout(() => setOwnerIdCopied(false), 2000);
+    } catch {
+      toast.error('Could not copy ID');
     }
   };
 
@@ -276,17 +501,56 @@ export default function DocumentDetail() {
     }
   };
 
-  // ── helpers ──────────────────────────────────────────────────────────────
+  // Post a new top-level comment (mock — adds to local state)
+  const handlePostComment = () => {
+    if (!newComment.trim() || !id) return;
+    const comment: Comment = {
+      id: `c-${Date.now()}`,
+      document_id: id,
+      user_id: 'current-user',
+      user: { id: 'current-user', first_name: 'You', last_name: '' },
+      content: newComment.trim(),
+      parent_id: null,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+    setComments(prev => [...prev, comment]);
+    setNewComment('');
+  };
+
+  // Post a reply to a comment (mock — adds to local state)
+  const handlePostReply = (parentId: string) => {
+    if (!replyText.trim() || !id) return;
+    const reply: Comment = {
+      id: `c-${Date.now()}`,
+      document_id: id,
+      user_id: 'current-user',
+      user: { id: 'current-user', first_name: 'You', last_name: '' },
+      content: replyText.trim(),
+      parent_id: parentId,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+    setComments(prev => [...prev, reply]);
+    setReplyText('');
+    setReplyingTo(null);
+  };
+
+  // ── Helpers ────────────────────────────────────────────────────────────────
 
   const deptName = (deptId?: string) =>
     departments.find(d => d.id === deptId)?.name ?? 'Global';
 
-  // ── loading / error states ───────────────────────────────────────────────
+  // Groups replies under their parent comment
+  const topLevelComments = comments.filter(c => c.parent_id === null);
+  const repliesFor = (commentId: string) => comments.filter(c => c.parent_id === commentId);
+
+  // ── Loading / error states ─────────────────────────────────────────────────
 
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <Loader2 className="h-10 w-10 animate-spin text-[#1e5631]" />
+        <Loader2 className="h-10 w-10 animate-spin text-ch-primary" />
       </div>
     );
   }
@@ -306,12 +570,12 @@ export default function DocumentDetail() {
   const vis = visibilityConfig(doc.visibility_level);
   const stat = statusConfig(doc.status);
 
-  // ── render ───────────────────────────────────────────────────────────────
+  // ── Render ─────────────────────────────────────────────────────────────────
 
   return (
     <div className="w-full space-y-6">
 
-      {/* ── Page Header ──────────────────────────────────────────────────── */}
+      {/* ── Page Header ── */}
       <div className="flex items-start justify-between gap-4">
         <div className="flex items-start gap-4">
           <Button
@@ -324,18 +588,29 @@ export default function DocumentDetail() {
             Documents
           </Button>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 leading-tight">{doc.title}</h1>
-            <p className="text-gray-500 text-sm mt-0.5">
+            <h1 className="text-2xl font-display font-bold text-gray-900 leading-tight">{doc.title}</h1>
+            <p className="text-gray-500 font-sans text-sm mt-0.5">
               {doc.description || 'No description provided.'}
             </p>
           </div>
         </div>
 
-        {/* Action buttons */}
+        {/* Action buttons — Download, Print, Share, Versions, Edit, AI */}
         <div className="flex items-center gap-2 flex-shrink-0 mt-1">
           <Button variant="outline" size="sm" onClick={handleDownload}>
             <Download className="h-4 w-4 mr-1.5" /> Download
           </Button>
+
+          {/* Print — triggers browser print dialog */}
+          <Button variant="outline" size="sm" onClick={handlePrint}>
+            <Printer className="h-4 w-4 mr-1.5" /> Print
+          </Button>
+
+          {/* Share — opens a small modal with a copy-link button */}
+          <Button variant="outline" size="sm" onClick={() => setIsShareOpen(true)}>
+            <Share2 className="h-4 w-4 mr-1.5" /> Share
+          </Button>
+
           <Button variant="outline" size="sm" onClick={openVersions}>
             <History className="h-4 w-4 mr-1.5" /> Versions
           </Button>
@@ -353,7 +628,7 @@ export default function DocumentDetail() {
         </div>
       </div>
 
-      {/* ── Status strip ─────────────────────────────────────────────────── */}
+      {/* ── Status strip ── */}
       <div className="flex items-center gap-2 flex-wrap">
         <Badge className={cn('border text-xs font-medium', stat.cls)}>{stat.label}</Badge>
         <Badge className={cn('border text-xs font-medium flex items-center gap-1', vis.cls)}>
@@ -372,10 +647,10 @@ export default function DocumentDetail() {
         <span className="text-xs text-gray-400 ml-1">v{doc.version}</span>
       </div>
 
-      {/* ── Two-column layout ─────────────────────────────────────────────── */}
+      {/* ── Two-column layout ── */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
-        {/* ── Left: main content ──────────────────────────────────────────── */}
+        {/* ── Left column: main content ── */}
         <div className="lg:col-span-8 space-y-6">
 
           <DocumentPreview
@@ -384,7 +659,7 @@ export default function DocumentDetail() {
             loadingSignatures={loadingSigs}
           />
 
-          {/* Document Details */}
+          {/* Document Details card — includes owner */}
           <Card className="border-none shadow-md">
             <CardHeader className="pb-3">
               <CardTitle className="text-base font-semibold flex items-center gap-2 text-gray-700">
@@ -438,6 +713,35 @@ export default function DocumentDetail() {
                     </div>
                   </div>
                 ))}
+
+                {/* Owner — displayed as a truncated ID with a copy button
+                    since owner_id is a raw UUID string with no nested user object */}
+                {doc.owner_id && (
+                  <div className="flex items-start gap-3">
+                    <div className="mt-0.5 flex-shrink-0">
+                      <User className="h-4 w-4 text-gray-400" />
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-400 font-medium uppercase tracking-wide">Owner</p>
+                      <div className="flex items-center gap-1.5 mt-0.5">
+                        <p className="text-sm font-mono text-gray-600 truncate max-w-[120px]">
+                          {doc.owner_id.slice(0, 8)}…
+                        </p>
+                        {/* Copy button lets users grab the full UUID */}
+                        <button
+                          onClick={handleCopyOwnerId}
+                          title="Copy owner ID"
+                          className="text-gray-400 hover:text-gray-700 transition-colors"
+                        >
+                          {ownerIdCopied
+                            ? <Check className="h-3.5 w-3.5 text-green-500" />
+                            : <Copy className="h-3.5 w-3.5" />
+                          }
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Tags */}
@@ -448,9 +752,7 @@ export default function DocumentDetail() {
                     <p className="text-xs text-gray-400 font-medium uppercase tracking-wide mb-2">Tags</p>
                     <div className="flex flex-wrap gap-1.5">
                       {doc.tags.map(tag => (
-                        <Badge key={tag} variant="outline" className="text-xs">
-                          {tag}
-                        </Badge>
+                        <Badge key={tag} variant="outline" className="text-xs">{tag}</Badge>
                       ))}
                     </div>
                   </div>
@@ -459,32 +761,309 @@ export default function DocumentDetail() {
             </CardContent>
           </Card>
 
-          {/* Activity — Coming Soon */}
+          {/* ── Approval History / Audit Trail ── */}
           <Card className="border-none shadow-md">
             <CardHeader className="pb-3">
               <CardTitle className="text-base font-semibold flex items-center gap-2 text-gray-700">
                 <Activity className="h-4 w-4" />
-                Activity
+                Approval History
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="flex flex-col items-center justify-center py-10 gap-3">
-                <div className="w-12 h-12 rounded-2xl bg-gray-100 flex items-center justify-center">
-                  <Activity className="h-5 w-5 text-gray-400" />
+              {auditLogs.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-10 gap-2">
+                  <Activity className="h-8 w-8 text-gray-300" />
+                  <p className="text-sm text-gray-400">No activity recorded yet.</p>
                 </div>
-                <p className="text-sm font-medium text-gray-500">Activity log coming soon</p>
-                <p className="text-xs text-gray-400 text-center max-w-xs">
-                  A full audit trail of changes, views, and approvals for this document will appear here.
-                </p>
+              ) : (
+                // Timeline — each log entry is a row with a coloured action badge
+                <div className="relative space-y-0">
+                  {auditLogs.map((log, idx) => {
+                    const ac = actionConfig(log.action);
+                    const isLast = idx === auditLogs.length - 1;
+                    return (
+                      <div key={log.id} className="flex gap-3">
+                        {/* Vertical line connecting entries */}
+                        <div className="flex flex-col items-center">
+                          <div className={cn('w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5', ac.cls)}>
+                            {ac.icon}
+                          </div>
+                          {/* Line below icon — hidden for the last item */}
+                          {!isLast && <div className="w-px flex-1 bg-border mt-1 mb-1" />}
+                        </div>
+                        <div className={cn('pb-4 flex-1', isLast && 'pb-0')}>
+                          <div className="flex items-center justify-between gap-2">
+                            <p className="text-sm font-medium text-gray-800">
+                              {log.user.first_name} {log.user.last_name}
+                              <span className="text-gray-400 font-normal ml-1">{ac.label.toLowerCase()} this document</span>
+                            </p>
+                            <span className="text-xs text-gray-400 whitespace-nowrap flex-shrink-0">
+                              {dayjs(log.timestamp).fromNow()}
+                            </span>
+                          </div>
+                          {log.details && (
+                            <p className="text-xs text-gray-400 mt-0.5 italic">{log.details}</p>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* ── Comments / Notes ── */}
+          <Card className="border-none shadow-md">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base font-semibold flex items-center gap-2 text-gray-700">
+                <MessageSquare className="h-4 w-4" />
+                Comments
+                {comments.length > 0 && (
+                  <span className="ml-1 px-1.5 py-0.5 rounded-full bg-ch-primary/10 text-ch-primary text-xs font-semibold">
+                    {comments.length}
+                  </span>
+                )}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-5">
+              {/* Comment list */}
+              {topLevelComments.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-8 gap-2">
+                  <MessageSquare className="h-8 w-8 text-gray-300" />
+                  <p className="text-sm text-gray-400">No comments yet. Be the first to leave a note.</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {topLevelComments.map(comment => (
+                    <div key={comment.id}>
+                      {/* Top-level comment */}
+                      <div className="flex gap-3">
+                        <Avatar className="h-8 w-8 flex-shrink-0">
+                          <AvatarFallback className="text-xs bg-ch-primary/10 text-ch-primary font-semibold">
+                            {initials(comment.user.first_name, comment.user.last_name || '?')}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-baseline gap-2">
+                            <span className="text-sm font-semibold text-gray-800">
+                              {comment.user.first_name} {comment.user.last_name}
+                            </span>
+                            <span className="text-xs text-gray-400">{dayjs(comment.created_at).fromNow()}</span>
+                          </div>
+                          <p className="text-sm text-gray-600 mt-0.5 leading-relaxed">{comment.content}</p>
+                          {/* Reply toggle */}
+                          <button
+                            onClick={() => setReplyingTo(replyingTo === comment.id ? null : comment.id)}
+                            className="text-xs text-gray-400 hover:text-ch-primary mt-1 transition-colors"
+                          >
+                            Reply
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Replies — indented under parent */}
+                      {repliesFor(comment.id).length > 0 && (
+                        <div className="ml-11 mt-3 space-y-3 border-l-2 border-border pl-4">
+                          {repliesFor(comment.id).map(reply => (
+                            <div key={reply.id} className="flex gap-3">
+                              <CornerDownRight className="h-3.5 w-3.5 text-gray-300 flex-shrink-0 mt-1" />
+                              <Avatar className="h-7 w-7 flex-shrink-0">
+                                <AvatarFallback className="text-xs bg-gray-100 text-gray-500 font-semibold">
+                                  {initials(reply.user.first_name, reply.user.last_name || '?')}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-baseline gap-2">
+                                  <span className="text-sm font-semibold text-gray-800">
+                                    {reply.user.first_name} {reply.user.last_name}
+                                  </span>
+                                  <span className="text-xs text-gray-400">{dayjs(reply.created_at).fromNow()}</span>
+                                </div>
+                                <p className="text-sm text-gray-600 mt-0.5 leading-relaxed">{reply.content}</p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Inline reply box — shown when user clicks "Reply" on this comment */}
+                      {replyingTo === comment.id && (
+                        <div className="ml-11 mt-3 flex gap-2">
+                          <Input
+                            placeholder="Write a reply..."
+                            value={replyText}
+                            onChange={e => setReplyText(e.target.value)}
+                            onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handlePostReply(comment.id); } }}
+                            className="flex-1 text-sm h-9"
+                          />
+                          <Button size="sm" onClick={() => handlePostReply(comment.id)} className="h-9 bg-ch-primary hover:bg-ch-primary-700 text-white">
+                            <Send className="h-3.5 w-3.5" />
+                          </Button>
+                          <Button size="sm" variant="ghost" onClick={() => setReplyingTo(null)} className="h-9">
+                            <X className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* New comment input */}
+              <Separator />
+              <div className="flex gap-3">
+                <Avatar className="h-8 w-8 flex-shrink-0">
+                  <AvatarFallback className="text-xs bg-ch-primary/10 text-ch-primary font-semibold">
+                    ME
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex-1 flex gap-2">
+                  <Input
+                    placeholder="Leave a comment or note..."
+                    value={newComment}
+                    onChange={e => setNewComment(e.target.value)}
+                    // Enter submits, Shift+Enter would add a newline if it were a textarea
+                    onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handlePostComment(); } }}
+                    className="flex-1 text-sm"
+                  />
+                  <Button
+                    size="sm"
+                    onClick={handlePostComment}
+                    disabled={!newComment.trim()}
+                    className="bg-ch-primary hover:bg-ch-primary-700 text-white"
+                  >
+                    <Send className="h-3.5 w-3.5 mr-1.5" />
+                    Post
+                  </Button>
+                </div>
               </div>
+            </CardContent>
+          </Card>
+
+          {/* ── Related Documents ── */}
+          <Card className="border-none shadow-md">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base font-semibold flex items-center gap-2 text-gray-700">
+                <FileText className="h-4 w-4" />
+                Related Documents
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {relatedDocs.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-8 gap-2">
+                  <FileText className="h-8 w-8 text-gray-300" />
+                  <p className="text-sm text-gray-400">No related documents found.</p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {relatedDocs.map(related => {
+                    const relStat = statusConfig(related.status ?? '');
+                    return (
+                      <div
+                        key={related.id}
+                        onClick={() => navigate(`/admin/documents/${related.id}`)}
+                        className="flex items-center justify-between gap-3 p-3 rounded-lg border border-border hover:bg-muted/50 cursor-pointer transition-colors group"
+                      >
+                        <div className="flex items-center gap-3 min-w-0">
+                          {/* Document type colour dot */}
+                          <div className={cn('w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0', docTypeColor(related.document_type ?? ''))}>
+                            <FileText className="h-4 w-4" />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium text-gray-800 truncate group-hover:text-ch-primary transition-colors">
+                              {related.title}
+                            </p>
+                            <p className="text-xs text-gray-400 font-mono truncate">{related.file_name}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                          <Badge className={cn('border text-xs', relStat.cls)}>{relStat.label}</Badge>
+                          <ChevronRight className="h-4 w-4 text-gray-300 group-hover:text-gray-500 transition-colors" />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
 
-        {/* ── Right: sidebar ───────────────────────────────────────────────── */}
+        {/* ── Right sidebar ── */}
         <div className="lg:col-span-4 space-y-4">
 
-          {/* Signatures Card */}
+          {/* Workflow Stage card */}
+          {workflow && (
+            <Card className="border-none shadow-md">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base font-semibold flex items-center gap-2 text-gray-700">
+                  <GitBranch className="h-4 w-4" />
+                  Workflow
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {/* Progress bar showing how far through the workflow we are */}
+                <div className="space-y-1">
+                  <div className="flex justify-between text-xs text-gray-400">
+                    <span>Step {workflow.current_step_index + 1} of {workflow.total_steps}</span>
+                    <span className="capitalize font-medium text-gray-600">{workflow.status.replace('_', ' ')}</span>
+                  </div>
+                  <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-ch-primary rounded-full transition-all duration-500"
+                      style={{ width: `${((workflow.current_step_index) / workflow.total_steps) * 100}%` }}
+                    />
+                  </div>
+                </div>
+
+                {/* Step list */}
+                <div className="space-y-2 pt-1">
+                  {workflow.steps.map((step, idx) => {
+                    // Determine visual state: done, active, or upcoming
+                    const isDone = step.status === 'approved';
+                    const isActive = idx === workflow.current_step_index;
+                    const isRejected = step.status === 'rejected';
+
+                    return (
+                      <div key={step.id} className="flex items-start gap-2.5">
+                        {/* Step status icon */}
+                        <div className={cn(
+                          'w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 text-white text-xs font-bold',
+                          isDone && 'bg-emerald-500',
+                          isActive && 'bg-ch-primary',
+                          isRejected && 'bg-red-500',
+                          !isDone && !isActive && !isRejected && 'bg-muted border border-border text-muted-foreground',
+                        )}>
+                          {isDone ? <Check className="h-3 w-3" /> :
+                            isRejected ? <X className="h-3 w-3" /> :
+                              <span className={cn('text-xs', !isActive && 'text-muted-foreground')}>{step.step_number}</span>}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className={cn('text-xs font-medium truncate', isActive ? 'text-foreground' : 'text-muted-foreground')}>
+                            {step.approver_user.first_name} {step.approver_user.last_name}
+                          </p>
+                          {/* Show approval time if approved, or "Awaiting" if active */}
+                          <p className="text-xs text-muted-foreground">
+                            {isDone && step.approved_at
+                              ? `Approved ${dayjs(step.approved_at).fromNow()}`
+                              : isActive
+                                ? 'Awaiting approval'
+                                : 'Pending'}
+                          </p>
+                          {step.comments && (
+                            <p className="text-xs text-gray-400 italic mt-0.5 line-clamp-1">"{step.comments}"</p>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Signatures card */}
           <Card className="border-none shadow-md">
             <CardHeader className="pb-3">
               <CardTitle className="text-base font-semibold flex items-center gap-2 text-gray-700">
@@ -506,10 +1085,10 @@ export default function DocumentDetail() {
                       ? `${req.signer.first_name} ${req.signer.last_name}`
                       : 'Unknown';
                     const statusMap: Record<string, { cls: string; icon: React.ReactNode }> = {
-                      pending:  { cls: 'bg-amber-50 text-amber-700 border-amber-300', icon: <Clock className="h-3 w-3" /> },
-                      signed:   { cls: 'bg-green-50 text-green-700 border-green-300', icon: <CheckCircle className="h-3 w-3" /> },
-                      declined: { cls: 'bg-red-50 text-red-700 border-red-300',       icon: <XCircle className="h-3 w-3" /> },
-                      expired:  { cls: 'bg-gray-100 text-gray-500 border-gray-300',   icon: <X className="h-3 w-3" /> },
+                      pending: { cls: 'bg-amber-50 text-amber-700 border-amber-300', icon: <Clock className="h-3 w-3" /> },
+                      signed: { cls: 'bg-green-50 text-green-700 border-green-300', icon: <CheckCircle className="h-3 w-3" /> },
+                      declined: { cls: 'bg-red-50 text-red-700 border-red-300', icon: <XCircle className="h-3 w-3" /> },
+                      expired: { cls: 'bg-gray-100 text-gray-500 border-gray-300', icon: <X className="h-3 w-3" /> },
                     };
                     const s = statusMap[req.status] ?? statusMap.pending;
                     return (
@@ -540,6 +1119,8 @@ export default function DocumentDetail() {
               </Button>
             </CardContent>
           </Card>
+
+          {/* File Info card */}
           <Card className="border-none shadow-md">
             <CardHeader className="pb-3">
               <CardTitle className="text-base font-semibold flex items-center gap-2 text-gray-700">
@@ -549,23 +1130,10 @@ export default function DocumentDetail() {
             </CardHeader>
             <CardContent className="space-y-3">
               {[
-                {
-                  label: 'File Name',
-                  value: doc.file_name,
-                  mono: true,
-                },
-                {
-                  label: 'File Type',
-                  value: doc.file_type || doc.document_type || '—',
-                },
-                {
-                  label: 'File Size',
-                  value: formatBytes(doc.file_size),
-                },
-                {
-                  label: 'Version',
-                  value: `v${doc.version}`,
-                },
+                { label: 'File Name', value: doc.file_name, mono: true },
+                { label: 'File Type', value: doc.file_type || doc.document_type || '—' },
+                { label: 'File Size', value: formatBytes(doc.file_size) },
+                { label: 'Version', value: `v${doc.version}` },
                 ...(doc.file_hash
                   ? [{ label: 'Hash', value: doc.file_hash.slice(0, 16) + '…', mono: true }]
                   : []),
@@ -580,7 +1148,7 @@ export default function DocumentDetail() {
             </CardContent>
           </Card>
 
-          {/* Quick Actions */}
+          {/* Quick Actions card */}
           <Card className="border-none shadow-md">
             <CardHeader className="pb-3">
               <CardTitle className="text-base font-semibold flex items-center gap-2 text-gray-700">
@@ -591,6 +1159,14 @@ export default function DocumentDetail() {
               <Button variant="outline" className="w-full justify-start" size="sm" onClick={handleDownload}>
                 <Download className="h-4 w-4 mr-2 text-gray-500" />
                 Download File
+              </Button>
+              <Button variant="outline" className="w-full justify-start" size="sm" onClick={handlePrint}>
+                <Printer className="h-4 w-4 mr-2 text-gray-500" />
+                Print Document
+              </Button>
+              <Button variant="outline" className="w-full justify-start" size="sm" onClick={() => setIsShareOpen(true)}>
+                <Share2 className="h-4 w-4 mr-2 text-gray-500" />
+                Share Link
               </Button>
               <Button variant="outline" className="w-full justify-start" size="sm" onClick={openVersions}>
                 <History className="h-4 w-4 mr-2 text-gray-500" />
@@ -613,7 +1189,7 @@ export default function DocumentDetail() {
             </CardContent>
           </Card>
 
-          {/* AI Card */}
+          {/* AI card */}
           <Card className="border-none shadow-md bg-gradient-to-br from-[#1e3c21]/5 to-[#2a5230]/10">
             <CardContent className="py-5">
               <div className="flex items-start gap-3">
@@ -640,7 +1216,36 @@ export default function DocumentDetail() {
         </div>
       </div>
 
-      {/* ── Edit Dialog ───────────────────────────────────────────────────── */}
+      {/* ── Share Modal ── */}
+      <Dialog open={isShareOpen} onOpenChange={setIsShareOpen}>
+        <DialogContent className="max-w-sm bg-white">
+          <DialogHeader>
+            <DialogTitle className="font-display font-bold text-foreground">Share Document</DialogTitle>
+            <DialogDescription className="font-sans text-sm text-muted-foreground">
+              Copy the link below to share this document with others.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex gap-2 py-2">
+            {/* Read-only URL input */}
+            <Input
+              readOnly
+              value={window.location.href}
+              className="text-xs font-mono text-gray-600 bg-muted border-0"
+            />
+            <Button size="sm" onClick={handleCopyUrl} className="flex-shrink-0 bg-ch-primary hover:bg-ch-primary-700 text-white">
+              {urlCopied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+            </Button>
+          </div>
+          {urlCopied && (
+            <p className="text-xs text-emerald-600 font-medium -mt-1">Link copied to clipboard!</p>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsShareOpen(false)}>Close</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Edit Dialog ── */}
       <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
         <DialogContent className="max-w-lg bg-white">
           <DialogHeader>
@@ -719,7 +1324,7 @@ export default function DocumentDetail() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsEditOpen(false)}>Cancel</Button>
-            <Button onClick={handleUpdate} disabled={isUpdating} className="bg-[#febb00] text-[#1e3c21] hover:bg-[#e8a900] font-bold">
+            <Button onClick={handleUpdate} disabled={isUpdating} className="bg-ch-primary hover:bg-ch-primary-700 text-white font-semibold">
               {isUpdating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Save Changes
             </Button>
@@ -727,13 +1332,13 @@ export default function DocumentDetail() {
         </DialogContent>
       </Dialog>
 
-      {/* ── Delete Confirmation ───────────────────────────────────────────── */}
+      {/* ── Delete Confirmation ── */}
       <AlertDialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
         <AlertDialogContent className="bg-white">
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Document</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete <strong>"{doc.title}"</strong>? This action will soft-delete the document and preserve the audit trail, but it will no longer appear in the explorer.
+              Are you sure you want to delete <strong>"{doc.title}"</strong>? This will soft-delete the document and preserve the audit trail, but it will no longer appear in the explorer.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -750,7 +1355,7 @@ export default function DocumentDetail() {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* ── Version History Dialog ────────────────────────────────────────── */}
+      {/* ── Version History Dialog ── */}
       <Dialog open={isVersionsOpen} onOpenChange={(open) => { setIsVersionsOpen(open); if (!open) setIsNewVersionOpen(false); }}>
         <DialogContent className="max-w-2xl bg-white">
           <DialogHeader>
@@ -760,7 +1365,6 @@ export default function DocumentDetail() {
             </DialogTitle>
             <DialogDescription>All versions of this document, newest first.</DialogDescription>
           </DialogHeader>
-
           <div className="space-y-3 max-h-[50vh] overflow-y-auto py-2">
             {loadingVersions ? (
               <div className="flex justify-center py-10">
@@ -791,7 +1395,6 @@ export default function DocumentDetail() {
               ))
             )}
           </div>
-
           {!isNewVersionOpen ? (
             <DialogFooter className="border-t pt-4">
               <Button variant="outline" className="w-full" onClick={() => setIsNewVersionOpen(true)}>
@@ -813,7 +1416,7 @@ export default function DocumentDetail() {
                   <X className="h-4 w-4 mr-1" /> Cancel
                 </Button>
                 <Button
-                  className="flex-1 bg-[#febb00] text-[#1e3c21] hover:bg-[#e8a900] font-bold"
+                  className="flex-1 bg-ch-primary hover:bg-ch-primary-700 text-white font-semibold"
                   onClick={handleUploadVersion}
                   disabled={isUploadingVersion}
                 >
@@ -826,7 +1429,7 @@ export default function DocumentDetail() {
         </DialogContent>
       </Dialog>
 
-      {/* ── Request Signature Modal ───────────────────────────────────────── */}
+      {/* ── Request Signature Modal ── */}
       {doc && (
         <RequestSignatureModal
           documentId={doc.id}
