@@ -76,13 +76,13 @@ export function DashboardHeader({ onUploadClick, recentSearches = [], onSearch }
   };
 
   return (
-    <div className="sticky top-0 z-40 bg-white border-b border-gray-200">
-      <div className="px-8 py-4">
-        <div className="flex items-center justify-between gap-4">
+    <div className="sticky top-0 z-40 bg-white border-b border-slate-200/50 shadow-premium-sm">
+      <div className="px-8 py-5">
+        <div className="flex items-center justify-between gap-6">
           {/* Search Bar */}
-          <div className="flex-1 relative" ref={searchRef}>
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+          <div className="flex-1 relative max-w-md" ref={searchRef}>
+            <div className="relative group">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 transition-colors group-focus-within:text-primary" />
               <input
                 type="search"
                 placeholder="Search documents..."
@@ -91,35 +91,35 @@ export function DashboardHeader({ onUploadClick, recentSearches = [], onSearch }
                 onKeyDown={handleSearchKeyDown}
                 onFocus={() => searchQuery.trim() && setShowResults(true)}
                 aria-label="Search documents by name, department, or content"
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-transparent"
+                className="w-full pl-12 pr-4 py-3 bg-slate-50/50 border border-slate-200/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all text-slate-900 placeholder:text-slate-500"
               />
               {isSearching && (
-                <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                  <div className="animate-spin h-4 w-4 border-2 border-green-600 border-t-transparent rounded-full" />
+                <div className="absolute right-4 top-1/2 -translate-y-1/2">
+                  <div className="animate-spin h-4 w-4 border-2 border-primary border-t-transparent rounded-full" />
                 </div>
               )}
             </div>
 
             {/* Search Results Dropdown */}
             {showResults && (
-              <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
+              <div className="absolute top-full left-0 right-0 mt-3 bg-white border border-slate-200/50 rounded-xl shadow-premium-lg z-50 overflow-hidden animate-fade-in-up">
                 {searchResults.length > 0 ? (
                   <div className="max-h-96 overflow-y-auto">
-                    {searchResults.map((result) => (
+                    {searchResults.map((result, idx) => (
                       <button
                         key={result.id}
                         onClick={() => handleResultClick(result.id)}
-                        className="w-full text-left px-4 py-3 hover:bg-gray-50 border-b border-gray-100 last:border-b-0 transition-colors"
+                        className={`w-full text-left px-4 py-3 hover:bg-primary/5 transition-colors ${idx !== searchResults.length - 1 ? 'border-b border-slate-100' : ''}`}
                       >
                         <div className="flex items-start gap-3">
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-gray-900 truncate">{result.title}</p>
+                            <p className="text-sm font-medium text-slate-900 truncate">{result.title}</p>
                             {result.department && (
-                              <p className="text-xs text-gray-500 mt-1">{result.department}</p>
+                              <p className="text-xs text-slate-500 mt-1">{result.department}</p>
                             )}
                           </div>
                           {result.lastAccessedAt && (
-                            <span className="text-xs text-gray-400 whitespace-nowrap ml-2">
+                            <span className="text-xs text-slate-400 whitespace-nowrap ml-2">
                               {dayjs(result.lastAccessedAt).fromNow()}
                             </span>
                           )}
@@ -128,20 +128,20 @@ export function DashboardHeader({ onUploadClick, recentSearches = [], onSearch }
                     ))}
                   </div>
                 ) : searchQuery.trim() ? (
-                  <div className="px-4 py-8 text-center text-gray-500 text-sm">
+                  <div className="px-4 py-8 text-center text-slate-500 text-sm">
                     No documents found for "{searchQuery}"
                   </div>
                 ) : (
                   <div className="px-4 py-4">
                     {recentSearches.length > 0 && (
                       <div>
-                        <p className="text-xs font-semibold text-gray-500 uppercase mb-2">Recent Searches</p>
+                        <p className="text-xs font-semibold text-slate-500 uppercase mb-3 tracking-wider">Recent Searches</p>
                         <div className="space-y-1">
                           {recentSearches.map((search) => (
                             <button
                               key={search}
                               onClick={() => handleSearchChange(search)}
-                              className="w-full text-left px-2 py-1 text-sm text-gray-600 hover:bg-gray-50 rounded"
+                              className="w-full text-left px-3 py-2 text-sm text-slate-600 hover:bg-slate-100/50 rounded-lg transition-colors"
                             >
                               {search}
                             </button>
@@ -150,7 +150,7 @@ export function DashboardHeader({ onUploadClick, recentSearches = [], onSearch }
                       </div>
                     )}
                     {recentSearches.length === 0 && (
-                      <p className="text-xs text-gray-400">Start typing to search...</p>
+                      <p className="text-xs text-slate-400">Start typing to search...</p>
                     )}
                   </div>
                 )}
@@ -161,7 +161,8 @@ export function DashboardHeader({ onUploadClick, recentSearches = [], onSearch }
           {/* Action Buttons */}
           <Button
             onClick={onUploadClick}
-            className="bg-green-700 hover:bg-green-800 text-white gap-2"
+            variant="tenantPrimary"
+            className="gap-2 shadow-premium-md hover:shadow-premium-lg transition-all hover:scale-105 active:scale-95"
             aria-label="Upload a new document"
           >
             <Upload className="h-4 w-4" />
@@ -172,6 +173,7 @@ export function DashboardHeader({ onUploadClick, recentSearches = [], onSearch }
           <Button
             variant="ghost"
             size="icon"
+            className="text-slate-600 hover:text-slate-900 hover:bg-slate-100/60 transition-colors"
             aria-label="More options"
           >
             <MoreVertical className="h-5 w-5" />

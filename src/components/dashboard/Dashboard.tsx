@@ -290,17 +290,17 @@ export function Dashboard({ departments = [], categories = [] }: DashboardProps)
   ];
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
       <DashboardHeader
         onUploadClick={() => setUploadModalOpen(true)}
         recentSearches={recentSearches}
         onSearch={handleSearch}
       />
 
-      <div className="px-4 sm:px-6 lg:px-8 py-8">
-        <div className="max-w-7xl mx-auto space-y-8">
+      <div className="px-6 sm:px-8 lg:px-10 py-10">
+        <div className="max-w-7xl mx-auto space-y-10">
           {/* Inbox Section */}
-          <div>
+          <div className="animate-fade-in-up">
             <InboxSection
                 approvals={approvals}
                 sharedDocuments={sharedDocuments}
@@ -316,16 +316,21 @@ export function Dashboard({ departments = [], categories = [] }: DashboardProps)
           </div>
 
           {/* Recent Activity */}
-          <RecentActivityList
-            documents={recentDocuments}
-            isLoading={isLoading}
-            onDocumentClick={(id) => navigate(`/admin/documents/${id}`)}
-            onViewAll={() => navigate('/admin/documents?sort=recent')}
-          />
+          <div className="animate-fade-in-up" style={{ animationDelay: '100ms' }}>
+            <RecentActivityList
+              documents={recentDocuments}
+              isLoading={isLoading}
+              onDocumentClick={(id) => navigate(`/admin/documents/${id}`)}
+              onViewAll={() => navigate('/admin/documents?sort=recent')}
+            />
+          </div>
 
           {/* Quick Shortcuts */}
-          <div>
-            <h2 className="text-sm font-semibold text-gray-900 mb-4">Quick Shortcuts</h2>
+          <div className="animate-fade-in-up" style={{ animationDelay: '200ms' }}>
+            <div className="mb-6">
+              <h2 className="text-lg font-semibold text-slate-900 tracking-tight">Quick Shortcuts</h2>
+              <p className="text-sm text-slate-600 mt-1">Access key features instantly</p>
+            </div>
             <QuickShortcutsGrid shortcuts={shortcuts} userRole={user?.role} />
           </div>
         </div>
@@ -334,7 +339,7 @@ export function Dashboard({ departments = [], categories = [] }: DashboardProps)
       {/* Mobile Floating Action Button */}
       <button
         onClick={() => setUploadModalOpen(true)}
-        className="fixed bottom-6 right-6 w-14 h-14 bg-green-700 hover:bg-green-800 text-white rounded-full shadow-lg flex items-center justify-center z-40 lg:hidden transition-all hover:scale-110"
+        className="fixed bottom-6 right-6 w-14 h-14 bg-primary hover:bg-primary/90 text-white rounded-full shadow-premium-lg flex items-center justify-center z-40 lg:hidden transition-all hover:scale-110 active:scale-95"
         aria-label="Upload a new document"
         title="Upload document"
       >
@@ -343,13 +348,16 @@ export function Dashboard({ departments = [], categories = [] }: DashboardProps)
 
       {/* Upload Modal for Mobile */}
       {uploadModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 lg:hidden flex items-end">
-          <div className="w-full bg-white rounded-t-2xl p-6 max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 lg:hidden flex items-end animate-fade-in-up">
+          <div className="w-full bg-white rounded-t-2xl p-6 max-h-[90vh] overflow-y-auto shadow-premium-xl">
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-bold text-gray-900">Upload Document</h2>
+              <div>
+                <h2 className="text-xl font-semibold text-slate-900">Upload Document</h2>
+                <p className="text-sm text-slate-600 mt-1">Add new documents to your workspace</p>
+              </div>
               <button
                 onClick={() => setUploadModalOpen(false)}
-                className="text-gray-500 hover:text-gray-900"
+                className="text-slate-500 hover:text-slate-900 transition-colors p-2 hover:bg-slate-100 rounded-lg"
               >
                 ✕
               </button>

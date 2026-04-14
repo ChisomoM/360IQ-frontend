@@ -1,4 +1,4 @@
-import type { UserRole } from '@/lib/constants';
+import type { RoleSlug, UserDepartment } from '@/types/rbac';
 
 /**
  * Auth Types - Adapted to the new login response shape used by the API.
@@ -11,7 +11,7 @@ import type { UserRole } from '@/lib/constants';
  */
 
 // Keep AccountType for backward compatibility in parts of the app that still need it
-export type AccountType = 'admin' | 'staff' | 'student';
+export type AccountType = 'admin' | 'staff' | 'student' | 'controlhub_admin';
 
 // User object returned by the new login endpoint
 export interface LoginUser {
@@ -49,13 +49,19 @@ export interface AuthUser extends Partial<LoginUser> {
   // convenience normalized names
   firstName?: string;
   lastName?: string;
-  role?: UserRole;
+  roleSlug?: RoleSlug; // assigned RBAC role
+  title?: string; // job title or designation
+  departments?: UserDepartment[]; // departments the user belongs to
   isVerified?: boolean;
   isActive?: boolean;
   myReferralCode?: string;
   permissions?: string[];
   assignedRegions?: string[]; // For Regional Admin / Operations
+  role?: string; // assigned RBAC role (legacy name)
   collection?: 'admins' | 'users';
+  // Multi-tenancy fields
+  tenantId?: string;              // Extracted from JWT tenant_id claim
+  isControlHubAdmin?: boolean;    // Flag for ControlHub platform admin access
 }
 
 // API Response structure for the new login
@@ -82,6 +88,7 @@ export interface AuthContextState {
 export interface AuthContextMethods {
   // Account type is detected from the login response
   login(email: string, password: string): Promise<void>;
+  controlHubLogin(email: string, password: string): Promise<void>;
   logout(): Promise<void>;
   changePassword(newPassword: string): Promise<void>;
   setUser(user: AuthUser | null): void;
@@ -96,5 +103,8 @@ export interface AuthContextValue extends AuthContextState, AuthContextMethods {
 export const STORAGE_KEYS = {
   TOKENS: 'auth_tokens',
   USER: 'auth_user',
+  // ControlHub admin session — separate namespace to prevent cross-contamination
+  CH_TOKENS: 'ch_tokens',
+  CH_USER: 'ch_user',
 } as const;
 

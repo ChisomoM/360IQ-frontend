@@ -8,6 +8,7 @@ export interface ChatMessage {
 export interface ChatRequest {
   message: string;
   history: Array<{ role: string; content: string }>;
+  document_id?: string;
 }
 
 export interface ChatResponse {
@@ -15,6 +16,7 @@ export interface ChatResponse {
   status: number;
   data: {
     message: string;
+    document_id?: string;
   };
 }
 
@@ -22,14 +24,20 @@ export interface ChatResponse {
  * Send a chat message to the AI assistant
  * @param message - The user's message
  * @param history - Previous conversation history
+ * @param documentId - Optional document ID for document-aware chat
  * @returns The AI's response message
  */
 export const sendChatMessage = async (
   message: string,
-  history: Array<{ role: string; content: string }> = []
+  history: Array<{ role: string; content: string }> = [],
+  documentId?: string
 ): Promise<string> => {
   try {
-    const result = await post('AI_CHAT', { message, history });
+    const payload: ChatRequest = { message, history };
+    if (documentId) {
+      payload.document_id = documentId;
+    }
+    const result = await post('AI_CHAT', payload);
     return result?.message || 'No response from AI';
   } catch (error: any) {
     throw new Error(error?.message || 'Failed to send chat message');
@@ -61,5 +69,32 @@ export const analyzeDocument = async (documentId: string): Promise<any> => {
     return result;
   } catch (error: any) {
     throw new Error(error?.message || 'Failed to analyze document');
+  }
+};
+
+/**
+ * Generate predictive analysis from chart/spreadsheet data
+ * @param chartData - The chart or spreadsheet data to analyze
+ * @param documentTitle - Title of the document/data source
+ * @param metricsContext - Description of what metrics are being analyzed
+ * @param analysisContext - Additional context for the analysis
+ * @returns The predictive analysis results
+ */
+export const generatePredictiveAnalysis = async (
+  chartData: any,
+  documentTitle: string = 'Spreadsheet Data',
+  metricsContext: string = 'Document metrics',
+  analysisContext?: string
+): Promise<any> => {
+  try {
+    const result = await post('DOCUMENT_PREDICTIVE_ANALYSIS', {
+      chart_data: chartData,
+      document_title: documentTitle,
+      metrics_context: metricsContext,
+      analysis_context: analysisContext || '',
+    });
+    return result;
+  } catch (error: any) {
+    throw new Error(error?.message || 'Failed to generate predictive analysis');
   }
 };

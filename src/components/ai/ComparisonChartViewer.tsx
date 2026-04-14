@@ -61,14 +61,34 @@ export function ComparisonChartViewer({ docs, onClearAll }: ComparisonChartViewe
     try {
       const result = await post('DOCUMENT_COMPARE', { document_ids: docs.map((d) => d.id) });
       const comparison = result as ComparisonData;
+      
+      console.log('ComparisonChartViewer: Comparison data loaded', {
+        sharedColumnCount: comparison.shared_columns.length,
+        columns: comparison.shared_columns.map(c => ({ name: c.name, kind: c.kind })),
+        seriesCount: comparison.series.length,
+        series: comparison.series.map(s => ({ title: s.title, rowCount: s.rows.length }))
+      });
+      
       setData(comparison);
       // Auto-select sensible axis defaults
       const cats = comparison.shared_columns.filter((c) => c.kind === 'categorical');
       const nums = comparison.shared_columns.filter((c) => c.kind === 'numeric');
-      setXKey(cats[0]?.name ?? comparison.shared_columns[0]?.name ?? '');
-      setYKey(nums[0]?.name ?? comparison.shared_columns.find((c) => c.name !== (cats[0]?.name ?? ''))?.name ?? '');
+      const newXKey = cats[0]?.name ?? comparison.shared_columns[0]?.name ?? '';
+      const newYKey = nums[0]?.name ?? comparison.shared_columns.find((c) => c.name !== (cats[0]?.name ?? ''))?.name ?? '';
+      
+      console.log('ComparisonChartViewer: Axes auto-selected', { 
+        xKey: newXKey, 
+        yKey: newYKey,
+        categoricalColumns: cats.map(c => c.name),
+        numericColumns: nums.map(c => c.name)
+      });
+      
+      setXKey(newXKey);
+      setYKey(newYKey);
     } catch (err: any) {
-      setError(err?.message || 'Comparison failed');
+      const message = err?.message || 'Comparison failed';
+      console.error('ComparisonChartViewer: Error loading comparison', { error: message, fullError: err });
+      setError(message);
     } finally {
       setIsLoading(false);
     }
@@ -157,7 +177,18 @@ export function ComparisonChartViewer({ docs, onClearAll }: ComparisonChartViewe
   // ── Chart rendering ───────────────────────────────────────────────────────
 
   const renderChart = () => {
-    if (!data || xKey === '' || yKey === '' || mergedData.length === 0) {
+    const canRender = data && xKey !== '' && yKey !== '' && mergedData.length > 0;
+    
+    console.log('ComparisonChartViewer: renderChart conditions', {
+      hasData: !!data,
+      xKeySet: xKey !== '',
+      yKeySet: yKey !== '',
+      mergedDataLength: mergedData.length,
+      conditions: { data: !!data, xKey, yKey, mergedDataLength: mergedData.length }
+    });
+    
+    if (!canRender) {
+      console.log('ComparisonChartViewer: Showing fallback');
       return (
         <div className="flex flex-col items-center justify-center h-64 text-gray-400 gap-2">
           <BarChart2 className="h-12 w-12 opacity-20" />
@@ -233,7 +264,7 @@ export function ComparisonChartViewer({ docs, onClearAll }: ComparisonChartViewe
   // ── Main render ───────────────────────────────────────────────────────────
 
   return (
-    <div className="flex flex-col gap-5">
+    <div className="flex flex-col gap-5 w-full">
 
       {/* Header */}
       <div className="flex items-start justify-between gap-3">
@@ -309,8 +340,8 @@ export function ComparisonChartViewer({ docs, onClearAll }: ComparisonChartViewe
       </Card>
 
       {/* Chart */}
-      <Card className="border border-gray-100 shadow-none">
-        <CardContent className="p-4">
+      <Card className="border border-gray-100 shadow-none w-full overflow-visible">
+        <CardContent className="p-4 w-full min-h-96 overflow-visible">
           {renderChart()}
         </CardContent>
       </Card>

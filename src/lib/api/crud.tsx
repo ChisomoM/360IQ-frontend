@@ -1,14 +1,23 @@
 // import { resetLogoutPromptTimer } from "../context/admin";
 import { Storage } from "../storage";
 import { API, getRoute, pipe } from "./end_points";
+import { useTenantStore } from "@/lib/store/tenantStore";
+import { validateResponseTenant } from "@/lib/api/interceptors/responseInterceptor";
 // import { getAuthHeader } from "./auth";
 
-const ROUTING_URL: string = import.meta.env.VITE_BACKEND_URL || "http://localhost:8032/api/v1/";
-// const ROUTING_URL: string = import.meta.env.VITE_BACKEND_URL || "http://102.211.186.58/api/v1/";
+// const ROUTING_URL: string = import.meta.env.VITE_BACKEND_URL || "http://localhost:8032/api/v1/";
+const ROUTING_URL: string = import.meta.env.VITE_BACKEND_URL || "http://102.211.186.58/api/v1/";
 
 // const ROUTING_URL = "http://102.211.186.58/api/v1/"
 // Storage key for auth tokens (matches AuthContext)
 const AUTH_TOKENS_KEY = 'auth_tokens';
+
+/** Optional overrides for non-standard callers (e.g. ControlHub uses its own token + tenantId) */
+export interface FetchOptions {
+  token?: string;
+  tenantId?: string;
+  skipValidation?: boolean;
+}
 
 // Get access token from localStorage (used by AuthContext)
 const getAccessTokenFromStorage = (): string | null => {
@@ -74,20 +83,24 @@ export const fetchData = async (
   params: Record<string, string> = {},
   body: unknown = null,
   query: Record<string, string> = {},
-  headers: Record<string, string> = {}
+  headers: Record<string, string> = {},
+  fetchOpts?: FetchOptions
 ) => {
   const h = new Headers();
   h.append("Content-Type", "application/json");
-  const tenant = import.meta.env.VITE_TENANT_ID || "unilus_meta";
-  h.append("X-Tenant-ID", tenant);
 
-  // Read tokens from localStorage (AuthContext storage)
-  // Skip for login/register endpoints
-  if (typeof window !== "undefined" && !["LOGIN", "ADMIN_LOGIN", "REGISTER"].includes(key)) {
-    const accessToken = getAccessTokenFromStorage();
-    if (accessToken) {
-      h.append("Authorization", `Bearer ${accessToken}`);
-    }
+  // fetchOpts.tenantId wins, then Zustand store, then env fallback
+  const tenantId = fetchOpts?.tenantId
+    || useTenantStore.getState().currentTenantId
+    || import.meta.env.VITE_TENANT_ID
+    || "dims";
+  h.append("X-Tenant-ID", tenantId);
+
+  // fetchOpts.token wins; otherwise read from storage (skip for public endpoints)
+  const skipPublicEndpoints = ["LOGIN", "ADMIN_LOGIN", "REGISTER"].includes(key);
+  const accessToken = fetchOpts?.token ?? (skipPublicEndpoints ? null : getAccessTokenFromStorage());
+  if (accessToken) {
+    h.append("Authorization", `Bearer ${accessToken}`);
   }
 
   Object.entries(headers).forEach(([key, value]) => {
@@ -120,19 +133,25 @@ export const fetchData = async (
       return;
     }
     const result = await res.json();
+    let payload: unknown;
     if (result.status === 0) {
-      return result.data;
+      payload = result.data;
     } else if (result.success !== undefined) {
       if (result.success) {
-        return result.data || result;
+        payload = result.data || result;
       } else {
         throw new Error(result.message || "Operation failed");
       }
     } else if (result.status !== undefined && result.status !== 0) {
       throw new Error(result.message || "Operation failed");
     } else {
-      return result.data || result;
+      payload = result.data || result;
     }
+    // Validate tenant ownership of returned data (security check)
+    if (!fetchOpts?.skipValidation) {
+      validateResponseTenant(payload);
+    }
+    return payload;
   }
 
   // If the response is 401, try to refresh the token and retry the request once
@@ -232,8 +251,11 @@ export const file = async (
 ) => {
   const h = new Headers();
   h.append("Content-Type", "application/json");
-  const tenant = import.meta.env.VITE_TENANT_ID || "unilus_meta";
-  h.append("X-Tenant-ID", tenant);
+
+  const tenantId = useTenantStore.getState().currentTenantId
+    || import.meta.env.VITE_TENANT_ID
+    || "dims";
+  h.append("X-Tenant-ID", tenantId);
 
   if (typeof window != "undefined" && !["LOGIN", "ADMIN_LOGIN"].includes(key)) {
     const accessToken = getAccessTokenFromStorage();

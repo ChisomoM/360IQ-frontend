@@ -5,15 +5,18 @@ import { HelmetProvider } from 'react-helmet-async'
 import './index.css'
 import App from './App.tsx'
 import { AuthProvider } from './lib/context/auth.tsx'
+import { RbacProvider } from './lib/context/RbacContext.tsx'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <HelmetProvider>
-    <BrowserRouter>
-      <AuthProvider>
-        <App />
-      </AuthProvider>
-    </BrowserRouter>
+      <BrowserRouter>
+        <AuthProvider>
+          <RbacProvider>
+            <App />
+          </RbacProvider>
+        </AuthProvider>
+      </BrowserRouter>
     </HelmetProvider>
   </StrictMode>,
 )

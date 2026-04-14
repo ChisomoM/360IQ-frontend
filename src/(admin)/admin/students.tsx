@@ -145,7 +145,7 @@ export default function Students() {
             <Loader2 className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
             Refresh
             </Button>
-            <Button variant="default">
+            <Button variant="tenantPrimary">
                 <Download className="h-4 w-4 mr-2" />
                 Export CSV
             </Button>
@@ -173,19 +173,19 @@ export default function Students() {
             </div>
             <div className="flex gap-2">
               <Button
-                variant={statusFilter === 'all' ? 'default' : 'outline'}
+                variant={statusFilter === 'all' ? 'tenantPrimary' : 'outline'}
                 onClick={() => setStatusFilter('all')}
               >
                 All
               </Button>
               <Button
-                variant={statusFilter === 'active' ? 'default' : 'outline'}
+                variant={statusFilter === 'active' ? 'tenantPrimary' : 'outline'}
                 onClick={() => setStatusFilter('active')}
               >
                 Active
               </Button>
               <Button
-                variant={statusFilter === 'graduated' ? 'default' : 'outline'}
+                variant={statusFilter === 'graduated' ? 'tenantPrimary' : 'outline'}
                 onClick={() => setStatusFilter('graduated')}
               >
                 Graduated
@@ -203,7 +203,7 @@ export default function Students() {
         <CardContent className="p-0">
           {loading ? (
             <div className="flex items-center justify-center h-64">
-              <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
           ) : filteredStudents.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-64 text-gray-500">
@@ -229,7 +229,7 @@ export default function Students() {
                     key={student.ID}
                     className={index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}
                   >
-                    <TableCell className="font-medium font-mono text-blue-600">{student.student_id}</TableCell>
+                    <TableCell className="font-medium font-mono text-primary">{student.student_id}</TableCell>
                     <TableCell className="font-medium">{getName(student)}</TableCell>
                     <TableCell>{student.application?.programme_of_study || 'N/A'}</TableCell>
                     <TableCell>Year {student.current_year}</TableCell>

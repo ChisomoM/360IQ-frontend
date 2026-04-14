@@ -59,7 +59,7 @@ export const LoginForm: React.FC<LoginFormProps> = () => {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
-            className="w-full h-10 transition-all duration-200 focus:ring-2 focus:ring-[#E5600B] focus:border-transparent text-sm"
+            className="w-full h-10 transition-all duration-200 focus:ring-2 focus:ring-[#3b82f6] focus:border-transparent text-sm"
             disabled={isLoading}
           />
         </div>
@@ -79,7 +79,7 @@ export const LoginForm: React.FC<LoginFormProps> = () => {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              className="w-full h-10 pr-10 transition-all duration-200 focus:ring-2 focus:ring-[#E5600B] focus:border-transparent text-sm"
+              className="w-full h-10 pr-10 transition-all duration-200 focus:ring-2 focus:ring-[#3b82f6] focus:border-transparent text-sm"
               disabled={isLoading}
             />
             <Button
@@ -102,7 +102,7 @@ export const LoginForm: React.FC<LoginFormProps> = () => {
           <button
             type="button"
             // onClick={() => setShowForgotPassword(true)}
-            className="text-xs sm:text-sm text-[#1e3c21] hover:text-[#febb00] font-medium transition-colors duration-200 hover:underline"
+            className="text-xs sm:text-sm text-[#1e3a8a] hover:text-[#3b82f6] font-medium transition-colors duration-200 hover:underline"
           >
             Forgot password?
           </button>
@@ -110,7 +110,7 @@ export const LoginForm: React.FC<LoginFormProps> = () => {
 
         <Button
           type="submit"
-          className="w-full h-10 bg-[#1e3c21] hover:bg-[#163019] text-white font-medium shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] text-sm border-b-2 border-[#febb00]"
+          className="w-full h-10 bg-[#1e3a8a] hover:bg-[#1e40af] text-white font-medium shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] text-sm border-b-2 border-[#3b82f6]"
           disabled={isLoading}
         >
           {isLoading ? (

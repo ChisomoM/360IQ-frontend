@@ -25,7 +25,6 @@ import {
   School,
   FileText,
   CreditCard,
-  Calendar,
   MapPin,
   Phone,
   Mail,
@@ -51,8 +50,8 @@ export default function StudentProfile() {
   const [loading, setLoading] = useState(true);
 
   // Permission checks
-  const canViewFinance = hasPermission(user, PERMISSIONS.VIEW_ALL_FINANCIALS);
-  const canViewDocuments = hasPermission(user, PERMISSIONS.MANAGE_USERS) || hasPermission(user, PERMISSIONS.VIEW_ALL_MEMBERS);
+  const canViewFinance = hasPermission(user, PERMISSIONS['payments.read']);
+  const canViewDocuments = hasPermission(user, PERMISSIONS['users.write']) || hasPermission(user, PERMISSIONS['users.read']);
 
   // Dummy data for demo
   const dummyPayments = [
@@ -228,7 +227,7 @@ export default function StudentProfile() {
   if (loading) {
     return (
       <div className="flex justify-center items-center h-screen">
-        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
@@ -247,7 +246,7 @@ export default function StudentProfile() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'active':
-        return <Badge className="bg-green-100 text-green-800 border-green-200">Active</Badge>;
+        return <Badge className="bg-primary/10 text-primary border-primary/20">Active</Badge>;
       case 'graduated':
         return <Badge className="bg-blue-100 text-blue-800 border-blue-200">Graduated</Badge>;
       case 'suspended':
@@ -305,10 +304,10 @@ export default function StudentProfile() {
     return dayjs(dateString).format('MMM DD, YYYY');
   };
 
-  const fullName = student.application
-    ? `${student.application.first_name} ${student.application.last_name}`
-    : student.user
-    ? `${student.user.first_name} ${student.user.last_name}`
+  const fullName = student.Application
+    ? `${student.Application.first_name} ${student.Application.last_name}`
+    : student.User
+    ? `${student.User.first_name} ${student.User.last_name}`
     : 'Unknown Student';
 
   return (
@@ -320,7 +319,7 @@ export default function StudentProfile() {
         </Link>
         <div className="flex items-start justify-between">
             <div className="flex items-center gap-4">
-                <div className="h-16 w-16 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-2xl">
+                <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-2xl">
                     {fullName.charAt(0)}
                 </div>
                 <div>
@@ -333,7 +332,7 @@ export default function StudentProfile() {
             </div>
             <div className="flex gap-2">
                 <Button variant="outline">Suspend Student</Button>
-                <Button variant="default">Edit Details</Button>
+                <Button variant="tenantPrimary">Edit Details</Button>
             </div>
         </div>
       </div>
@@ -365,16 +364,16 @@ export default function StudentProfile() {
                                 <p className="font-medium">{fullName}</p>
                             </div>
                             <div>
-                                <p className="text-gray-500">Gender</p>
-                                <p className="font-medium capitalize">{student.application?.gender || 'N/A'}</p>
+                                 <p className="text-gray-500">Gender</p>
+                                <p className="font-medium capitalize">{student.Application?.gender || 'N/A'}</p>
                             </div>
                             <div>
                                 <p className="text-gray-500">Date of Birth</p>
-                                <p className="font-medium">{formatDate(student.application?.date_of_birth)}</p>
+                                <p className="font-medium">{formatDate(student.Application?.date_of_birth)}</p>
                             </div>
                             <div>
                                 <p className="text-gray-500">NRC / Passport</p>
-                                <p className="font-medium">{student.application?.nrc || 'N/A'}</p>
+                                <p className="font-medium">{student.Application?.nrc || 'N/A'}</p>
                             </div>
                         </div>
                     </CardContent>
@@ -388,19 +387,19 @@ export default function StudentProfile() {
                         </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                         <div className="space-y-3 text-sm">
+                          <div className="space-y-3 text-sm">
                             <div className="flex items-center gap-2">
                                 <Mail className="h-4 w-4 text-gray-400" />
-                                <span>{student.user?.email || student.application?.email}</span>
+                                <span>{student.User?.email || student.Application?.email}</span>
                             </div>
                             <div className="flex items-center gap-2">
                                 <Phone className="h-4 w-4 text-gray-400" />
-                                <span>{student.application?.phone_number || 'N/A'}</span>
+                                <span>{student.Application?.phone_number || 'N/A'}</span>
                             </div>
                             <div className="flex items-start gap-2">
                                 <MapPin className="h-4 w-4 text-gray-400 mt-0.5" />
                                 <span>
-                                    {student.application?.address}, {student.application?.city}, {student.application?.province}
+                                    {student.Application?.residential_address || 'N/A'}
                                 </span>
                             </div>
                         </div>

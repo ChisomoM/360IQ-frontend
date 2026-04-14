@@ -174,7 +174,7 @@ export default function AuditTrails() {
         <Button
           onClick={fetchAuditLogs}
           disabled={loading}
-          className="bg-gradient-to-r from-\[#D70F0E\] to-\[#E5600B\] hover:from-\[#C00E0D\] hover:to-\[#D5500A\] text-white"
+          className="bg-primary text-white"
         >
           {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Activity className="mr-2 h-4 w-4" />}
           Refresh

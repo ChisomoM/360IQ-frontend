@@ -1,88 +1,224 @@
-// Finance Module Type Definitions
+/**
+ * Financial Data Types for Frontend
+ * Extends base Document types with financial-specific metadata
+ */
 
-export type PaymentStatus = 'pending' | 'verified' | 'rejected';
-export type PaymentMethod = 'bank_transfer' | 'online' | 'cash' | 'mobile_money';
-export type PaymentType = 'application_fee' | 'tuition_fee' | 'registration_fee' | 'accommodation_fee' | 'custom';
+import type { Document } from './dms';
 
-export interface Payment {
-  id: string;
-  student_id: string;
-  student_name: string;
-  student_email: string;
-  amount: number;
+// ============================================================================
+// FINANCIAL COLUMN TYPES
+// ============================================================================
+
+export interface FinancialColumnMeta {
+  name: string;
+  kind: 'numeric' | 'categorical';
+  financial_metadata?: {
+    type?:
+      | 'amount'
+      | 'date'
+      | 'count'
+      | 'ratio'
+      | 'percentage'
+      | 'currency';
+    currency?: string; // "USD", "KES", etc
+    is_calculated?: boolean; // Subtotal/total rows
+    sign_convention?: 'normal' | 'inverted'; // Some accounting systems invert
+  };
+}
+
+// ============================================================================
+// FINANCIAL SHEET DATA
+// ============================================================================
+
+export interface FinancialSheetData {
+  name: string;
+  columns: FinancialColumnMeta[];
+  rows: (string | number | null)[][];
+  financial_metadata?: {
+    statement_type:
+      | 'profit_loss'
+      | 'balance_sheet'
+      | 'cash_flow'
+      | 'invoice_list'
+      | 'payment_list'
+      | 'other';
+    fiscal_year?: number;
+    fiscal_period?: 'full_year' | 'quarterly' | 'monthly' | 'weekly';
+    currency: string;
+    total_row_indices?: number[]; // Row indices that are subtotals
+    sections?: Record<string, { start: number; end: number }>; // "revenue", "expenses"
+  };
+}
+
+// ============================================================================
+// FINANCIAL TABLE DATA
+// ============================================================================
+
+export interface FinancialTableData {
+  sheets: FinancialSheetData[];
+  extracted_at: string;
+  detected_statement_type:
+    | 'profit_loss'
+    | 'balance_sheet'
+    | 'cash_flow'
+    | 'invoice_list'
+    | 'payment_list'
+    | 'other';
+}
+
+// ============================================================================
+// FINANCIAL DOCUMENT TYPE
+// ============================================================================
+
+export interface FinancialDocument extends Document {
+  category: 'financial';
+  statement_type:
+    | 'profit_loss'
+    | 'balance_sheet'
+    | 'cash_flow'
+    | 'invoice_list'
+    | 'payment_list'
+    | 'other';
+  fiscal_year?: number;
+  fiscal_period?: 'full_year' | 'quarterly' | 'monthly' | 'weekly';
   currency: string;
-  payment_date: string;
-  payment_method: PaymentMethod;
-  payment_type: PaymentType;
-  payment_ref: string;
-  status: PaymentStatus;
-  verified_by_id?: string;
-  verified_by_name?: string;
-  verified_at?: string;
-  rejection_reason?: string;
-  notes?: string;
-  proof_document_url?: string;
-  created_at: string;
-  updated_at: string;
 }
 
-export interface PaymentFilters {
-  status?: PaymentStatus | 'all';
-  payment_type?: PaymentType | 'all';
-  payment_method?: PaymentMethod | 'all';
-  start_date?: string;
-  end_date?: string;
-  min_amount?: number;
-  max_amount?: number;
-  search?: string;
+// ============================================================================
+// FINANCIAL COMPARISON TYPES
+// ============================================================================
+
+export interface FinancialComparisonSeries {
+  document_id: string;
+  title: string;
+  file_name: string;
+  rows: (string | number | null)[][];
 }
 
-export interface PaymentStats {
-  total_revenue: number;
-  pending_revenue: number;
-  monthly_revenue: number;
-  payment_count: number;
-  pending_count: number;
-  verified_count: number;
-  rejected_count: number;
-  success_rate: number;
-  average_payment: number;
+export interface FinancialComparisonMetric {
+  metric: string; // "Revenue Growth", "Operating Margin"
+  value?: number; // For single value metrics
+  values?: Record<string, number>; // For per-document metrics
+  unit: '%' | 'K' | 'M' | 'absolute';
+  interpretation: 'positive' | 'negative' | 'neutral';
+  formula?: string; // For documentation
 }
 
-export interface RevenueByMonth {
-  month: string;
-  revenue: number;
-  count: number;
+export interface VarianceAnalysisRow {
+  account: string;
+  values: Record<string, number>;
+  variance: number;
+  variance_percent: number;
 }
 
-export interface PaymentTypeBreakdown {
-  type: PaymentType;
-  count: number;
-  total: number;
-  percentage: number;
+export interface FinancialComparisonData {
+  shared_columns: FinancialColumnMeta[];
+  series: FinancialComparisonSeries[];
+  financial_metrics: FinancialComparisonMetric[];
+  variance_analysis?: {
+    by_row: VarianceAnalysisRow[];
+  };
 }
 
-export interface PaymentMethodBreakdown {
-  method: PaymentMethod;
-  count: number;
-  total: number;
-  percentage: number;
+// ============================================================================
+// CHART VIEWER STATE
+// ============================================================================
+
+export interface FinancialChartState {
+  selectedSheet: string;
+  xAxis: string;
+  yAxes: string[];
+  chartType: 'bar' | 'line' | 'area' | 'pie' | 'pl_layout' | 'waterfall';
 }
 
-export interface DashboardData {
-  stats: PaymentStats;
-  revenue_trend: RevenueByMonth[];
-  payment_type_breakdown: PaymentTypeBreakdown[];
-  payment_method_breakdown: PaymentMethodBreakdown[];
-  recent_activities: Payment[];
+// ============================================================================
+// UI HELPER TYPES
+// ============================================================================
+
+export type StatementType =
+  | 'profit_loss'
+  | 'balance_sheet'
+  | 'cash_flow'
+  | 'invoice_list'
+  | 'payment_list'
+  | 'other';
+
+export type FiscalPeriod =
+  | 'full_year'
+  | 'quarterly'
+  | 'monthly'
+  | 'weekly';
+
+export interface StatementTypeInfo {
+  key: StatementType;
+  label: string;
+  description: string;
+  color: string;
+  icon: string;
 }
 
-export interface VerifyPaymentRequest {
-  payment_id: string;
-  notes?: string;
-}
+export const STATEMENT_TYPE_INFO: Record<StatementType, StatementTypeInfo> = {
+  profit_loss: {
+    key: 'profit_loss',
+    label: 'P&L Statement',
+    description: 'Profit and Loss statement',
+    color: 'bg-orange-100 text-orange-700',
+    icon: '📊',
+  },
+  balance_sheet: {
+    key: 'balance_sheet',
+    label: 'Balance Sheet',
+    description: 'Balance sheet / Assets, Liabilities & Equity',
+    color: 'bg-blue-100 text-blue-700',
+    icon: '⚖️',
+  },
+  cash_flow: {
+    key: 'cash_flow',
+    label: 'Cash Flow',
+    description: 'Cash flow statement',
+    color: 'bg-cyan-100 text-cyan-700',
+    icon: '💧',
+  },
+  invoice_list: {
+    key: 'invoice_list',
+    label: 'Invoices',
+    description: 'Invoice list / Receivables',
+    color: 'bg-green-100 text-green-700',
+    icon: '📄',
+  },
+  payment_list: {
+    key: 'payment_list',
+    label: 'Payments',
+    description: 'Payment list / Transactions',
+    color: 'bg-purple-100 text-purple-700',
+    icon: '💰',
+  },
+  other: {
+    key: 'other',
+    label: 'Other',
+    description: 'Other financial data',
+    color: 'bg-gray-100 text-gray-700',
+    icon: '📋',
+  },
+};
 
-export interface RejectPaymentRequest {
-  payment_id: string;
-  reason: string;
+// ============================================================================
+// DASHBOARD SUMMARY
+// ============================================================================
+
+export interface FinancialDashboardSummary {
+  total_documents: number;
+  latest_statement?: {
+    title: string;
+    statement_type: StatementType;
+    fiscal_year: number;
+    uploaded_at: string;
+  };
+  statements_by_type: Record<StatementType, number>;
+  latest_metrics?: {
+    total_revenue?: number;
+    total_expenses?: number;
+    net_income?: number;
+    gross_margin?: number;
+  };
 }

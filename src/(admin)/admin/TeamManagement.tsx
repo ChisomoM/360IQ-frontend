@@ -10,28 +10,12 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-  DialogFooter,
-} from '@/components/ui/dialog';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Label } from '@/components/ui/label';
-import { Plus, Search, Loader2 } from 'lucide-react';
+import { Plus, Search, Loader2, MapPin } from 'lucide-react';
 import { toast } from 'sonner';
 import { fetchData } from '@/lib/api/crud';
-import { USER_ROLES, type UserRole } from '@/lib/constants';
+import { USER_ROLES } from '@/lib/constants';
+import { TwoStepUserCreationDialog } from '@/components/users/TwoStepUserCreationDialog';
 import type { AdminProfile } from '@/types/admin';
 
 export default function TeamManagement() {
@@ -39,16 +23,6 @@ export default function TeamManagement() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  // Form State
-  const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
-    email: '',
-    password: '',
-    role: 'super_admin' as UserRole,
-  });
 
   const fetchUsers = async () => {
     try {
@@ -74,7 +48,7 @@ export default function TeamManagement() {
       setUsers(mappedUsers);
     } catch (error) {
       console.error('Error fetching users:', error);
-      toast.error('Failed to load administrators');
+      toast.error('Failed to load users');
     } finally {
       setLoading(false);
     }
@@ -83,45 +57,6 @@ export default function TeamManagement() {
   useEffect(() => {
     fetchUsers();
   }, []);
-
-  const handleCreateUser = async () => {
-    if (!formData.email || !formData.password || !formData.firstName || !formData.lastName) {
-      toast.error('Please fill in all the required fields');
-      return;
-    }
-
-    try {
-      setIsSubmitting(true);
-      
-      const payload = {
-        first_name: formData.firstName,
-        last_name: formData.lastName,
-        email: formData.email,
-        password: formData.password,
-        role_name: formData.role,
-        is_active: true,
-        is_verified: true
-      };
-
-      await fetchData('USERS', 'POST', {}, payload);
-      
-      toast.success('User created successfully');
-      setIsAddDialogOpen(false);
-      setFormData({
-        firstName: '',
-        lastName: '',
-        email: '',
-        password: '',
-        role: 'super_admin',
-      });
-      fetchUsers();
-    } catch (error: any) {
-      console.error('Error creating user:', error);
-      toast.error(error.message || 'Failed to create user');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
 
   const filteredUsers = users.filter(user => 
     user.firstName.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -143,113 +78,46 @@ export default function TeamManagement() {
   };
 
   return (
-    <div className="w-full space-y-6">
+    <div className="w-full space-y-8">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Administrators</h1>
-          <p className="text-gray-600 mt-1">Manage system accounts and access levels</p>
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
+            User Management
+          </h1>
+          <p className="text-gray-600 mt-1 font-medium">
+            Create and manage user accounts with assigned roles and permissions
+          </p>
         </div>
-        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              Add Administrator
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-2xl bg-white max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Add New Administrator</DialogTitle>
-              <DialogDescription>
-                Create a new administrator account with specific roles and permissions.
-              </DialogDescription>
-            </DialogHeader>
-            
-            <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>First Name</Label>
-                  <Input 
-                    value={formData.firstName}
-                    onChange={(e) => setFormData({...formData, firstName: e.target.value})}
-                    placeholder="John"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Last Name</Label>
-                  <Input 
-                    value={formData.lastName}
-                    onChange={(e) => setFormData({...formData, lastName: e.target.value})}
-                    placeholder="Doe"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Email Address</Label>
-                <Input 
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => setFormData({...formData, email: e.target.value})}
-                  placeholder="john.doe@avec.org"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label>Password</Label>
-                <Input 
-                  type="password"
-                  value={formData.password}
-                  onChange={(e) => setFormData({...formData, password: e.target.value})}
-                  placeholder="••••••••"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label>Role</Label>
-                <Select 
-                  value={formData.role} 
-                  onValueChange={(val) => setFormData({...formData, role: val as UserRole})}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a role" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="super_admin">System Administrator</SelectItem>
-                    <SelectItem value="records_authority">Records Authority</SelectItem>
-                    <SelectItem value="dept_head">Department Head</SelectItem>
-                    <SelectItem value="staff_member">Staff Member</SelectItem>
-                    <SelectItem value="finance">Finance Officer</SelectItem>
-                    <SelectItem value="hr_officer">HR Officer</SelectItem>
-                    <SelectItem value="auditor">Auditor</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>Cancel</Button>
-              <Button onClick={handleCreateUser} disabled={isSubmitting}>
-                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Create Account
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        <Button
+          onClick={() => setIsAddDialogOpen(true)}
+          className="bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white rounded-lg shadow-md hover:shadow-lg transition-all"
+        >
+          <Plus className="h-4 w-4 mr-2" />
+          Add User
+        </Button>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Search className="h-5 w-5" />
-            Search Administrators
+      <TwoStepUserCreationDialog
+        isOpen={isAddDialogOpen}
+        onClose={() => setIsAddDialogOpen(false)}
+        onUserCreated={() => fetchUsers()}
+      />
+
+      <Card className="shadow-sm border-gray-150 rounded-xl">
+        <CardHeader className="pb-4 border-b border-gray-100">
+          <CardTitle className="flex items-center gap-3 text-lg">
+            <div className="p-2 bg-blue-50 rounded-lg">
+              <Search className="h-5 w-5 text-blue-600" />
+            </div>
+            Find Users
           </CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="pt-4">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
             <Input
               placeholder="Search by name or email..."
-              className="pl-10"
+              className="pl-11 border-gray-200 rounded-lg focus:border-blue-400 focus:ring-blue-50"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
@@ -257,58 +125,71 @@ export default function TeamManagement() {
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="shadow-sm border-gray-150 rounded-xl overflow-hidden">
         <CardContent className="p-0">
           <Table>
             <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Role</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Assigned Regions</TableHead>
-                <TableHead>Status</TableHead>
+              <TableRow className="border-gray-100 bg-gradient-to-r from-gray-50 to-gray-25 hover:bg-gray-50">
+                <TableHead className="text-gray-700 font-semibold">Name</TableHead>
+                <TableHead className="text-gray-700 font-semibold">Role</TableHead>
+                <TableHead className="text-gray-700 font-semibold">Email</TableHead>
+                <TableHead className="text-gray-700 font-semibold">Assigned Regions</TableHead>
+                <TableHead className="text-gray-700 font-semibold">Status</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center py-8">
-                    <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary-blue" />
+                  <TableCell colSpan={5} className="text-center py-12 border-gray-100">
+                    <div className="flex flex-col items-center justify-center space-y-3">
+                      <div className="relative w-10 h-10">
+                        <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-blue-600 rounded-full animate-spin" style={{maskImage: 'conic-gradient(transparent 70%, black)'}} />
+                      </div>
+                      <p className="text-gray-600 font-medium">Loading users...</p>
+                    </div>
                   </TableCell>
                 </TableRow>
               ) : filteredUsers.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center py-8 text-gray-500">
-                    No administrators found
+                  <TableCell colSpan={5} className="text-center py-12 border-gray-100 text-gray-500">
+                    No users found
                   </TableCell>
                 </TableRow>
               ) : (
                 filteredUsers.map((user) => (
-                  <TableRow key={user.uid}>
-                    <TableCell className="font-medium">
+                  <TableRow key={user.uid} className="border-gray-100 hover:bg-blue-50/50 transition">
+                    <TableCell className="font-semibold text-gray-900">
                       {user.firstName} {user.lastName}
                     </TableCell>
                     <TableCell>
-                      <Badge className={getRoleBadgeColor(user.role)}>
+                      <Badge className={`${getRoleBadgeColor(user.role)} border rounded-full px-3 py-1 text-xs font-medium`}>
                         {user.role.replace('_', ' ').toUpperCase()}
                       </Badge>
                     </TableCell>
-                    <TableCell>{user.email}</TableCell>
+                    <TableCell className="text-gray-600">{user.email}</TableCell>
                     <TableCell>
                       {user.assignedRegions && user.assignedRegions.length > 0 ? (
-                        <div className="flex items-center gap-1 text-sm text-gray-600">
-                          <MapPin className="h-3 w-3" />
-                          {user.assignedRegions.length > 2 
-                            ? `${user.assignedRegions.slice(0, 2).join(', ')} +${user.assignedRegions.length - 2} more`
-                            : user.assignedRegions.join(', ')
-                          }
+                        <div className="flex items-center gap-2 text-sm text-gray-700">
+                          <MapPin className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                          <span className="truncate">
+                            {user.assignedRegions.length > 2
+                              ? `${user.assignedRegions.slice(0, 2).join(', ')} +${user.assignedRegions.length - 2}`
+                              : user.assignedRegions.join(', ')}
+                          </span>
                         </div>
                       ) : (
-                        <span className="text-gray-400 text-sm">-</span>
+                        <span className="text-gray-400 text-sm">—</span>
                       )}
                     </TableCell>
                     <TableCell>
-                      <Badge variant={user.isActive ? 'default' : 'secondary'}>
+                      <Badge
+                        variant={user.isActive ? 'default' : 'secondary'}
+                        className={`rounded-full px-3 py-1 text-xs font-medium ${
+                          user.isActive
+                            ? 'bg-emerald-100 text-emerald-700 border-emerald-200'
+                            : 'bg-gray-100 text-gray-600 border-gray-200'
+                        }`}
+                      >
                         {user.isActive ? 'Active' : 'Inactive'}
                       </Badge>
                     </TableCell>

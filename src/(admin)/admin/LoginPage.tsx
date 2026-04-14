@@ -29,7 +29,7 @@ export const LoginPage: React.FC<LoginPageProps> = () => {
   return (
 
     <motion.div
-      className="min-h-screen w-full flex bg-[#1e3c21] relative overflow-hidden"
+      className="min-h-screen w-full flex bg-[#1e3a8a] relative overflow-hidden"
       initial="hidden"
       animate="show"
       variants={container}
@@ -43,18 +43,16 @@ export const LoginPage: React.FC<LoginPageProps> = () => {
           style={{ backgroundImage: "url('/campus.jpg')" }}
         >
 
-          <div className="absolute inset-0 bg-[#1e3c21]/85" />
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#1e3a8a]/65 to-[#1e3a8a]/95" />
 
           <motion.div
             className="relative z-10 flex items-start"
             variants={item}
           >
 
-            <img
-              src="/logos/unilus-logo-3.png"
-              alt="UNILUS Logo"
-              className="h-36 object-contain transition-transform duration-500 hover:scale-105"
-            />
+            <h1 className="text-7xl font-bold text-white tracking-tight transition-transform duration-500 hover:scale-105" style={{ fontFamily: "'Montserrat', sans-serif", letterSpacing: '0.05em' }}>
+              DIMS
+            </h1>
 
           </motion.div>
 
@@ -63,10 +61,10 @@ export const LoginPage: React.FC<LoginPageProps> = () => {
             variants={item}
           >
 
-            <div className="inline-flex items-center gap-2 bg-[#febb00]/20 backdrop-blur-md px-4 py-1.5 rounded-full border border-[#febb00]/40 mb-6">
+            <div className="inline-flex items-center gap-2 bg-[#3b82f6]/20 backdrop-blur-md px-4 py-1.5 rounded-full border border-[#3b82f6]/40 mb-6">
 
-              <span className="text-[#febb00] font-semibold text-xs uppercase tracking-wider">
-                UNILUS DIMS
+              <span className="text-[#3b82f6] font-semibold text-xs uppercase tracking-wider">
+                DIMS Platform
               </span>
 
             </div>
@@ -74,7 +72,7 @@ export const LoginPage: React.FC<LoginPageProps> = () => {
             <h1 className="text-4xl font-bold leading-tight mb-5">
 
               Document Intelligence &{" "}
-              <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#febb00] via-yellow-300 to-[#febb00]">
+              <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#3b82f6] via-blue-400 to-[#60a5fa]">
                 Management System
               </span>
 
@@ -82,37 +80,37 @@ export const LoginPage: React.FC<LoginPageProps> = () => {
 
             <p className="text-base text-white/80 leading-relaxed">
 
-              A centralized digital platform built to manage institutional
-              documents, automate administrative processes, and generate
-              insights across the University of Lusaka.
+              A powerful multi-tenant platform designed to streamline document
+              management, automate workflows, and deliver actionable insights
+              for educational institutions and organizations.
 
             </p>
 
             <div className="mt-8 grid grid-cols-2 gap-4 text-sm text-white/75">
 
               <div className="flex items-center gap-2">
-                <span className="text-[#febb00]">•</span>
+                <span className="text-[#3b82f6]">•</span>
                 Smart document indexing
               </div>
 
               <div className="flex items-center gap-2">
-                <span className="text-[#febb00]">•</span>
+                <span className="text-[#3b82f6]">•</span>
                 Secure digital archives
               </div>
 
               <div className="flex items-center gap-2">
-                <span className="text-[#febb00]">•</span>
+                <span className="text-[#3b82f6]">•</span>
                 Analytics & reporting
               </div>
 
               <div className="flex items-center gap-2">
-                <span className="text-[#febb00]">•</span>
-                Real-time institutional insights
+                <span className="text-[#3b82f6]">•</span>
+                Real-time insights & dashboards
               </div>
 
             </div>
 
-            <div className="mt-8 w-16 h-1 bg-[#febb00] rounded-full" />
+            <div className="mt-8 w-16 h-1 bg-[#3b82f6] rounded-full" />
 
           </motion.div>
 
@@ -132,11 +130,9 @@ export const LoginPage: React.FC<LoginPageProps> = () => {
               variants={item}
             >
 
-              <img
-                src="/logos/unilus-logo-3.png"
-                alt="UNILUS Logo"
-                className="h-28"
-              />
+              <h1 className="text-6xl font-bold text-[#1e3a8a] tracking-tight" style={{ fontFamily: "'Montserrat', sans-serif", letterSpacing: '0.05em' }}>
+                DIMS
+              </h1>
 
             </motion.div>
 
@@ -146,7 +142,7 @@ export const LoginPage: React.FC<LoginPageProps> = () => {
             >
 
               <motion.h2
-                className="text-3xl font-bold text-[#1e3c21] mb-2"
+                className="text-3xl font-bold text-[#1e3a8a] mb-2"
                 variants={item}
               >
                 Welcome Back
@@ -156,7 +152,7 @@ export const LoginPage: React.FC<LoginPageProps> = () => {
                 className="text-sm text-gray-500 mb-8"
                 variants={item}
               >
-                Sign in to access the UNILUS Document Intelligence &
+                Sign in to access the Document Intelligence &
                 Management System.
               </motion.p>
 

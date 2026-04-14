@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, useOutletContext } from 'react-router-dom';
-import { fetchData, file as downloadFile } from '@/lib/api/crud';
+import { fetchData, file as downloadFile, fetchFileBuffer } from '@/lib/api/crud';
 import type { Document, Department, DocumentVersion, DocumentUpdatePayload } from '@/types/dms';
 import type { AdminLayoutContext } from '@/layouts/AdminLayout';
 import { toast } from 'sonner';
@@ -64,6 +64,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import RequestSignatureModal from '@/components/signature/RequestSignatureModal';
+import DocumentPreview from '@/components/signature/DocumentPreview';
 import { getDocumentSignatureRequests } from '@/lib/api/signatures';
 import type { SignatureRequest } from '@/types/signatures';
 
@@ -104,6 +105,9 @@ const docTypeColor = (type: string) => {
   };
   return map[type] ?? 'bg-gray-100 text-gray-600';
 };
+
+const getErrorMessage = (error: unknown, fallback: string) =>
+  error instanceof Error ? error.message : fallback;
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
@@ -185,13 +189,22 @@ export default function DocumentDetail() {
     }
   };
 
+  const handleVersionDownload = async (version: DocumentVersion) => {
+    if (!doc) { toast.error('No document available'); return; }
+    try {
+      await downloadFile('DOCUMENT_DOWNLOAD', { id: doc.id }, { version_id: version.id });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Version download failed');
+    }
+  };
+
   const openEdit = () => {
     if (!doc) return;
     setEditData({
       title: doc.title,
       description: doc.description ?? '',
-      visibility_level: doc.visibility_level as any,
-      status: doc.status as any,
+      visibility_level: doc.visibility_level,
+      status: doc.status === 'active' || doc.status === 'archived' ? doc.status : undefined,
       category: doc.category ?? '',
       document_type: doc.document_type,
     });
@@ -206,8 +219,8 @@ export default function DocumentDetail() {
       setDoc({ ...doc, ...updated });
       toast.success('Document updated');
       setIsEditOpen(false);
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to update document');
+    } catch (err) {
+      toast.error(getErrorMessage(err, 'Failed to update document'));
     } finally {
       setIsUpdating(false);
     }
@@ -220,8 +233,8 @@ export default function DocumentDetail() {
       await fetchData('DOCUMENT_DELETE', 'DELETE', { id: doc.id });
       toast.success('Document deleted');
       navigate('/admin/documents');
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to delete document');
+    } catch (err) {
+      toast.error(getErrorMessage(err, 'Failed to delete document'));
     } finally {
       setIsDeleting(false);
     }
@@ -256,8 +269,8 @@ export default function DocumentDetail() {
       setNewVersionNotes('');
       const data = await fetchData('DOCUMENT_VERSIONS', 'GET', { id: doc.id });
       setVersions(Array.isArray(data) ? data : (data?.items ?? []));
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to upload version');
+    } catch (err) {
+      toast.error(getErrorMessage(err, 'Failed to upload version'));
     } finally {
       setIsUploadingVersion(false);
     }
@@ -364,6 +377,12 @@ export default function DocumentDetail() {
 
         {/* ── Left: main content ──────────────────────────────────────────── */}
         <div className="lg:col-span-8 space-y-6">
+
+          <DocumentPreview
+            document={doc}
+            signatureRequests={sigRequests}
+            loadingSignatures={loadingSigs}
+          />
 
           {/* Document Details */}
           <Card className="border-none shadow-md">
@@ -667,7 +686,12 @@ export default function DocumentDetail() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Visibility</Label>
-                <Select value={editData.visibility_level ?? ''} onValueChange={(v: any) => setEditData({ ...editData, visibility_level: v })}>
+                <Select
+                  value={editData.visibility_level ?? ''}
+                  onValueChange={(value: DocumentUpdatePayload['visibility_level']) =>
+                    setEditData({ ...editData, visibility_level: value })
+                  }
+                >
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="department">Department Only</SelectItem>
@@ -678,7 +702,12 @@ export default function DocumentDetail() {
               </div>
               <div className="space-y-2">
                 <Label>Status</Label>
-                <Select value={editData.status ?? ''} onValueChange={(v: any) => setEditData({ ...editData, status: v })}>
+                <Select
+                  value={editData.status ?? ''}
+                  onValueChange={(value: DocumentUpdatePayload['status']) =>
+                    setEditData({ ...editData, status: value })
+                  }
+                >
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="active">Active</SelectItem>
@@ -754,11 +783,9 @@ export default function DocumentDetail() {
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-xs text-gray-400">{dayjs(v.created_at).format('MMM DD, YYYY')}</span>
-                    {v.file_url && (
-                      <Button variant="ghost" size="sm" onClick={() => window.open(v.file_url, '_blank')}>
-                        <Download className="h-3 w-3" />
-                      </Button>
-                    )}
+                    <Button variant="ghost" size="sm" onClick={() => handleVersionDownload(v)}>
+                      <Download className="h-3 w-3" />
+                    </Button>
                   </div>
                 </div>
               ))
