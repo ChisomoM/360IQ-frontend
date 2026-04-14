@@ -1,4 +1,7 @@
-import { useState, useEffect } from 'react';
+// Depracated - No longer in Use
+
+
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -60,7 +63,6 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { useDropzone } from 'react-dropzone';
 import { Switch } from '@/components/ui/switch';
 import { fetchData, file } from '@/lib/api/crud';
 import type { Document, Department, DocumentVersion, DocumentUpdatePayload } from '@/types/dms';
@@ -205,25 +207,48 @@ export default function Documents() {
   };
 
   // ── dropzone logic ────────────────────────────────────────────────────────
+  
+  const [dragActive, setDragActive] = useState(false);
 
-  const onDrop = (acceptedFiles: File[]) => {
-    if (acceptedFiles.length > 0) {
-      const file = acceptedFiles[0];
-      // Auto-fill title if empty
-      const fileNameWithoutExt = file.name.split('.').slice(0, -1).join('.');
+  const handleDrag = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === 'dragenter' || e.type === 'dragover') {
+      setDragActive(true);
+    } else if (e.type === 'dragleave') {
+      setDragActive(false);
+    }
+  }, []);
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+
+    const files = e.dataTransfer.files;
+    if (files && files[0]) {
+      const droppedFile = files[0];
+      const fileNameWithoutExt = droppedFile.name.split('.').slice(0, -1).join('.');
       setUploadData(prev => ({
         ...prev,
-        file,
+        file: droppedFile,
         title: prev.title.trim() === '' ? fileNameWithoutExt : prev.title
       }));
     }
-  };
+  }, []);
 
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
-    onDrop,
-    multiple: false,
-    maxSize: 50 * 1024 * 1024, // 50MB
-  });
+  const handleFileInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files && files[0]) {
+      const selectedFile = files[0];
+      const fileNameWithoutExt = selectedFile.name.split('.').slice(0, -1).join('.');
+      setUploadData(prev => ({
+        ...prev,
+        file: selectedFile,
+        title: prev.title.trim() === '' ? fileNameWithoutExt : prev.title
+      }));
+    }
+  }, []);
 
   // ── download ─────────────────────────────────────────────────────────────
  
@@ -424,14 +449,21 @@ export default function Documents() {
 
                 {!uploadData.file ? (
                   <div
-                    {...getRootProps()}
+                    onDragEnter={handleDrag}
+                    onDragLeave={handleDrag}
+                    onDragOver={handleDrag}
+                    onDrop={handleDrop}
                     className={`
                       border-2 border-dashed rounded-2xl p-10 transition-all cursor-pointer
                       flex flex-col items-center justify-center text-center space-y-4
-                      ${isDragActive ? 'border-primary bg-primary/5 scale-[1.02]' : 'border-slate-300 hover:border-primary hover:bg-white'}
+                      ${dragActive ? 'border-primary bg-primary/5 scale-[1.02]' : 'border-slate-300 hover:border-primary hover:bg-white'}
                     `}
                   >
-                    <input {...getInputProps()} />
+                    <input 
+                      type="file"
+                      onChange={handleFileInputChange}
+                      className="absolute inset-0 opacity-0 cursor-pointer"
+                    />
                     <div className="p-4 bg-white rounded-full shadow-sm text-primary">
                       <FileUp className="h-10 w-10" />
                     </div>

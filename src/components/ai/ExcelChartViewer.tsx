@@ -41,16 +41,60 @@ interface ExcelChartViewerProps {
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 /** Convert a SheetData into the flat-object array recharts expects. */
+/** Attempt to parse a value as a number, handling Excel comma-formatted strings like '45,000'. */
+function parseNumericValue(v: unknown): number | string | null {
+  if (v === null || v === undefined) return null;
+  if (typeof v === 'number') return v;
+  if (typeof v === 'string') {
+    const cleaned = v.replace(/,/g, '').replace(/[$€£¥%]/g, '').trim();
+    // Handle accounting negative: (45,000) → -45000
+    const accounting = cleaned.match(/^\((.+)\)$/);
+    const toParse = accounting ? `-${accounting[1]}` : cleaned;
+    const parsed = parseFloat(toParse);
+    if (!isNaN(parsed) && toParse !== '') return parsed;
+    return v; // return original string if not numeric
+  }
+  return null;
+}
+
 function sheetToChartData(sheet: SheetData): Record<string, string | number | null>[] {
   const headers = sheet.columns.map((c) => c.name);
   return sheet.rows.map((row) =>
-    Object.fromEntries(headers.map((h, i) => [h, row[i] ?? null]))
+    Object.fromEntries(headers.map((h, i) => {
+      const raw = row[i] ?? null;
+      return [h, parseNumericValue(raw)];
+    }))
   );
 }
 
 /** Return only columns whose kind is 'numeric'. */
 function numericCols(columns: ColumnMeta[]): string[] {
   return columns.filter((c) => c.kind === 'numeric').map((c) => c.name);
+}
+
+/**
+ * Detect columns that look numeric by inspecting actual row values.
+ * Used as a fallback when the backend tags everything as categorical
+ * (e.g. comma-formatted numbers like '45,000' fool the server-side inference).
+ */
+function detectNumericColsFromData(
+  columns: ColumnMeta[],
+  rows: unknown[][]
+): string[] {
+  const sample = rows.slice(0, 8);
+  return columns
+    .map((col, i) => {
+      const values = sample
+        .map((r) => r[i])
+        .filter((v) => v !== null && v !== undefined && String(v).trim() !== '');
+      if (values.length === 0) return null;
+      const numericCount = values.filter((v) => {
+        const parsed = parseNumericValue(v);
+        return typeof parsed === 'number';
+      }).length;
+      return numericCount / values.length >= 0.6 ? col.name : null;
+    })
+    .filter((n): n is string => n !== null);
 }
 
 /** Return only columns whose kind is 'categorical'. */
@@ -61,13 +105,22 @@ function categoricalCols(columns: ColumnMeta[]): string[] {
 /**
  * Choose sensible defaults for a sheet:
  *   x-axis   → first categorical col (or first col if none)
- *   y-axis   → first numeric col (or second col if none)
+ *   y-axis   → first numeric col; falls back to data-detected numeric cols
  */
-function defaultAxes(columns: ColumnMeta[]): { xKey: string; yKeys: string[] } {
+function defaultAxes(
+  columns: ColumnMeta[],
+  rows?: unknown[][]
+): { xKey: string; yKeys: string[] } {
   const cats = categoricalCols(columns);
-  const nums = numericCols(columns);
+  let nums = numericCols(columns);
+  // Fallback: if backend found no numeric columns, detect from actual data
+  if (nums.length === 0 && rows && rows.length > 0) {
+    nums = detectNumericColsFromData(columns, rows);
+  }
   const xKey = cats[0] ?? columns[0]?.name ?? '';
-  const yKeys = nums.length > 0 ? [nums[0]] : columns.filter((c) => c.name !== xKey).slice(0, 1).map((c) => c.name);
+  const yKeys = nums.length > 0
+    ? [nums[0]]
+    : columns.filter((c) => c.name !== xKey).slice(0, 1).map((c) => c.name);
   return { xKey, yKeys };
 }
 
@@ -150,7 +203,7 @@ export function ExcelChartViewer({ document, onClose }: ExcelChartViewerProps) {
         });
         
         setSelectedSheet(first.name);
-        const { xKey: ax, yKeys: ay } = defaultAxes(first.columns);
+        const { xKey: ax, yKeys: ay } = defaultAxes(first.columns, first.rows);
         console.log('ExcelChartViewer: Axes inferred', { xKey: ax, yKeys: ay });
         setXKey(ax);
         setYKeys(ay);
@@ -174,19 +227,34 @@ export function ExcelChartViewer({ document, onClose }: ExcelChartViewerProps) {
   );
 
   const chartData = useMemo(
-    () => (currentSheet ? sheetToChartData(currentSheet) : []),
-    [currentSheet]
+    () => {
+      if (!currentSheet) return [];
+      const data = sheetToChartData(currentSheet);
+      console.log('ExcelChartViewer: Transformed chart data sample', {
+        totalRows: data.length,
+        sampleRow: data[0] ? Object.fromEntries(Object.entries(data[0]).slice(0, 5)) : null,
+        yKeyValue: data[0] && yKeys[0] ? data[0][yKeys[0]] : null,
+        yKeyType: data[0] && yKeys[0] ? typeof data[0][yKeys[0]] : null
+      });
+      return data;
+    },
+    [currentSheet, yKeys]
   );
 
   const allColNames = currentSheet?.columns.map((c) => c.name) ?? [];
-  const numericColumns = currentSheet ? numericCols(currentSheet.columns) : [];
+  // Use data-based detection as fallback if backend tagged everything as categorical
+  const numericColumns = currentSheet
+    ? (numericCols(currentSheet.columns).length > 0
+        ? numericCols(currentSheet.columns)
+        : detectNumericColsFromData(currentSheet.columns, currentSheet.rows))
+    : [];
 
   // When sheet changes, reset axes to smart defaults
   const handleSheetChange = (name: string) => {
     setSelectedSheet(name);
     const sheet = data?.sheets.find((s) => s.name === name);
     if (sheet) {
-      const { xKey: ax, yKeys: ay } = defaultAxes(sheet.columns);
+      const { xKey: ax, yKeys: ay } = defaultAxes(sheet.columns, sheet.rows);
       setXKey(ax);
       setYKeys(ay);
     }
@@ -266,6 +334,11 @@ export function ExcelChartViewer({ document, onClose }: ExcelChartViewerProps) {
     };
 
     if (chartType === 'bar') {
+      console.log('ExcelChartViewer: Rendering BarChart with data', {
+        dataLength: chartData.length,
+        sampleData: chartData.slice(0, 2),
+        yKeys: yKeys
+      });
       return (
         <ResponsiveContainer width="100%" height={320}>
           <BarChart {...commonProps}>

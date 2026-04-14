@@ -56,10 +56,11 @@ export interface UserDepartment {
 // Defines which actions on which resources require maker-checker approval
 export interface MakerCheckerRule {
   id: number | string;
+  name: string;
   resource: string;
   action: PermissionAction;
   requiredApprovals: number;
-  approverRoles: RoleSlug[];
+  approverSlug: RoleSlug;
   isActive: boolean;
 }
 

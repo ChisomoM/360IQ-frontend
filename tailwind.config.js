@@ -192,7 +192,7 @@ export default {
       },
 
       // ─────────────────────────────────────────────────────────────────────
-      // BORDER RADIUS — Untitled UI standard scale
+      // BORDER RADIUS — ControlHub design system scale
       // ─────────────────────────────────────────────────────────────────────
       borderRadius: {
         'none': '0px',
