@@ -18,6 +18,8 @@ interface AIChatSidebarProps {
   onClose: () => void;
   pendingDoc?: Document | null;
   onDocConsumed?: () => void;
+  pendingChatMessage?: string | null;
+  onChatMessageConsumed?: () => void;
 }
 
 const WELCOME_MESSAGE: Message = {
@@ -30,7 +32,7 @@ const WELCOME_MESSAGE: Message = {
 
 type AnalysisMode = 'summarize' | 'analyze';
 
-export function AIChatSidebar({ isOpen, onClose, pendingDoc, onDocConsumed }: AIChatSidebarProps) {
+export function AIChatSidebar({ isOpen, onClose, pendingDoc, onDocConsumed, pendingChatMessage, onChatMessageConsumed }: AIChatSidebarProps) {
   const [messages, setMessages] = useState<Message[]>([WELCOME_MESSAGE]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -100,6 +102,16 @@ export function AIChatSidebar({ isOpen, onClose, pendingDoc, onDocConsumed }: AI
       prev.some((d) => d.id === pendingDoc.id) ? prev : [pendingDoc, ...prev]
     );
   }, [pendingDoc, isOpen]);
+
+  // Pre-fill chat input when a dashboard AI Insights message is requested
+  useEffect(() => {
+    if (!isOpen || !pendingChatMessage) return;
+    setActiveTab('chat');
+    setInput(pendingChatMessage);
+    onChatMessageConsumed?.();
+    // Focus textarea on next tick
+    setTimeout(() => textareaRef.current?.focus(), 100);
+  }, [pendingChatMessage, isOpen]);
 
   // Auto-run analysis after selectedDoc is committed to state
   useEffect(() => {

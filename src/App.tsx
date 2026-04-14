@@ -22,7 +22,6 @@ import ReportsPage from './(admin)/admin/ReportsPage';
 import ApprovalsPage from './(admin)/admin/ApprovalsPage';
 import RegionManagement from './(admin)/admin/RegionManagement';
 import PartnershipPage from './(admin)/admin/PartnershipPage';
-import BlogPage from './(admin)/admin/BlogPage';
 import Departments from './(admin)/admin/Departments';
 import Documents from './(admin)/admin/Documents';
 import DocumentDetail from './(admin)/admin/DocumentDetail';
@@ -40,6 +39,9 @@ import DepartmentDetailPage from './(admin)/admin/DepartmentDetailPage';
 // RBAC — Roles & Maker-Checker Pages
 import RolesManagement from './(admin)/admin/RolesManagement';
 import MakerCheckerPage from './(admin)/admin/MakerCheckerPage';
+import DocumentsV2 from './(admin)/admin/DocumentsV2';
+import DocumentsPremium from './(admin)/admin/DocumentsPremium';
+import DemoDashboard from './(admin)/admin/DemoDashboard';
 
 // ControlHub
 import ControlHubLayout from './layouts/ControlHubLayout';
@@ -72,8 +74,9 @@ function App() {
           </ProtectedRoute>
         }>
           <Route index element={<Navigate to="/admin/dashboard" replace />} />
-          <Route path="dashboard" element={<RoleAwareDashboard />} />
+          <Route path="dashboard" element={<DemoDashboard />} />
           <Route path="newdashboard" element={<RoleAwareDashboard />} />
+          <Route path="demo-dashboard" element={<DemoDashboard />} />
           <Route path="legacy-dashboard" element={<AdminDashboard />} />
           <Route path="approvals" element={<ApprovalsPage />} />
           <Route path="regions" element={<RegionManagement />} />
@@ -89,10 +92,10 @@ function App() {
           <Route path="reports/document-charts" element={<DocumentCharts />} />
           <Route path="reports/financial-charts" element={<FinancialCharts />} />
           <Route path="partnerships" element={<PartnershipPage />} />
-          <Route path="blogs" element={<BlogPage />} />
           <Route path="departments" element={<Departments />} />
           <Route path="departments/:id" element={<DepartmentDetailPage />} />
-          <Route path="documents" element={<Documents />} />
+          <Route path="documents" element={<DocumentsV2 />} />
+          <Route path="documents-premium" element={<DocumentsPremium />} />
           <Route path="documents/:id" element={<DocumentDetail />} />
           <Route path="workflows" element={<Workflows />} />
           <Route path="audit-trails" element={<AuditTrails />} />

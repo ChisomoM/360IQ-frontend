@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import type { Document } from '@/types/dms';
+import { post } from '@/lib/api/crud';
 
 interface DocumentSearchModalProps {
   isOpen: boolean;
@@ -25,15 +26,13 @@ interface DocumentSearchModalProps {
   onSelect?: (document: Document) => void;
 }
 
-const XTenantID = localStorage.getItem('X-Tenant-ID') || '';
-
 export function DocumentSearchModal({
   isOpen,
   onClose,
   onSelect,
 }: DocumentSearchModalProps) {
   const [searchQuery, setSearchQuery] = useState('');
-  const [results, setResults] = useState<Document[]>([]);
+  const [results, setResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -47,22 +46,9 @@ export function DocumentSearchModal({
     setIsSearching(true);
     setError(null);
     try {
-      const response = await fetch('/api/v1/chat/search', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Tenant-ID': XTenantID,
-        },
-        body: JSON.stringify({ search_query: query }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to search documents');
-      }
-
-      const data = await response.json();
-      setResults(data.data?.documents || []);
-      if (!data.data?.documents || data.data.documents.length === 0) {
+      const data = await post('DOCUMENT_SEARCH', { query });
+      setResults(data?.results || []);
+      if (!data?.results || data.results.length === 0) {
         setError('No documents found matching your search.');
       }
     } catch (err) {
@@ -177,21 +163,21 @@ export function DocumentSearchModal({
                       <p className="font-semibold text-gray-900 truncate group-hover:text-blue-700">
                         {doc.title}
                       </p>
-                      {doc.description && (
+                      {doc.preview && (
                         <p className="text-xs text-gray-600 line-clamp-2 mt-1">
-                          {doc.description}
+                          {doc.preview}
                         </p>
                       )}
                       <div className="flex gap-3 mt-2 flex-wrap">
-                        {doc.document_type && (
+                        {doc.type && (
                           <span className="inline-flex items-center gap-1 text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">
-                            {doc.document_type}
+                            {doc.type}
                           </span>
                         )}
-                        {doc.department_id && (
+                        {doc.owner && (
                           <span className="inline-flex items-center gap-1 text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">
                             <Building className="h-3 w-3" />
-                            {doc.department_id.slice(0, 8)}...
+                            {doc.owner}
                           </span>
                         )}
                         {doc.created_at && (

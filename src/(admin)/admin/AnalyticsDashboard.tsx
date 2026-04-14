@@ -31,11 +31,11 @@ const cardVariants = {
 };
 
 // ─── Design system status colors ─────────────────────────────────────────────
-// Using semantic token pairs as per Issue #36 design requirements
+// Using CSS variables so recharts SVG attrs stay token-driven, not hardcoded hex
 const STATUS_COLOR = {
-  approved: { bar: '#10B981', bg: 'bg-success-light', text: 'text-success-fg' },
-  pending: { bar: '#F59E0B', bg: 'bg-warning-light', text: 'text-warning-fg' },
-  rejected: { bar: '#EF4444', bg: 'bg-danger-light', text: 'text-danger-fg' },
+  approved: { bar: 'var(--tenant-success)', bg: 'bg-success-light', text: 'text-success-fg' },
+  pending:  { bar: 'var(--tenant-warning)', bg: 'bg-warning-light', text: 'text-warning-fg' },
+  rejected: { bar: 'var(--tenant-destructive)', bg: 'bg-danger-light', text: 'text-danger-fg' },
 };
 
 // ─── Mock data (matches shape of real API responses we proposed) ──────────────
@@ -150,7 +150,7 @@ function StatCard({ label, value, sub, icon, iconBg }: StatCardProps) {
       <div className={`p-2.5 rounded-lg ${iconBg}`}>{icon}</div>
       <div>
         <p className="font-sans text-text-xs text-muted-foreground">{label}</p>
-        <p className="font-display font-bold text-xl text-foreground">{value}</p>
+        <p className="font-display font-bold text-display-xs text-foreground">{value}</p>
         {sub && <p className="font-sans text-text-xs text-muted-foreground">{sub}</p>}
       </div>
     </motion.div>
@@ -302,7 +302,7 @@ export const AnalyticsDashboard: React.FC = () => {
               size="sm"
               onClick={handleExport}
               disabled={!canExportAnalytics || loading}
-              className="bg-primary text-primary-foreground hover:bg-primary/90 font-semibold font-sans text-text-sm"
+              className="bg-primary text-primary-fg hover:bg-primary-hover font-medium font-sans text-text-sm"
             >
               <Download className="h-4 w-4 mr-2" />
               Export Report
@@ -312,18 +312,40 @@ export const AnalyticsDashboard: React.FC = () => {
 
         {/* ── Filters Row ── */}
         <div className="flex flex-wrap items-center gap-3">
-          {/* Date range */}
-          <Select value={filters.dateRange} onValueChange={v => setFilter('dateRange', v)}>
-            <SelectTrigger className="w-44 h-9 font-sans text-text-sm">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="last_3_months">Last 3 Months</SelectItem>
-              <SelectItem value="last_6_months">Last 6 Months</SelectItem>
-              <SelectItem value="last_year">Last Year</SelectItem>
-              <SelectItem value="all_time">All Time</SelectItem>
-            </SelectContent>
-          </Select>
+          {/* Date range — Frosted Pill labeled toggle */}
+          <motion.div
+            className="flex bg-slate-50/80 p-1 rounded-xl gap-0.5"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+          >
+            {([
+              { value: 'last_3_months', label: '3M' },
+              { value: 'last_6_months', label: '6M' },
+              { value: 'last_year',     label: '1Y' },
+              { value: 'all_time',      label: 'All' },
+            ] as const).map((opt) => (
+              <motion.button
+                key={opt.value}
+                onClick={() => setFilter('dateRange', opt.value)}
+                className={`relative h-9 px-3 rounded-lg font-sans text-text-sm font-medium outline-none
+                  transition-colors duration-150
+                  ${filters.dateRange === opt.value ? 'text-slate-900' : 'text-slate-400'}`}
+                whileHover={{ scale: 1.04 }}
+                whileTap={{ scale: 0.94 }}
+                transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+              >
+                {filters.dateRange === opt.value && (
+                  <motion.span
+                    layoutId="dateRangeActivePill"
+                    className="absolute inset-0 bg-white rounded-lg shadow-sm"
+                    transition={{ type: 'spring', stiffness: 400, damping: 28 }}
+                  />
+                )}
+                <span className="relative z-10">{opt.label}</span>
+              </motion.button>
+            ))}
+          </motion.div>
 
           {/* Department — only shown to users with dept read permission */}
           {canViewDepts && (
@@ -434,7 +456,7 @@ export const AnalyticsDashboard: React.FC = () => {
             {loading ? <ChartSkeleton /> : (
               <Card className="border-border">
                 <CardHeader>
-                  <CardTitle className="font-display font-bold text-base text-foreground flex items-center gap-2">
+                  <CardTitle className="font-display font-semibold text-text-xl text-foreground flex items-center gap-2">
                     <TrendingUp className="h-4 w-4 text-ch-primary-600" />
                     Documents Processed Over Time
                   </CardTitle>
@@ -448,8 +470,8 @@ export const AnalyticsDashboard: React.FC = () => {
                       <AreaChart data={MOCK_VOLUME}>
                         <defs>
                           <linearGradient id="volGrad" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="#7C69FF" stopOpacity={0.3} />
-                            <stop offset="95%" stopColor="#7C69FF" stopOpacity={0} />
+                            <stop offset="5%" stopColor="var(--chart-1)" stopOpacity={0.3} />
+                            <stop offset="95%" stopColor="var(--chart-1)" stopOpacity={0} />
                           </linearGradient>
                         </defs>
                         <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
@@ -460,7 +482,7 @@ export const AnalyticsDashboard: React.FC = () => {
                           type="monotone"
                           dataKey="count"
                           name="Documents"
-                          stroke="#7C69FF"
+                          stroke="var(--chart-1)"
                           strokeWidth={2}
                           fill="url(#volGrad)"
                         />
@@ -477,7 +499,7 @@ export const AnalyticsDashboard: React.FC = () => {
             {loading ? <ChartSkeleton /> : (
               <Card className="border-border">
                 <CardHeader>
-                  <CardTitle className="font-display font-bold text-base text-foreground flex items-center gap-2">
+                  <CardTitle className="font-display font-semibold text-text-xl text-foreground flex items-center gap-2">
                     <FileText className="h-4 w-4 text-emerald-600" />
                     Pending vs Approved vs Rejected
                   </CardTitle>
@@ -518,7 +540,7 @@ export const AnalyticsDashboard: React.FC = () => {
             {loading ? <ChartSkeleton /> : (
               <Card className="border-border">
                 <CardHeader>
-                  <CardTitle className="font-display font-bold text-base text-foreground flex items-center gap-2">
+                  <CardTitle className="font-display font-semibold text-text-xl text-foreground flex items-center gap-2">
                     <Clock className="h-4 w-4 text-amber-600" />
                     Average Approval Time by Department
                   </CardTitle>
@@ -546,7 +568,7 @@ export const AnalyticsDashboard: React.FC = () => {
                         <Bar
                           dataKey="avgDays"
                           name="Avg Days"
-                          fill="#F59E0B"
+                          fill="var(--tenant-warning)"
                           radius={[0, 4, 4, 0]}
                         />
                       </BarChart>
@@ -562,7 +584,7 @@ export const AnalyticsDashboard: React.FC = () => {
             {loading ? <ChartSkeleton /> : (
               <Card className="border-border">
                 <CardHeader>
-                  <CardTitle className="font-display font-bold text-base text-foreground flex items-center gap-2">
+                  <CardTitle className="font-display font-semibold text-text-xl text-foreground flex items-center gap-2">
                     <Building2 className="h-4 w-4 text-ch-secondary-600" />
                     Department Performance
                   </CardTitle>
@@ -582,8 +604,8 @@ export const AnalyticsDashboard: React.FC = () => {
                         <YAxis tick={{ fontSize: 11, fontFamily: 'Plus Jakarta Sans' }} />
                         <Tooltip content={<CustomTooltip />} />
                         <Legend wrapperStyle={{ fontSize: 11, fontFamily: 'Plus Jakarta Sans' }} />
-                        <Bar dataKey="submitted" name="Submitted" fill="#03D8FD" radius={[4, 4, 0, 0]} />
-                        <Bar dataKey="processed" name="Processed" fill="#7C69FF" radius={[4, 4, 0, 0]} />
+                        <Bar dataKey="submitted" name="Submitted" fill="var(--chart-2)" radius={[4, 4, 0, 0]} />
+                        <Bar dataKey="processed" name="Processed" fill="var(--chart-1)" radius={[4, 4, 0, 0]} />
                       </BarChart>
                     </ResponsiveContainer>
                   )}
@@ -605,7 +627,7 @@ export const AnalyticsDashboard: React.FC = () => {
             {loading ? <ChartSkeleton /> : (
               <Card className="border-border">
                 <CardHeader>
-                  <CardTitle className="font-display font-bold text-base text-foreground flex items-center gap-2">
+                  <CardTitle className="font-display font-semibold text-text-xl text-foreground flex items-center gap-2">
                     <AlertTriangle className="h-4 w-4 text-destructive" />
                     Bottlenecks by Stage
                   </CardTitle>
@@ -672,7 +694,7 @@ export const AnalyticsDashboard: React.FC = () => {
             {loading ? <ChartSkeleton /> : (
               <Card className="border-border">
                 <CardHeader>
-                  <CardTitle className="font-display font-bold text-base text-foreground flex items-center gap-2">
+                  <CardTitle className="font-display font-semibold text-text-xl text-foreground flex items-center gap-2">
                     <XCircle className="h-4 w-4 text-ch-primary-600" />
                     Overall Status Summary
                   </CardTitle>
@@ -753,7 +775,7 @@ export const AnalyticsDashboard: React.FC = () => {
           {loading ? <ChartSkeleton /> : (
             <Card className="border-border">
               <CardHeader>
-                <CardTitle className="font-display font-bold text-base text-foreground flex items-center gap-2">
+                <CardTitle className="font-display font-semibold text-text-xl text-foreground flex items-center gap-2">
                   <Building2 className="h-4 w-4 text-ch-primary-600" />
                   Department Leaderboard
                 </CardTitle>
@@ -771,7 +793,7 @@ export const AnalyticsDashboard: React.FC = () => {
                           {['Rank', 'Department', 'Submitted', 'Processed', 'Efficiency', 'Status'].map(h => (
                             <th
                               key={h}
-                              className="pb-3 text-left font-sans font-medium text-text-sm text-gray-700 first:w-12"
+                              className="pb-3 text-left font-sans font-medium text-text-xs text-gray-500 uppercase tracking-wide first:w-12"
                             >
                               {h}
                             </th>
@@ -786,7 +808,12 @@ export const AnalyticsDashboard: React.FC = () => {
                             const isHigh = efficiency >= 90;
                             const isMid = efficiency >= 75 && efficiency < 90;
                             return (
-                              <tr key={dept.department} className="border-b border-border hover:bg-muted/40 transition-colors">
+                              <motion.tr
+                              key={dept.department}
+                              whileHover={{ x: 2 }}
+                              transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+                              className="border-b border-border hover:bg-slate-50/60 transition-colors duration-150"
+                            >
                                 <td className="py-3">
                                   <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold font-sans ${i === 0 ? 'bg-amber-100 text-amber-700' :
                                       i === 1 ? 'bg-gray-100 text-gray-600' :
@@ -826,7 +853,7 @@ export const AnalyticsDashboard: React.FC = () => {
                                     {isHigh ? 'On Track' : isMid ? 'At Risk' : 'Behind'}
                                   </Badge>
                                 </td>
-                              </tr>
+                              </motion.tr>
                             );
                           })}
                       </tbody>

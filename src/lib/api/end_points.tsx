@@ -19,6 +19,9 @@ export const API: Record<string, string> = {
 
   // RBAC — Roles, Maker Checker & User Management
   MAKER_CHECKER_RULES: "admin/maker-checker/rules",
+  MAKER_CHECKER_RULE_DETAIL: "admin/maker-checker/rules/:ruleId",
+  MAKER_CHECKER_RULE_TOGGLE: "admin/maker-checker/rules/:ruleId/toggle",
+  MAKER_CHECKER_ACTION_CODES: "admin/maker-checker/action-codes",
   MAKER_CHECKER_REQUESTS: "maker-checker/requests",
   MAKER_CHECKER_APPROVE: "maker-checker/requests/:id/approve",
   MAKER_CHECKER_REJECT: "maker-checker/requests/:id/reject",
@@ -43,6 +46,7 @@ export const API: Record<string, string> = {
   DOCUMENT_ANALYZE: "documents/:id/analyze",
   DOCUMENT_CHART_DATA: "documents/:id/chart-data",
   DOCUMENT_COMPARE: "documents/compare",
+  DOCUMENT_SEARCH: "chat/search",
   DOCUMENT_PREDICTIVE_ANALYSIS: "ai/predictive-analysis",
   AI_CHAT: "ai/chat",
   WORKFLOWS: "workflows",

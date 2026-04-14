@@ -4,6 +4,7 @@ import type { Document } from "@/types/dms"
 
 export type AdminLayoutContext = {
   analyzeDocument: (doc: Document) => void;
+  sendChatMessage: (message: string) => void;
 };
 
 import {
@@ -51,9 +52,15 @@ export default function AdminLayout() {
   const [isChatOpen, setIsChatOpen] = useState(false)
   const [isDocDetailsOpen, setIsDocDetailsOpen] = useState(false)
   const [pendingAnalysisDoc, setPendingAnalysisDoc] = useState<Document | null>(null)
+  const [pendingChatMessage, setPendingChatMessage] = useState<string | null>(null)
 
   const analyzeDocument = (doc: Document) => {
     setPendingAnalysisDoc(doc)
+    setIsChatOpen(true)
+  }
+
+  const sendChatMessage = (message: string) => {
+    setPendingChatMessage(message)
     setIsChatOpen(true)
   }
 
@@ -459,7 +466,7 @@ export default function AdminLayout() {
 
         <div className={`flex-1 transition-all duration-300 ${collapsed ? "ml-20" : "ml-64"} mr-20`}>
           <main className="px-10 py-10 min-h-screen">
-            <Outlet context={{ analyzeDocument } as AdminLayoutContext} />
+            <Outlet context={{ analyzeDocument, sendChatMessage } as AdminLayoutContext} />
           </main>
         </div>
 
@@ -470,6 +477,8 @@ export default function AdminLayout() {
         onClose={() => setIsChatOpen(false)}
         pendingDoc={pendingAnalysisDoc}
         onDocConsumed={() => setPendingAnalysisDoc(null)}
+        pendingChatMessage={pendingChatMessage}
+        onChatMessageConsumed={() => setPendingChatMessage(null)}
       />
 
       <RightSidebar
