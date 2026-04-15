@@ -123,9 +123,6 @@ const cardVariants = {
   visible: { opacity: 1, y: 0, transition: { duration: 0.25, ease: [0.16, 1, 0.3, 1] } },
 };
 
-// Motion-enhanced shadcn Button — preserves all variants + adds spring props
-const MotionButton = motion(Button);
-
 // ─── Department Card ──────────────────────────────────────────────────────────
 interface DeptCardProps {
   dept: Department;
@@ -151,10 +148,11 @@ function DeptCard({ dept, canManage, onView, onEdit, onDelete, onAssignUsers }: 
   return (
     <motion.div
       variants={cardVariants}
+      // Cards lift on hover (y translation) per design system — never scale a content surface
       whileHover={{ y: -3 }}
       whileTap={{ scale: 0.99 }}
       transition={{ type: 'spring', stiffness: 400, damping: 28 }}
-      className="group relative bg-card rounded-xl border border-border p-5 hover:border-primary/30 hover:shadow-lg transition-shadow duration-200 cursor-pointer"
+      className="group relative bg-card rounded-xl border border-gray-200 p-5 hover:border-primary/30 hover:shadow-md transition-shadow duration-200 cursor-pointer"
       onClick={onView}
     >
       {/* Top row: avatar + dropdown */}
@@ -173,14 +171,13 @@ function DeptCard({ dept, canManage, onView, onEdit, onDelete, onAssignUsers }: 
           <DropdownMenu>
             {/* stopPropagation prevents the card's onView click from firing */}
             <DropdownMenuTrigger asChild onClick={e => e.stopPropagation()}>
-              <motion.button
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.88 }}
-                transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-                className="h-8 w-8 rounded-md inline-flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-foreground hover:bg-muted"
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-foreground hover:bg-muted"
               >
                 <MoreVertical className="h-4 w-4" />
-              </motion.button>
+              </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-44">
               <DropdownMenuItem
@@ -233,22 +230,22 @@ function DeptCard({ dept, canManage, onView, onEdit, onDelete, onAssignUsers }: 
       )}
 
       {/* Status dot + "View →" ghost link */}
-      <div className="flex items-center justify-between mt-auto pt-3 border-t border-border">
+      <div className="flex items-center justify-between mt-auto pt-3 border-t border-gray-200">
         <div className="flex items-center gap-1.5">
           <div className={`w-1.5 h-1.5 rounded-full ${dept.is_active ? 'bg-emerald-500' : 'bg-muted-foreground'}`} />
           <span className={`text-xs font-medium font-sans ${dept.is_active ? 'text-emerald-600' : 'text-muted-foreground'}`}>
             {dept.is_active ? 'Active' : 'Inactive'}
           </span>
         </div>
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          transition={{ type: 'spring', stiffness: 500, damping: 28 }}
+        {/* "View →" only appears on hover */}
+        <Button
+          variant="ghost"
+          size="sm"
           onClick={e => { e.stopPropagation(); onView(); }}
-          className="h-6 px-2 rounded text-xs font-medium text-muted-foreground hover:text-primary opacity-0 group-hover:opacity-100 transition-opacity"
+          className="h-6 px-2 text-xs text-muted-foreground hover:text-primary opacity-0 group-hover:opacity-100 transition-opacity"
         >
           View →
-        </motion.button>
+        </Button>
       </div>
     </motion.div>
   );
@@ -258,7 +255,7 @@ function DeptCard({ dept, canManage, onView, onEdit, onDelete, onAssignUsers }: 
 // Shown while data is loading — mirrors the real card's layout
 function DeptCardSkeleton() {
   return (
-    <motion.div variants={cardVariants} className="bg-card rounded-xl border border-border p-5">
+    <motion.div variants={cardVariants} className="bg-card rounded-xl border border-gray-200 p-5">
       <div className="flex items-start justify-between mb-4">
         <Skeleton className="h-12 w-12 rounded-full" />
       </div>
@@ -266,7 +263,7 @@ function DeptCardSkeleton() {
       <Skeleton className="h-5 w-14 mb-3" />
       <Skeleton className="h-3 w-full mb-1" />
       <Skeleton className="h-3 w-2/3 mb-4" />
-      <div className="pt-3 border-t border-border">
+      <div className="pt-3 border-t border-gray-200">
         <Skeleton className="h-3 w-12" />
       </div>
     </motion.div>
@@ -578,15 +575,10 @@ export default function Departments() {
               if (!open) { setFormData(EMPTY_FORM); setFormErrors({}); }
             }}>
               <DialogTrigger asChild>
-                <MotionButton
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.97 }}
-                  transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-                  className="bg-primary text-primary-foreground hover:bg-primary/90 font-semibold shadow-sm"
-                >
+                <Button className="bg-primary text-primary-foreground hover:bg-primary/90 font-semibold shadow-sm">
                   <Plus className="h-4 w-4 mr-2" />
                   Add Department
-                </MotionButton>
+                </Button>
               </DialogTrigger>
               <DialogContent className="max-w-md bg-white">
                 <DialogHeader>
@@ -606,26 +598,17 @@ export default function Departments() {
                   }}
                 />
                 <DialogFooter className="gap-2">
-                  <MotionButton
-                    variant="outline"
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.97 }}
-                    transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-                    onClick={() => setIsAddDialogOpen(false)}
-                  >
+                  <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
                     Cancel
-                  </MotionButton>
-                  <MotionButton
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.97 }}
-                    transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                  </Button>
+                  <Button
                     onClick={handleCreateDepartment}
                     className="bg-primary text-primary-foreground hover:bg-primary/90 font-semibold"
                     disabled={isSubmitting}
                   >
                     {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                     Create
-                  </MotionButton>
+                  </Button>
                 </DialogFooter>
               </DialogContent>
             </Dialog>
@@ -648,10 +631,7 @@ export default function Departments() {
             <motion.div
               key={label}
               variants={cardVariants}
-              whileHover={{ y: -3 }}
-              whileTap={{ scale: 0.99 }}
-              transition={{ type: 'spring', stiffness: 400, damping: 28 }}
-              className="bg-card rounded-xl border border-border p-4 flex items-center gap-3 hover:shadow-sm transition-shadow duration-200"
+              className="bg-card rounded-xl border border-gray-200 p-4 flex items-center gap-3"
             >
               <div className={`p-2.5 rounded-lg ${bg}`}>
                 <Building2 className={`h-5 w-5 ${color}`} />
@@ -675,15 +655,12 @@ export default function Departments() {
           />
           {/* Clear button — only rendered when there's text in the search box */}
           {searchQuery && (
-            <motion.button
-              whileHover={{ scale: 1.15 }}
-              whileTap={{ scale: 0.85 }}
-              transition={{ type: 'spring', stiffness: 600, damping: 32 }}
+            <button
               onClick={() => setSearchQuery('')}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
             >
               <X className="h-4 w-4" />
-            </motion.button>
+            </button>
           )}
         </div>
 
@@ -703,7 +680,7 @@ export default function Departments() {
 
         ) : filteredDepartments.length === 0 ? (
           // Empty state — message differs based on whether search is active
-          <div className="flex flex-col items-center justify-center py-20 px-6 text-center rounded-xl border-2 border-dashed border-border bg-muted/30">
+          <div className="flex flex-col items-center justify-center py-20 px-6 text-center rounded-xl border-2 border-dashed border-gray-200 bg-muted/30">
             <div className="rounded-full bg-muted p-6 mb-4">
               <Building2 className="h-10 w-10 text-muted-foreground" />
             </div>
@@ -717,27 +694,18 @@ export default function Departments() {
             </p>
             <div className="flex gap-3">
               {!searchQuery && canManage && (
-                <MotionButton
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.97 }}
-                  transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                <Button
                   onClick={() => setIsAddDialogOpen(true)}
                   className="bg-primary text-primary-foreground hover:bg-primary/90 font-semibold"
                 >
                   <Plus className="h-4 w-4 mr-2" />
                   Create First Department
-                </MotionButton>
+                </Button>
               )}
               {searchQuery && (
-                <MotionButton
-                  variant="outline"
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.97 }}
-                  transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-                  onClick={() => setSearchQuery('')}
-                >
+                <Button variant="outline" onClick={() => setSearchQuery('')}>
                   Clear Search
-                </MotionButton>
+                </Button>
               )}
             </div>
           </div>
@@ -774,35 +742,29 @@ export default function Departments() {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-            className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pt-4 border-t border-border"
+            className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pt-4 border-t border-gray-200"
           >
             <p className="font-sans text-text-sm text-muted-foreground">
               Page <span className="font-semibold text-foreground">{currentPage}</span> of{' '}
               <span className="font-semibold text-foreground">{totalPages}</span> · {totalCount} total
             </p>
             <div className="flex gap-2">
-              <MotionButton
+              <Button
                 variant="outline"
                 size="sm"
-                whileHover={currentPage !== 1 ? { scale: 1.02 } : {}}
-                whileTap={currentPage !== 1 ? { scale: 0.97 } : {}}
-                transition={{ type: 'spring', stiffness: 500, damping: 30 }}
                 disabled={currentPage === 1}
                 onClick={() => setCurrentPage(p => p - 1)}
               >
                 Previous
-              </MotionButton>
-              <MotionButton
+              </Button>
+              <Button
                 variant="outline"
                 size="sm"
-                whileHover={currentPage !== totalPages ? { scale: 1.02 } : {}}
-                whileTap={currentPage !== totalPages ? { scale: 0.97 } : {}}
-                transition={{ type: 'spring', stiffness: 500, damping: 30 }}
                 disabled={currentPage === totalPages}
                 onClick={() => setCurrentPage(p => p + 1)}
               >
                 Next
-              </MotionButton>
+              </Button>
             </div>
           </motion.div>
         )}
@@ -840,26 +802,15 @@ export default function Departments() {
               />
             </div>
             <DialogFooter className="gap-2">
-              <MotionButton
-                variant="outline"
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.97 }}
-                transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-                onClick={() => setIsEditDialogOpen(false)}
-              >
-                Cancel
-              </MotionButton>
-              <MotionButton
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.97 }}
-                transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+              <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>Cancel</Button>
+              <Button
                 onClick={handleUpdateDepartment}
                 className="bg-primary text-primary-foreground hover:bg-primary/90 font-semibold"
                 disabled={isEditSubmitting}
               >
                 {isEditSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Save Changes
-              </MotionButton>
+              </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
@@ -914,15 +865,7 @@ export default function Departments() {
               />
             )}
             <DialogFooter>
-              <MotionButton
-                variant="outline"
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.97 }}
-                transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-                onClick={() => setIsAssignUsersOpen(false)}
-              >
-                Close
-              </MotionButton>
+              <Button variant="outline" onClick={() => setIsAssignUsersOpen(false)}>Close</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>

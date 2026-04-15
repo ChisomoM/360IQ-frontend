@@ -4,7 +4,8 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, useOutletContext } from 'react-router-dom';
-import { fetchData, file as downloadFile } from '@/lib/api/crud';
+import { motion } from 'framer-motion';
+import { fetchData, file as downloadFile, fetchFileBuffer } from '@/lib/api/crud';
 import type { Document, Department, DocumentVersion, DocumentUpdatePayload } from '@/types/dms';
 import type { AdminLayoutContext } from '@/layouts/AdminLayout';
 import { toast } from 'sonner';
@@ -290,6 +291,8 @@ export default function DocumentDetail() {
   const [departments, setDepartments] = useState<Department[]>([]);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+  // Separate from notFound — shown when the server returns 403/forbidden
+  const [accessDenied, setAccessDenied] = useState(false);
 
   // Edit dialog
   const [isEditOpen, setIsEditOpen] = useState(false);
@@ -355,9 +358,15 @@ export default function DocumentDetail() {
         setWorkflow(getMockWorkflow(id));
         setRelatedDocs(getMockRelatedDocuments(id));
       })
-      .catch(() => {
-        setNotFound(true);
-        toast.error('Document not found');
+      .catch((err) => {
+        // Check if the backend said "forbidden" / "unauthorized" vs just not found
+        const msg = err instanceof Error ? err.message.toLowerCase() : String(err).toLowerCase();
+        if (msg.includes('403') || msg.includes('forbidden') || msg.includes('unauthorized')) {
+          setAccessDenied(true);
+        } else {
+          setNotFound(true);
+          toast.error('Document not found');
+        }
       })
       .finally(() => setLoading(false));
   }, [id]);
@@ -386,12 +395,30 @@ export default function DocumentDetail() {
     }
   };
 
-  // Opens the browser print dialog — CSS media queries hide the sidebar/nav
-  const handlePrint = () => {
-    window.print();
+  // Print the document file itself, not the whole page UI.
+  // We use fetchFileBuffer (which sends auth headers) to get the file as a blob,
+  // then create a temporary object URL and open it in a new tab.
+  // The browser's PDF viewer has a built-in print button the user can use.
+  const handlePrint = async () => {
+    if (!doc) { toast.error('No document available'); return; }
+    try {
+      toast.info('Opening document for printing...');
+      // fetchFileBuffer handles auth — returns an ArrayBuffer
+      const buffer = await fetchFileBuffer('DOCUMENT_DOWNLOAD', { id: doc.id });
+      const blob = new Blob([buffer], { type: 'application/pdf' });
+      const blobUrl = URL.createObjectURL(blob);
+      const printWindow = window.open(blobUrl, '_blank');
+      if (!printWindow) {
+        toast.error('Popup blocked — please allow popups for this site.');
+      }
+      // Clean up the blob URL after the tab has had time to load it
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Could not open document for printing');
+    }
   };
 
-  // Copies the current page URL to clipboard
+  // Copies the full current URL so the recipient can paste it directly in their browser.
   const handleCopyUrl = async () => {
     try {
       await navigator.clipboard.writeText(window.location.href);
@@ -555,6 +582,27 @@ export default function DocumentDetail() {
     );
   }
 
+  // Shown when the backend returns 403 — the user is logged in but lacks permission
+  if (accessDenied) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4 text-center px-6">
+        <div className="w-16 h-16 rounded-full bg-red-50 flex items-center justify-center">
+          <Shield className="h-8 w-8 text-red-400" />
+        </div>
+        <div>
+          <h2 className="text-xl font-display font-bold text-gray-900">Access Denied</h2>
+          <p className="text-gray-500 font-sans text-sm mt-1 max-w-sm">
+            You don't have permission to view this document.
+            If you think this is a mistake, contact your administrator.
+          </p>
+        </div>
+        <Button variant="outline" onClick={() => navigate('/admin/documents')}>
+          <ArrowLeft className="h-4 w-4 mr-2" /> Back to Documents
+        </Button>
+      </div>
+    );
+  }
+
   if (notFound || !doc) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
@@ -576,55 +624,58 @@ export default function DocumentDetail() {
     <div className="w-full space-y-6">
 
       {/* ── Page Header ── */}
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex items-start gap-4">
+      {/* Two-row layout: top row has back button + actions, bottom row has title + description.
+          This prevents long titles from fighting the buttons for horizontal space. */}
+      <div className="space-y-3">
+        {/* Row 1: Navigation + Actions */}
+        <div className="flex items-center justify-between gap-4">
           <Button
             variant="ghost"
             size="sm"
             onClick={() => navigate('/admin/documents')}
-            className="mt-1 text-gray-500 hover:text-gray-900"
+            className="text-gray-500 hover:text-gray-900 flex-shrink-0"
           >
             <ArrowLeft className="h-4 w-4 mr-1.5" />
             Documents
           </Button>
-          <div>
-            <h1 className="text-2xl font-display font-bold text-gray-900 leading-tight">{doc.title}</h1>
-            <p className="text-gray-500 font-sans text-sm mt-0.5">
-              {doc.description || 'No description provided.'}
-            </p>
+
+          {/* Action buttons — Print removed per Chisomo */}
+          <div className="flex items-center gap-2 flex-shrink-0">
+            {[
+              { label: 'Download', icon: <Download className="h-4 w-4 mr-1.5" />, onClick: handleDownload },
+              { label: 'Share', icon: <Share2 className="h-4 w-4 mr-1.5" />, onClick: () => setIsShareOpen(true) },
+              { label: 'Versions', icon: <History className="h-4 w-4 mr-1.5" />, onClick: openVersions },
+              { label: 'Edit', icon: <Pencil className="h-4 w-4 mr-1.5" />, onClick: openEdit },
+            ].map(({ label, icon, onClick }) => (
+              <motion.div key={label}
+                whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.94 }}
+                transition={{ type: 'spring', stiffness: 500, damping: 30 }}>
+                <Button variant="outline" size="sm" onClick={onClick} className="border-gray-200">
+                  {icon}{label}
+                </Button>
+              </motion.div>
+            ))}
+            <motion.div
+              whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.94 }}
+              transition={{ type: 'spring', stiffness: 500, damping: 30 }}>
+              <Button size="sm" onClick={handleAnalyzeWithAI}
+                className="bg-gradient-to-r from-[#1e3c21] to-[#2a5230] text-white hover:opacity-90 gap-1.5 shadow-sm">
+                <Sparkles className="h-4 w-4" />
+                Analyze with AI
+              </Button>
+            </motion.div>
           </div>
         </div>
 
-        {/* Action buttons — Download, Print, Share, Versions, Edit, AI */}
-        <div className="flex items-center gap-2 flex-shrink-0 mt-1">
-          <Button variant="outline" size="sm" onClick={handleDownload}>
-            <Download className="h-4 w-4 mr-1.5" /> Download
-          </Button>
-
-          {/* Print — triggers browser print dialog */}
-          <Button variant="outline" size="sm" onClick={handlePrint}>
-            <Printer className="h-4 w-4 mr-1.5" /> Print
-          </Button>
-
-          {/* Share — opens a small modal with a copy-link button */}
-          <Button variant="outline" size="sm" onClick={() => setIsShareOpen(true)}>
-            <Share2 className="h-4 w-4 mr-1.5" /> Share
-          </Button>
-
-          <Button variant="outline" size="sm" onClick={openVersions}>
-            <History className="h-4 w-4 mr-1.5" /> Versions
-          </Button>
-          <Button variant="outline" size="sm" onClick={openEdit}>
-            <Pencil className="h-4 w-4 mr-1.5" /> Edit
-          </Button>
-          <Button
-            size="sm"
-            onClick={handleAnalyzeWithAI}
-            className="bg-gradient-to-r from-[#1e3c21] to-[#2a5230] text-white hover:opacity-90 gap-1.5 shadow-sm"
-          >
-            <Sparkles className="h-4 w-4" />
-            Analyze with AI
-          </Button>
+        {/* Row 2: Title + description — full width, wraps freely */}
+        <div>
+          <h1 className="text-2xl font-display font-bold text-gray-900 leading-tight">
+            {doc.title}
+          </h1>
+          {/* No truncation here — description can wrap to as many lines as needed */}
+          <p className="text-gray-500 font-sans text-sm mt-1 max-w-2xl">
+            {doc.description || 'No description provided.'}
+          </p>
         </div>
       </div>
 
@@ -960,10 +1011,12 @@ export default function DocumentDetail() {
                   {relatedDocs.map(related => {
                     const relStat = statusConfig(related.status ?? '');
                     return (
-                      <div
+                      <motion.div
                         key={related.id}
+                        whileHover={{ x: 2 }}
+                        transition={{ type: 'spring', stiffness: 400, damping: 30 }}
                         onClick={() => navigate(`/admin/documents/${related.id}`)}
-                        className="flex items-center justify-between gap-3 p-3 rounded-lg border border-border hover:bg-muted/50 cursor-pointer transition-colors group"
+                        className="flex items-center justify-between gap-3 p-3 rounded-lg border border-gray-200 hover:bg-slate-50/60 cursor-pointer transition-colors group"
                       >
                         <div className="flex items-center gap-3 min-w-0">
                           {/* Document type colour dot */}
@@ -981,7 +1034,7 @@ export default function DocumentDetail() {
                           <Badge className={cn('border text-xs', relStat.cls)}>{relStat.label}</Badge>
                           <ChevronRight className="h-4 w-4 text-gray-300 group-hover:text-gray-500 transition-colors" />
                         </div>
-                      </div>
+                      </motion.div>
                     );
                   })}
                 </div>
@@ -1156,36 +1209,39 @@ export default function DocumentDetail() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
-              <Button variant="outline" className="w-full justify-start" size="sm" onClick={handleDownload}>
-                <Download className="h-4 w-4 mr-2 text-gray-500" />
-                Download File
-              </Button>
-              <Button variant="outline" className="w-full justify-start" size="sm" onClick={handlePrint}>
-                <Printer className="h-4 w-4 mr-2 text-gray-500" />
-                Print Document
-              </Button>
-              <Button variant="outline" className="w-full justify-start" size="sm" onClick={() => setIsShareOpen(true)}>
-                <Share2 className="h-4 w-4 mr-2 text-gray-500" />
-                Share Link
-              </Button>
-              <Button variant="outline" className="w-full justify-start" size="sm" onClick={openVersions}>
-                <History className="h-4 w-4 mr-2 text-gray-500" />
-                Version History
-              </Button>
-              <Button variant="outline" className="w-full justify-start" size="sm" onClick={openEdit}>
-                <Pencil className="h-4 w-4 mr-2 text-gray-500" />
-                Edit Metadata
-              </Button>
+              {[
+                { label: 'Download File', icon: <Download className="h-4 w-4 mr-2 text-gray-500" />, onClick: handleDownload },
+                { label: 'Share Link', icon: <Share2 className="h-4 w-4 mr-2 text-gray-500" />, onClick: () => setIsShareOpen(true) },
+                { label: 'Version History', icon: <History className="h-4 w-4 mr-2 text-gray-500" />, onClick: openVersions },
+                { label: 'Edit Metadata', icon: <Pencil className="h-4 w-4 mr-2 text-gray-500" />, onClick: openEdit },
+              ].map(({ label, icon, onClick }) => (
+                <motion.div
+                  key={label}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.97 }}
+                  transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                >
+                  <Button variant="outline" className="w-full justify-start border-gray-200 hover:border-gray-300" size="sm" onClick={onClick}>
+                    {icon}{label}
+                  </Button>
+                </motion.div>
+              ))}
               <Separator />
-              <Button
-                variant="outline"
-                className="w-full justify-start text-red-500 hover:text-red-600 hover:bg-red-50 border-red-100"
-                size="sm"
-                onClick={() => setIsDeleteOpen(true)}
+              <motion.div
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.97 }}
+                transition={{ type: 'spring', stiffness: 500, damping: 30 }}
               >
-                <Trash2 className="h-4 w-4 mr-2" />
-                Delete Document
-              </Button>
+                <Button
+                  variant="outline"
+                  className="w-full justify-start text-red-500 hover:text-red-600 hover:bg-red-50 border-gray-200 hover:border-red-200"
+                  size="sm"
+                  onClick={() => setIsDeleteOpen(true)}
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Delete Document
+                </Button>
+              </motion.div>
             </CardContent>
           </Card>
 
@@ -1222,22 +1278,22 @@ export default function DocumentDetail() {
           <DialogHeader>
             <DialogTitle className="font-display font-bold text-foreground">Share Document</DialogTitle>
             <DialogDescription className="font-sans text-sm text-muted-foreground">
-              Copy the link below to share this document with others.
+              Copy the link below and paste it directly into a browser address bar to open this document.
             </DialogDescription>
           </DialogHeader>
           <div className="flex gap-2 py-2">
-            {/* Read-only URL input */}
+            {/* Full URL — recipient pastes this into their browser address bar */}
             <Input
               readOnly
               value={window.location.href}
-              className="text-xs font-mono text-gray-600 bg-muted border-0"
+              className="text-xs font-mono text-gray-500 bg-muted border-gray-200"
             />
             <Button size="sm" onClick={handleCopyUrl} className="flex-shrink-0 bg-ch-primary hover:bg-ch-primary-700 text-white">
               {urlCopied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
             </Button>
           </div>
           {urlCopied && (
-            <p className="text-xs text-emerald-600 font-medium -mt-1">Link copied to clipboard!</p>
+            <p className="text-xs text-emerald-600 font-medium -mt-1">✓ Link copied — paste it in the browser address bar.</p>
           )}
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsShareOpen(false)}>Close</Button>
