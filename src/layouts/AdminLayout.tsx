@@ -1,5 +1,6 @@
 import { Outlet, Link, useLocation } from "react-router-dom"
 import { useState } from "react"
+import { motion, AnimatePresence } from "framer-motion"
 import type { Document } from "@/types/dms"
 
 export type AdminLayoutContext = {
@@ -78,45 +79,68 @@ export default function AdminLayout() {
           <div className="h-full flex flex-col bg-primary text-white shadow-xl">
 
             <div className="flex items-center justify-center py-6 border-b border-white/10">
-              {!collapsed && (
-                <>
-                  {logoUrl ? (
-                    <img
-                      src={logo}
-                      alt={tenantName}
-                      className="h-12 w-auto"
-                    />
-                  ) : (
-                    <div className="text-white font-extrabold uppercase tracking-wider text-xl">
-                      {tenantName}
-                    </div>
-                  )}
-                </>
-              )}
+              <AnimatePresence mode="wait">
+                {!collapsed && (
+                  <motion.div
+                    key="brand"
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -10 }}
+                    transition={{ duration: 0.25, ease: 'easeOut' }}
+                  >
+                    {logoUrl ? (
+                      <img
+                        src={logo}
+                        alt={tenantName}
+                        className="h-12 w-auto"
+                      />
+                    ) : (
+                      <div className="text-white font-extrabold uppercase tracking-wider text-xl">
+                        {tenantName}
+                      </div>
+                    )}
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
 
-            <button
+            <motion.button
               onClick={toggleSidebar}
               className="absolute -right-3 top-24 bg-white text-primary rounded-full p-1 shadow-lg border border-primary/20"
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.85 }}
+              transition={{ type: 'spring', stiffness: 400, damping: 17 }}
             >
               {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
-            </button>
+            </motion.button>
 
             <div className="flex-1 overflow-y-auto p-4">
               <SidebarMenu className="space-y-3">
 
                 {/* Dashboard */}
                 <SidebarMenuItem>
-                  <SidebarMenuButton
-                    asChild
-                    isActive={isActive("/admin") || isActive("/admin/dashboard")}
-                    className="text-white hover:bg-white/10 data-[active=true]:bg-secondary data-[active=true]:text-black rounded-md transition-colors"
+                  {(isActive("/admin") || isActive("/admin/dashboard")) && (
+                    <motion.div
+                      layoutId="sidebar-active-pill"
+                      className="absolute inset-0 rounded-md bg-secondary"
+                      transition={{ type: 'spring', stiffness: 600, damping: 20 }}
+                    />
+                  )}
+                  <motion.div
+                    whileHover={{ x: 4 }}
+                    transition={{ type: 'spring', stiffness: 350, damping: 10 }}
                   >
-                    <Link to="/admin/dashboard" className="flex items-center gap-3">
-                      <LayoutDashboard className="h-5 w-5" />
-                      {!collapsed && <span>Dashboard</span>}
-                    </Link>
-                  </SidebarMenuButton>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={isActive("/admin") || isActive("/admin/dashboard")}
+                      className="text-white hover:bg-white/10 data-[active=true]:bg-secondary data-[active=true]:text-black rounded-md transition-colors relative z-10"
+                    >
+                      <Link to="/admin/dashboard" className="flex items-center gap-3">
+                        <LayoutDashboard className="h-5 w-5" />
+                        {!collapsed && <span>Dashboard</span>}
+                      </Link>
+                    </SidebarMenuButton>
+                  </motion.div>
                 </SidebarMenuItem>
 
                 {/* Financials Section */}
@@ -129,28 +153,52 @@ export default function AdminLayout() {
                   >
                     <SidebarMenu className="space-y-2">
                       <SidebarMenuItem>
-                        <SidebarMenuButton
-                          asChild
-                          isActive={isActive("/admin/finance/dashboard")}
-                          className="text-white hover:bg-white/10 data-[active=true]:bg-secondary data-[active=true]:text-black rounded-md transition-colors"
+                        {isActive("/admin/finance/dashboard") && (
+                          <motion.div
+                            layoutId="sidebar-active-pill"
+                            className="absolute inset-0 rounded-md bg-secondary"
+                            transition={{ type: 'spring', stiffness: 600, damping: 20 }}
+                          />
+                        )}
+                        <motion.div
+                          whileHover={{ x: 4 }}
+                          transition={{ type: 'spring', stiffness: 350, damping: 10 }}
                         >
-                          <Link to="/admin/finance/dashboard" className="flex items-center gap-3">
-                            <Wallet className="h-5 w-5" />
-                            {!collapsed && <span>Finance Dashboard</span>}
-                          </Link>
-                        </SidebarMenuButton>
+                          <SidebarMenuButton
+                            asChild
+                            isActive={isActive("/admin/finance/dashboard")}
+                            className="text-white hover:bg-white/10 data-[active=true]:bg-secondary data-[active=true]:text-black rounded-md transition-colors relative z-10"
+                          >
+                            <Link to="/admin/finance/dashboard" className="flex items-center gap-3">
+                              <Wallet className="h-5 w-5" />
+                              {!collapsed && <span>Finance Dashboard</span>}
+                            </Link>
+                          </SidebarMenuButton>
+                        </motion.div>
                       </SidebarMenuItem>
                       <SidebarMenuItem>
-                        <SidebarMenuButton
-                          asChild
-                          isActive={isActive("/admin/finance/reports")}
-                          className="text-white hover:bg-white/10 data-[active=true]:bg-secondary data-[active=true]:text-black rounded-md transition-colors"
+                        {isActive("/admin/finance/reports") && (
+                          <motion.div
+                            layoutId="sidebar-active-pill"
+                            className="absolute inset-0 rounded-md bg-secondary"
+                            transition={{ type: 'spring', stiffness: 600, damping: 20 }}
+                          />
+                        )}
+                        <motion.div
+                          whileHover={{ x: 4 }}
+                          transition={{ type: 'spring', stiffness: 350, damping: 10 }}
                         >
-                          <Link to="/admin/finance/reports" className="flex items-center gap-3">
-                            <PieChart className="h-5 w-5" />
-                            {!collapsed && <span>Finance Reports</span>}
-                          </Link>
-                        </SidebarMenuButton>
+                          <SidebarMenuButton
+                            asChild
+                            isActive={isActive("/admin/finance/reports")}
+                            className="text-white hover:bg-white/10 data-[active=true]:bg-secondary data-[active=true]:text-black rounded-md transition-colors relative z-10"
+                          >
+                            <Link to="/admin/finance/reports" className="flex items-center gap-3">
+                              <PieChart className="h-5 w-5" />
+                              {!collapsed && <span>Finance Reports</span>}
+                            </Link>
+                          </SidebarMenuButton>
+                        </motion.div>
                       </SidebarMenuItem>
                     </SidebarMenu>
                   </CollapsibleSidebarSection>
@@ -221,6 +269,7 @@ export default function AdminLayout() {
                   )} */}
 
                 {/* Documents Section */}
+                {hasPermission(user, PERMISSIONS['documents.read']) && (
                 <CollapsibleSidebarSection
                   title="Documents"
                   icon={<FileText className="h-5 w-5" />}
@@ -229,31 +278,58 @@ export default function AdminLayout() {
                 >
                   <SidebarMenu className="space-y-2">
                     <SidebarMenuItem>
-                      <SidebarMenuButton
-                        asChild
-                        isActive={isActive("/admin/documents")}
-                        className="text-white hover:bg-white/10 data-[active=true]:bg-secondary data-[active=true]:text-black rounded-md transition-colors"
+                      {isActive("/admin/documents") && (
+                        <motion.div
+                          layoutId="sidebar-active-pill"
+                          className="absolute inset-0 rounded-md bg-secondary"
+                          transition={{ type: 'spring', stiffness: 600, damping: 20 }}
+                        />
+                      )}
+                      <motion.div
+                        whileHover={{ x: 4 }}
+                        transition={{ type: 'spring', stiffness: 350, damping: 10 }}
                       >
-                        <Link to="/admin/documents" className="flex items-center gap-3">
-                          <FileText className="h-5 w-5" />
-                          {!collapsed && <span>Documents</span>}
-                        </Link>
-                      </SidebarMenuButton>
+                        <SidebarMenuButton
+                          asChild
+                          isActive={isActive("/admin/documents")}
+                          className="text-white hover:bg-white/10 data-[active=true]:bg-secondary data-[active=true]:text-black rounded-md transition-colors relative z-10"
+                        >
+                          <Link to="/admin/documents" className="flex items-center gap-3">
+                            <FileText className="h-5 w-5" />
+                            {!collapsed && <span>Documents</span>}
+                          </Link>
+                        </SidebarMenuButton>
+                      </motion.div>
                     </SidebarMenuItem>
+                    {hasPermission(user, PERMISSIONS['documents.sign']) && (
                     <SidebarMenuItem>
-                      <SidebarMenuButton
-                        asChild
-                        isActive={isActive("/admin/signatures")}
-                        className="text-white hover:bg-white/10 data-[active=true]:bg-secondary data-[active=true]:text-black rounded-md transition-colors"
+                      {isActive("/admin/signatures") && (
+                        <motion.div
+                          layoutId="sidebar-active-pill"
+                          className="absolute inset-0 rounded-md bg-secondary"
+                          transition={{ type: 'spring', stiffness: 600, damping: 20 }}
+                        />
+                      )}
+                      <motion.div
+                        whileHover={{ x: 4 }}
+                        transition={{ type: 'spring', stiffness: 350, damping: 10 }}
                       >
-                        <Link to="/admin/signatures" className="flex items-center gap-3">
-                          <PenLine className="h-5 w-5" />
-                          {!collapsed && <span>My Signatures</span>}
-                        </Link>
-                      </SidebarMenuButton>
+                        <SidebarMenuButton
+                          asChild
+                          isActive={isActive("/admin/signatures")}
+                          className="text-white hover:bg-white/10 data-[active=true]:bg-secondary data-[active=true]:text-black rounded-md transition-colors relative z-10"
+                        >
+                          <Link to="/admin/signatures" className="flex items-center gap-3">
+                            <PenLine className="h-5 w-5" />
+                            {!collapsed && <span>My Signatures</span>}
+                          </Link>
+                        </SidebarMenuButton>
+                      </motion.div>
                     </SidebarMenuItem>
+                    )}
                   </SidebarMenu>
                 </CollapsibleSidebarSection>
+                )}
 
                 {/* Reports & Analytics Section */}
                 {hasPermission(user, PERMISSIONS['analytics.read']) && (
@@ -265,41 +341,77 @@ export default function AdminLayout() {
                   >
                     <SidebarMenu className="space-y-2">
                       <SidebarMenuItem>
-                        <SidebarMenuButton
-                          asChild
-                          isActive={isActive("/admin/analytics")}
-                          className="text-white hover:bg-white/10 data-[active=true]:bg-secondary data-[active=true]:text-black rounded-md transition-colors"
+                        {isActive("/admin/analytics") && (
+                          <motion.div
+                            layoutId="sidebar-active-pill"
+                            className="absolute inset-0 rounded-md bg-secondary"
+                            transition={{ type: 'spring', stiffness: 600, damping: 20 }}
+                          />
+                        )}
+                        <motion.div
+                          whileHover={{ x: 4 }}
+                          transition={{ type: 'spring', stiffness: 350, damping: 10 }}
                         >
-                          <Link to="/admin/analytics" className="flex items-center gap-3">
-                            <BarChart2 className="h-5 w-5" />
-                            {!collapsed && <span>Analytics</span>}
-                          </Link>
-                        </SidebarMenuButton>
+                          <SidebarMenuButton
+                            asChild
+                            isActive={isActive("/admin/analytics")}
+                            className="text-white hover:bg-white/10 data-[active=true]:bg-secondary data-[active=true]:text-black rounded-md transition-colors relative z-10"
+                          >
+                            <Link to="/admin/analytics" className="flex items-center gap-3">
+                              <BarChart2 className="h-5 w-5" />
+                              {!collapsed && <span>Analytics</span>}
+                            </Link>
+                          </SidebarMenuButton>
+                        </motion.div>
                       </SidebarMenuItem>
                       <SidebarMenuItem>
-                        <SidebarMenuButton
-                          asChild
-                          isActive={isActive("/admin/reports")}
-                          className="text-white hover:bg-white/10 data-[active=true]:bg-secondary data-[active=true]:text-black rounded-md transition-colors"
+                        {isActive("/admin/reports") && (
+                          <motion.div
+                            layoutId="sidebar-active-pill"
+                            className="absolute inset-0 rounded-md bg-secondary"
+                            transition={{ type: 'spring', stiffness: 600, damping: 20 }}
+                          />
+                        )}
+                        <motion.div
+                          whileHover={{ x: 4 }}
+                          transition={{ type: 'spring', stiffness: 350, damping: 10 }}
                         >
-                          <Link to="/admin/reports" className="flex items-center gap-3">
-                            <BarChart3 className="h-5 w-5" />
-                            {!collapsed && <span>Reports Builder</span>}
-                          </Link>
-                        </SidebarMenuButton>
+                          <SidebarMenuButton
+                            asChild
+                            isActive={isActive("/admin/reports")}
+                            className="text-white hover:bg-white/10 data-[active=true]:bg-secondary data-[active=true]:text-black rounded-md transition-colors relative z-10"
+                          >
+                            <Link to="/admin/reports" className="flex items-center gap-3">
+                              <BarChart3 className="h-5 w-5" />
+                              {!collapsed && <span>Reports Builder</span>}
+                            </Link>
+                          </SidebarMenuButton>
+                        </motion.div>
                       </SidebarMenuItem>
                       <SidebarMenuItem>
-                    <SidebarMenuButton
-                      asChild
-                      isActive={isActive("/admin/reports/document-charts")}
-                      className="text-white hover:bg-white/10 data-[active=true]:bg-secondary data-[active=true]:text-black rounded-md transition-colors"
-                    >
-                      <Link to="/admin/reports/document-charts" className="flex items-center gap-3">
-                        <BarChart2 className="h-5 w-5" />
-                        {!collapsed && <span>Chart Analysis</span>}
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
+                        {isActive("/admin/reports/document-charts") && (
+                          <motion.div
+                            layoutId="sidebar-active-pill"
+                            className="absolute inset-0 rounded-md bg-secondary"
+                            transition={{ type: 'spring', stiffness: 600, damping: 20 }}
+                          />
+                        )}
+                        <motion.div
+                          whileHover={{ x: 4 }}
+                          transition={{ type: 'spring', stiffness: 350, damping: 10 }}
+                        >
+                          <SidebarMenuButton
+                            asChild
+                            isActive={isActive("/admin/reports/document-charts")}
+                            className="text-white hover:bg-white/10 data-[active=true]:bg-secondary data-[active=true]:text-black rounded-md transition-colors relative z-10"
+                          >
+                            <Link to="/admin/reports/document-charts" className="flex items-center gap-3">
+                              <BarChart2 className="h-5 w-5" />
+                              {!collapsed && <span>Chart Analysis</span>}
+                            </Link>
+                          </SidebarMenuButton>
+                        </motion.div>
+                      </SidebarMenuItem>
                     </SidebarMenu>
                   </CollapsibleSidebarSection>
                 )}
@@ -316,74 +428,134 @@ export default function AdminLayout() {
                       activePaths={["/admin/departments", "/admin/users", "/admin/user-management", "/admin/audit-trails", "/admin/roles", "/admin/maker-checker"]}
                     >
                       <SidebarMenu className="space-y-2">
-                        {hasPermission(user, PERMISSIONS['users.write']) && (
+                        {hasPermission(user, PERMISSIONS['departments.manage']) && (
                           <SidebarMenuItem>
-                            <SidebarMenuButton
-                              asChild
-                              isActive={isActive("/admin/departments")}
-                              className="text-white hover:bg-white/10 data-[active=true]:bg-secondary data-[active=true]:text-black rounded-md transition-colors"
+                            {isActive("/admin/departments") && (
+                              <motion.div
+                                layoutId="sidebar-active-pill"
+                                className="absolute inset-0 rounded-md bg-secondary"
+                                transition={{ type: 'spring', stiffness: 600, damping: 20 }}
+                              />
+                            )}
+                            <motion.div
+                              whileHover={{ x: 4 }}
+                              transition={{ type: 'spring', stiffness: 350, damping: 10 }}
                             >
-                              <Link to="/admin/departments" className="flex items-center gap-3">
-                                <Building2 className="h-5 w-5" />
-                                {!collapsed && <span>Departments</span>}
-                              </Link>
-                            </SidebarMenuButton>
+                              <SidebarMenuButton
+                                asChild
+                                isActive={isActive("/admin/departments")}
+                                className="text-white hover:bg-white/10 data-[active=true]:bg-secondary data-[active=true]:text-black rounded-md transition-colors relative z-10"
+                              >
+                                <Link to="/admin/departments" className="flex items-center gap-3">
+                                  <Building2 className="h-5 w-5" />
+                                  {!collapsed && <span>Departments</span>}
+                                </Link>
+                              </SidebarMenuButton>
+                            </motion.div>
                           </SidebarMenuItem>
                         )}
                         {hasPermission(user, PERMISSIONS['users.read']) && (
                           <SidebarMenuItem>
-                            <SidebarMenuButton
-                              asChild
-                              isActive={isActive("/admin/user-management")}
-                              className="text-white hover:bg-white/10 data-[active=true]:bg-secondary data-[active=true]:text-black rounded-md transition-colors"
+                            {isActive("/admin/user-management") && (
+                              <motion.div
+                                layoutId="sidebar-active-pill"
+                                className="absolute inset-0 rounded-md bg-secondary"
+                                transition={{ type: 'spring', stiffness: 600, damping: 20 }}
+                              />
+                            )}
+                            <motion.div
+                              whileHover={{ x: 4 }}
+                              transition={{ type: 'spring', stiffness: 350, damping: 10 }}
                             >
-                              <Link to="/admin/users" className="flex items-center gap-3">
-                                <Users className="h-5 w-5" />
-                                {!collapsed && <span>User Management</span>}
-                              </Link>
-                            </SidebarMenuButton>
+                              <SidebarMenuButton
+                                asChild
+                                isActive={isActive("/admin/user-management")}
+                                className="text-white hover:bg-white/10 data-[active=true]:bg-secondary data-[active=true]:text-black rounded-md transition-colors relative z-10"
+                              >
+                                <Link to="/admin/users" className="flex items-center gap-3">
+                                  <Users className="h-5 w-5" />
+                                  {!collapsed && <span>User Management</span>}
+                                </Link>
+                              </SidebarMenuButton>
+                            </motion.div>
                           </SidebarMenuItem>
                         )}
                         {hasPermission(user, PERMISSIONS['audit.read']) && (
                           <SidebarMenuItem>
-                            <SidebarMenuButton
-                              asChild
-                              isActive={isActive("/admin/audit-trails")}
-                              className="text-white hover:bg-white/10 data-[active=true]:bg-secondary data-[active=true]:text-black rounded-md transition-colors"
+                            {isActive("/admin/audit-trails") && (
+                              <motion.div
+                                layoutId="sidebar-active-pill"
+                                className="absolute inset-0 rounded-md bg-secondary"
+                                transition={{ type: 'spring', stiffness: 600, damping: 20 }}
+                              />
+                            )}
+                            <motion.div
+                              whileHover={{ x: 4 }}
+                              transition={{ type: 'spring', stiffness: 350, damping: 10 }}
                             >
-                              <Link to="/admin/audit-trails" className="flex items-center gap-3">
-                                <History className="h-5 w-5" />
-                                {!collapsed && <span>Audit Trails</span>}
-                              </Link>
-                            </SidebarMenuButton>
+                              <SidebarMenuButton
+                                asChild
+                                isActive={isActive("/admin/audit-trails")}
+                                className="text-white hover:bg-white/10 data-[active=true]:bg-secondary data-[active=true]:text-black rounded-md transition-colors relative z-10"
+                              >
+                                <Link to="/admin/audit-trails" className="flex items-center gap-3">
+                                  <History className="h-5 w-5" />
+                                  {!collapsed && <span>Audit Trails</span>}
+                                </Link>
+                              </SidebarMenuButton>
+                            </motion.div>
                           </SidebarMenuItem>
                         )}
                         {hasPermission(user, PERMISSIONS['roles.manage']) && (
                           <SidebarMenuItem>
-                            <SidebarMenuButton
-                              asChild
-                              isActive={isActive("/admin/roles")}
-                              className="text-white hover:bg-white/10 data-[active=true]:bg-secondary data-[active=true]:text-black rounded-md transition-colors"
+                            {isActive("/admin/roles") && (
+                              <motion.div
+                                layoutId="sidebar-active-pill"
+                                className="absolute inset-0 rounded-md bg-secondary"
+                                transition={{ type: 'spring', stiffness: 600, damping: 20 }}
+                              />
+                            )}
+                            <motion.div
+                              whileHover={{ x: 4 }}
+                              transition={{ type: 'spring', stiffness: 350, damping: 10 }}
                             >
-                              <Link to="/admin/roles" className="flex items-center gap-3">
-                                <ShieldCheck className="h-5 w-5" />
-                                {!collapsed && <span>Roles</span>}
-                              </Link>
-                            </SidebarMenuButton>
+                              <SidebarMenuButton
+                                asChild
+                                isActive={isActive("/admin/roles")}
+                                className="text-white hover:bg-white/10 data-[active=true]:bg-secondary data-[active=true]:text-black rounded-md transition-colors relative z-10"
+                              >
+                                <Link to="/admin/roles" className="flex items-center gap-3">
+                                  <ShieldCheck className="h-5 w-5" />
+                                  {!collapsed && <span>Roles</span>}
+                                </Link>
+                              </SidebarMenuButton>
+                            </motion.div>
                           </SidebarMenuItem>
                         )}
                         {hasPermission(user, PERMISSIONS['maker_checker.manage']) && (
                           <SidebarMenuItem>
-                            <SidebarMenuButton
-                              asChild
-                              isActive={isActive("/admin/maker-checker")}
-                              className="text-white hover:bg-white/10 data-[active=true]:bg-secondary data-[active=true]:text-black rounded-md transition-colors"
+                            {isActive("/admin/maker-checker") && (
+                              <motion.div
+                                layoutId="sidebar-active-pill"
+                                className="absolute inset-0 rounded-md bg-secondary"
+                                transition={{ type: 'spring', stiffness: 600, damping: 20 }}
+                              />
+                            )}
+                            <motion.div
+                              whileHover={{ x: 4 }}
+                              transition={{ type: 'spring', stiffness: 350, damping: 10 }}
                             >
-                              <Link to="/admin/maker-checker" className="flex items-center gap-3">
-                                <ClipboardCheck className="h-5 w-5" />
-                                {!collapsed && <span>Maker-Checker</span>}
-                              </Link>
-                            </SidebarMenuButton>
+                              <SidebarMenuButton
+                                asChild
+                                isActive={isActive("/admin/maker-checker")}
+                                className="text-white hover:bg-white/10 data-[active=true]:bg-secondary data-[active=true]:text-black rounded-md transition-colors relative z-10"
+                              >
+                                <Link to="/admin/maker-checker" className="flex items-center gap-3">
+                                  <ClipboardCheck className="h-5 w-5" />
+                                  {!collapsed && <span>Maker-Checker</span>}
+                                </Link>
+                              </SidebarMenuButton>
+                            </motion.div>
                           </SidebarMenuItem>
                         )}
                       </SidebarMenu>
@@ -450,13 +622,19 @@ export default function AdminLayout() {
             <div className="p-4 border-t border-white/10">
               <SidebarMenu>
                 <SidebarMenuItem>
-                  <SidebarMenuButton
-                    onClick={handleLogout}
-                    className="text-white hover:bg-white/10 rounded-md transition-colors"
+                  <motion.div
+                    whileHover={{ backgroundColor: 'rgba(239,68,68,0.1)' }}
+                    transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+                    className="rounded-md"
                   >
-                    <LogOut className="h-5 w-5" />
-                    {!collapsed && <span>Log Out</span>}
-                  </SidebarMenuButton>
+                    <SidebarMenuButton
+                      onClick={handleLogout}
+                      className="text-white hover:bg-white/10 rounded-md transition-colors"
+                    >
+                      <LogOut className="h-5 w-5" />
+                      {!collapsed && <span>Log Out</span>}
+                    </SidebarMenuButton>
+                  </motion.div>
                 </SidebarMenuItem>
               </SidebarMenu>
             </div>

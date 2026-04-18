@@ -143,7 +143,13 @@ export default function DocumentsV2() {
       setDocuments(Array.isArray(docsData) ? docsData : (docsData?.items ?? []))
       setDepartments(Array.isArray(deptsData) ? deptsData : (deptsData?.items ?? []))
     } catch (err) {
-      toast.error('Failed to load documents')
+      const msg = err instanceof Error ? err.message.toLowerCase() : String(err).toLowerCase()
+      if (msg.includes('no tenant context') || msg.includes('missing tenant')) {
+        toast.error('Session expired. Please log in again.')
+        // Optionally: navigate('/admin/login') to force immediate redirect
+      } else {
+        toast.error('Failed to load documents')
+      }
     } finally {
       setLoading(false)
     }

@@ -352,15 +352,23 @@ export default function DocumentDetail() {
         setDoc(docData);
         setDepartments(Array.isArray(deptsData) ? deptsData : (deptsData?.items ?? []));
 
-        // Load mock data for the new sections using the document ID
-        setComments(getMockComments(id));
+        // Load mock data for comments, audit logs, and workflow
         setAuditLogs(getMockAuditLogs(id));
+        setComments(getMockComments(id));
         setWorkflow(getMockWorkflow(id));
         setRelatedDocs(getMockRelatedDocuments(id));
       })
       .catch((err) => {
         // Check if the backend said "forbidden" / "unauthorized" vs just not found
         const msg = err instanceof Error ? err.message.toLowerCase() : String(err).toLowerCase();
+        
+        // Missing tenant context = session expired, force re-login
+        if (msg.includes('no tenant context') || msg.includes('missing tenant')) {
+          toast.error('Session expired. Please log in again.');
+          navigate('/admin/login');
+          return;
+        }
+        
         if (msg.includes('403') || msg.includes('forbidden') || msg.includes('unauthorized')) {
           setAccessDenied(true);
         } else {

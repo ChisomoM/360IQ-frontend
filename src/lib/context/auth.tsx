@@ -20,6 +20,7 @@ import { AuthContext } from './AuthContext';
 import { type UserRole, USER_ROLES } from '../constants';
 import { useTenantStore } from '@/lib/store/tenantStore';
 import type { TenantConfig } from '@/types/tenant';
+import { BACKEND_URL } from '../api/config';
 
 /** Returns the stored ControlHub token — usable outside React (e.g. in API clients) */
 export function getControlHubToken(): string | null {
@@ -183,6 +184,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           firstName: backendUser.first_name,
           lastName: backendUser.last_name,
           role: backendUser.role?.name as UserRole,
+          // Placeholder — will be replaced with backend-resolved permissions below
           permissions: backendUser.role?.permissions?.map((p: any) => p.code) || [],
           isActive: backendUser.is_active,
           isVerified: backendUser.is_verified,
@@ -202,25 +204,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         // Extract tenant_id and control-hub flag from JWT
         const { tenantId, isControlHubAdmin } = extractTenantFromToken(token);
-        if (tenantId) {
-          authUser.tenantId = tenantId;
-          useTenantStore.getState().setTenantId(tenantId);
-        } else {
-          // Fallback to env variable if JWT doesn't include tenant_id (dev mode)
-          const fallbackTenant = import.meta.env.VITE_TENANT_ID || 'dims';
-          authUser.tenantId = fallbackTenant;
-          useTenantStore.getState().setTenantId(fallbackTenant);
-          console.warn('[Auth] JWT missing tenant_id, falling back to:', fallbackTenant);
+        if (!tenantId) {
+          // JWT must contain tenant_id — no fallback for security
+          throw new Error('Invalid token: missing tenant_id claim');
         }
+        authUser.tenantId = tenantId;
+        useTenantStore.getState().setTenantId(tenantId);
         if (isControlHubAdmin) {
           authUser.isControlHubAdmin = true;
         }
 
         const authTokens: AuthTokens = { token };
 
-        // Save to storage and update context
+        // Save to storage first so the retrieve call below can read the token.
         saveToStorage(authUser, authTokens);
         setTokens(authTokens);
+
+        // Fetch the fully resolved permissions (role + overrides) from the backend.
+        // This is the single source of truth — replacing the snapshot baked into the login response.
+        try {
+          const resolvedPermissions = await retrieve('MY_PERMISSIONS');
+          if (Array.isArray(resolvedPermissions)) {
+            authUser.permissions = resolvedPermissions;
+            // Persist updated permissions so page refreshes stay in sync.
+            saveToStorage(authUser, authTokens);
+          }
+        } catch {
+          // Non-fatal: keep the role.permissions snapshot as a safe fallback.
+        }
+
+        // Commit the final user state (with resolved permissions) to context.
         setUser(authUser);
 
         // Background: fetch full tenant config (branding) - non-blocking
@@ -277,10 +290,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       setIsLoading(true);
       setError(null);
-      
-      // const ROUTING_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8032/api/v1/';
-      const ROUTING_URL: string = import.meta.env.VITE_BACKEND_URL || "http://102.211.186.58/api/v1/";
-      const res = await fetch(`${ROUTING_URL}controlhub/auth/login`, {
+
+      const res = await fetch(`${BACKEND_URL}controlhub/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),

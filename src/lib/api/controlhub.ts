@@ -8,6 +8,7 @@
 import { API } from "./end_points";
 import { fetchData, type FetchOptions } from "./crud";
 import { getControlHubToken } from "@/lib/context/auth";
+import { BACKEND_URL } from "./config";
 
 type CHEndpoint = keyof typeof API;
 
@@ -39,11 +40,7 @@ export const chUploadBrandingLogo = async (tenantId: string, file: File) => {
   const formData = new FormData();
   formData.append("logo", file);
 
-        // const baseUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8032/api/v1/';
- const baseUrl: string = import.meta.env.VITE_BACKEND_URL || "http://102.211.186.58/api/v1/";
-
-//  const baseUrl: string = import.meta.env.VITE_BACKEND_URL || "http://102.211.186.58/api/v1/";
-  const url = `${baseUrl}controlhub/clients/${tenantId}/branding/logo`;
+  const url = `${BACKEND_URL}controlhub/clients/${tenantId}/branding/logo`;
   const token = getControlHubToken();
 
   const response = await fetch(url, {

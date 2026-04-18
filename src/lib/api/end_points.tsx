@@ -6,6 +6,7 @@ export const API: Record<string, string> = {
   REGISTER: "auth/register",
   REFRESH_TOKEN: "auth/refresh-token",
   ME: "auth/me",
+  MY_PERMISSIONS: "me/permissions",
   TENANT_CONFIG: "tenant/config",
 
   // Roles & Permissions
@@ -42,6 +43,7 @@ export const API: Record<string, string> = {
   DOCUMENT_DELETE: "documents/:id",
   DOCUMENT_VERSIONS: "documents/:id/versions",
   DOCUMENT_DOWNLOAD: "documents/:id/download",
+  DOCUMENT_ACCESS_LOGS: "documents/:id/access-logs",
   DOCUMENT_SUMMARIZE: "documents/:id/summarize",
   DOCUMENT_ANALYZE: "documents/:id/analyze",
   DOCUMENT_CHART_DATA: "documents/:id/chart-data",

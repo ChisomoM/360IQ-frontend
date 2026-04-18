@@ -1,5 +1,6 @@
 import { useState, useEffect, ReactNode } from 'react';
 import { useLocation } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -52,27 +53,32 @@ export function CollapsibleSidebarSection({
   return (
     <div className="w-full">
       {/* Section Header - Clickable to toggle */}
-      <button
-        onClick={toggleOpen}
-        className={cn(
-          "w-full flex items-center justify-between gap-2 px-3 py-2",
-          "text-xs uppercase tracking-wider font-bold",
-          "text-white/50 hover:text-white/70 transition-colors duration-200",
-          "hover:bg-white/3 rounded-sm",
-          isOpen && "text-white/80 bg-white/5"
-        )}
+      <motion.div
+        whileHover={{ x: 4 }}
+        transition={{ type: 'spring', stiffness: 350, damping: 10 }}
       >
-        <div className="flex items-center gap-2 min-w-0">
-          <span className="flex-shrink-0 h-4 w-4 flex items-center justify-center opacity-70">{icon}</span>
-          <span className="truncate text-xs">{title}</span>
-        </div>
-        <ChevronDown
+        <button
+          onClick={toggleOpen}
           className={cn(
-            "h-3 w-3 flex-shrink-0 transition-transform duration-300 opacity-60",
-            isOpen ? "rotate-180" : "rotate-0"
+            "w-full flex items-center justify-between gap-2 px-3 py-2",
+            "text-xs uppercase tracking-wider font-bold",
+            "text-white/50 hover:text-white/70 transition-colors duration-200",
+            "hover:bg-white/3 rounded-sm",
+            isOpen && "text-white/80 bg-white/5"
           )}
-        />
-      </button>
+        >
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="flex-shrink-0 h-4 w-4 flex items-center justify-center opacity-70">{icon}</span>
+            <span className="truncate text-xs">{title}</span>
+          </div>
+          <ChevronDown
+            className={cn(
+              "h-3 w-3 flex-shrink-0 transition-transform duration-300 opacity-60",
+              isOpen ? "rotate-180" : "rotate-0"
+            )}
+          />
+        </button>
+      </motion.div>
 
       {/* Collapsible Content - Slide animation */}
       <div

@@ -226,12 +226,12 @@ export default function Workflows() {
                         <TableCell>
                           <div className="flex items-center gap-2">
                              <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
-                               <div 
-                                 className="h-full bg-primary-blue transition-all" 
-                                 style={{ width: `${(wf.current_step_index / wf.total_steps) * 100}%` }}
+                               <div
+                                 className="h-full bg-primary-blue transition-all"
+                                 style={{ width: `${((wf.current_step_index + 1) / wf.total_steps) * 100}%` }}
                                />
                              </div>
-                             <span className="text-xs font-bold text-gray-600">{wf.current_step_index}/{wf.total_steps}</span>
+                             <span className="text-xs font-bold text-gray-600">{wf.current_step_index + 1}/{wf.total_steps}</span>
                           </div>
                         </TableCell>
                         <TableCell>{getStatusBadge(wf.status)}</TableCell>

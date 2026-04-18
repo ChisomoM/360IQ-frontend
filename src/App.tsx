@@ -14,16 +14,10 @@ import DashboardConfiguration from './(admin)/admin/DashboardConfiguration';
 // Keeping this import just in case we need to roll back to the old user management
 // import TeamManagement from './(admin)/admin/TeamManagement';
 import ManageUsers from './(admin)/admin/ManageUsers'; // New User management page
-import TeacherManagement from './(admin)/admin/TeacherManagement';
-import Referrals from './(admin)/admin/Referrals';
-import FinancialsPage from './(admin)/admin/FinancialsPage';
 import { AnalyticsDashboard } from './(admin)/admin/AnalyticsDashboard';
 import ReportsPage from './(admin)/admin/ReportsPage';
-import ApprovalsPage from './(admin)/admin/ApprovalsPage';
-import RegionManagement from './(admin)/admin/RegionManagement';
-import PartnershipPage from './(admin)/admin/PartnershipPage';
 import Departments from './(admin)/admin/Departments';
-import Documents from './(admin)/admin/Documents';
+// import Documents from './(admin)/admin/Documents';
 import DocumentDetail from './(admin)/admin/DocumentDetail';
 import DocumentCharts from './(admin)/admin/DocumentCharts';
 import FinancialCharts from './(admin)/admin/FinancialCharts';
@@ -40,8 +34,8 @@ import DepartmentDetailPage from './(admin)/admin/DepartmentDetailPage';
 import RolesManagement from './(admin)/admin/RolesManagement';
 import MakerCheckerPage from './(admin)/admin/MakerCheckerPage';
 import DocumentsV2 from './(admin)/admin/DocumentsV2';
-import DocumentsPremium from './(admin)/admin/DocumentsPremium';
-import DemoDashboard from './(admin)/admin/DemoDashboard';
+// import DocumentsPremium from './(admin)/admin/DocumentsPremium';
+import DemoDashboard from './(admin)/admin/Dashboard';
 
 // ControlHub
 import ControlHubLayout from './layouts/ControlHubLayout';
@@ -78,24 +72,18 @@ function App() {
           <Route path="newdashboard" element={<RoleAwareDashboard />} />
           <Route path="demo-dashboard" element={<DemoDashboard />} />
           <Route path="legacy-dashboard" element={<AdminDashboard />} />
-          <Route path="approvals" element={<ApprovalsPage />} />
-          <Route path="regions" element={<RegionManagement />} />
           {/* We are replacing the old user-management with our shiny new 'users' route, 
               but leaving this commented out just in case we need to roll back. */}
           {/* <Route path="user-management" element={<TeamManagement />} /> */}
           <Route path="users" element={<ManageUsers />} />
-          <Route path="teacher-management" element={<TeacherManagement />} />
-          <Route path="financials" element={<FinancialsPage />} />
-          <Route path="referrals" element={<Referrals />} />
           <Route path="analytics" element={<AnalyticsDashboard />} />
           <Route path="reports" element={<ReportsPage />} />
           <Route path="reports/document-charts" element={<DocumentCharts />} />
           <Route path="reports/financial-charts" element={<FinancialCharts />} />
-          <Route path="partnerships" element={<PartnershipPage />} />
           <Route path="departments" element={<Departments />} />
           <Route path="departments/:id" element={<DepartmentDetailPage />} />
           <Route path="documents" element={<DocumentsV2 />} />
-          <Route path="documents-premium" element={<DocumentsPremium />} />
+          {/* <Route path="documents-premium" element={<DocumentsPremium />} /> */}
           <Route path="documents/:id" element={<DocumentDetail />} />
           <Route path="workflows" element={<Workflows />} />
           <Route path="audit-trails" element={<AuditTrails />} />

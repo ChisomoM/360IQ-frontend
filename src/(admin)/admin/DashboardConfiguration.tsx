@@ -1,3 +1,5 @@
+//Depracated: This page is no longer used
+
 import { useEffect, useState } from 'react';
 import {
   getDashboardCardDefinitions,

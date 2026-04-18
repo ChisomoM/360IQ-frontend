@@ -83,7 +83,7 @@
   --ch-primary-200: 252 100% 89%;
   --ch-primary-300: 252 100% 83%;
   --ch-primary-400: 252 100% 74%;
-  --ch-primary-500: 252 100% 71%;
+  --ch-primary-500: 248 100% 71%;
   --ch-primary-600: 252 100% 64%;
   --ch-primary-700: 252 100% 57%;
   --ch-primary-800: 252 100% 47%;
@@ -102,17 +102,17 @@
   --ch-secondary-900: 189 98% 23%;
   --ch-secondary-950: 189 98% 15%;
 
-  --ch-tertiary-50: 233 63% 98%;
-  --ch-tertiary-100: 233 63% 95%;
-  --ch-tertiary-200: 233 63% 89%;
-  --ch-tertiary-300: 233 63% 83%;
-  --ch-tertiary-400: 233 63% 74%;
-  --ch-tertiary-500: 233 63% 64%;
-  --ch-tertiary-600: 233 63% 57%;
-  --ch-tertiary-700: 233 63% 47%;
-  --ch-tertiary-800: 233 63% 39%;
-  --ch-tertiary-900: 233 63% 31%;
-  --ch-tertiary-950: 233 63% 23%;
+  --ch-tertiary-50: 225 66% 98%;
+  --ch-tertiary-100: 225 66% 95%;
+  --ch-tertiary-200: 225 66% 89%;
+  --ch-tertiary-300: 225 66% 83%;
+  --ch-tertiary-400: 225 66% 74%;
+  --ch-tertiary-500: 225 66% 26%;
+  --ch-tertiary-600: 225 66% 22%;
+  --ch-tertiary-700: 225 66% 18%;
+  --ch-tertiary-800: 225 66% 14%;
+  --ch-tertiary-900: 225 66% 10%;
+  --ch-tertiary-950: 225 66% 6%;
 
   /* ── Chart palette ── */
   --chart-1: #7C69FF;

@@ -3,10 +3,11 @@ import { Storage } from "../storage";
 import { API, getRoute, pipe } from "./end_points";
 import { useTenantStore } from "@/lib/store/tenantStore";
 import { validateResponseTenant } from "@/lib/api/interceptors/responseInterceptor";
+import { BACKEND_URL } from "./config";
 // import { getAuthHeader } from "./auth";
 
-// const ROUTING_URL: string = import.meta.env.VITE_BACKEND_URL || "http://localhost:8032/api/v1/";
-const ROUTING_URL: string = import.meta.env.VITE_BACKEND_URL || "http://102.211.186.58/api/v1/";
+const ROUTING_URL: string = BACKEND_URL;
+
 
 // const ROUTING_URL = "http://102.211.186.58/api/v1/"
 // Storage key for auth tokens (matches AuthContext)
@@ -89,15 +90,20 @@ export const fetchData = async (
   const h = new Headers();
   h.append("Content-Type", "application/json");
 
-  // fetchOpts.tenantId wins, then Zustand store, then env fallback
-  const tenantId = fetchOpts?.tenantId
-    || useTenantStore.getState().currentTenantId
-    || import.meta.env.VITE_TENANT_ID
-    || "dims";
-  h.append("X-Tenant-ID", tenantId);
+  // Check if this is a public endpoint first
+  const skipPublicEndpoints = ["LOGIN", "ADMIN_LOGIN", "CH_LOGIN","CH_CLIENTS","CH_CLIENT_DETAIL","CH_CLIENT_ADMINS","CH_CLIENT_ONBOARD","CH_CLIENT_BRANDING","CH_CLIENT_BRANDING_LOGO","CH_CLIENT_SETTINGS","REGISTER"].includes(key);
+
+  // Tenant context: required for protected endpoints, optional for public
+  const tenantId = fetchOpts?.tenantId || useTenantStore.getState().currentTenantId;
+  if (!skipPublicEndpoints && !tenantId) {
+    // Tenant context is missing for protected endpoint
+    throw new Error("No tenant context. Please log in again.");
+  }
+  if (tenantId) {
+    h.append("X-Tenant-ID", tenantId);
+  }
 
   // fetchOpts.token wins; otherwise read from storage (skip for public endpoints)
-  const skipPublicEndpoints = ["LOGIN", "ADMIN_LOGIN", "REGISTER"].includes(key);
   const accessToken = fetchOpts?.token ?? (skipPublicEndpoints ? null : getAccessTokenFromStorage());
   if (accessToken) {
     h.append("Authorization", `Bearer ${accessToken}`);
