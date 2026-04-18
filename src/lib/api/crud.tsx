@@ -91,7 +91,7 @@ export const fetchData = async (
   h.append("Content-Type", "application/json");
 
   // Check if this is a public endpoint first
-  const skipPublicEndpoints = ["LOGIN", "ADMIN_LOGIN", "CH_LOGIN","CH_CLIENTS","CH_CLIENT_DETAIL","CH_CLIENT_ADMINS","CH_CLIENT_ONBOARD","CH_CLIENT_BRANDING","CH_CLIENT_BRANDING_LOGO","CH_CLIENT_SETTINGS","REGISTER"].includes(key);
+  const skipPublicEndpoints = ["LOGIN", "ADMIN_LOGIN", "CH_LOGIN", "REGISTER"].includes(key);
 
   // Tenant context: required for protected endpoints, optional for public
   const tenantId = fetchOpts?.tenantId || useTenantStore.getState().currentTenantId;
