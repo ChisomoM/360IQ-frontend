@@ -3,7 +3,7 @@ import { useNavigate, useOutletContext } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd'
 import type { DropResult } from '@hello-pangea/dnd'
-import { Loader2, Plus, ListFilter ,Search, Settings, Upload, FileUp, X, CheckCircle2, Shield, Building, Lock, Tag, LayoutGrid, List } from 'lucide-react'
+import { Loader2, Plus, ListFilter, Search, Settings, Upload, FileUp, X, CheckCircle2, Shield, Building, Lock, Tag, LayoutGrid, List } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
@@ -60,7 +60,8 @@ interface FilterState {
  */
 export default function DocumentsV2() {
   const navigate = useNavigate()
-  const { analyzeDocument } = useOutletContext<AdminLayoutContext>()
+  // Pull openChat and openAnalysis from outlet context
+  const { analyzeDocument, openChat, openAnalysis } = useOutletContext<AdminLayoutContext>()
   const { user } = useAuth()
 
   // ─── State: Core data ───────────────────────────────────────────────────
@@ -226,7 +227,7 @@ export default function DocumentsV2() {
     // Date range filter (parsed or manual)
     const dateFrom = parsedSearch.dateFrom || filters.date_from
     const dateUntil = parsedSearch.dateUntil || filters.date_to
-    
+
     if (dateFrom) {
       const docDate = new Date(doc.created_at).getTime()
       const fromDate = new Date(dateFrom).getTime()
@@ -251,11 +252,11 @@ export default function DocumentsV2() {
       const aVal = a[sortColumn]
       const bVal = b[sortColumn]
       if (typeof aVal === 'string') {
-        return sortDirection === 'asc' 
+        return sortDirection === 'asc'
           ? aVal.localeCompare(String(bVal))
           : String(bVal).localeCompare(aVal)
       }
-      return sortDirection === 'asc' 
+      return sortDirection === 'asc'
         ? (aVal as number) - (bVal as number)
         : (bVal as number) - (aVal as number)
     })
@@ -342,7 +343,7 @@ export default function DocumentsV2() {
       form.append('department_id', uploadData.department_id)
       form.append('visibility_level', uploadData.visibility_level)
       form.append('is_encrypted', String(uploadData.is_encrypted))
-      
+
       if (uploadData.tags.length > 0) {
         form.append('tags', JSON.stringify(uploadData.tags))
       }
@@ -476,8 +477,8 @@ export default function DocumentsV2() {
     if (!selectedDoc) return
     try {
       setLoadingVersions(true)
-      await fetchData('DOCUMENTS', 'PATCH', 
-        { id: selectedDoc.id }, 
+      await fetchData('DOCUMENTS', 'PATCH',
+        { id: selectedDoc.id },
         { version_id: versionId }
       )
       toast.success('Document restored to this version')
@@ -492,7 +493,7 @@ export default function DocumentsV2() {
   // ─── Handlers: AI Features ───────────────────────────────────────
 
   const handleChat = (doc: Document) => {
-    analyzeDocument(doc)
+    openChat(doc)
   }
 
   const handleSummarize = (doc: Document) => {
@@ -500,7 +501,7 @@ export default function DocumentsV2() {
   }
 
   const handleAnalysis = (doc: Document) => {
-    analyzeDocument(doc)
+    openAnalysis(doc)
   }
 
   const handleChartAnalysis = (doc: Document) => {
@@ -599,7 +600,7 @@ export default function DocumentsV2() {
                           ${dragActive ? 'border-primary bg-primary/5 scale-[1.02]' : 'border-slate-300 hover:border-primary hover:bg-white'}
                         `}
                       >
-                        <input 
+                        <input
                           type="file"
                           onChange={handleFileInputChange}
                           className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
@@ -614,7 +615,7 @@ export default function DocumentsV2() {
                       </div>
                     ) : (
                       <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 relative group">
-                        <button 
+                        <button
                           onClick={() => setUploadData(prev => ({ ...prev, file: null }))}
                           className="absolute -top-2 -right-2 p-1.5 bg-red-500 text-white rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity"
                         >
@@ -659,9 +660,9 @@ export default function DocumentsV2() {
                       <div className="space-y-4 pt-2">
                         <div className="space-y-2">
                           <Label className="text-slate-700 font-bold">Document Title *</Label>
-                          <Input 
-                            value={uploadData.title} 
-                            onChange={(e) => setUploadData({ ...uploadData, title: e.target.value })} 
+                          <Input
+                            value={uploadData.title}
+                            onChange={(e) => setUploadData({ ...uploadData, title: e.target.value })}
                             placeholder="e.g., Annual Financial Audit 2024"
                             className="h-11 border-slate-200 focus:ring-primary shadow-sm"
                           />
@@ -669,10 +670,10 @@ export default function DocumentsV2() {
 
                         <div className="space-y-2">
                           <Label className="text-slate-700 font-bold">Description</Label>
-                          <Textarea 
-                            value={uploadData.description} 
-                            onChange={(e) => setUploadData({ ...uploadData, description: e.target.value })} 
-                            placeholder="Provide deep context for this record..." 
+                          <Textarea
+                            value={uploadData.description}
+                            onChange={(e) => setUploadData({ ...uploadData, description: e.target.value })}
+                            placeholder="Provide deep context for this record..."
                             rows={3}
                             className="resize-none border-slate-200 shadow-sm"
                           />
@@ -688,17 +689,17 @@ export default function DocumentsV2() {
                           <Select value={uploadData.document_type} onValueChange={(v) => setUploadData({ ...uploadData, document_type: v })}>
                             <SelectTrigger className="h-10 border-slate-200 bg-slate-50/50"><SelectValue /></SelectTrigger>
                             <SelectContent>
-                            <SelectItem value="memo">Memo</SelectItem>
-                            <SelectItem value="circular">Circular</SelectItem>
-                            <SelectItem value="minutes">Minutes</SelectItem>
-                            <SelectItem value="report">Report</SelectItem>
-                            <SelectItem value="policy">Policy</SelectItem>
-                            <SelectItem value="bid_document">Bid / Tender Document</SelectItem>
-                            <SelectItem value="contract">Contract / Agreement</SelectItem>
-                            <SelectItem value="invoice">Invoice</SelectItem>
-                            <SelectItem value="appointment_letter">Appointment Letter</SelectItem>
-                            <SelectItem value="permit">Permit / Licence</SelectItem>
-                          </SelectContent>
+                              <SelectItem value="memo">Memo</SelectItem>
+                              <SelectItem value="circular">Circular</SelectItem>
+                              <SelectItem value="minutes">Minutes</SelectItem>
+                              <SelectItem value="report">Report</SelectItem>
+                              <SelectItem value="policy">Policy</SelectItem>
+                              <SelectItem value="bid_document">Bid / Tender Document</SelectItem>
+                              <SelectItem value="contract">Contract / Agreement</SelectItem>
+                              <SelectItem value="invoice">Invoice</SelectItem>
+                              <SelectItem value="appointment_letter">Appointment Letter</SelectItem>
+                              <SelectItem value="permit">Permit / Licence</SelectItem>
+                            </SelectContent>
                           </Select>
                         </div>
                         <div className="space-y-2">
@@ -759,10 +760,10 @@ export default function DocumentsV2() {
                           ))}
                         </div>
                         <div className="flex gap-2">
-                          <Input 
-                            placeholder="Add tag and press Enter..." 
-                            value={tagInput} 
-                            onChange={(e) => setTagInput(e.target.value)} 
+                          <Input
+                            placeholder="Add tag and press Enter..."
+                            value={tagInput}
+                            onChange={(e) => setTagInput(e.target.value)}
                             onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addTag())}
                             className="h-9 border-slate-200 text-sm"
                           />
@@ -781,8 +782,8 @@ export default function DocumentsV2() {
                             <p className="text-xs text-slate-500">Encrypt this file before storing it in the persistent vault.</p>
                           </div>
                         </div>
-                        <Switch 
-                          checked={uploadData.is_encrypted} 
+                        <Switch
+                          checked={uploadData.is_encrypted}
                           onCheckedChange={(checked) => setUploadData({ ...uploadData, is_encrypted: checked })}
                         />
                       </div>
@@ -790,10 +791,10 @@ export default function DocumentsV2() {
 
                     <div className="mt-10 flex gap-3">
                       <Button variant="ghost" className="flex-1 h-12 text-slate-500" onClick={() => setIsUploadOpen(false)}>Discard</Button>
-                      <Button 
-                        variant="tenantPrimary" 
-                        className="flex-[2] h-12 shadow-md shadow-primary/20 text-lg font-bold" 
-                        onClick={handleUpload} 
+                      <Button
+                        variant="tenantPrimary"
+                        className="flex-[2] h-12 shadow-md shadow-primary/20 text-lg font-bold"
+                        onClick={handleUpload}
                         disabled={isUploading || !uploadData.file}
                       >
                         {isUploading ? (
@@ -912,9 +913,8 @@ export default function DocumentsV2() {
                   <motion.div
                     ref={provided.innerRef}
                     {...provided.droppableProps}
-                    className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 transition-colors ${
-                      snapshot.isDraggingOver ? 'bg-blue-50 rounded-lg p-4' : ''
-                    }`}
+                    className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 transition-colors ${snapshot.isDraggingOver ? 'bg-blue-50 rounded-lg p-4' : ''
+                      }`}
                     variants={{
                       hidden: {},
                       visible: { transition: { staggerChildren: 0.06 } },

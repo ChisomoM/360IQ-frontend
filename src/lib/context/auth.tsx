@@ -280,7 +280,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       // const ROUTING_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8032/api/v1/';
       // const ROUTING_URL: string = import.meta.env.VITE_BACKEND_URL || "http://102.211.186.58/api/v1/";
-      const ROUTING_URL: string = import.meta.env.VITE_BACKEND_URL || "http://102.211.186.58:8094/api/v1/";
+      // const ROUTING_URL: string = import.meta.env.VITE_BACKEND_URL || "http://102.211.186.58:8094/api/v1/";
+      const ROUTING_URL: string = import.meta.env.VITE_BACKEND_URL || "http://35.197.235.41/api/v1/";
+      
       const res = await fetch(`${ROUTING_URL}controlhub/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

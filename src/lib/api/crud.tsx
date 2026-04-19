@@ -7,7 +7,8 @@ import { validateResponseTenant } from "@/lib/api/interceptors/responseIntercept
 
 // const ROUTING_URL: string = import.meta.env.VITE_BACKEND_URL || "http://localhost:8032/api/v1/";
 // const ROUTING_URL: string = import.meta.env.VITE_BACKEND_URL || " http://102.211.186.58:8094";
-const ROUTING_URL: string = import.meta.env.VITE_BACKEND_URL || "http://102.211.186.58:8094/api/v1/";
+// const ROUTING_URL: string = import.meta.env.VITE_BACKEND_URL || "http://102.211.186.58:8094/api/v1/";
+const ROUTING_URL: string = import.meta.env.VITE_BACKEND_URL || "http://35.197.235.41/api/v1/";
 
 // const ROUTING_URL = "http://102.211.186.58/api/v1/"
 // Storage key for auth tokens (matches AuthContext)
