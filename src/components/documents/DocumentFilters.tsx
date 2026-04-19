@@ -45,15 +45,32 @@ const STATUS_OPTIONS = [
 
 // Document type options
 const DOCUMENT_TYPE_OPTIONS = [
-  { value: 'policy', label: 'Policy' },
-  { value: 'procedure', label: 'Procedure' },
-  { value: 'guideline', label: 'Guideline' },
+  { value: 'memo', label: 'Memo' },
+  { value: 'circular', label: 'Circular' },
+  { value: 'minutes', label: 'Minutes' },
   { value: 'report', label: 'Report' },
-  { value: 'form', label: 'Form' },
-  { value: 'template', label: 'Template' },
-  { value: 'manual', label: 'Manual' },
-  { value: 'other', label: 'Other' },
+  { value: 'policy', label: 'Policy' },
+  { value: 'bid_document', label: 'Bid / Tender Document' },
+  { value: 'contract', label: 'Contract / Agreement' },
+  { value: 'invoice', label: 'Invoice' },
+  { value: 'appointment_letter', label: 'Appointment Letter' },
+  { value: 'permit', label: 'Permit / Licence' },
+  
+                              
 ]
+
+/**
+ * Safe search query modifier removal
+ * Removes a specific modifier (e.g., "type:pdf") from the search query
+ * Handles edge cases like escaped characters and multiple modifiers
+ */
+function removeSearchModifier(query: string, modifierKey: string, modifierValue: string): string {
+  // Escape special regex characters in the value
+  const escapedValue = modifierValue.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  // Match the modifier with word boundaries, case-insensitive
+  const pattern = new RegExp(`\\b${modifierKey}:${escapedValue}\\b`, 'gi')
+  return query.replace(pattern, '').trim()
+}
 
 /**
  * DocumentFilters — Advanced filter panel for document search
@@ -136,49 +153,63 @@ export function DocumentFilters({
       {parsedSearchFilters && (
         <div className="flex flex-wrap gap-2">
           {parsedSearchFilters.types?.map(type => (
-            <Badge key={`type-${type}`} variant="secondary" className="bg-blue-100 text-blue-800 flex items-center gap-1">
+            <Badge key={`type-${type}`} variant="secondary" className="bg-blue-100 text-blue-800 flex items-center gap-1 cursor-pointer hover:bg-blue-200 transition-colors">
               type: {type}
-              <X className="h-3 w-3 cursor-pointer hover:text-blue-600" onClick={() => {
-                // Remove this filter from search query
-                const newQuery = searchQuery.replace(new RegExp(`\\btype:${type}\\b`, 'gi'), '').trim()
-                onSearchChange(newQuery)
-              }} />
+              <X 
+                className="h-3 w-3 hover:text-blue-900" 
+                onClick={() => {
+                  const newQuery = removeSearchModifier(searchQuery, 'type', type)
+                  onSearchChange(newQuery)
+                }} 
+              />
             </Badge>
           ))}
           {parsedSearchFilters.statuses?.map(status => (
-            <Badge key={`status-${status}`} variant="secondary" className="bg-purple-100 text-purple-800 flex items-center gap-1">
+            <Badge key={`status-${status}`} variant="secondary" className="bg-purple-100 text-purple-800 flex items-center gap-1 cursor-pointer hover:bg-purple-200 transition-colors">
               status: {status}
-              <X className="h-3 w-3 cursor-pointer hover:text-purple-600" onClick={() => {
-                const newQuery = searchQuery.replace(new RegExp(`\\bstatus:${status}\\b`, 'gi'), '').trim()
-                onSearchChange(newQuery)
-              }} />
+              <X 
+                className="h-3 w-3 hover:text-purple-900" 
+                onClick={() => {
+                  const newQuery = removeSearchModifier(searchQuery, 'status', status)
+                  onSearchChange(newQuery)
+                }} 
+              />
             </Badge>
           ))}
           {parsedSearchFilters.tags?.map(tag => (
-            <Badge key={`tag-${tag}`} variant="secondary" className="bg-green-100 text-green-800 flex items-center gap-1">
+            <Badge key={`tag-${tag}`} variant="secondary" className="bg-green-100 text-green-800 flex items-center gap-1 cursor-pointer hover:bg-green-200 transition-colors">
               tag: {tag}
-              <X className="h-3 w-3 cursor-pointer hover:text-green-600" onClick={() => {
-                const newQuery = searchQuery.replace(new RegExp(`\\btag:${tag}\\b`, 'gi'), '').trim()
-                onSearchChange(newQuery)
-              }} />
+              <X 
+                className="h-3 w-3 hover:text-green-900" 
+                onClick={() => {
+                  const newQuery = removeSearchModifier(searchQuery, 'tag', tag)
+                  onSearchChange(newQuery)
+                }} 
+              />
             </Badge>
           ))}
           {parsedSearchFilters.dateFrom && (
-            <Badge variant="secondary" className="bg-amber-100 text-amber-800 flex items-center gap-1">
+            <Badge variant="secondary" className="bg-amber-100 text-amber-800 flex items-center gap-1 cursor-pointer hover:bg-amber-200 transition-colors">
               since: {parsedSearchFilters.dateFrom}
-              <X className="h-3 w-3 cursor-pointer hover:text-amber-600" onClick={() => {
-                const newQuery = searchQuery.replace(new RegExp(`\\bsince:[^\\s]+\\b`, 'gi'), '').trim()
-                onSearchChange(newQuery)
-              }} />
+              <X 
+                className="h-3 w-3 hover:text-amber-900" 
+                onClick={() => {
+                  const newQuery = removeSearchModifier(searchQuery, 'since', parsedSearchFilters.dateFrom!)
+                  onSearchChange(newQuery)
+                }} 
+              />
             </Badge>
           )}
           {parsedSearchFilters.dateUntil && (
-            <Badge variant="secondary" className="bg-amber-100 text-amber-800 flex items-center gap-1">
+            <Badge variant="secondary" className="bg-amber-100 text-amber-800 flex items-center gap-1 cursor-pointer hover:bg-amber-200 transition-colors">
               until: {parsedSearchFilters.dateUntil}
-              <X className="h-3 w-3 cursor-pointer hover:text-amber-600" onClick={() => {
-                const newQuery = searchQuery.replace(new RegExp(`\\buntil:[^\\s]+\\b`, 'gi'), '').trim()
-                onSearchChange(newQuery)
-              }} />
+              <X 
+                className="h-3 w-3 hover:text-amber-900" 
+                onClick={() => {
+                  const newQuery = removeSearchModifier(searchQuery, 'until', parsedSearchFilters.dateUntil!)
+                  onSearchChange(newQuery)
+                }} 
+              />
             </Badge>
           )}
         </div>

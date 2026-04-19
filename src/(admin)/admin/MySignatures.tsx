@@ -23,6 +23,7 @@ import { cn } from '@/lib/utils';
 import { getMySignatureRequests, declineSignature } from '@/lib/api/signatures';
 import type { SignatureRequest } from '@/types/signatures';
 import SignDocumentModal from '@/components/signature/SignDocumentModal';
+import SavedSignatureManager from '@/components/signature/SavedSignatureManager';
 
 dayjs.extend(relativeTime);
 
@@ -79,6 +80,13 @@ export default function MySignatures() {
         <h1 className="text-2xl font-bold text-gray-900">My Signatures</h1>
         <p className="text-gray-500 text-sm mt-0.5">Documents waiting for your signature</p>
       </div>
+
+      {/* Saved Signature Manager */}
+      <Card className="border-none shadow-md">
+        <CardContent className="pt-5">
+          <SavedSignatureManager />
+        </CardContent>
+      </Card>
 
       {loading ? (
         <div className="flex items-center justify-center min-h-[40vh]">

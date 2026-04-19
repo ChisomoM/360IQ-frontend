@@ -95,7 +95,7 @@ export default function DocumentsV2() {
     description: '',
     document_type: 'policy',
     category: 'administrative',
-    department_id: '',
+    department_ids: [] as string[],
     visibility_level: 'department' as 'public' | 'department' | 'restricted',
     tags: [] as string[],
     is_encrypted: false,
@@ -187,21 +187,27 @@ export default function DocumentsV2() {
     }
   }, [parsedSearch.text])
 
+  // ─── Check if any manual filters are applied
+  const hasManualFilters = Object.values(filters).some(v => v)
+
   // ─── Computed: filtered & paginated documents ────────────────────────
-  // When backend search is active, start from server-ranked IDs; otherwise all docs
-  const searchBase = searchResultIds !== null
+  // When backend search is active AND no manual filters, use server results
+  // Otherwise, filter from all documents with combined criteria
+  const searchBase = (searchResultIds !== null && !hasManualFilters)
     ? searchResultIds.map(id => documents.find(d => d.id === id)).filter((d): d is Document => !!d)
     : documents
 
   const filtered = searchBase.filter(doc => {
     // Text search is now handled server-side (searchResultIds); skip client-side
 
-    // Manual department filter
-    if (filters.department_id && doc.department_id !== filters.department_id) {
-      return false
+    // Manual department filter — check primary department_id or any in document_departments
+    if (filters.department_id) {
+      const inDepts = doc.document_departments?.some(dd => dd.department_id === filters.department_id)
+      const matchesPrimary = doc.department_id === filters.department_id
+      if (!inDepts && !matchesPrimary) return false
     }
 
-    // Manual status filter + parsed status filters (OR logic)
+    // Manual status filter + parsed status filters (AND logic for both)
     if (filters.status && doc.status !== filters.status) {
       return false
     }
@@ -211,7 +217,7 @@ export default function DocumentsV2() {
       }
     }
 
-    // Manual document type filter + parsed type filters (OR logic)
+    // Manual document type filter + parsed type filters (AND logic for both)
     if (filters.document_type && doc.document_type !== filters.document_type) {
       return false
     }
@@ -229,23 +235,20 @@ export default function DocumentsV2() {
       }
     }
 
-    // Date range filter (parsed or manual)
+    // Date range filter (parsed or manual) — use the more restrictive (later from, earlier until)
     const dateFrom = parsedSearch.dateFrom || filters.date_from
     const dateUntil = parsedSearch.dateUntil || filters.date_to
     
     if (dateFrom) {
       const docDate = new Date(doc.created_at).getTime()
-      const fromDate = new Date(dateFrom).getTime()
+      const fromDate = new Date(dateFrom + 'T00:00:00Z').getTime()
       if (docDate < fromDate) return false
     }
     if (dateUntil) {
       const docDate = new Date(doc.created_at).getTime()
-      const toDate = new Date(dateUntil).getTime()
+      const toDate = new Date(dateUntil + 'T23:59:59Z').getTime()
       if (docDate > toDate) return false
     }
-
-    // Active collection filter (Phase 5)
-    // Intentionally disabled - using simple "Attention Required" section instead
 
     return true
   })
@@ -275,6 +278,26 @@ export default function DocumentsV2() {
 
   // Featured docs (action_required status or similar)
   const featuredDocs = documents.filter(doc => doc.status === 'action_required').slice(0, 6)
+
+  // ─── Handlers: Filters ────────────────────────────────────────────
+
+  const handleFilterChange = (newFilters: FilterState) => {
+    setFilters(newFilters)
+    setCurrentPage(1) // Reset to first page when filters change
+    setSearchResultIds(null) // Invalidate search results when manual filters change
+  }
+
+  const handleSearchChange = (query: string) => {
+    setSearchQuery(query)
+    setCurrentPage(1) // Reset to first page when search changes
+  }
+
+  const handleResetFilters = () => {
+    setFilters({})
+    setSearchQuery('')
+    setCurrentPage(1)
+    setSearchResultIds(null)
+  }
 
   // ─── Handlers: Upload ─────────────────────────────────────────────────
 
@@ -345,7 +368,8 @@ export default function DocumentsV2() {
       form.append('description', uploadData.description)
       form.append('document_type', uploadData.document_type)
       form.append('category', uploadData.category)
-      form.append('department_id', uploadData.department_id)
+      // Send each department as a separate department_ids[] form field
+      uploadData.department_ids.forEach(id => form.append('department_ids[]', id))
       form.append('visibility_level', uploadData.visibility_level)
       form.append('is_encrypted', String(uploadData.is_encrypted))
       
@@ -361,7 +385,7 @@ export default function DocumentsV2() {
         description: '',
         document_type: 'policy',
         category: 'administrative',
-        department_id: '',
+        department_ids: [],
         visibility_level: 'department',
         tags: [],
         is_encrypted: false,
@@ -725,16 +749,33 @@ export default function DocumentsV2() {
                       <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
                           <Label className="text-slate-700 font-bold text-xs uppercase tracking-wider text-primary flex items-center gap-1">
-                            <Building className="h-3 w-3" /> Owning Department
+                            <Building className="h-3 w-3" /> Departments
+                            <span className="text-slate-400 normal-case font-normal ml-1">— first is primary</span>
                           </Label>
-                          <Select value={uploadData.department_id} onValueChange={(v) => setUploadData({ ...uploadData, department_id: v })}>
-                            <SelectTrigger className="h-10 border-slate-200 bg-slate-50/50"><SelectValue placeholder="Global / Central" /></SelectTrigger>
-                            <SelectContent>
-                              {departments.filter(d => d.id?.trim()).map(d => (
-                                <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
+                          <div className="border border-slate-200 rounded-lg bg-slate-50/50 max-h-36 overflow-y-auto p-2 space-y-1">
+                            {departments.filter(d => d.id?.trim()).map(d => {
+                              const isSelected = uploadData.department_ids.includes(d.id)
+                              const isPrimary = uploadData.department_ids[0] === d.id
+                              return (
+                                <button
+                                  key={d.id}
+                                  type="button"
+                                  onClick={() => {
+                                    const current = uploadData.department_ids
+                                    const next = isSelected ? current.filter(id => id !== d.id) : [...current, d.id]
+                                    setUploadData(prev => ({ ...prev, department_ids: next }))
+                                  }}
+                                  className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-sm transition-colors ${isSelected ? 'bg-primary/10 text-primary font-medium' : 'hover:bg-slate-100 text-slate-600'}`}
+                                >
+                                  <div className={`h-4 w-4 rounded border flex-shrink-0 flex items-center justify-center ${isSelected ? 'bg-primary border-primary' : 'border-slate-300'}`}>
+                                    {isSelected && <X className="h-2.5 w-2.5 text-white" />}
+                                  </div>
+                                  <span className="flex-1 text-left truncate">{d.name}</span>
+                                  {isPrimary && <span className="text-amber-500 text-xs font-semibold">★ Primary</span>}
+                                </button>
+                              )
+                            })}
+                          </div>
                         </div>
                         <div className="space-y-2">
                           <Label className="text-slate-700 font-bold text-xs uppercase tracking-wider flex items-center gap-1">
@@ -744,7 +785,7 @@ export default function DocumentsV2() {
                             <SelectTrigger className="h-10 border-slate-200 bg-slate-50/50"><SelectValue /></SelectTrigger>
                             <SelectContent>
                               <SelectItem value="department">Department Internal</SelectItem>
-                              <SelectItem value="public">Tenant Public</SelectItem>
+                              <SelectItem value="public">Institution Public</SelectItem>
                               <SelectItem value="restricted">Restricted Access</SelectItem>
                             </SelectContent>
                           </Select>
@@ -840,7 +881,7 @@ export default function DocumentsV2() {
                 <DocumentCardV2
                   key={doc.id}
                   document={doc}
-                  department={departments.find(d => d.id === doc.department_id)}
+                  department={departments.find(d => d.id === (doc.document_departments?.find(dd => dd.is_primary)?.department_id ?? doc.department_id))}
                   onDownload={handleDownload}
                   onView={openDetail}
                   onVersions={openVersions}
@@ -859,10 +900,7 @@ export default function DocumentsV2() {
           {/* Standard Search Bar with View Toggle and Filter Button */}
           <StandardSearchBar
             searchQuery={searchQuery}
-            onSearchChange={(query) => {
-              setSearchQuery(query)
-              setCurrentPage(1)
-            }}
+            onSearchChange={handleSearchChange}
             placeholder="Search by title, tags, or description..."
             onFilterClick={() => setShowFilterPanel(!showFilterPanel)}
             showFilterPanel={showFilterPanel}
@@ -885,13 +923,9 @@ export default function DocumentsV2() {
                 filters={filters}
                 searchQuery={searchQuery}
                 parsedSearchFilters={parsedSearch}
-                onFilterChange={setFilters}
-                onSearchChange={setSearchQuery}
-                onReset={() => {
-                  setFilters({})
-                  setSearchQuery('')
-                  setCurrentPage(1)
-                }}
+                onFilterChange={handleFilterChange}
+                onSearchChange={handleSearchChange}
+                onReset={handleResetFilters}
               />
             </motion.div>
           )}
@@ -939,7 +973,7 @@ export default function DocumentsV2() {
                           >
                             <DocumentCardV2
                               document={doc}
-                              department={departments.find(d => d.id === doc.department_id)}
+                              department={departments.find(d => d.id === (doc.document_departments?.find(dd => dd.is_primary)?.department_id ?? doc.department_id))}
                               onDownload={handleDownload}
                               onView={openDetail}
                               onVersions={openVersions}

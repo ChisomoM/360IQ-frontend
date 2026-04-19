@@ -16,7 +16,7 @@ import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
-import { FileText, Upload, FileUp, Shield, Tag, X, CheckCircle2, Loader2 } from 'lucide-react';
+import { FileText, Upload, FileUp, Shield, Tag, X, CheckCircle2, Loader2, Star, Building2 } from 'lucide-react';
 import { useDropzone } from 'react-dropzone';
 
 import type { Department } from '@/types/dms';
@@ -34,7 +34,8 @@ export type UploadData = {
   description: string;
   document_type: string;
   category: string;
-  department_id: string;
+  /** Ordered list of department IDs. First entry is the primary (owning) department. */
+  department_ids: string[];
   visibility_level: 'public' | 'department' | 'restricted';
   tags: string[];
   is_encrypted: boolean;
@@ -46,7 +47,7 @@ const UPLOAD_DEFAULTS: UploadData = {
   description: '',
   document_type: 'policy',
   category: 'administrative',
-  department_id: '',
+  department_ids: [],
   visibility_level: 'department',
   tags: [],
   is_encrypted: false,
@@ -228,24 +229,62 @@ export default function DocumentUploadDialog({
               </div>
 
               <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label className="text-slate-700 font-bold text-xs uppercase tracking-wider text-primary flex items-center gap-1">Owning Department</Label>
-                  <Select value={uploadData.department_id} onValueChange={(v) => setUploadData({ ...uploadData, department_id: v })}>
-                    <SelectTrigger className="h-10 border-slate-200 bg-slate-50/50"><SelectValue placeholder="Global / Central" /></SelectTrigger>
-                    <SelectContent>
-                      {departments.filter(d => d.id?.trim()).map(d => (
-                        <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                <div className="space-y-2 col-span-2">
+                  <Label className="text-slate-700 font-bold text-xs uppercase tracking-wider text-primary flex items-center gap-1">
+                    <Building2 className="h-3 w-3" /> Departments
+                    <span className="text-slate-400 normal-case font-normal ml-1">— first selected is the owning department</span>
+                  </Label>
+                  {/* Multi-select department checkboxes */}
+                  <div className="border border-slate-200 rounded-lg bg-slate-50/50 max-h-40 overflow-y-auto p-2 space-y-1">
+                    {departments.filter(d => d.id?.trim()).length === 0 && (
+                      <p className="text-xs text-slate-400 px-2 py-1">No departments available</p>
+                    )}
+                    {departments.filter(d => d.id?.trim()).map(d => {
+                      const isSelected = uploadData.department_ids.includes(d.id)
+                      const isPrimary = uploadData.department_ids[0] === d.id
+                      return (
+                        <button
+                          key={d.id}
+                          type="button"
+                          onClick={() => {
+                            const current = uploadData.department_ids
+                            const next = isSelected
+                              ? current.filter(id => id !== d.id)
+                              : [...current, d.id]
+                            setUploadData({ ...uploadData, department_ids: next })
+                          }}
+                          className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-sm transition-colors ${
+                            isSelected
+                              ? 'bg-primary/10 text-primary font-medium'
+                              : 'hover:bg-slate-100 text-slate-600'
+                          }`}
+                        >
+                          <div className={`h-4 w-4 rounded border flex-shrink-0 flex items-center justify-center ${
+                            isSelected ? 'bg-primary border-primary' : 'border-slate-300'
+                          }`}>
+                            {isSelected && <X className="h-2.5 w-2.5 text-white" />}
+                          </div>
+                          <span className="flex-1 text-left truncate">{d.name}</span>
+                          {isPrimary && (
+                            <span className="flex items-center gap-0.5 text-amber-500 text-xs font-semibold">
+                              <Star className="h-3 w-3 fill-amber-400" /> Primary
+                            </span>
+                          )}
+                        </button>
+                      )
+                    })}
+                  </div>
+                  {uploadData.department_ids.length === 0 && (
+                    <p className="text-xs text-slate-400">No department selected — document will be institution-wide</p>
+                  )}
                 </div>
-                <div className="space-y-2">
+                <div className="space-y-2 col-span-2">
                   <Label className="text-slate-700 font-bold text-xs uppercase tracking-wider flex items-center gap-1">Visibility Level</Label>
                   <Select value={uploadData.visibility_level} onValueChange={(v: any) => setUploadData({ ...uploadData, visibility_level: v })}>
                     <SelectTrigger className="h-10 border-slate-200 bg-slate-50/50"><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="department">Department Internal</SelectItem>
-                      <SelectItem value="public">Tenant Public</SelectItem>
+                      <SelectItem value="public">Institution Public</SelectItem>
                       <SelectItem value="restricted">Restricted Access</SelectItem>
                     </SelectContent>
                   </Select>

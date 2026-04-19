@@ -18,9 +18,12 @@ interface TenantState {
   clear: () => void
 }
 
-export const useTenantStore = create<TenantState>((set) => ({
+export const useTenantStore = create<TenantState>((set, get) => ({
   currentTenantId: null,
-  setTenantId: (id: string) => set({ currentTenantId: id }),
+  setTenantId: (id: string) => {
+    console.log('[TenantStore] Setting tenant ID:', id);
+    set({ currentTenantId: id });
+  },
 
   currentTenantConfig: null,
   setTenantConfig: (config: TenantConfig) => set({ currentTenantConfig: config }),

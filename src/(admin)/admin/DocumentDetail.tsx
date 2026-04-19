@@ -107,14 +107,15 @@ interface DocumentAccessLog {
   user_id: string;
   user: { id: string; first_name: string; last_name: string };
   action: string; // 'viewed' | 'downloaded' | 'edited' | 'approved' | 'rejected'
-  timestamp: string;
+  created_at: string;
   details: string | null;
 }
 
 interface WorkflowStep {
   id: string;
   step_number: number;
-  approver_user: { id: string; first_name: string; last_name: string };
+  approver_user?: { id: string; first_name: string; last_name: string } | null;
+  approver_role?: { id: string; name: string; slug: string };
   status: 'pending' | 'approved' | 'rejected';
   approved_at: string | null;
   comments: string | null;
@@ -127,100 +128,6 @@ interface DocumentWorkflow {
   current_step_index: number;
   total_steps: number;
   steps: WorkflowStep[];
-}
-
-// ─── Mock data factories ───────────────────────────────────────────────────────
-// All mock data is keyed by document ID so the same doc always shows the same data.
-// Replace these with real API calls once endpoints are ready.
-
-function getMockComments(documentId: string): Comment[] {
-  return [
-    {
-      id: 'c-001',
-      document_id: documentId,
-      user_id: 'u-001',
-      user: { id: 'u-001', first_name: 'Tendai', last_name: 'Moyo' },
-      content: 'This policy needs to be reviewed before the board meeting on Friday. A few clauses in section 3 are outdated.',
-      parent_id: null,
-      created_at: dayjs().subtract(2, 'day').toISOString(),
-      updated_at: dayjs().subtract(2, 'day').toISOString(),
-    },
-    {
-      id: 'c-002',
-      document_id: documentId,
-      user_id: 'u-002',
-      user: { id: 'u-002', first_name: 'Amara', last_name: 'Banda' },
-      content: 'Agreed. I\'ve flagged section 3.2 specifically — the fee structure referenced there changed in January.',
-      parent_id: 'c-001', // reply to c-001
-      created_at: dayjs().subtract(1, 'day').toISOString(),
-      updated_at: dayjs().subtract(1, 'day').toISOString(),
-    },
-    {
-      id: 'c-003',
-      document_id: documentId,
-      user_id: 'u-003',
-      user: { id: 'u-003', first_name: 'Chanda', last_name: 'Phiri' },
-      content: 'Approved the document with minor notes. Please update the revision date on the cover page.',
-      parent_id: null,
-      created_at: dayjs().subtract(3, 'hour').toISOString(),
-      updated_at: dayjs().subtract(3, 'hour').toISOString(),
-    },
-  ];
-}
-
-function getMockAuditLogs(documentId: string): DocumentAccessLog[] {
-  return [
-    { id: 'l-001', document_id: documentId, user_id: 'u-003', user: { id: 'u-003', first_name: 'Chanda', last_name: 'Phiri' }, action: 'approved', timestamp: dayjs().subtract(3, 'hour').toISOString(), details: 'Approved at workflow step 2' },
-    { id: 'l-002', document_id: documentId, user_id: 'u-002', user: { id: 'u-002', first_name: 'Amara', last_name: 'Banda' }, action: 'viewed', timestamp: dayjs().subtract(5, 'hour').toISOString(), details: null },
-    { id: 'l-003', document_id: documentId, user_id: 'u-001', user: { id: 'u-001', first_name: 'Tendai', last_name: 'Moyo' }, action: 'edited', timestamp: dayjs().subtract(1, 'day').toISOString(), details: 'Updated description and visibility' },
-    { id: 'l-004', document_id: documentId, user_id: 'u-004', user: { id: 'u-004', first_name: 'Kemi', last_name: 'Dlamini' }, action: 'downloaded', timestamp: dayjs().subtract(2, 'day').toISOString(), details: null },
-    { id: 'l-005', document_id: documentId, user_id: 'u-001', user: { id: 'u-001', first_name: 'Tendai', last_name: 'Moyo' }, action: 'viewed', timestamp: dayjs().subtract(3, 'day').toISOString(), details: null },
-  ];
-}
-
-function getMockWorkflow(documentId: string): DocumentWorkflow {
-  return {
-    id: 'wf-001',
-    document_id: documentId,
-    status: 'in_progress',
-    current_step_index: 1, // 0-based, so step 2 is active
-    total_steps: 3,
-    steps: [
-      {
-        id: 'ws-001',
-        step_number: 1,
-        approver_user: { id: 'u-001', first_name: 'Tendai', last_name: 'Moyo' },
-        status: 'approved',
-        approved_at: dayjs().subtract(1, 'day').toISOString(),
-        comments: 'Looks good, forwarding to department head.',
-      },
-      {
-        id: 'ws-002',
-        step_number: 2,
-        approver_user: { id: 'u-003', first_name: 'Chanda', last_name: 'Phiri' },
-        status: 'pending',
-        approved_at: null,
-        comments: null,
-      },
-      {
-        id: 'ws-003',
-        step_number: 3,
-        approver_user: { id: 'u-005', first_name: 'Bongani', last_name: 'Ncube' },
-        status: 'pending',
-        approved_at: null,
-        comments: null,
-      },
-    ],
-  };
-}
-
-function getMockRelatedDocuments(currentId: string): Partial<Document>[] {
-  // Returns documents that share tags/category — in production this would be an API call
-  return [
-    { id: 'rel-001', title: 'Finance Policy 2023', file_name: 'finance_policy_2023.pdf', document_type: 'policy', status: 'approved', created_at: dayjs().subtract(6, 'month').toISOString() },
-    { id: 'rel-002', title: 'Budget Allocation Report Q1', file_name: 'budget_q1.pdf', document_type: 'report', status: 'active', created_at: dayjs().subtract(3, 'month').toISOString() },
-    { id: 'rel-003', title: 'Procurement Guidelines', file_name: 'procurement_guidelines.pdf', document_type: 'policy', status: 'active', created_at: dayjs().subtract(1, 'month').toISOString() },
-  ].filter(d => d.id !== currentId);
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -246,6 +153,9 @@ const statusConfig = (status: string) => {
     approved: { cls: 'bg-blue-50 text-blue-700 border-blue-200', label: 'Approved' },
     rejected: { cls: 'bg-red-50 text-red-700 border-red-200', label: 'Rejected' },
     pending: { cls: 'bg-yellow-50 text-yellow-700 border-yellow-200', label: 'Pending' },
+    in_review: { cls: 'bg-orange-50 text-orange-700 border-orange-200', label: 'In Review' },
+    changes_requested: { cls: 'bg-amber-50 text-amber-700 border-amber-200', label: 'Changes Requested' },
+    signed: { cls: 'bg-teal-50 text-teal-700 border-teal-200', label: 'Signed' },
   };
   return map[status] ?? { cls: 'bg-gray-100 text-gray-600 border-gray-200', label: status };
 };
@@ -351,12 +261,7 @@ export default function DocumentDetail() {
       .then(([docData, deptsData]) => {
         setDoc(docData);
         setDepartments(Array.isArray(deptsData) ? deptsData : (deptsData?.items ?? []));
-
-        // Load mock data for comments, audit logs, and workflow
-        setAuditLogs(getMockAuditLogs(id));
-        setComments(getMockComments(id));
-        setWorkflow(getMockWorkflow(id));
-        setRelatedDocs(getMockRelatedDocuments(id));
+        setRelatedDocs([]);
       })
       .catch((err) => {
         // Check if the backend said "forbidden" / "unauthorized" vs just not found
@@ -388,6 +293,25 @@ export default function DocumentDetail() {
       .finally(() => setLoadingSigs(false));
   }, [id, loading]);
 
+  // Load access logs and workflow once the document is available
+  useEffect(() => {
+    if (loading || !id) return;
+    // Access logs
+    fetchData('DOCUMENT_ACCESS_LOGS', 'GET', { id })
+      .then((data) => setAuditLogs(Array.isArray(data) ? data : []))
+      .catch(() => setAuditLogs([]));
+    // Workflow(s) for this document — take the most recent one
+    fetchData('DOCUMENT_WORKFLOWS', 'GET', { id })
+      .then((data: DocumentWorkflow[]) => {
+        if (Array.isArray(data) && data.length > 0) {
+          setWorkflow(data[0]);
+        } else {
+          setWorkflow(null);
+        }
+      })
+      .catch(() => setWorkflow(null));
+  }, [id, loading]);
+
   // ── Actions ────────────────────────────────────────────────────────────────
 
   const handleAnalyzeWithAI = () => {
@@ -412,7 +336,7 @@ export default function DocumentDetail() {
     try {
       toast.info('Opening document for printing...');
       // fetchFileBuffer handles auth — returns an ArrayBuffer
-      const buffer = await fetchFileBuffer('DOCUMENT_DOWNLOAD', { id: doc.id });
+      const { buffer } = await fetchFileBuffer('DOCUMENT_DOWNLOAD', { id: doc.id });
       const blob = new Blob([buffer], { type: 'application/pdf' });
       const blobUrl = URL.createObjectURL(blob);
       const printWindow = window.open(blobUrl, '_blank');
@@ -575,6 +499,17 @@ export default function DocumentDetail() {
 
   const deptName = (deptId?: string) =>
     departments.find(d => d.id === deptId)?.name ?? 'Global';
+
+  /** Returns a human-readable label for the document's department associations. */
+  const deptLabel = (doc: Document) => {
+    if (doc.document_departments && doc.document_departments.length > 0) {
+      const primary = doc.document_departments.find(dd => dd.is_primary);
+      const primaryName = primary?.department?.name ?? deptName(primary?.department_id);
+      const extra = doc.document_departments.length - 1;
+      return extra > 0 ? `${primaryName} +${extra} more` : primaryName;
+    }
+    return deptName(doc.department_id);
+  };
 
   // Groups replies under their parent comment
   const topLevelComments = comments.filter(c => c.parent_id === null);
@@ -746,7 +681,7 @@ export default function DocumentDetail() {
                   {
                     icon: <Building className="h-4 w-4 text-gray-400" />,
                     label: 'Department',
-                    value: deptName(doc.department_id),
+                    value: deptLabel(doc),
                   },
                   {
                     icon: vis.icon,
@@ -857,7 +792,7 @@ export default function DocumentDetail() {
                               <span className="text-gray-400 font-normal ml-1">{ac.label.toLowerCase()} this document</span>
                             </p>
                             <span className="text-xs text-gray-400 whitespace-nowrap flex-shrink-0">
-                              {dayjs(log.timestamp).fromNow()}
+                              {dayjs(log.created_at).fromNow()}
                             </span>
                           </div>
                           {log.details && (
@@ -1102,7 +1037,9 @@ export default function DocumentDetail() {
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className={cn('text-xs font-medium truncate', isActive ? 'text-foreground' : 'text-muted-foreground')}>
-                            {step.approver_user.first_name} {step.approver_user.last_name}
+                            {step.approver_user
+                              ? `${step.approver_user.first_name} ${step.approver_user.last_name}`
+                              : (step.approver_role?.name ?? 'Role Approver')}
                           </p>
                           {/* Show approval time if approved, or "Awaiting" if active */}
                           <p className="text-xs text-muted-foreground">

@@ -55,7 +55,9 @@ export const API: Record<string, string> = {
   WORKFLOW_DETAIL: "workflows/:id",
   WORKFLOW_STEP_APPROVE: "workflows/steps/:id/approve",
   WORKFLOW_STEP_REJECT: "workflows/steps/:id/reject",
+  WORKFLOW_STEP_REQUEST_CHANGES: "workflows/steps/:id/request-changes",
   PENDING_APPROVALS: "workflows/pending",
+  DOCUMENT_WORKFLOWS: "documents/:id/workflows",
   USERS: "users",
 
   // HR Module
@@ -85,6 +87,10 @@ export const API: Record<string, string> = {
   SIGNATURE_SIGN: "signatures/:id/sign",
   SIGNATURE_DECLINE: "signatures/:id/decline",
   SIGNATURE_DOCUMENT: "signatures/document/:docId",
+  USER_SIGNATURE_LIST: "me/signatures",
+  USER_SIGNATURE_SAVE: "me/signatures",
+  USER_SIGNATURE_SET_DEFAULT: "me/signatures/:id/default",
+  USER_SIGNATURE_DELETE: "me/signatures/:id",
 
   // Dashboard
   DASHBOARD_CARDS: "dashboard/cards",
