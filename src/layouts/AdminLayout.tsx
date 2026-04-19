@@ -5,6 +5,8 @@ import type { Document } from "@/types/dms"
 
 export type AdminLayoutContext = {
   analyzeDocument: (doc: Document) => void;
+  openChat: (doc: Document) => void;
+  openAnalysis: (doc: Document) => void;
   sendChatMessage: (message: string) => void;
 };
 
@@ -46,7 +48,7 @@ export default function AdminLayout() {
   const location = useLocation()
   const { user, logout } = useAuth()
   const { logo, logoUrl, tenantName } = useTenantBranding()
-  
+
   // Apply tenant branding colors to CSS variables
   useTenantBrandingEffect()
   const [collapsed, setCollapsed] = useState(false)
@@ -68,6 +70,20 @@ export default function AdminLayout() {
   const isActive = (path: string) => location.pathname === path
   const toggleSidebar = () => setCollapsed(!collapsed)
   const handleLogout = () => logout()
+
+  const [initialTab, setInitialTab] = useState<'chat' | 'analyze'>('analyze');
+
+  const openChat = (doc: Document) => {
+    setPendingAnalysisDoc(doc);
+    setInitialTab('chat');
+    setIsChatOpen(true);
+  };
+
+  const openAnalysis = (doc: Document) => {
+    setPendingAnalysisDoc(doc);
+    setInitialTab('analyze');
+    setIsChatOpen(true);
+  };
 
   return (
     <div className="min-h-screen flex bg-gradient-to-br from-gray-50 via-white to-gray-100">
@@ -644,7 +660,7 @@ export default function AdminLayout() {
 
         <div className={`flex-1 transition-all duration-300 ${collapsed ? "ml-20" : "ml-64"} mr-20`}>
           <main className="px-10 py-10 min-h-screen">
-            <Outlet context={{ analyzeDocument, sendChatMessage } as AdminLayoutContext} />
+            <Outlet context={{ analyzeDocument, openChat, openAnalysis, sendChatMessage } as AdminLayoutContext} />
           </main>
         </div>
 
@@ -657,6 +673,7 @@ export default function AdminLayout() {
         onDocConsumed={() => setPendingAnalysisDoc(null)}
         pendingChatMessage={pendingChatMessage}
         onChatMessageConsumed={() => setPendingChatMessage(null)}
+        initialTab={initialTab}
       />
 
       <RightSidebar
