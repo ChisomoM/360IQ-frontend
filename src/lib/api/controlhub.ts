@@ -39,10 +39,11 @@ export const chUploadBrandingLogo = async (tenantId: string, file: File) => {
   const formData = new FormData();
   formData.append("logo", file);
 
-        // const baseUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8032/api/v1/';
- const baseUrl: string = import.meta.env.VITE_BACKEND_URL || "http://102.211.186.58/api/v1/";
+  // const baseUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8032/api/v1/';
+  // const baseUrl: string = import.meta.env.VITE_BACKEND_URL || " http://102.211.186.58:8094";
+  const baseUrl: string = import.meta.env.VITE_BACKEND_URL || " http://102.211.186.58:8094";
 
-//  const baseUrl: string = import.meta.env.VITE_BACKEND_URL || "http://102.211.186.58/api/v1/";
+  //  const baseUrl: string = import.meta.env.VITE_BACKEND_URL || "http://102.211.186.58/api/v1/";
   const url = `${baseUrl}controlhub/clients/${tenantId}/branding/logo`;
   const token = getControlHubToken();
 
