@@ -644,22 +644,22 @@ export default function DocumentsV2() {
                         </div>
                       </div>
                     ) : (
-                      <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 relative group">
+                      <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 relative group max-w-full">
                         <button
                           onClick={() => setUploadData(prev => ({ ...prev, file: null }))}
                           className="absolute -top-2 -right-2 p-1.5 bg-red-500 text-white rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity"
                         >
                           <X className="h-3 w-3" />
                         </button>
-                        <div className="flex items-center gap-4">
-                          <div className="p-3 bg-blue-50 text-blue-600 rounded-xl">
+                        <div className="flex items-center gap-4 min-w-0">
+                          <div className="p-3 bg-blue-50 text-blue-600 rounded-xl flex-shrink-0">
                             <FileUp className="h-8 w-8" />
                           </div>
                           <div className="flex-1 min-w-0">
                             <p className="font-bold text-slate-800 truncate" title={uploadData.file.name}>
                               {uploadData.file.name}
                             </p>
-                            <p className="text-xs text-slate-500">
+                            <p className="text-xs text-slate-500 truncate">
                               {(uploadData.file.size / 1024 / 1024).toFixed(2)} MB • {uploadData.file.type.split('/').pop()?.toUpperCase()}
                             </p>
                           </div>

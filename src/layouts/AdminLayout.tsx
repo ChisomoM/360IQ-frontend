@@ -431,6 +431,44 @@ export default function AdminLayout() {
                     </SidebarMenu>
                   </CollapsibleSidebarSection>
                 )}
+
+                {/* Departments Section */}
+                {hasPermission(user, PERMISSIONS['departments.manage']) && (
+                  <CollapsibleSidebarSection
+                    title="Departments"
+                    icon={<Building2 className="h-5 w-5" />}
+                    collapsed={collapsed}
+                    activePaths={["/admin/departments"]}
+                  >
+                    <SidebarMenu className="space-y-2">
+                      <SidebarMenuItem>
+                        {isActive("/admin/departments") && (
+                          <motion.div
+                            layoutId="sidebar-active-pill"
+                            className="absolute inset-0 rounded-md bg-secondary"
+                            transition={{ type: 'spring', stiffness: 600, damping: 20 }}
+                          />
+                        )}
+                        <motion.div
+                          whileHover={{ x: 4 }}
+                          transition={{ type: 'spring', stiffness: 350, damping: 10 }}
+                        >
+                          <SidebarMenuButton
+                            asChild
+                            isActive={isActive("/admin/departments")}
+                            className="text-white hover:bg-white/10 data-[active=true]:bg-secondary data-[active=true]:text-black rounded-md transition-colors relative z-10"
+                          >
+                            <Link to="/admin/departments" className="flex items-center gap-3">
+                              <Building2 className="h-5 w-5" />
+                              {!collapsed && <span>Manage Departments</span>}
+                            </Link>
+                          </SidebarMenuButton>
+                        </motion.div>
+                      </SidebarMenuItem>
+                    </SidebarMenu>
+                  </CollapsibleSidebarSection>
+                )}
+
                 {/* System Section */}
                 {(hasPermission(user, PERMISSIONS['users.write']) ||
                   hasPermission(user, PERMISSIONS['users.read']) ||
@@ -441,35 +479,9 @@ export default function AdminLayout() {
                       title="System"
                       icon={<ShieldCheck className="h-5 w-5" />}
                       collapsed={collapsed}
-                      activePaths={["/admin/departments", "/admin/users", "/admin/user-management", "/admin/audit-trails", "/admin/roles", "/admin/maker-checker"]}
+                      activePaths={["/admin/users", "/admin/user-management", "/admin/audit-trails", "/admin/roles", "/admin/maker-checker"]}
                     >
                       <SidebarMenu className="space-y-2">
-                        {hasPermission(user, PERMISSIONS['departments.manage']) && (
-                          <SidebarMenuItem>
-                            {isActive("/admin/departments") && (
-                              <motion.div
-                                layoutId="sidebar-active-pill"
-                                className="absolute inset-0 rounded-md bg-secondary"
-                                transition={{ type: 'spring', stiffness: 600, damping: 20 }}
-                              />
-                            )}
-                            <motion.div
-                              whileHover={{ x: 4 }}
-                              transition={{ type: 'spring', stiffness: 350, damping: 10 }}
-                            >
-                              <SidebarMenuButton
-                                asChild
-                                isActive={isActive("/admin/departments")}
-                                className="text-white hover:bg-white/10 data-[active=true]:bg-secondary data-[active=true]:text-black rounded-md transition-colors relative z-10"
-                              >
-                                <Link to="/admin/departments" className="flex items-center gap-3">
-                                  <Building2 className="h-5 w-5" />
-                                  {!collapsed && <span>Departments</span>}
-                                </Link>
-                              </SidebarMenuButton>
-                            </motion.div>
-                          </SidebarMenuItem>
-                        )}
                         {hasPermission(user, PERMISSIONS['users.read']) && (
                           <SidebarMenuItem>
                             {isActive("/admin/user-management") && (
