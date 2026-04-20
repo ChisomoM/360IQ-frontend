@@ -93,17 +93,32 @@ export default function RequestSignatureModal({
     if (!pdfUrl) {
       setLoadingPdf(true);
       fetchFileBuffer('DOCUMENT_DOWNLOAD', { id: documentId })
-        .then((buf) => {
-          setPdfBuffer(buf);
-          setPdfUrl(URL.createObjectURL(new Blob([buf], { type: 'application/pdf' })));
+        .then(({ buffer, contentType }) => {
+          if (!contentType.startsWith('application/pdf')) {
+            throw new Error('Only PDF documents can be signed');
+          }
+          setPdfBuffer(buffer);
+          setPdfUrl(URL.createObjectURL(new Blob([buffer], { type: 'application/pdf' })));
         })
-        .catch(() => toast.error('Failed to load document preview'))
+        .catch((err) => {
+          toast.error(err.message || 'Failed to load document preview');
+        })
         .finally(() => setLoadingPdf(false));
     }
   };
 
   const handleSubmit = async () => {
     if (!field) { toast.error('Please place the signature field on the document'); return; }
+    if (!signerId) { toast.error('Please select a signer'); return; }
+    
+    // Verify tenant context is still set
+    const { useTenantStore } = await import('@/lib/store/tenantStore');
+    const tenantId = useTenantStore.getState().currentTenantId;
+    if (!tenantId) {
+      toast.error('Tenant context lost. Please log in again.');
+      return;
+    }
+    
     setIsSubmitting(true);
     try {
       const req = await requestSignature({

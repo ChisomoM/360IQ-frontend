@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import {
@@ -26,13 +27,14 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
-import { ClipboardList, CheckCircle, XCircle, Clock, Eye, Loader2, MessageSquare, User } from 'lucide-react';
+import { CheckCircle, XCircle, Clock, Eye, Loader2, RotateCcw } from 'lucide-react';
 import { toast } from 'sonner';
 import { fetchData } from '@/lib/api/crud';
 import type { Workflow, WorkflowStep, Document } from '@/types/dms';
 import dayjs from 'dayjs';
 
 export default function Workflows() {
+  const navigate = useNavigate();
   const [workflows, setWorkflows] = useState<Workflow[]>([]);
   const [pendingSteps, setPendingSteps] = useState<WorkflowStep[]>([]);
   const [documents, setDocuments] = useState<Record<string, Document>>({});
@@ -40,24 +42,26 @@ export default function Workflows() {
   const [actionLoading, setActionLoading] = useState(false);
   const [selectedStep, setSelectedStep] = useState<WorkflowStep | null>(null);
   const [isDecisionDialogOpen, setIsDecisionDialogOpen] = useState(false);
-  const [decisionType, setDecisionType] = useState<'approve' | 'reject'>('approve');
+  const [decisionType, setDecisionType] = useState<'approve' | 'reject' | 'request-changes'>('approve');
   const [comments, setComments] = useState('');
 
   const fetchWorkflowData = async () => {
     try {
       setLoading(true);
-      const [wfData, pendingData, docsData] = await Promise.all([
+      // WORKFLOWS and PENDING_APPROVALS are critical; fetch them together
+      const [wfData, pendingData] = await Promise.all([
         fetchData('WORKFLOWS', 'GET'),
         fetchData('PENDING_APPROVALS', 'GET'),
-        fetchData('DOCUMENTS', 'GET'),
       ]);
       setWorkflows(wfData);
       setPendingSteps(pendingData);
-      
-      // Map documents for easy lookup
-      const docMap: Record<string, Document> = {};
-      docsData.forEach((d: Document) => { docMap[d.id] = d; });
-      setDocuments(docMap);
+
+      // DOCUMENTS is supplemental fallback — fetch separately so a failure doesn't break the page
+      fetchData('DOCUMENTS', 'GET').then((docsData) => {
+        const docMap: Record<string, Document> = {};
+        docsData.forEach((d: Document) => { docMap[d.id] = d; });
+        setDocuments(docMap);
+      }).catch(() => { /* non-critical */ });
     } catch (error) {
       console.error('Error fetching workflow data:', error);
       toast.error('Failed to load workflows');
@@ -75,15 +79,20 @@ export default function Workflows() {
 
     try {
       setActionLoading(true);
-      const endpoint = decisionType === 'approve' ? 'WORKFLOW_STEP_APPROVE' : 'WORKFLOW_STEP_REJECT';
-      await fetchData(endpoint, 'POST', { id: selectedStep.id }, { comments });
-      toast.success(`Step ${decisionType}d successfully`);
+      const endpointMap = {
+        'approve': 'WORKFLOW_STEP_APPROVE',
+        'reject': 'WORKFLOW_STEP_REJECT',
+        'request-changes': 'WORKFLOW_STEP_REQUEST_CHANGES',
+      } as const;
+      await fetchData(endpointMap[decisionType], 'POST', { id: selectedStep.id }, { comments });
+      const actionLabel = decisionType === 'request-changes' ? 'Changes requested' : `Step ${decisionType}d`;
+      toast.success(`${actionLabel} successfully`);
       setIsDecisionDialogOpen(false);
       setComments('');
       fetchWorkflowData();
     } catch (error: any) {
-      console.error(`Error ${decisionType}ing step:`, error);
-      toast.error(error.message || `Failed to ${decisionType} step`);
+      console.error(`Error on workflow decision:`, error);
+      toast.error(error.message || `Failed to process decision`);
     } finally {
       setActionLoading(false);
     }
@@ -147,10 +156,10 @@ export default function Workflows() {
                     pendingSteps.map((step) => (
                       <TableRow key={step.id} className="hover:bg-gray-50 transition-colors">
                         <TableCell className="font-semibold text-gray-900 py-4">
-                          {documents[step.workflow_id]?.title || 'Unknown Document'}
+                          {step.workflow?.document?.title || documents[step.workflow?.document_id ?? '']?.title || 'Unknown Document'}
                         </TableCell>
                         <TableCell className="uppercase text-xs font-bold text-gray-500">
-                           approval
+                          {step.workflow?.workflow_type?.replace(/_/g, ' ') || 'approval'}
                         </TableCell>
                         <TableCell>
                           <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-100">
@@ -158,8 +167,7 @@ export default function Workflows() {
                           </Badge>
                         </TableCell>
                         <TableCell className="text-sm text-gray-600">
-                          {/* We don't have created_at in step model yet, assume from workflow if needed */}
-                          {dayjs().format('MMM DD, YYYY')}
+                          {step.created_at ? dayjs(step.created_at).format('MMM DD, YYYY') : '—'}
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-2">
@@ -173,6 +181,18 @@ export default function Workflows() {
                               }}
                             >
                               <CheckCircle className="h-4 w-4 mr-1" /> Approve
+                            </Button>
+                            <Button 
+                              size="sm"
+                              variant="outline"
+                              className="border-amber-400 text-amber-700 hover:bg-amber-50"
+                              onClick={() => {
+                                setSelectedStep(step);
+                                setDecisionType('request-changes');
+                                setIsDecisionDialogOpen(true);
+                              }}
+                            >
+                              <RotateCcw className="h-4 w-4 mr-1" /> Request Changes
                             </Button>
                             <Button 
                               size="sm" 
@@ -221,22 +241,22 @@ export default function Workflows() {
                           {wf.id.split('-')[0]}...
                         </TableCell>
                         <TableCell className="font-semibold text-gray-900">
-                          {documents[wf.document_id]?.title || 'Unknown Document'}
+                          {wf.document?.title || documents[wf.document_id]?.title || 'Unknown Document'}
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-2">
                              <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
                                <div
                                  className="h-full bg-primary-blue transition-all"
-                                 style={{ width: `${((wf.current_step_index + 1) / wf.total_steps) * 100}%` }}
+                                 style={{ width: `${(wf.current_step_index / wf.total_steps) * 100}%` }}
                                />
                              </div>
-                             <span className="text-xs font-bold text-gray-600">{wf.current_step_index + 1}/{wf.total_steps}</span>
+                             <span className="text-xs font-bold text-gray-600">{wf.current_step_index}/{wf.total_steps}</span>
                           </div>
                         </TableCell>
                         <TableCell>{getStatusBadge(wf.status)}</TableCell>
                         <TableCell className="text-right">
-                          <Button variant="ghost" size="sm">
+                          <Button variant="ghost" size="sm" onClick={() => navigate(`/admin/documents/${wf.document_id}`)}>
                             <Eye className="h-4 w-4" />
                           </Button>
                         </TableCell>
@@ -254,21 +274,23 @@ export default function Workflows() {
       <Dialog open={isDecisionDialogOpen} onOpenChange={setIsDecisionDialogOpen}>
         <DialogContent className="max-w-md bg-white">
           <DialogHeader>
-            <DialogTitle className={`flex items-center gap-2 ${decisionType === 'approve' ? 'text-green-600' : 'text-red-600'}`}>
-              {decisionType === 'approve' ? <CheckCircle className="h-5 w-5" /> : <XCircle className="h-5 w-5" />}
-              {decisionType === 'approve' ? 'Approve' : 'Reject'} Workflow Step
+            <DialogTitle className={`flex items-center gap-2 ${decisionType === 'approve' ? 'text-green-600' : decisionType === 'request-changes' ? 'text-amber-600' : 'text-red-600'}`}>
+              {decisionType === 'approve' ? <CheckCircle className="h-5 w-5" /> : decisionType === 'request-changes' ? <RotateCcw className="h-5 w-5" /> : <XCircle className="h-5 w-5" />}
+              {decisionType === 'approve' ? 'Approve' : decisionType === 'request-changes' ? 'Request Changes' : 'Reject'} Workflow Step
             </DialogTitle>
             <DialogDescription>
-              Provide comments for this decision. This will be visible in the workflow history.
+              {decisionType === 'request-changes'
+                ? 'Describe what changes are needed. The document will be returned to the initiator for revision.'
+                : 'Provide comments for this decision. This will be visible in the workflow history.'}
             </DialogDescription>
           </DialogHeader>
           
           <div className="py-4">
-            <Label>Comments</Label>
+            <Label>Comments{decisionType === 'request-changes' ? ' (required)' : ''}</Label>
             <Textarea 
               value={comments}
               onChange={(e) => setComments(e.target.value)}
-              placeholder="Reason for approval/rejection..."
+              placeholder={decisionType === 'request-changes' ? 'Describe the changes needed...' : 'Reason for approval/rejection...'}
               className="mt-2"
             />
           </div>
@@ -277,11 +299,17 @@ export default function Workflows() {
             <Button variant="outline" onClick={() => setIsDecisionDialogOpen(false)}>Cancel</Button>
             <Button 
               onClick={handleDecision} 
-              disabled={actionLoading}
-              className={decisionType === 'approve' ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'}
+              disabled={actionLoading || (decisionType === 'request-changes' && !comments.trim())}
+              className={
+                decisionType === 'approve'
+                  ? 'bg-green-600 hover:bg-green-700'
+                  : decisionType === 'request-changes'
+                  ? 'bg-amber-500 hover:bg-amber-600'
+                  : 'bg-red-600 hover:bg-red-700'
+              }
             >
               {actionLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Confirm {decisionType === 'approve' ? 'Approval' : 'Rejection'}
+              {decisionType === 'approve' ? 'Confirm Approval' : decisionType === 'request-changes' ? 'Send Request' : 'Confirm Rejection'}
             </Button>
           </DialogFooter>
         </DialogContent>

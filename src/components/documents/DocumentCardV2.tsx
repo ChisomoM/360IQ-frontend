@@ -93,16 +93,16 @@ export function DocumentCardV2({
   onChartAnalysis,
 }: DocumentCardV2Props) {
   const [isOpen, setIsOpen] = useState(false)
-  const config = getFileTypeConfig(document.title)
+  const config = getFileTypeConfig(document.file_name)
 
   return (
     <motion.div
       onClick={() => onView(document)}
       whileHover={{ y: -3 }}
-      className="h-full w-full flex flex-col rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 ease-out border border-gray-200 hover:border-gray-300 bg-white cursor-pointer"
+      className="h-full w-full flex flex-col rounded-2xl overflow-hidden hover:shadow-md transition-all duration-300 ease-out border border-gray-200 hover:border-gray-300 bg-white cursor-pointer"
     >
       {/* TOP SECTION — Centered file icon only, no text, no badge */}
-      <div className={`${config.lightBg} flex items-center justify-center py-8`}>
+      <div className={`${config.lightBg}/50 flex items-center justify-center py-8`}>
         <img
           src={config.icon}
           alt={config.extLabel}

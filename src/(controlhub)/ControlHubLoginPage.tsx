@@ -168,21 +168,7 @@ const ControlHubLoginPage: React.FC<ControlHubLoginPageProps> = () => {
                 variants={item}
               >
 
-                By signing in you agree to the{" "}
-
-                <a
-                  href="#"
-                  className="underline hover:text-gray-600 transition-colors"
-                >
-                  Terms of Service
-                </a>{" "}
-                and{" "}
-                <a
-                  href="#"
-                  className="underline hover:text-gray-600 transition-colors"
-                >
-                  Privacy Policy
-                </a>
+              Made with <span className="text-red-500">♥</span> by Avec Team
 
               </motion.p>
 

@@ -3,7 +3,7 @@ import { useNavigate, useOutletContext } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd'
 import type { DropResult } from '@hello-pangea/dnd'
-import { Loader2, Plus, ListFilter ,Search, Settings, Upload, FileUp, X, CheckCircle2, Shield, Building, Lock, Tag, LayoutGrid, List } from 'lucide-react'
+import { Loader2, Plus, ListFilter, Search, Settings, Upload, FileUp, X, CheckCircle2, Shield, Building, Lock, Tag, LayoutGrid, List } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
@@ -60,7 +60,8 @@ interface FilterState {
  */
 export default function DocumentsV2() {
   const navigate = useNavigate()
-  const { analyzeDocument } = useOutletContext<AdminLayoutContext>()
+  // Pull openChat and openAnalysis from outlet context
+  const { analyzeDocument, openChat, openAnalysis } = useOutletContext<AdminLayoutContext>()
   const { user } = useAuth()
 
   // ─── State: Core data ───────────────────────────────────────────────────
@@ -95,7 +96,7 @@ export default function DocumentsV2() {
     description: '',
     document_type: 'policy',
     category: 'administrative',
-    department_id: '',
+    department_ids: [] as string[],
     visibility_level: 'department' as 'public' | 'department' | 'restricted',
     tags: [] as string[],
     is_encrypted: false,
@@ -187,21 +188,27 @@ export default function DocumentsV2() {
     }
   }, [parsedSearch.text])
 
+  // ─── Check if any manual filters are applied
+  const hasManualFilters = Object.values(filters).some(v => v)
+
   // ─── Computed: filtered & paginated documents ────────────────────────
-  // When backend search is active, start from server-ranked IDs; otherwise all docs
-  const searchBase = searchResultIds !== null
+  // When backend search is active AND no manual filters, use server results
+  // Otherwise, filter from all documents with combined criteria
+  const searchBase = (searchResultIds !== null && !hasManualFilters)
     ? searchResultIds.map(id => documents.find(d => d.id === id)).filter((d): d is Document => !!d)
     : documents
 
   const filtered = searchBase.filter(doc => {
     // Text search is now handled server-side (searchResultIds); skip client-side
 
-    // Manual department filter
-    if (filters.department_id && doc.department_id !== filters.department_id) {
-      return false
+    // Manual department filter — check primary department_id or any in document_departments
+    if (filters.department_id) {
+      const inDepts = doc.document_departments?.some(dd => dd.department_id === filters.department_id)
+      const matchesPrimary = doc.department_id === filters.department_id
+      if (!inDepts && !matchesPrimary) return false
     }
 
-    // Manual status filter + parsed status filters (OR logic)
+    // Manual status filter + parsed status filters (AND logic for both)
     if (filters.status && doc.status !== filters.status) {
       return false
     }
@@ -211,7 +218,7 @@ export default function DocumentsV2() {
       }
     }
 
-    // Manual document type filter + parsed type filters (OR logic)
+    // Manual document type filter + parsed type filters (AND logic for both)
     if (filters.document_type && doc.document_type !== filters.document_type) {
       return false
     }
@@ -229,23 +236,20 @@ export default function DocumentsV2() {
       }
     }
 
-    // Date range filter (parsed or manual)
+    // Date range filter (parsed or manual) — use the more restrictive (later from, earlier until)
     const dateFrom = parsedSearch.dateFrom || filters.date_from
     const dateUntil = parsedSearch.dateUntil || filters.date_to
-    
+
     if (dateFrom) {
       const docDate = new Date(doc.created_at).getTime()
-      const fromDate = new Date(dateFrom).getTime()
+      const fromDate = new Date(dateFrom + 'T00:00:00Z').getTime()
       if (docDate < fromDate) return false
     }
     if (dateUntil) {
       const docDate = new Date(doc.created_at).getTime()
-      const toDate = new Date(dateUntil).getTime()
+      const toDate = new Date(dateUntil + 'T23:59:59Z').getTime()
       if (docDate > toDate) return false
     }
-
-    // Active collection filter (Phase 5)
-    // Intentionally disabled - using simple "Attention Required" section instead
 
     return true
   })
@@ -257,11 +261,11 @@ export default function DocumentsV2() {
       const aVal = a[sortColumn]
       const bVal = b[sortColumn]
       if (typeof aVal === 'string') {
-        return sortDirection === 'asc' 
+        return sortDirection === 'asc'
           ? aVal.localeCompare(String(bVal))
           : String(bVal).localeCompare(aVal)
       }
-      return sortDirection === 'asc' 
+      return sortDirection === 'asc'
         ? (aVal as number) - (bVal as number)
         : (bVal as number) - (aVal as number)
     })
@@ -275,6 +279,26 @@ export default function DocumentsV2() {
 
   // Featured docs (action_required status or similar)
   const featuredDocs = documents.filter(doc => doc.status === 'action_required').slice(0, 6)
+
+  // ─── Handlers: Filters ────────────────────────────────────────────
+
+  const handleFilterChange = (newFilters: FilterState) => {
+    setFilters(newFilters)
+    setCurrentPage(1) // Reset to first page when filters change
+    setSearchResultIds(null) // Invalidate search results when manual filters change
+  }
+
+  const handleSearchChange = (query: string) => {
+    setSearchQuery(query)
+    setCurrentPage(1) // Reset to first page when search changes
+  }
+
+  const handleResetFilters = () => {
+    setFilters({})
+    setSearchQuery('')
+    setCurrentPage(1)
+    setSearchResultIds(null)
+  }
 
   // ─── Handlers: Upload ─────────────────────────────────────────────────
 
@@ -345,10 +369,11 @@ export default function DocumentsV2() {
       form.append('description', uploadData.description)
       form.append('document_type', uploadData.document_type)
       form.append('category', uploadData.category)
-      form.append('department_id', uploadData.department_id)
+      // Send each department as a separate department_ids[] form field
+      uploadData.department_ids.forEach(id => form.append('department_ids[]', id))
       form.append('visibility_level', uploadData.visibility_level)
       form.append('is_encrypted', String(uploadData.is_encrypted))
-      
+
       if (uploadData.tags.length > 0) {
         form.append('tags', JSON.stringify(uploadData.tags))
       }
@@ -361,7 +386,7 @@ export default function DocumentsV2() {
         description: '',
         document_type: 'policy',
         category: 'administrative',
-        department_id: '',
+        department_ids: [],
         visibility_level: 'department',
         tags: [],
         is_encrypted: false,
@@ -482,8 +507,8 @@ export default function DocumentsV2() {
     if (!selectedDoc) return
     try {
       setLoadingVersions(true)
-      await fetchData('DOCUMENTS', 'PATCH', 
-        { id: selectedDoc.id }, 
+      await fetchData('DOCUMENTS', 'PATCH',
+        { id: selectedDoc.id },
         { version_id: versionId }
       )
       toast.success('Document restored to this version')
@@ -498,7 +523,7 @@ export default function DocumentsV2() {
   // ─── Handlers: AI Features ───────────────────────────────────────
 
   const handleChat = (doc: Document) => {
-    analyzeDocument(doc)
+    openChat(doc)
   }
 
   const handleSummarize = (doc: Document) => {
@@ -506,7 +531,7 @@ export default function DocumentsV2() {
   }
 
   const handleAnalysis = (doc: Document) => {
-    analyzeDocument(doc)
+    openAnalysis(doc)
   }
 
   const handleChartAnalysis = (doc: Document) => {
@@ -605,7 +630,7 @@ export default function DocumentsV2() {
                           ${dragActive ? 'border-primary bg-primary/5 scale-[1.02]' : 'border-slate-300 hover:border-primary hover:bg-white'}
                         `}
                       >
-                        <input 
+                        <input
                           type="file"
                           onChange={handleFileInputChange}
                           className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
@@ -619,22 +644,22 @@ export default function DocumentsV2() {
                         </div>
                       </div>
                     ) : (
-                      <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 relative group">
-                        <button 
+                      <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 relative group max-w-full">
+                        <button
                           onClick={() => setUploadData(prev => ({ ...prev, file: null }))}
                           className="absolute -top-2 -right-2 p-1.5 bg-red-500 text-white rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity"
                         >
                           <X className="h-3 w-3" />
                         </button>
-                        <div className="flex items-center gap-4">
-                          <div className="p-3 bg-blue-50 text-blue-600 rounded-xl">
+                        <div className="flex items-center gap-4 min-w-0">
+                          <div className="p-3 bg-blue-50 text-blue-600 rounded-xl flex-shrink-0">
                             <FileUp className="h-8 w-8" />
                           </div>
                           <div className="flex-1 min-w-0">
                             <p className="font-bold text-slate-800 truncate" title={uploadData.file.name}>
                               {uploadData.file.name}
                             </p>
-                            <p className="text-xs text-slate-500">
+                            <p className="text-xs text-slate-500 truncate">
                               {(uploadData.file.size / 1024 / 1024).toFixed(2)} MB • {uploadData.file.type.split('/').pop()?.toUpperCase()}
                             </p>
                           </div>
@@ -665,9 +690,9 @@ export default function DocumentsV2() {
                       <div className="space-y-4 pt-2">
                         <div className="space-y-2">
                           <Label className="text-slate-700 font-bold">Document Title *</Label>
-                          <Input 
-                            value={uploadData.title} 
-                            onChange={(e) => setUploadData({ ...uploadData, title: e.target.value })} 
+                          <Input
+                            value={uploadData.title}
+                            onChange={(e) => setUploadData({ ...uploadData, title: e.target.value })}
                             placeholder="e.g., Annual Financial Audit 2024"
                             className="h-11 border-slate-200 focus:ring-primary shadow-sm"
                           />
@@ -675,10 +700,10 @@ export default function DocumentsV2() {
 
                         <div className="space-y-2">
                           <Label className="text-slate-700 font-bold">Description</Label>
-                          <Textarea 
-                            value={uploadData.description} 
-                            onChange={(e) => setUploadData({ ...uploadData, description: e.target.value })} 
-                            placeholder="Provide deep context for this record..." 
+                          <Textarea
+                            value={uploadData.description}
+                            onChange={(e) => setUploadData({ ...uploadData, description: e.target.value })}
+                            placeholder="Provide deep context for this record..."
                             rows={3}
                             className="resize-none border-slate-200 shadow-sm"
                           />
@@ -694,17 +719,17 @@ export default function DocumentsV2() {
                           <Select value={uploadData.document_type} onValueChange={(v) => setUploadData({ ...uploadData, document_type: v })}>
                             <SelectTrigger className="h-10 border-slate-200 bg-slate-50/50"><SelectValue /></SelectTrigger>
                             <SelectContent>
-                            <SelectItem value="memo">Memo</SelectItem>
-                            <SelectItem value="circular">Circular</SelectItem>
-                            <SelectItem value="minutes">Minutes</SelectItem>
-                            <SelectItem value="report">Report</SelectItem>
-                            <SelectItem value="policy">Policy</SelectItem>
-                            <SelectItem value="bid_document">Bid / Tender Document</SelectItem>
-                            <SelectItem value="contract">Contract / Agreement</SelectItem>
-                            <SelectItem value="invoice">Invoice</SelectItem>
-                            <SelectItem value="appointment_letter">Appointment Letter</SelectItem>
-                            <SelectItem value="permit">Permit / Licence</SelectItem>
-                          </SelectContent>
+                              <SelectItem value="memo">Memo</SelectItem>
+                              <SelectItem value="circular">Circular</SelectItem>
+                              <SelectItem value="minutes">Minutes</SelectItem>
+                              <SelectItem value="report">Report</SelectItem>
+                              <SelectItem value="policy">Policy</SelectItem>
+                              <SelectItem value="bid_document">Bid / Tender Document</SelectItem>
+                              <SelectItem value="contract">Contract / Agreement</SelectItem>
+                              <SelectItem value="invoice">Invoice</SelectItem>
+                              <SelectItem value="appointment_letter">Appointment Letter</SelectItem>
+                              <SelectItem value="permit">Permit / Licence</SelectItem>
+                            </SelectContent>
                           </Select>
                         </div>
                         <div className="space-y-2">
@@ -725,16 +750,33 @@ export default function DocumentsV2() {
                       <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
                           <Label className="text-slate-700 font-bold text-xs uppercase tracking-wider text-primary flex items-center gap-1">
-                            <Building className="h-3 w-3" /> Owning Department
+                            <Building className="h-3 w-3" /> Departments
+                            <span className="text-slate-400 normal-case font-normal ml-1">— first is primary</span>
                           </Label>
-                          <Select value={uploadData.department_id} onValueChange={(v) => setUploadData({ ...uploadData, department_id: v })}>
-                            <SelectTrigger className="h-10 border-slate-200 bg-slate-50/50"><SelectValue placeholder="Global / Central" /></SelectTrigger>
-                            <SelectContent>
-                              {departments.filter(d => d.id?.trim()).map(d => (
-                                <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
+                          <div className="border border-slate-200 rounded-lg bg-slate-50/50 max-h-36 overflow-y-auto p-2 space-y-1">
+                            {departments.filter(d => d.id?.trim()).map(d => {
+                              const isSelected = uploadData.department_ids.includes(d.id)
+                              const isPrimary = uploadData.department_ids[0] === d.id
+                              return (
+                                <button
+                                  key={d.id}
+                                  type="button"
+                                  onClick={() => {
+                                    const current = uploadData.department_ids
+                                    const next = isSelected ? current.filter(id => id !== d.id) : [...current, d.id]
+                                    setUploadData(prev => ({ ...prev, department_ids: next }))
+                                  }}
+                                  className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-sm transition-colors ${isSelected ? 'bg-primary/10 text-primary font-medium' : 'hover:bg-slate-100 text-slate-600'}`}
+                                >
+                                  <div className={`h-4 w-4 rounded border flex-shrink-0 flex items-center justify-center ${isSelected ? 'bg-primary border-primary' : 'border-slate-300'}`}>
+                                    {isSelected && <X className="h-2.5 w-2.5 text-white" />}
+                                  </div>
+                                  <span className="flex-1 text-left truncate">{d.name}</span>
+                                  {isPrimary && <span className="text-amber-500 text-xs font-semibold">★ Primary</span>}
+                                </button>
+                              )
+                            })}
+                          </div>
                         </div>
                         <div className="space-y-2">
                           <Label className="text-slate-700 font-bold text-xs uppercase tracking-wider flex items-center gap-1">
@@ -744,7 +786,7 @@ export default function DocumentsV2() {
                             <SelectTrigger className="h-10 border-slate-200 bg-slate-50/50"><SelectValue /></SelectTrigger>
                             <SelectContent>
                               <SelectItem value="department">Department Internal</SelectItem>
-                              <SelectItem value="public">Tenant Public</SelectItem>
+                              <SelectItem value="public">Institution Public</SelectItem>
                               <SelectItem value="restricted">Restricted Access</SelectItem>
                             </SelectContent>
                           </Select>
@@ -765,10 +807,10 @@ export default function DocumentsV2() {
                           ))}
                         </div>
                         <div className="flex gap-2">
-                          <Input 
-                            placeholder="Add tag and press Enter..." 
-                            value={tagInput} 
-                            onChange={(e) => setTagInput(e.target.value)} 
+                          <Input
+                            placeholder="Add tag and press Enter..."
+                            value={tagInput}
+                            onChange={(e) => setTagInput(e.target.value)}
                             onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addTag())}
                             className="h-9 border-slate-200 text-sm"
                           />
@@ -787,8 +829,8 @@ export default function DocumentsV2() {
                             <p className="text-xs text-slate-500">Encrypt this file before storing it in the persistent vault.</p>
                           </div>
                         </div>
-                        <Switch 
-                          checked={uploadData.is_encrypted} 
+                        <Switch
+                          checked={uploadData.is_encrypted}
                           onCheckedChange={(checked) => setUploadData({ ...uploadData, is_encrypted: checked })}
                         />
                       </div>
@@ -796,10 +838,10 @@ export default function DocumentsV2() {
 
                     <div className="mt-10 flex gap-3">
                       <Button variant="ghost" className="flex-1 h-12 text-slate-500" onClick={() => setIsUploadOpen(false)}>Discard</Button>
-                      <Button 
-                        variant="tenantPrimary" 
-                        className="flex-[2] h-12 shadow-md shadow-primary/20 text-lg font-bold" 
-                        onClick={handleUpload} 
+                      <Button
+                        variant="tenantPrimary"
+                        className="flex-[2] h-12 shadow-md shadow-primary/20 text-lg font-bold"
+                        onClick={handleUpload}
                         disabled={isUploading || !uploadData.file}
                       >
                         {isUploading ? (
@@ -840,7 +882,7 @@ export default function DocumentsV2() {
                 <DocumentCardV2
                   key={doc.id}
                   document={doc}
-                  department={departments.find(d => d.id === doc.department_id)}
+                  department={departments.find(d => d.id === (doc.document_departments?.find(dd => dd.is_primary)?.department_id ?? doc.department_id))}
                   onDownload={handleDownload}
                   onView={openDetail}
                   onVersions={openVersions}
@@ -859,10 +901,7 @@ export default function DocumentsV2() {
           {/* Standard Search Bar with View Toggle and Filter Button */}
           <StandardSearchBar
             searchQuery={searchQuery}
-            onSearchChange={(query) => {
-              setSearchQuery(query)
-              setCurrentPage(1)
-            }}
+            onSearchChange={handleSearchChange}
             placeholder="Search by title, tags, or description..."
             onFilterClick={() => setShowFilterPanel(!showFilterPanel)}
             showFilterPanel={showFilterPanel}
@@ -885,13 +924,9 @@ export default function DocumentsV2() {
                 filters={filters}
                 searchQuery={searchQuery}
                 parsedSearchFilters={parsedSearch}
-                onFilterChange={setFilters}
-                onSearchChange={setSearchQuery}
-                onReset={() => {
-                  setFilters({})
-                  setSearchQuery('')
-                  setCurrentPage(1)
-                }}
+                onFilterChange={handleFilterChange}
+                onSearchChange={handleSearchChange}
+                onReset={handleResetFilters}
               />
             </motion.div>
           )}
@@ -918,9 +953,8 @@ export default function DocumentsV2() {
                   <motion.div
                     ref={provided.innerRef}
                     {...provided.droppableProps}
-                    className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 transition-colors ${
-                      snapshot.isDraggingOver ? 'bg-blue-50 rounded-lg p-4' : ''
-                    }`}
+                    className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 transition-colors ${snapshot.isDraggingOver ? 'bg-blue-50 rounded-lg p-4' : ''
+                      }`}
                     variants={{
                       hidden: {},
                       visible: { transition: { staggerChildren: 0.06 } },
@@ -939,7 +973,7 @@ export default function DocumentsV2() {
                           >
                             <DocumentCardV2
                               document={doc}
-                              department={departments.find(d => d.id === doc.department_id)}
+                              department={departments.find(d => d.id === (doc.document_departments?.find(dd => dd.is_primary)?.department_id ?? doc.department_id))}
                               onDownload={handleDownload}
                               onView={openDetail}
                               onVersions={openVersions}

@@ -320,11 +320,23 @@ export const file = async (
  */
 export const fetchFileBuffer = async (
   key: Endpoints,
-  params: Record<string, string> = {}
-): Promise<ArrayBuffer> => {
+  params: Record<string, string> = {},
+  fetchOpts?: FetchOptions
+): Promise<{ buffer: ArrayBuffer; contentType: string }> => {
   const h = new Headers();
-  const tenant = import.meta.env.VITE_TENANT_ID || "unilus_meta";
-  h.append("X-Tenant-ID", tenant);
+
+  // Check if this is a public endpoint first
+  const skipPublicEndpoints = ["LOGIN", "ADMIN_LOGIN", "CH_LOGIN", "REGISTER"].includes(key);
+
+  // Tenant context: required for protected endpoints, optional for public
+  const tenantId = fetchOpts?.tenantId || useTenantStore.getState().currentTenantId;
+  if (!skipPublicEndpoints && !tenantId) {
+    // Tenant context is missing for protected endpoint
+    throw new Error("No tenant context. Please log in again.");
+  }
+  if (tenantId) {
+    h.append("X-Tenant-ID", tenantId);
+  }
 
   if (typeof window !== "undefined") {
     const accessToken = getAccessTokenFromStorage();
@@ -341,7 +353,9 @@ export const fetchFileBuffer = async (
     throw new Error(errorMessage);
   }
 
-  return res.arrayBuffer();
+  const contentType = res.headers.get('content-type') || '';
+  const buffer = await res.arrayBuffer();
+  return { buffer, contentType };
 };
 
 export const get = async (path: string) => {

@@ -5,6 +5,8 @@ import type { Document } from "@/types/dms"
 
 export type AdminLayoutContext = {
   analyzeDocument: (doc: Document) => void;
+  openChat: (doc: Document) => void;
+  openAnalysis: (doc: Document) => void;
   sendChatMessage: (message: string) => void;
 };
 
@@ -46,7 +48,7 @@ export default function AdminLayout() {
   const location = useLocation()
   const { user, logout } = useAuth()
   const { logo, logoUrl, tenantName } = useTenantBranding()
-  
+
   // Apply tenant branding colors to CSS variables
   useTenantBrandingEffect()
   const [collapsed, setCollapsed] = useState(false)
@@ -68,6 +70,20 @@ export default function AdminLayout() {
   const isActive = (path: string) => location.pathname === path
   const toggleSidebar = () => setCollapsed(!collapsed)
   const handleLogout = () => logout()
+
+  const [initialTab, setInitialTab] = useState<'chat' | 'analyze'>('analyze');
+
+  const openChat = (doc: Document) => {
+    setPendingAnalysisDoc(doc);
+    setInitialTab('chat');
+    setIsChatOpen(true);
+  };
+
+  const openAnalysis = (doc: Document) => {
+    setPendingAnalysisDoc(doc);
+    setInitialTab('analyze');
+    setIsChatOpen(true);
+  };
 
   return (
     <div className="min-h-screen flex bg-gradient-to-br from-gray-50 via-white to-gray-100">
@@ -415,6 +431,44 @@ export default function AdminLayout() {
                     </SidebarMenu>
                   </CollapsibleSidebarSection>
                 )}
+
+                {/* Departments Section */}
+                {hasPermission(user, PERMISSIONS['departments.manage']) && (
+                  <CollapsibleSidebarSection
+                    title="Departments"
+                    icon={<Building2 className="h-5 w-5" />}
+                    collapsed={collapsed}
+                    activePaths={["/admin/departments"]}
+                  >
+                    <SidebarMenu className="space-y-2">
+                      <SidebarMenuItem>
+                        {isActive("/admin/departments") && (
+                          <motion.div
+                            layoutId="sidebar-active-pill"
+                            className="absolute inset-0 rounded-md bg-secondary"
+                            transition={{ type: 'spring', stiffness: 600, damping: 20 }}
+                          />
+                        )}
+                        <motion.div
+                          whileHover={{ x: 4 }}
+                          transition={{ type: 'spring', stiffness: 350, damping: 10 }}
+                        >
+                          <SidebarMenuButton
+                            asChild
+                            isActive={isActive("/admin/departments")}
+                            className="text-white hover:bg-white/10 data-[active=true]:bg-secondary data-[active=true]:text-black rounded-md transition-colors relative z-10"
+                          >
+                            <Link to="/admin/departments" className="flex items-center gap-3">
+                              <Building2 className="h-5 w-5" />
+                              {!collapsed && <span>Manage Departments</span>}
+                            </Link>
+                          </SidebarMenuButton>
+                        </motion.div>
+                      </SidebarMenuItem>
+                    </SidebarMenu>
+                  </CollapsibleSidebarSection>
+                )}
+
                 {/* System Section */}
                 {(hasPermission(user, PERMISSIONS['users.write']) ||
                   hasPermission(user, PERMISSIONS['users.read']) ||
@@ -425,35 +479,9 @@ export default function AdminLayout() {
                       title="System"
                       icon={<ShieldCheck className="h-5 w-5" />}
                       collapsed={collapsed}
-                      activePaths={["/admin/departments", "/admin/users", "/admin/user-management", "/admin/audit-trails", "/admin/roles", "/admin/maker-checker"]}
+                      activePaths={["/admin/users", "/admin/user-management", "/admin/audit-trails", "/admin/roles", "/admin/maker-checker"]}
                     >
                       <SidebarMenu className="space-y-2">
-                        {hasPermission(user, PERMISSIONS['departments.manage']) && (
-                          <SidebarMenuItem>
-                            {isActive("/admin/departments") && (
-                              <motion.div
-                                layoutId="sidebar-active-pill"
-                                className="absolute inset-0 rounded-md bg-secondary"
-                                transition={{ type: 'spring', stiffness: 600, damping: 20 }}
-                              />
-                            )}
-                            <motion.div
-                              whileHover={{ x: 4 }}
-                              transition={{ type: 'spring', stiffness: 350, damping: 10 }}
-                            >
-                              <SidebarMenuButton
-                                asChild
-                                isActive={isActive("/admin/departments")}
-                                className="text-white hover:bg-white/10 data-[active=true]:bg-secondary data-[active=true]:text-black rounded-md transition-colors relative z-10"
-                              >
-                                <Link to="/admin/departments" className="flex items-center gap-3">
-                                  <Building2 className="h-5 w-5" />
-                                  {!collapsed && <span>Departments</span>}
-                                </Link>
-                              </SidebarMenuButton>
-                            </motion.div>
-                          </SidebarMenuItem>
-                        )}
                         {hasPermission(user, PERMISSIONS['users.read']) && (
                           <SidebarMenuItem>
                             {isActive("/admin/user-management") && (
@@ -644,7 +672,7 @@ export default function AdminLayout() {
 
         <div className={`flex-1 transition-all duration-300 ${collapsed ? "ml-20" : "ml-64"} mr-20`}>
           <main className="px-10 py-10 min-h-screen">
-            <Outlet context={{ analyzeDocument, sendChatMessage } as AdminLayoutContext} />
+            <Outlet context={{ analyzeDocument, openChat, openAnalysis, sendChatMessage } as AdminLayoutContext} />
           </main>
         </div>
 
@@ -657,6 +685,7 @@ export default function AdminLayout() {
         onDocConsumed={() => setPendingAnalysisDoc(null)}
         pendingChatMessage={pendingChatMessage}
         onChatMessageConsumed={() => setPendingChatMessage(null)}
+        initialTab={initialTab}
       />
 
       <RightSidebar

@@ -7,6 +7,7 @@ export interface SignaturePadHandle {
   clear: () => void;
   isEmpty: () => boolean;
   getDataURL: () => string;
+  loadDataURL: (dataUrl: string) => void;
 }
 
 interface SignaturePadProps {
@@ -83,6 +84,24 @@ const SignaturePad = forwardRef<SignaturePadHandle, SignaturePadProps>(
     useImperativeHandle(ref, () => ({
       clear: () => canvasRef.current?.clear(),
       isEmpty: () => canvasRef.current?.isEmpty() ?? true,
+      loadDataURL: (dataUrl: string) => {
+        const canvas = canvasRef.current?.getCanvas();
+        if (!canvas) return;
+        // Clear via the component (resets internal stroke data)
+        canvasRef.current?.clear();
+        // Bypass fromDataURL which has a known DPR bug on retina displays.
+        // Draw directly on the 2D context, centered and scaled to fit.
+        const img = new Image();
+        img.onload = () => {
+          const ctx = canvas.getContext('2d');
+          if (!ctx) return;
+          const scale = Math.min(canvas.width / img.width, canvas.height / img.height) * 0.85;
+          const x = (canvas.width - img.width * scale) / 2;
+          const y = (canvas.height - img.height * scale) / 2;
+          ctx.drawImage(img, x, y, img.width * scale, img.height * scale);
+        };
+        img.src = dataUrl;
+      },
       getDataURL: () => {
         const rawCanvas = canvasRef.current?.getCanvas();
         if (!rawCanvas) return '';

@@ -37,6 +37,12 @@ export const API: Record<string, string> = {
   DEPARTMENT_UPDATE: "departments/:id",
   DEPARTMENT_DELETE: "departments/:id",
   DEPARTMENT_USERS: "departments/:id/users",
+  DEPARTMENT_STATISTICS: "departments/:id/statistics",
+  DEPARTMENT_DOCUMENTS: "departments/:id/documents",
+  DEPARTMENT_USER_HEAD: "departments/:id/users/:userId/head",
+  DEPARTMENT_USER_PERMISSIONS: "departments/:id/users/:userId/permissions",
+  DEPARTMENT_USER_REMOVE: "departments/:id/users/:userId",
+  DEPARTMENT_USERS_SEARCH: "departments/users/search",
   DOCUMENTS: "documents",
   DOCUMENT_DETAIL: "documents/:id",
   DOCUMENT_UPDATE: "documents/:id",
@@ -55,7 +61,9 @@ export const API: Record<string, string> = {
   WORKFLOW_DETAIL: "workflows/:id",
   WORKFLOW_STEP_APPROVE: "workflows/steps/:id/approve",
   WORKFLOW_STEP_REJECT: "workflows/steps/:id/reject",
+  WORKFLOW_STEP_REQUEST_CHANGES: "workflows/steps/:id/request-changes",
   PENDING_APPROVALS: "workflows/pending",
+  DOCUMENT_WORKFLOWS: "documents/:id/workflows",
   USERS: "users",
 
   // HR Module
@@ -85,6 +93,10 @@ export const API: Record<string, string> = {
   SIGNATURE_SIGN: "signatures/:id/sign",
   SIGNATURE_DECLINE: "signatures/:id/decline",
   SIGNATURE_DOCUMENT: "signatures/document/:docId",
+  USER_SIGNATURE_LIST: "me/signatures",
+  USER_SIGNATURE_SAVE: "me/signatures",
+  USER_SIGNATURE_SET_DEFAULT: "me/signatures/:id/default",
+  USER_SIGNATURE_DELETE: "me/signatures/:id",
 
   // Dashboard
   DASHBOARD_CARDS: "dashboard/cards",

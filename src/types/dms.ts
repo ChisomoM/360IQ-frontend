@@ -60,9 +60,12 @@ export interface Document {
   file_type: string;
   file_hash?: string;
   visibility_level: 'public' | 'department' | 'restricted';
-  status: 'active' | 'archived' | 'deleted' | 'approved' | 'rejected';
+  status: 'active' | 'archived' | 'deleted' | 'approved' | 'rejected' | 'in_review' | 'changes_requested' | 'signed';
   version: number;
+  /** @deprecated Use department_departments instead. Kept for backward compat; reflects the primary department. */
   department_id?: string;
+  /** Populated by GET /documents/:id — all department associations for this document. */
+  document_departments?: { id: string; department_id: string; is_primary: boolean; department?: { id: string; name: string } }[];
   owner_id: string;
   created_by_id: string;
   created_at: string;
@@ -92,6 +95,7 @@ export interface Workflow {
   initiated_by_id: string;
   completed_at?: string;
   steps?: WorkflowStep[];
+  document?: { id: string; title: string; file_name: string };
 }
 
 export interface WorkflowStep {
@@ -104,6 +108,10 @@ export interface WorkflowStep {
   approved_at?: string;
   approved_by_id?: string;
   comments?: string;
+  created_at?: string;
+  approver_role?: { id: string; name: string; slug: string };
+  approver_user?: { id: string; first_name: string; last_name: string } | null;
+  workflow?: { id: string; document_id: string; workflow_type: string; total_steps: number; document?: { id: string; title: string; file_name: string } };
 }
 
 export interface AISummary {
@@ -128,6 +136,9 @@ export interface DocumentUpdatePayload {
   status?: 'active' | 'archived';
   category?: string;
   document_type?: string;
+  /** Full replacement set of department IDs. First entry (or primary_department_id) becomes is_primary. */
+  department_ids?: string[];
+  primary_department_id?: string;
 }
 
 // ─── Excel / Spreadsheet Chart Types ────────────────────────────────────────

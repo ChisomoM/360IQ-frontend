@@ -4,22 +4,23 @@ export type RoleSlug = 'super_admin' | 'admin' | 'user';
 // Actions that can be attached to a permission
 export type PermissionAction =
   | 'read'
+  | 'create'
   | 'write'
+  | 'update'
   | 'delete'
   | 'approve'
+  | 'reject'
   | 'manage'
   | 'export'
   | 'sign'
-  | 'sign.request';
-
-// Whether the permission applies at merchant or platform level
-export type PermissionScope = 'merchant' | 'platform';
+  | 'request'
+  | 'view'
+  | 'view_all';
 
 export interface Permission {
   id: number | string;
-  resource: string; // e.g. 'documents', 'users', 'payments'
+  resource: string; // e.g. 'documents', 'users', 'hr.staff'
   action: PermissionAction;
-  scope?: PermissionScope;
   description?: string;
 }
 

@@ -106,7 +106,7 @@ export default function DocumentPreview({
       setPreviewError(null);
 
       try {
-        const buffer = await fetchFileBuffer('DOCUMENT_DOWNLOAD', { id: document.id });
+        const { buffer } = await fetchFileBuffer('DOCUMENT_DOWNLOAD', { id: document.id });
         objectUrl = URL.createObjectURL(new Blob([buffer], { type: 'application/pdf' }));
 
         if (!cancelled) {

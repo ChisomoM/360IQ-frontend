@@ -3,7 +3,7 @@
 // Set USE_MOCK = false once the backend /departments endpoint is live.
 
 import { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -341,6 +341,7 @@ function DeptFormFields({
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export default function Departments() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuth();
 
   // ── State ──────────────────────────────────────────────────────────────────
@@ -380,6 +381,22 @@ export default function Departments() {
     dept.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     dept.code.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  // ── Auto-open edit modal when navigated here from DepartmentDetailPage ──────
+  // DepartmentDetailPage passes { state: { editId: dept.id } } when the user
+  // clicks "Edit Department". Once departments are loaded we find the matching
+  // one and open its edit dialog automatically.
+  useEffect(() => {
+    const editId = (location.state as { editId?: string } | null)?.editId;
+    if (!editId || loading || departments.length === 0) return;
+
+    const target = departments.find(d => d.id === editId);
+    if (target) {
+      openEditDialog(target);
+      // Clear the state so refreshing the page doesn't re-open the modal
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+  }, [location.state, loading, departments]);
 
   // ── Fetch ──────────────────────────────────────────────────────────────────
   const fetchDepartments = useCallback(async (page: number = 1) => {

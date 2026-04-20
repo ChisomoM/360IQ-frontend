@@ -174,12 +174,12 @@ export function DocumentTableV2({
             return (
               <tr key={doc.id} className={`hover:bg-gray-50 transition-colors ${idx % 2 === 0 ? 'bg-white' : 'bg-gray-50/30'}`}>
                 {/* Document Name */}
-                <td className="px-6 py-4">
-                  <div className="flex items-center gap-3">
-                    <img src={config.icon} alt={config.extLabel} className="w-8 h-8 object-contain" />
-                    <div className="min-w-0">
+                <td className="px-6 py-4 max-w-xs">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <img src={config.icon} alt={config.extLabel} className="w-8 h-8 object-contain flex-shrink-0" />
+                    <div className="min-w-0 flex-1">
                       <p className="font-sans font-semibold text-sm text-gray-900 truncate">{doc.title}</p>
-                      <p className="text-xs text-gray-500">{getFileExtension(doc.title).toUpperCase()}</p>
+                      <p className="text-xs text-gray-500">{getFileExtension(doc.file_type).toUpperCase()}</p>
                     </div>
                   </div>
                 </td>
@@ -193,7 +193,7 @@ export function DocumentTableV2({
 
                 {/* Department */}
                 <td className="px-6 py-4">
-                  <p className="text-sm text-gray-600">{getDeptName(doc.department_id)}</p>
+                  <p className="text-sm text-gray-600">{getDeptName(doc.document_departments?.find(dd => dd.is_primary)?.department_id ?? doc.department_id)}</p>
                 </td>
 
                 {/* Modified Date */}

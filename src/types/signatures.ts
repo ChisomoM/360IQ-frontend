@@ -56,3 +56,23 @@ export interface RequestSignaturePayload {
 export interface SignDocumentPayload {
   signed_version_id?: string;
 }
+
+export type SignatureType = 'draw' | 'type' | 'image';
+
+export interface UserSignature {
+  id: string;
+  user_id: string;
+  label: string;
+  signature_type: SignatureType;
+  signature_data: string; // base64 PNG data URL
+  is_default: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SaveSignaturePayload {
+  label: string;
+  signature_type: SignatureType;
+  signature_data: string;
+  is_default: boolean;
+}
