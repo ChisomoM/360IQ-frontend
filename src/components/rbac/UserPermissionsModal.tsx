@@ -255,7 +255,7 @@ export function UserPermissionsModal({ userId, userName = 'User', isOpen, onClos
           <Button
             onClick={onClose}
             disabled={isSubmitting}
-            className="h-11 bg-primary text-white hover:bg-primary-dark"
+            className="h-11 bg-primary text-primary-foreground hover:bg-primary-dark"
           >
             Done
           </Button>

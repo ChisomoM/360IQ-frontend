@@ -64,6 +64,9 @@ export default {
         tertiary: {
           DEFAULT: "var(--tenant-accent)",
         },
+        /** Tenant on-primary / on-secondary (hex); synced by useTenantBranding */
+        'primary-fg': 'var(--tenant-primary-fg)',
+        'secondary-fg': 'var(--tenant-secondary-fg)',
         destructive: "hsl(var(--destructive))",
         success: "hsl(var(--tenant-success))",
         warning: "hsl(var(--tenant-warning))",

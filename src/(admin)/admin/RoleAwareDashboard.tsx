@@ -531,7 +531,7 @@ function CustomRankingChart() {
 function RankingItem({ rank, title, dept, count, conv }: { rank: number; title: string; dept: string; count: string; conv: string; }) {
   return (
     <div className="flex items-center gap-4">
-      <div className="w-8 h-8 rounded-full bg-primary shadow-md text-white font-bold flex items-center justify-center flex-shrink-0 text-sm">
+      <div className="w-8 h-8 rounded-full bg-primary shadow-md text-primary-foreground font-bold flex items-center justify-center flex-shrink-0 text-sm">
         {rank}
       </div>
       <div className="flex-1 min-w-0">

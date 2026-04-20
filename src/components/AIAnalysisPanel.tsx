@@ -69,25 +69,40 @@ const AIAnalysisPanel: React.FC<AIAnalysisPanelProps> = ({ onClose }) => {
     setIsLoading(false);
   };
 
+  const toggleExpanded = () => setIsExpanded((v) => !v);
+
   return (
     <Card className="shadow-lg border-primary/20 bg-gradient-to-br from-slate-50 to-slate-100">
-      <CardHeader className="border-b border-primary/10">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-gradient-to-br from-purple-500 to-blue-500 rounded-lg">
+      <CardHeader
+        role="button"
+        tabIndex={0}
+        aria-expanded={isExpanded}
+        aria-label={isExpanded ? 'Collapse AI insights' : 'Expand AI insights'}
+        onClick={toggleExpanded}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            toggleExpanded();
+          }
+        }}
+        className="cursor-pointer select-none border-b border-primary/10 rounded-t-xl outline-none transition-colors hover:bg-slate-100/80 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+      >
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="p-2 bg-gradient-to-br from-purple-500 to-blue-500 rounded-lg shrink-0">
               <Sparkles className="h-5 w-5 text-white" />
             </div>
-            <div>
+            <div className="min-w-0">
               <CardTitle className="text-lg">AI-Powered Insights</CardTitle>
               <CardDescription>Contextual analysis of your analytics data</CardDescription>
             </div>
           </div>
-          <button
-            onClick={() => setIsExpanded(!isExpanded)}
-            className="text-muted-foreground hover:text-foreground transition-colors"
+          <span
+            className="text-muted-foreground shrink-0 text-lg font-medium leading-none tabular-nums"
+            aria-hidden
           >
             {isExpanded ? '−' : '+'}
-          </button>
+          </span>
         </div>
       </CardHeader>
 

@@ -174,7 +174,7 @@ export default function AuditTrails() {
         <Button
           onClick={fetchAuditLogs}
           disabled={loading}
-          className="bg-primary text-white"
+          className="bg-primary text-primary-foreground"
         >
           {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Activity className="mr-2 h-4 w-4" />}
           Refresh

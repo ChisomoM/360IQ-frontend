@@ -12,6 +12,42 @@ const DEFAULT_LOGO = '/logos/unilus-logo-3.png';
  * Converts a hex color string to its HSL numeric components (e.g., "248 75% 44%").
  * This is required for shadcn/ui and Tailwind compatibility when using CSS variables.
  */
+function normalizeHex(hex: string): string | null {
+  let h = hex.replace(/^#/, '').trim();
+  if (h.length === 3) {
+    h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2];
+  }
+  if (h.length !== 6 || !/^[0-9a-fA-F]{6}$/.test(h)) {
+    return null;
+  }
+  return `#${h}`;
+}
+
+/**
+ * WCAG 2.1 relative luminance (0 = black, 1 = white).
+ */
+function relativeLuminance(hex: string): number {
+  const normalized = normalizeHex(hex);
+  if (!normalized) return 0;
+
+  const h = normalized.slice(1);
+  const rs = parseInt(h.slice(0, 2), 16) / 255;
+  const gs = parseInt(h.slice(2, 4), 16) / 255;
+  const bs = parseInt(h.slice(4, 6), 16) / 255;
+
+  const lin = (c: number) => (c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4));
+  const R = lin(rs);
+  const G = lin(gs);
+  const B = lin(bs);
+  return 0.2126 * R + 0.7152 * G + 0.0722 * B;
+}
+
+/** Light background → dark text hex; dark background → white. */
+function contrastingForegroundHex(backgroundHex: string): '#ffffff' | '#0f172a' {
+  const L = relativeLuminance(backgroundHex);
+  return L > 0.55 ? '#0f172a' : '#ffffff';
+}
+
 function hexToHSLValues(hex: string): string {
   // Remove '#' if present
   hex = hex.replace(/^#/, '');
@@ -19,6 +55,10 @@ function hexToHSLValues(hex: string): string {
   // Handle shorthand hex colors (e.g. #03F)
   if (hex.length === 3) {
     hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
+  }
+
+  if (hex.length !== 6 || !/^[0-9a-fA-F]{6}$/i.test(hex)) {
+    return '0 0% 100%';
   }
 
   // Parse RGB
@@ -99,24 +139,29 @@ export function useTenantBrandingEffect() {
 
     // 1. Set Hex Variables (for raw usage)
     if (colors.primaryColor) {
+      const primaryFgHex = contrastingForegroundHex(colors.primaryColor);
       document.documentElement.style.setProperty('--tenant-primary', colors.primaryColor);
       document.documentElement.style.setProperty('--tenant-primary-hover', darkenHex(colors.primaryColor, 10));
       document.documentElement.style.setProperty('--tenant-primary-light', alphaHex(colors.primaryColor, 0.12));
-      document.documentElement.style.setProperty('--tenant-primary-fg', '#FFFFFF');
+      document.documentElement.style.setProperty('--tenant-primary-fg', primaryFgHex);
       // Link to standard shadcn variables
       const hsl = hexToHSLValues(colors.primaryColor);
       document.documentElement.style.setProperty('--primary', hsl);
+      document.documentElement.style.setProperty('--primary-foreground', hexToHSLValues(primaryFgHex));
       document.documentElement.style.setProperty('--sidebar', hsl);
       document.documentElement.style.setProperty('--ring', hsl);
     }
     if (colors.secondaryColor) {
+      const secondaryFgHex = contrastingForegroundHex(colors.secondaryColor);
       document.documentElement.style.setProperty('--tenant-secondary', colors.secondaryColor);
       document.documentElement.style.setProperty('--tenant-secondary-hover', darkenHex(colors.secondaryColor, 10));
-      document.documentElement.style.setProperty('--tenant-secondary-fg', '#063B4D');
+      document.documentElement.style.setProperty('--tenant-secondary-fg', secondaryFgHex);
       // Link to standard shadcn variables
       const hsl = hexToHSLValues(colors.secondaryColor);
       document.documentElement.style.setProperty('--secondary', hsl);
+      document.documentElement.style.setProperty('--secondary-foreground', hexToHSLValues(secondaryFgHex));
       document.documentElement.style.setProperty('--sidebar-primary', hsl);
+      document.documentElement.style.setProperty('--sidebar-primary-foreground', hexToHSLValues(secondaryFgHex));
     }
     if (colors.accentColor) {
       document.documentElement.style.setProperty('--tenant-accent', colors.accentColor);
