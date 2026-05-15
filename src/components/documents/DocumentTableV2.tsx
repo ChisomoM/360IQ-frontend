@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import type { Document, Department } from '@/types/dms'
-import { MoreVertical, Download, History, MessageSquare, Sparkles, BarChart3, ChevronUp, ChevronDown } from 'lucide-react'
+import { MoreVertical, Download, History, MessageSquare, Sparkles, BarChart3, ChevronUp, ChevronDown, Archive, Trash2 } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import {
   DropdownMenu,
@@ -31,6 +31,8 @@ interface DocumentTableV2Props {
   onSummarize?: (doc: Document) => void
   onAnalysis?: (doc: Document) => void
   onChartAnalysis?: (doc: Document) => void
+  onArchive?: (doc: Document) => void
+  onDelete?: (doc: Document) => void
 }
 
 const fileTypeConfig: Record<string, { icon: string; lightBg: string; textColor: string; extLabel: string }> = {
@@ -87,6 +89,8 @@ export function DocumentTableV2({
   onSummarize,
   onAnalysis,
   onChartAnalysis,
+  onArchive,
+  onDelete,
 }: DocumentTableV2Props) {
   const [sortColumn, setSortColumn] = useState<'name' | 'date' | 'category'>('date')
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc')
@@ -262,6 +266,30 @@ export function DocumentTableV2({
                       <DropdownMenuItem onClick={() => onView(doc)} className="text-sm text-tenant-primary cursor-pointer">
                         View Details
                       </DropdownMenuItem>
+
+                      {(onArchive || onDelete) && (
+                        <>
+                          <DropdownMenuSeparator className="my-1" />
+                          {onArchive && doc.status !== 'archived' && (
+                            <DropdownMenuItem
+                              onClick={() => onArchive(doc)}
+                              className="text-sm cursor-pointer text-amber-600 focus:text-amber-700"
+                            >
+                              <Archive className="h-4 w-4 mr-2" />
+                              Archive
+                            </DropdownMenuItem>
+                          )}
+                          {onDelete && (
+                            <DropdownMenuItem
+                              onClick={() => onDelete(doc)}
+                              className="text-sm cursor-pointer text-red-600 focus:text-red-700"
+                            >
+                              <Trash2 className="h-4 w-4 mr-2" />
+                              Delete
+                            </DropdownMenuItem>
+                          )}
+                        </>
+                      )}
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </td>

@@ -53,8 +53,8 @@ export function CreateCardModal({ open, onOpenChange, onCardCreated }: CreateCar
     // Validate required fields
     if (!title.trim()) {
       toast({
-        title: 'Validation Error',
-        description: 'Title is required',
+        title: 'Processing...',
+        description: 'Processing...',
         variant: 'destructive',
       });
       return;
@@ -93,8 +93,8 @@ export function CreateCardModal({ open, onOpenChange, onCardCreated }: CreateCar
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to create card definition';
       toast({
-        title: 'Error',
-        description: message,
+        title: 'Processing...',
+        description: 'Processing...',
         variant: 'destructive',
       });
     } finally {

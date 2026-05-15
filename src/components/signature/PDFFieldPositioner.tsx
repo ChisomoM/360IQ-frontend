@@ -210,7 +210,6 @@ export default function PDFFieldPositioner({
       {/* Scrollable viewport — lets tall pages be scrolled within the modal */}
       <div
         className="border border-gray-200 rounded-b-lg overflow-auto bg-gray-100"
-        style={{ maxHeight: '65vh' }}
       >
         {/* Inner container sized exactly to the page so absolute overlays align */}
         <div

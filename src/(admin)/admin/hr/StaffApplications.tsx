@@ -315,10 +315,10 @@ export default function StaffApplications() {
               </div>
               <div className="space-y-1">
                 <Label htmlFor="role_sel">Role</Label>
-                <Select value={approveForm.role_id ?? ''} onValueChange={v => setApproveForm(p => ({ ...p, role_id: v }))}>
+                <Select value={approveForm.role_id ?? '__none__'} onValueChange={v => setApproveForm(p => ({ ...p, role_id: v === '__none__' ? undefined : v }))}>
                   <SelectTrigger id="role_sel"><SelectValue placeholder="Leave blank for default (HR Officer)" /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Default (HR Officer)</SelectItem>
+                    <SelectItem value="__none__">Default (HR Officer)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

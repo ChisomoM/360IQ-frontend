@@ -1,198 +1,102 @@
 import React from "react"
 import { motion } from "framer-motion"
 import { LoginForm } from "../../components/auth/loginForm"
+import { DashboardPreviewPanel } from "./DashboardPreviewPanel"
 
 interface LoginPageProps {
   onSignUpClick?: () => void
 }
 
+const EASE: [number, number, number, number] = [0.16, 1, 0.3, 1];
+
+const container = {
+  hidden: {},
+  show: {
+    transition: {
+      staggerChildren: 0.2,
+      delayChildren: 0.1,
+    }
+  }
+}
+
+const item = {
+  hidden: { opacity: 0, y: 20 },
+  show: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.55, ease: EASE }
+  }
+}
+
 export const LoginPage: React.FC<LoginPageProps> = () => {
-
-  const container = {
-    hidden: {},
-    show: {
-      transition: {
-        staggerChildren: 0.25
-      }
-    }
-  }
-
-  const item = {
-    hidden: { opacity: 0, y: 20 },
-    show: {
-      opacity: 1,
-      y: 0,
-      transition: { duration: 0.6 }
-    }
-  }
-
   return (
+    <div className="min-h-screen w-full flex overflow-hidden bg-white">
 
-    <motion.div
-      className="min-h-screen w-full flex bg-[#1e3a8a] relative overflow-hidden"
-      initial="hidden"
-      animate="show"
-      variants={container}
-    >
+      {/* ── LEFT — Dashboard preview panel ─────────────────────────────────── */}
+      <DashboardPreviewPanel />
 
-      <div className="relative z-10 flex w-full min-h-screen">
+      {/* ── RIGHT — Login form ──────────────────────────────────────────────── */}
+      <div className="flex items-center justify-center w-full lg:w-1/2 min-h-screen px-8 bg-white">
 
-        {/* LEFT PANEL */}
-        <div
-          className="hidden lg:flex flex-col justify-between w-1/2 px-16 py-14 text-white bg-cover bg-center relative"
-          style={{ backgroundImage: "url('/campus.jpg')" }}
+        <motion.div
+          className="w-full max-w-md"
+          variants={container}
+          initial="hidden"
+          animate="show"
         >
 
-          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#1e3a8a]/65 to-[#1e3a8a]/95" />
+          {/* Mobile-only logo */}
+          <motion.div className="lg:hidden flex justify-center mb-10" variants={item}>
+            <img src="/logos/dims-logo.svg" alt="DIMS" style={{ height: "32px", width: "auto" }} />
+          </motion.div>
 
+          {/* Login card */}
           <motion.div
-            className="relative z-10 flex items-start"
+            className="bg-white rounded-2xl p-10"
             variants={item}
           >
-
-            <h1 className="text-7xl font-bold text-white tracking-tight transition-transform duration-500 hover:scale-105" style={{ fontFamily: "'Montserrat', sans-serif", letterSpacing: '0.05em' }}>
-              DIMS
-            </h1>
-
-          </motion.div>
-
-          <motion.div
-            className="relative z-10 max-w-lg"
-            variants={item}
-          >
-
-            <div className="inline-flex items-center gap-2 bg-[#3b82f6]/20 backdrop-blur-md px-4 py-1.5 rounded-full border border-[#3b82f6]/40 mb-6">
-
-              <span className="text-[#3b82f6] font-semibold text-xs uppercase tracking-wider">
-                DIMS Platform
-              </span>
-
-            </div>
-
-            <h1 className="text-4xl font-bold leading-tight mb-5">
-
-              Document Intelligence &{" "}
-              <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#3b82f6] via-blue-400 to-[#60a5fa]">
-                Management System
-              </span>
-
-            </h1>
-
-            <p className="text-base text-white/80 leading-relaxed">
-
-              A powerful multi-tenant platform designed to streamline document
-              management, automate workflows, and deliver actionable insights
-              for educational institutions and organizations.
-
-            </p>
-
-            <div className="mt-8 grid grid-cols-2 gap-4 text-sm text-white/75">
-
-              <div className="flex items-center gap-2">
-                <span className="text-[#3b82f6]">•</span>
-                Smart document indexing
-              </div>
-
-              <div className="flex items-center gap-2">
-                <span className="text-[#3b82f6]">•</span>
-                Secure digital archives
-              </div>
-
-              <div className="flex items-center gap-2">
-                <span className="text-[#3b82f6]">•</span>
-                Analytics & reporting
-              </div>
-
-              <div className="flex items-center gap-2">
-                <span className="text-[#3b82f6]">•</span>
-                Real-time insights & dashboards
-              </div>
-
-            </div>
-
-            <div className="mt-8 w-16 h-1 bg-[#3b82f6] rounded-full" />
-
-          </motion.div>
-
-        </div>
-
-
-        {/* LOGIN PANEL */}
-        <div className="flex items-center justify-center w-full lg:w-1/2 px-8 bg-white border-l border-gray-200">
-
-          <motion.div
-            className="w-full max-w-md"
-            variants={container}
-          >
-
-            <motion.div
-              className="lg:hidden flex justify-center mb-10"
-              variants={item}
-            >
-
-              <h1 className="text-6xl font-bold text-[#1e3a8a] tracking-tight" style={{ fontFamily: "'Montserrat', sans-serif", letterSpacing: '0.05em' }}>
-                DIMS
-              </h1>
-
+            {/* Card logo */}
+            <motion.div className="mb-8" variants={item}>
+              <img src="/logos/dims-logo.svg" alt="DIMS" style={{ height: "28px", width: "auto" }} />
             </motion.div>
 
-            <motion.div
-              className="bg-white border border-gray-200 rounded-2xl shadow-xl p-10"
+            <motion.h2
+              className="font-display text-3xl font-bold text-slate-900 mb-1.5 tracking-tight"
               variants={item}
             >
+              Welcome back
+            </motion.h2>
 
-              <motion.h2
-                className="text-3xl font-bold text-[#1e3a8a] mb-2"
-                variants={item}
-              >
-                Welcome Back
-              </motion.h2>
+            <motion.p
+              className="font-sans text-base text-slate-500 mb-8"
+              variants={item}
+            >
+              Sign in to your DIMS workspace.
+            </motion.p>
 
-              <motion.p
-                className="text-sm text-gray-500 mb-8"
-                variants={item}
-              >
-                Sign in to access the Document Intelligence &
-                Management System.
-              </motion.p>
-
-              <motion.div variants={item}>
-                <LoginForm onSignUpClick={() => {}} />
-              </motion.div>
-
-              <motion.p
-                className="mt-8 text-center text-xs text-gray-400"
-                variants={item}
-              >
-
-                By signing in you agree to the{" "}
-
-                <a
-                  href="#"
-                  className="underline hover:text-gray-600 transition-colors"
-                >
-                  Terms of Service
-                </a>{" "}
-                and{" "}
-                <a
-                  href="#"
-                  className="underline hover:text-gray-600 transition-colors"
-                >
-                  Privacy Policy
-                </a>
-
-              </motion.p>
-
+            <motion.div variants={item}>
+              <LoginForm onSignUpClick={() => {}} />
             </motion.div>
 
+            <motion.p
+              className="mt-8 text-center font-sans text-xs text-slate-400"
+              variants={item}
+            >
+              By signing in you agree to the{" "}
+              <a href="#" className="underline hover:text-slate-600 transition-colors">
+                Terms of Service
+              </a>
+              {" "}and{" "}
+              <a href="#" className="underline hover:text-slate-600 transition-colors">
+                Privacy Policy
+              </a>
+            </motion.p>
           </motion.div>
 
-        </div>
-
+        </motion.div>
       </div>
 
-    </motion.div>
-
+    </div>
   )
 }
 

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
 import type { Document, Department } from '@/types/dms'
-import { MoreHorizontal, Download, History, MessageSquare, Sparkles, BarChart3, Clock } from 'lucide-react'
+import { MoreHorizontal, Download, History, MessageSquare, Sparkles, BarChart3, Clock, Archive, Trash2 } from 'lucide-react'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -31,6 +31,8 @@ interface DocumentCardV2Props {
   onSummarize?: (doc: Document) => void
   onAnalysis?: (doc: Document) => void
   onChartAnalysis?: (doc: Document) => void
+  onArchive?: (doc: Document) => void
+  onDelete?: (doc: Document) => void
 }
 
 // File type to SVG icon & light background color mapping
@@ -91,6 +93,8 @@ export function DocumentCardV2({
   onSummarize,
   onAnalysis,
   onChartAnalysis,
+  onArchive,
+  onDelete,
 }: DocumentCardV2Props) {
   const [isOpen, setIsOpen] = useState(false)
   const config = getFileTypeConfig(document.file_name)
@@ -205,6 +209,41 @@ export function DocumentCardV2({
                         <DropdownMenuItem onClick={() => { onChartAnalysis?.(document); setIsOpen(false) }} className="text-sm cursor-pointer">
                           <BarChart3 className="h-4 w-4 mr-2" />
                           Chart Analysis
+                        </DropdownMenuItem>
+                      </motion.div>
+                    )}
+                  </>
+                )}
+                {(onArchive || onDelete) && (
+                  <>
+                    <DropdownMenuSeparator className="my-1" />
+                    {onArchive && document.status !== 'archived' && (
+                      <motion.div
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.25, duration: 0.2 }}
+                      >
+                        <DropdownMenuItem
+                          onClick={(e) => { e.stopPropagation(); onArchive(document); setIsOpen(false) }}
+                          className="text-sm cursor-pointer text-amber-600 focus:text-amber-700"
+                        >
+                          <Archive className="h-4 w-4 mr-2" />
+                          Archive
+                        </DropdownMenuItem>
+                      </motion.div>
+                    )}
+                    {onDelete && (
+                      <motion.div
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.3, duration: 0.2 }}
+                      >
+                        <DropdownMenuItem
+                          onClick={(e) => { e.stopPropagation(); onDelete(document); setIsOpen(false) }}
+                          className="text-sm cursor-pointer text-red-600 focus:text-red-700"
+                        >
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          Delete
                         </DropdownMenuItem>
                       </motion.div>
                     )}

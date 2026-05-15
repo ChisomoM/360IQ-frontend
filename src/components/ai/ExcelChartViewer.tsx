@@ -454,7 +454,7 @@ export function ExcelChartViewer({ document, onClose }: ExcelChartViewerProps) {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {data!.sheets.map((s) => (
+                    {data!.sheets.filter((s) => !!s.name).map((s) => (
                       <SelectItem key={s.name} value={s.name}>{s.name}</SelectItem>
                     ))}
                   </SelectContent>
@@ -489,7 +489,7 @@ export function ExcelChartViewer({ document, onClose }: ExcelChartViewerProps) {
                   <SelectValue placeholder="Select column…" />
                 </SelectTrigger>
                 <SelectContent>
-                  {allColNames.map((col) => (
+                  {allColNames.filter((col) => !!col).map((col) => (
                     <SelectItem key={col} value={col}>{col}</SelectItem>
                   ))}
                 </SelectContent>
@@ -508,8 +508,8 @@ export function ExcelChartViewer({ document, onClose }: ExcelChartViewerProps) {
                   </SelectTrigger>
                   <SelectContent>
                     {numericColumns.length > 0
-                      ? numericColumns.map((col) => <SelectItem key={col} value={col}>{col}</SelectItem>)
-                      : allColNames.map((col) => <SelectItem key={col} value={col}>{col}</SelectItem>)
+                      ? numericColumns.filter((col) => !!col).map((col) => <SelectItem key={col} value={col}>{col}</SelectItem>)
+                      : allColNames.filter((col) => !!col).map((col) => <SelectItem key={col} value={col}>{col}</SelectItem>)
                     }
                   </SelectContent>
                 </Select>

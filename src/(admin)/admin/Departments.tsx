@@ -148,6 +148,8 @@ function DeptCard({ dept, canManage, onView, onEdit, onDelete, onAssignUsers }: 
   return (
     <motion.div
       variants={cardVariants}
+      initial="hidden"
+      animate="visible"
       // Cards lift on hover (y translation) per design system — never scale a content surface
       whileHover={{ y: -3 }}
       whileTap={{ scale: 0.99 }}
@@ -255,7 +257,7 @@ function DeptCard({ dept, canManage, onView, onEdit, onDelete, onAssignUsers }: 
 // Shown while data is loading — mirrors the real card's layout
 function DeptCardSkeleton() {
   return (
-    <motion.div variants={cardVariants} className="bg-card rounded-xl border border-gray-200 p-5">
+    <motion.div variants={cardVariants} initial="hidden" animate="visible" className="bg-card rounded-xl border border-gray-200 p-5">
       <div className="flex items-start justify-between mb-4">
         <Skeleton className="h-12 w-12 rounded-full" />
       </div>

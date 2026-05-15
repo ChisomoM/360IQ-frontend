@@ -318,7 +318,7 @@ export function ComparisonChartViewer({ docs, onClearAll }: ComparisonChartViewe
               <Select value={xKey} onValueChange={setXKey}>
                 <SelectTrigger className="h-8 w-44 text-xs bg-white"><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {allCols.map((c) => (
+                  {allCols.filter((c) => !!c.name).map((c) => (
                     <SelectItem key={c.name} value={c.name}>{c.name}</SelectItem>
                   ))}
                 </SelectContent>
@@ -329,7 +329,7 @@ export function ComparisonChartViewer({ docs, onClearAll }: ComparisonChartViewe
               <Select value={yKey} onValueChange={setYKey}>
                 <SelectTrigger className="h-8 w-44 text-xs bg-white"><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {(numericCols.length > 0 ? numericCols : allCols).map((c) => (
+                  {(numericCols.length > 0 ? numericCols : allCols).filter((c) => !!c.name).map((c) => (
                     <SelectItem key={c.name} value={c.name}>{c.name}</SelectItem>
                   ))}
                 </SelectContent>

@@ -29,6 +29,7 @@ import LeaveManagement from './(admin)/admin/hr/LeaveManagement';
 import StaffApplications from './(admin)/admin/hr/StaffApplications';
 import MySignatures from './(admin)/admin/MySignatures';
 import StaffOnboarding from './(public)/staff-onboarding/StaffOnboarding';
+import LogoExploration from './(public)/logo-exploration/LogoExploration';
 import DepartmentDetailPage from './(admin)/admin/DepartmentDetailPage';
 // RBAC — Roles & Maker-Checker Pages
 import RolesManagement from './(admin)/admin/RolesManagement';
@@ -48,6 +49,7 @@ import TeamManagement from './(admin)/admin/TeamManagement';
 
 
 
+
 function App() {
   return (
     <>
@@ -56,9 +58,11 @@ function App() {
       <Routes>
         <Route path="/" element={<Login />} />
 
+
         <Route path="/login" element={<Login />} />
 
         <Route path="/staff-onboarding" element={<StaffOnboarding />} />
+        <Route path="/logo-exploration" element={<LogoExploration />} />
         <Route path="*" element={<div>Page Not Found</div>} />
 
         {/* Admin Routes */}

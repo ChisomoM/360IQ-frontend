@@ -12,6 +12,7 @@ import {
 import { PageTransition } from '@/components/PageTransition';
 import { DocumentSearchModal } from '@/components/DocumentSearchModal';
 import type { AdminLayoutContext } from '@/layouts/AdminLayout';
+import { useAuth } from '@/lib/context/useAuth';
 
 import BossView  from './BossView';
 import DeptView  from './DeptView';
@@ -67,37 +68,30 @@ function useTenantColor(varName: string, fallback: string): string {
 }
 
 // ── Role config ───────────────────────────────────────────────────────────────
-const ROLES: {
-  key: RoleType;
-  label: string;
-  contextLine: string;
-  icon: React.ElementType;
-  userName: string;
-  userTitle: string;
-}[] = [
+const createRoles = (userName: string) => [
   {
     key:         'boss',
-    label:       'Org Boss',
+    label:       'System Admin',
     contextLine: '7 overdue · 24 pending across org',
     icon:        Building2,
-    userName:    'Chisomo Mwale',
-    userTitle:   'Org Administrator',
+    userName:    userName,
+    userTitle:   'System Admin',
   },
   {
     key:         'dept',
     label:       'Department Head',
     contextLine: 'Finance Department · 3 overdue · 9 pending',
     icon:        Users,
-    userName:    'Chisomo Mwale',
-    userTitle:   'Finance Head',
+    userName:    userName,
+    userTitle:   'Director',
   },
   {
     key:         'admin',
     label:       'Regular Admin',
     contextLine: 'Your workspace · 5 pending · 1 overdue',
     icon:        User,
-    userName:    'Chisomo Mwale',
-    userTitle:   'Document Admin',
+    userName:    userName,
+    userTitle:   'Admin',
   },
 ];
 
@@ -281,10 +275,12 @@ interface PageHeaderProps {
   onRoleChange: (r: RoleType) => void;
   primary: string;
   onSearchClick: () => void;
+  userName: string;
 }
 
-function PageHeader({ role, onRoleChange, primary, onSearchClick }: PageHeaderProps) {
+function PageHeader({ role, onRoleChange, primary, onSearchClick, userName }: PageHeaderProps) {
   const [open, setOpen] = useState(false);
+  const ROLES = createRoles(userName);
   const current = ROLES.find((r) => r.key === role)!;
 
   const now = new Date();
@@ -296,7 +292,7 @@ function PageHeader({ role, onRoleChange, primary, onSearchClick }: PageHeaderPr
     <div className="flex items-center justify-between">
       <div>
         <h1 className="font-display font-bold text-display-sm text-gray-900 tracking-tight leading-none">
-          Welcome back, Chisomo
+          Welcome back, {userName}
         </h1>
         <p className="font-sans text-sm font-medium text-slate-500 mt-1.5">{dateStr}</p>
         <p className="font-sans text-xs text-slate-400 mt-0.5">{current.contextLine}</p>
@@ -380,7 +376,7 @@ function PageHeader({ role, onRoleChange, primary, onSearchClick }: PageHeaderPr
                   return (
                     <motion.button
                       key={r.key}
-                      onClick={() => { onRoleChange(r.key); setOpen(false); }}
+                      onClick={() => { onRoleChange(r.key as RoleType); setOpen(false); }}
                       className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors text-left ${
                         isActive
                           ? 'bg-primary/10 text-slate-900'
@@ -418,6 +414,8 @@ function PageHeader({ role, onRoleChange, primary, onSearchClick }: PageHeaderPr
 export default function DemoDashboard() {
   const navigate = useNavigate();
   const { sendChatMessage } = useOutletContext<AdminLayoutContext>();
+  const { user } = useAuth();
+  const firstName = user?.first_name || user?.firstName || 'there';
 
   const primary   = useTenantColor('--tenant-primary',   '#7C69FF');
   const secondary = useTenantColor('--tenant-secondary', '#03D8FD');
@@ -444,6 +442,7 @@ export default function DemoDashboard() {
             onRoleChange={setRole}
             primary={primary}
             onSearchClick={() => setIsSearchOpen(true)}
+            userName={firstName}
           />
 
           {/* ── View content — transitions on role change ───────────────────── */}

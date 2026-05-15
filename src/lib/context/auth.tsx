@@ -184,6 +184,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           firstName: backendUser.first_name,
           lastName: backendUser.last_name,
           role: backendUser.role?.name as UserRole,
+          roleSlug: backendUser.role_slug as RoleSlug,
           // Placeholder — will be replaced with backend-resolved permissions below
           permissions: backendUser.role?.permissions?.map((p: any) => p.code) || [],
           isActive: backendUser.is_active,

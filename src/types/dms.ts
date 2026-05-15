@@ -82,6 +82,13 @@ export interface DocumentVersion {
   file_size: number;
   change_notes?: string;
   uploaded_by_id: string;
+  uploaded_by?: {
+    id: string;
+    first_name: string;
+    last_name: string;
+    email?: string;
+    avatar_url?: string;
+  };
   created_at: string;
 }
 

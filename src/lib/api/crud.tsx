@@ -99,9 +99,6 @@ export const fetchData = async (
     // Tenant context is missing for protected endpoint
     throw new Error("No tenant context. Please log in again.");
   }
-  if (tenantId) {
-    h.append("X-Tenant-ID", tenantId);
-  }
 
   // fetchOpts.token wins; otherwise read from storage (skip for public endpoints)
   const accessToken = fetchOpts?.token ?? (skipPublicEndpoints ? null : getAccessTokenFromStorage());
@@ -258,10 +255,7 @@ export const file = async (
   const h = new Headers();
   h.append("Content-Type", "application/json");
 
-  const tenantId = useTenantStore.getState().currentTenantId
-    || import.meta.env.VITE_TENANT_ID
-    || "dims";
-  h.append("X-Tenant-ID", tenantId);
+  // Tenant ID is embedded in JWT token, no need to send X-Tenant-ID header
 
   if (typeof window != "undefined" && !["LOGIN", "ADMIN_LOGIN"].includes(key)) {
     const accessToken = getAccessTokenFromStorage();
@@ -328,14 +322,11 @@ export const fetchFileBuffer = async (
   // Check if this is a public endpoint first
   const skipPublicEndpoints = ["LOGIN", "ADMIN_LOGIN", "CH_LOGIN", "REGISTER"].includes(key);
 
-  // Tenant context: required for protected endpoints, optional for public
+  // Tenant context is now embedded in JWT, no need to send X-Tenant-ID header
   const tenantId = fetchOpts?.tenantId || useTenantStore.getState().currentTenantId;
   if (!skipPublicEndpoints && !tenantId) {
     // Tenant context is missing for protected endpoint
     throw new Error("No tenant context. Please log in again.");
-  }
-  if (tenantId) {
-    h.append("X-Tenant-ID", tenantId);
   }
 
   if (typeof window !== "undefined") {

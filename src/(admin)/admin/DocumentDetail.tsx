@@ -602,7 +602,7 @@ export default function DocumentDetail() {
               whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.94 }}
               transition={{ type: 'spring', stiffness: 500, damping: 30 }}>
               <Button size="sm" onClick={handleAnalyzeWithAI}
-                className="bg-gradient-to-r from-[#1e3c21] to-[#2a5230] text-white hover:opacity-90 gap-1.5 shadow-sm">
+                className="bg-gradient-to-r from-primary to-primary-hover text-white hover:opacity-90 gap-1.5 shadow-sm">
                 <Sparkles className="h-4 w-4" />
                 Analyze with AI
               </Button>
@@ -1191,20 +1191,20 @@ export default function DocumentDetail() {
           </Card>
 
           {/* AI card */}
-          <Card className="border-none shadow-md bg-gradient-to-br from-[#1e3c21]/5 to-[#2a5230]/10">
+          <Card className="border-none shadow-md bg-gradient-to-br from-primary/5 to-[#2a5230]/10">
             <CardContent className="py-5">
               <div className="flex items-start gap-3">
-                <div className="w-9 h-9 rounded-xl bg-[#1e3c21] flex items-center justify-center flex-shrink-0 mt-0.5">
+                <div className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center flex-shrink-0 mt-0.5">
                   <Sparkles className="h-4 w-4 text-white" />
                 </div>
                 <div className="flex-1">
-                  <p className="text-sm font-semibold text-[#1e3c21]">AI Analysis</p>
+                  <p className="text-sm font-semibold text-primary">AI Analysis</p>
                   <p className="text-xs text-gray-500 mt-0.5 leading-relaxed">
                     Extract summaries, key insights, themes, and action items from this document.
                   </p>
                   <Button
                     size="sm"
-                    className="mt-3 bg-[#1e3c21] hover:bg-[#2a5230] text-white text-xs"
+                    className="mt-3 bg-primary hover:bg-[#2a5230] text-white text-xs"
                     onClick={handleAnalyzeWithAI}
                   >
                     <Sparkles className="h-3.5 w-3.5 mr-1.5" />
@@ -1374,24 +1374,43 @@ export default function DocumentDetail() {
             ) : versions.length === 0 ? (
               <p className="text-center text-gray-500 py-8 text-sm">No version history found.</p>
             ) : (
-              versions.map((v) => (
-                <div key={v.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-100">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-white rounded-lg border text-gray-600">
-                      <FileText className="h-4 w-4" />
+              versions.map((v, idx) => (
+                <div key={v.id} className="p-4 bg-gray-50 rounded-lg border border-gray-100 hover:border-gray-200 transition-colors">
+                  <div className="flex items-start justify-between mb-2">
+                    <div className="flex items-center gap-3 flex-1">
+                      <div className="p-2 bg-white rounded-lg border text-gray-600">
+                        <FileText className="h-4 w-4" />
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <p className="text-sm font-semibold text-gray-900">Version {v.version_number}</p>
+                          {idx === 0 && <Badge className="bg-blue-100 text-blue-700 text-xs">Latest</Badge>}
+                        </div>
+                        <p className="text-xs text-gray-600 mt-0.5">{v.file_name}</p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-sm font-semibold">Version {v.version_number}</p>
-                      <p className="text-xs text-gray-500">{v.file_name} • {formatBytes(v.file_size)}</p>
-                      {v.change_notes && <p className="text-xs text-gray-400 italic mt-0.5">{v.change_notes}</p>}
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs text-gray-400">{dayjs(v.created_at).format('MMM DD, YYYY')}</span>
-                    <Button variant="ghost" size="sm" onClick={() => handleVersionDownload(v)}>
-                      <Download className="h-3 w-3" />
+                    <Button variant="ghost" size="sm" onClick={() => handleVersionDownload(v)} className="text-blue-600 hover:text-blue-700">
+                      <Download className="h-3.5 w-3.5 mr-1" /> Download
                     </Button>
                   </div>
+                  
+                  <div className="flex items-center gap-4 text-xs text-gray-500 mt-2 ml-11">
+                    <span>{formatBytes(v.file_size)}</span>
+                    <span>•</span>
+                    <span>{dayjs(v.created_at).format('MMM DD, YYYY HH:mm')}</span>
+                    {v.uploaded_by && (
+                      <>
+                        <span>•</span>
+                        <span>Uploaded by {v.uploaded_by.first_name} {v.uploaded_by.last_name}</span>
+                      </>
+                    )}
+                  </div>
+
+                  {v.change_notes && (
+                    <div className="mt-2 ml-11 p-2 bg-white rounded border border-gray-200">
+                      <p className="text-xs text-gray-600"><span className="font-semibold">Changes:</span> {v.change_notes}</p>
+                    </div>
+                  )}
                 </div>
               ))
             )}

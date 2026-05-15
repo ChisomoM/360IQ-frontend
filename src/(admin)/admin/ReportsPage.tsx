@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { AlertCircle, Plus } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { useAuth } from '@/lib/context/useAuth';
 import { hasPermission, PERMISSIONS } from '@/lib/permissions';
-import { Button } from '@/components/ui/button';
+import { PageTransition } from '@/components/PageTransition';
 import { toast } from 'sonner';
 import { 
   ReportDiscoveryCards, 
@@ -139,13 +140,23 @@ export const ReportsPage: React.FC = () => {
 
   if (!canViewAnalytics) {
     return (
-      <div className="p-6 flex flex-col items-center justify-center min-h-screen gap-4">
-        <AlertCircle className="h-12 w-12 text-red-500" />
-        <h1 className="text-2xl font-semibold text-gray-800">
-          You do not have permission to access reports
-        </h1>
-        <p className="text-gray-600">Please contact your administrator</p>
-      </div>
+      <PageTransition>
+        <div className="p-6 flex flex-col items-center justify-center min-h-screen gap-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+          >
+            <AlertCircle className="h-12 w-12 text-danger" />
+          </motion.div>
+          <h1 className="font-display font-bold text-display-xs text-gray-900">
+            You do not have permission to access reports
+          </h1>
+          <p className="font-sans text-text-md text-gray-500">
+            Please contact your administrator
+          </p>
+        </div>
+      </PageTransition>
     );
   }
 
@@ -270,122 +281,153 @@ export const ReportsPage: React.FC = () => {
   // Generated report view
   if (mode === 'generated' && generatedReport) {
     return (
-      <div className="p-6 space-y-6 bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen">
-        <ReportGenerationResult
-          report={generatedReport}
-          aiInsights={aiInsights}
-          onBack={handleBackFromGenerated}
-          onSave={handleSaveReport}
-          users={sampleUsers}
-          canExport={canExportAnalytics}
-        />
-      </div>
+      <PageTransition>
+        <div className="p-6 space-y-6 bg-white min-h-screen">
+          <ReportGenerationResult
+            report={generatedReport}
+            aiInsights={aiInsights}
+            onBack={handleBackFromGenerated}
+            onSave={handleSaveReport}
+            users={sampleUsers}
+            canExport={canExportAnalytics}
+          />
+        </div>
+      </PageTransition>
     );
   }
 
   // Builder view - Hybrid split panel layout
   return (
-    <div className="p-6 space-y-6 bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen">
-      {/* Header */}
-      <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-        <div className="flex items-center justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-              Reports Builder
-            </h1>
-            <p className="text-sm text-muted-foreground mt-1">
-              Create, customize, and manage your reports with ease • Export as PDF, Excel, or CSV
-            </p>
+    <PageTransition>
+      <div className="p-6 space-y-6 bg-white min-h-screen">
+        {/* Header */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+          className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200"
+        >
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <h1 className="font-display font-bold text-display-sm text-gray-900">
+                Reports Builder
+              </h1>
+              <p className="font-sans text-text-md text-gray-500 mt-1">
+                Create, customize, and manage your reports with ease • Export as PDF, Excel, or CSV
+              </p>
+            </div>
+            <motion.button
+              onClick={handleCreateNewReport}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.97 }}
+              transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+              className="h-10 px-4 rounded-xl bg-primary text-primary-fg font-sans font-medium text-text-sm flex items-center gap-2 outline-none"
+            >
+              <Plus className="h-4 w-4" />
+              Create New Report
+            </motion.button>
           </div>
-          <Button 
-            variant="default" 
-            className="gap-2"
-            onClick={handleCreateNewReport}
-          >
-            <Plus className="h-4 w-4" />
-            Create New Report
-          </Button>
-        </div>
 
-        {/* Quick Info */}
-        {config.type && !showFilterPanel && (
-          <div className="mt-4 p-3 bg-blue-50 rounded-lg text-sm text-blue-700 border border-blue-200">
-            <p className="font-medium">
-              📊 {config.type.replace(/_/g, ' ')} Report Selected
-            </p>
-            <p className="text-xs mt-1">
-              Click "Configure & Generate" to customize filters, or click a saved report below to run it immediately.
-            </p>
-          </div>
-        )}
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Main Content */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Step 1: Report Type Selection */}
-          {!showFilterPanel ? (
-            <ReportDiscoveryCards
-              selectedType={config.type}
-              onSelect={handleSelectReportType}
-              user={user}
-            />
-          ) : (
-            <>
-              {/* Step 2: Filter Configuration */}
-              <ReportFilterPanel
-                reportType={config.type}
-                filters={config.filters}
-                onFilterChange={handleFilterChange}
-                user={user}
-                onPreview={handlePreview}
-                previewLoading={previewLoading}
-                documentCount={documentCount}
-              />
-
-              {/* Action Buttons */}
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  onClick={handleCreateNewReport}
-                  className="flex-1"
-                >
-                  Back to Report Selection
-                </Button>
-                <Button
-                  onClick={handleGenerateReport}
-                  className="flex-1 gap-2"
-                >
-                  Generate Report
-                </Button>
-              </div>
-            </>
+          {/* Quick Info */}
+          {config.type && !showFilterPanel && (
+            <motion.div
+              initial={{ opacity: 0, y: -4 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1], delay: 0.1 }}
+              className="mt-4 p-3 bg-blue-50/80 rounded-lg text-text-sm text-blue-700 border border-blue-200"
+            >
+              <p className="font-sans font-medium">
+                📊 {config.type.replace(/_/g, ' ')} Report Selected
+              </p>
+              <p className="font-sans text-text-xs mt-1">
+                Click "Configure & Generate" to customize filters, or click a saved report below to run it immediately.
+              </p>
+            </motion.div>
           )}
-        </div>
+        </motion.div>
 
-        {/* Sidebar: Saved Reports */}
-        <div className="lg:col-span-1">
-          <SavedReportsManager
-            reports={savedReports}
-            onRun={handleRunSavedReport}
-            onEdit={(id) => {
-              const report = savedReports.find(r => r.id === id);
-              if (report) {
-                setConfig(prev => ({
-                  ...prev,
-                  type: report.type,
-                }));
-                setShowFilterPanel(true);
-              }
-            }}
-            onDelete={(id) => {
-              setSavedReports(prev => prev.filter(r => r.id !== id));
-              toast.success('Report deleted');
-            }}
-          />
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Main Content */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1], delay: 0.05 }}
+            className="lg:col-span-2 space-y-6"
+          >
+            {/* Step 1: Report Type Selection */}
+            {!showFilterPanel ? (
+              <ReportDiscoveryCards
+                selectedType={config.type}
+                onSelect={handleSelectReportType}
+                user={user}
+              />
+            ) : (
+              <>
+                {/* Step 2: Filter Configuration */}
+                <ReportFilterPanel
+                  reportType={config.type}
+                  filters={config.filters}
+                  onFilterChange={handleFilterChange}
+                  user={user}
+                  onPreview={handlePreview}
+                  previewLoading={previewLoading}
+                  documentCount={documentCount}
+                />
+
+                {/* Action Buttons */}
+                <div className="flex gap-2">
+                  <motion.button
+                    onClick={handleCreateNewReport}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.97 }}
+                    transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                    className="flex-1 h-10 px-4 rounded-xl bg-slate-100 hover:bg-slate-150 text-gray-700 font-sans font-medium text-text-sm outline-none border border-slate-300 transition-colors"
+                  >
+                    Back to Report Selection
+                  </motion.button>
+                  <motion.button
+                    onClick={handleGenerateReport}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.97 }}
+                    transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                    className="flex-1 h-10 px-4 rounded-xl bg-primary text-primary-fg font-sans font-medium text-text-sm flex items-center justify-center gap-2 outline-none"
+                  >
+                    Generate Report
+                  </motion.button>
+                </div>
+              </>
+            )}
+          </motion.div>
+
+          {/* Sidebar: Saved Reports */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1], delay: 0.1 }}
+            className="lg:col-span-1"
+          >
+            <SavedReportsManager
+              reports={savedReports}
+              onRun={handleRunSavedReport}
+              onEdit={(id) => {
+                const report = savedReports.find(r => r.id === id);
+                if (report) {
+                  setConfig(prev => ({
+                    ...prev,
+                    type: report.type,
+                  }));
+                  setShowFilterPanel(true);
+                }
+              }}
+              onDelete={(id) => {
+                setSavedReports(prev => prev.filter(r => r.id !== id));
+                toast.success('Report deleted');
+              }}
+            />
+          </motion.div>
         </div>
       </div>
-    </div>
+    </PageTransition>
   );
 };
 

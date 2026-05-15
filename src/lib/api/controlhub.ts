@@ -48,7 +48,6 @@ export const chUploadBrandingLogo = async (tenantId: string, file: File) => {
     body: formData,
     headers: {
       Authorization: `Bearer ${token}`,
-      "X-Tenant-ID": "dims",
     },
   });
 

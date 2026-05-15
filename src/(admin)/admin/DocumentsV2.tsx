@@ -23,6 +23,7 @@ import type { AdminLayoutContext } from '@/layouts/AdminLayout'
 import { DocumentFilters } from '@/components/documents/DocumentFilters'
 import { EditModal, type EditFormData } from '@/components/documents/EditModal'
 import { DeleteModal } from '@/components/documents/DeleteModal'
+import { ArchiveModal } from '@/components/documents/ArchiveModal'
 import { VersionHistoryModal } from '@/components/documents/VersionHistoryModal'
 import { DocumentSkeletonGrid, DocumentSkeletonTable } from '@/components/documents/DocumentSkeleton'
 import { useAuth } from '@/lib/context/useAuth'
@@ -88,6 +89,7 @@ export default function DocumentsV2() {
   const [isUploadOpen, setIsUploadOpen] = useState(false)
   const [isEditOpen, setIsEditOpen] = useState(false)
   const [isDeleteOpen, setIsDeleteOpen] = useState(false)
+  const [isArchiveOpen, setIsArchiveOpen] = useState(false)
   const [isVersionsOpen, setIsVersionsOpen] = useState(false)
 
   // ─── State: Upload form ────────────────────────────────────────────────
@@ -115,6 +117,9 @@ export default function DocumentsV2() {
 
   // ─── State: Delete ────────────────────────────────────────────────────
   const [isDeleting, setIsDeleting] = useState(false)
+
+  // ─── State: Archive ───────────────────────────────────────────────────
+  const [isArchiving, setIsArchiving] = useState(false)
 
   // ─── State: Versions ──────────────────────────────────────────────────
   const [versions, setVersions] = useState<DocumentVersion[]>([])
@@ -412,6 +417,11 @@ export default function DocumentsV2() {
     setIsDeleteOpen(true)
   }
 
+  const openArchive = (doc: Document) => {
+    setSelectedDoc(doc)
+    setIsArchiveOpen(true)
+  }
+
   const openVersions = (doc: Document) => {
     setSelectedDoc(doc)
     setVersions([])
@@ -482,7 +492,7 @@ export default function DocumentsV2() {
     if (!selectedDoc) return
     try {
       setIsDeleting(true)
-      await fetchData('DOCUMENTS', 'DELETE', { id: selectedDoc.id })
+      await fetchData('DOCUMENT_DELETE', 'DELETE', { id: selectedDoc.id })
       toast.success('Document deleted successfully')
       setIsDeleteOpen(false)
       fetchAll()
@@ -490,6 +500,23 @@ export default function DocumentsV2() {
       toast.error(err.message || 'Failed to delete document')
     } finally {
       setIsDeleting(false)
+    }
+  }
+
+  // ─── Handlers: Archive ────────────────────────────────────────────
+
+  const handleArchiveSubmit = async () => {
+    if (!selectedDoc) return
+    try {
+      setIsArchiving(true)
+      await fetchData('DOCUMENTS', 'PATCH', { id: selectedDoc.id }, { status: 'archived' })
+      toast.success('Document archived successfully')
+      setIsArchiveOpen(false)
+      fetchAll()
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to archive document')
+    } finally {
+      setIsArchiving(false)
     }
   }
 
@@ -580,9 +607,9 @@ export default function DocumentsV2() {
   // ─── Permissions check ───────────────────────────────────────────────
 
   const canUpload = hasPermission(user, PERMISSIONS['documents.write'])
-  const canEdit = hasPermission(user, PERMISSIONS['documents.manage'])
-  const canDelete = hasPermission(user, PERMISSIONS['documents.manage'])
-  const canReorder = hasPermission(user, PERMISSIONS['documents.manage'])
+  const canEdit = hasPermission(user, PERMISSIONS['documents.update'])
+  const canDelete = hasPermission(user, PERMISSIONS['documents.delete'])
+  const canReorder = hasPermission(user, PERMISSIONS['documents.update'])
 
   // ─── Render ───────────────────────────────────────────────────────────
 
@@ -890,6 +917,8 @@ export default function DocumentsV2() {
                   onSummarize={() => handleSummarize(doc)}
                   onAnalysis={() => handleAnalysis(doc)}
                   onChartAnalysis={() => handleChartAnalysis(doc)}
+                  onArchive={canEdit ? openArchive : undefined}
+                  onDelete={canDelete ? openDelete : undefined}
                 />
               ))}
             </div>
@@ -981,6 +1010,8 @@ export default function DocumentsV2() {
                               onSummarize={() => handleSummarize(doc)}
                               onAnalysis={() => handleAnalysis(doc)}
                               onChartAnalysis={() => handleChartAnalysis(doc)}
+                              onArchive={canEdit ? openArchive : undefined}
+                              onDelete={canDelete ? openDelete : undefined}
                             />
                           </div>
                         )}
@@ -1001,6 +1032,8 @@ export default function DocumentsV2() {
                 onSummarize={handleSummarize}
                 onAnalysis={handleAnalysis}
                 onChartAnalysis={handleChartAnalysis}
+                onArchive={canEdit ? openArchive : undefined}
+                onDelete={canDelete ? openDelete : undefined}
               />
             )}
           </DragDropContext>
@@ -1065,6 +1098,15 @@ export default function DocumentsV2() {
           onConfirm={handleDeleteSubmit}
           document={selectedDoc}
           isLoading={isDeleting}
+        />
+
+        {/* Archive Modal */}
+        <ArchiveModal
+          open={isArchiveOpen}
+          onClose={() => setIsArchiveOpen(false)}
+          onConfirm={handleArchiveSubmit}
+          document={selectedDoc}
+          isLoading={isArchiving}
         />
 
         {/* Version History Modal */}

@@ -29,7 +29,6 @@ interface AddToCalendarProps {
 export function AddToCalendarButton({ document, onSuccess }: AddToCalendarProps) {
   const { tokens, user } = useAuth();
   const token = tokens?.token || '';
-  const tenantId = user?.tenantId || localStorage.getItem('X-Tenant-ID') || '';
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [calendarConnected, setCalendarConnected] = useState(false);
@@ -49,7 +48,6 @@ export function AddToCalendarButton({ document, onSuccess }: AddToCalendarProps)
     try {
       const response = await fetch('/api/v1/chat/calendar-status', {
         headers: {
-          'X-Tenant-ID': tenantId || '',
           'Authorization': `Bearer ${token}`,
         },
       });
@@ -70,7 +68,6 @@ export function AddToCalendarButton({ document, onSuccess }: AddToCalendarProps)
     try {
       const response = await fetch('/api/v1/auth/google-calendar/login', {
         headers: {
-          'X-Tenant-ID': tenantId || '',
           'Authorization': `Bearer ${token}`,
         },
       });
@@ -109,7 +106,6 @@ export function AddToCalendarButton({ document, onSuccess }: AddToCalendarProps)
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'X-Tenant-ID': tenantId || '',
           'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({

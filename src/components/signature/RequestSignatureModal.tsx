@@ -145,10 +145,10 @@ export default function RequestSignatureModal({
 
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v) handleClose(); }}>
-      <DialogContent className={`bg-white ${step === 2 ? 'max-w-3xl' : 'max-w-md'}`}>
+      <DialogContent className={`bg-white ${step === 2 ? 'max-w-3xl' : 'max-w-md'} max-h-[90vh] flex flex-col overflow-hidden`}>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <PenLine className="h-5 w-5 text-[#1e3c21]" />
+            <PenLine className="h-5 w-5 text-primary" />
             Request Signature
             <span className="ml-auto text-xs font-normal text-gray-400">Step {step} of 2</span>
           </DialogTitle>
@@ -160,7 +160,7 @@ export default function RequestSignatureModal({
         </DialogHeader>
 
         {step === 1 && (
-          <div className="space-y-4 py-2">
+          <div className="space-y-4 py-2 flex-1 overflow-y-auto">
             <div className="space-y-2">
               <Label>Signer <span className="text-red-500">*</span></Label>
               {loadingUsers ? (
@@ -221,7 +221,7 @@ export default function RequestSignatureModal({
         )}
 
         {step === 2 && (
-          <div className="py-2 space-y-3">
+          <div className="py-2 space-y-3 flex-1 min-h-0 overflow-y-auto">
             {loadingPdf ? (
               <div className="flex items-center justify-center h-48 gap-2 text-gray-400">
                 <Loader2 className="h-5 w-5 animate-spin" />
@@ -254,7 +254,7 @@ export default function RequestSignatureModal({
               <Button
                 onClick={handleNextStep}
                 disabled={!signerId}
-                className="bg-[#1e3c21] hover:bg-[#2a5230] text-white"
+                className="bg-primary  text-white"
               >
                 Next: Place Field
                 <ArrowRight className="ml-2 h-4 w-4" />
@@ -269,7 +269,7 @@ export default function RequestSignatureModal({
               <Button
                 onClick={handleSubmit}
                 disabled={isSubmitting || !field}
-                className="bg-[#1e3c21] hover:bg-[#2a5230] text-white"
+                className="bg-primary  text-white"
               >
                 {isSubmitting ? (
                   <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Sending...</>

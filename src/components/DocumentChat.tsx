@@ -80,7 +80,6 @@ export function DocumentChat() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'X-Tenant-ID': tenantId || '',
           'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({ query, limit: 5 }),
@@ -112,7 +111,6 @@ export function DocumentChat() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'X-Tenant-ID': tenantId || '',
           'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({ document_id: doc.id }),
@@ -144,7 +142,6 @@ export function DocumentChat() {
       // Check if calendar is connected (simplified check)
       const statusResponse = await fetch('/api/v1/chat/calendar-status', {
         headers: {
-          'X-Tenant-ID': tenantId || '',
           'Authorization': `Bearer ${token}`,
         },
       });
@@ -160,7 +157,6 @@ export function DocumentChat() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'X-Tenant-ID': tenantId || '',
           'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({

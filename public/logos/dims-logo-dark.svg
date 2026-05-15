@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  DIMS Logo — Dark / Reversed variant
+  For use on dark backgrounds.
+  Mark:     White container · Dark (#111827) D · Purple (#A855F7) fold
+  Wordmark: White text · Purple slash
+  Font:     Geist 700 (Google Fonts)
+-->
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 460 128"
+  width="460"
+  height="128"
+  role="img"
+  aria-labelledby="dims-logo-dark-title"
+>
+  <title id="dims-logo-dark-title">DIMS — Document Intelligence &amp; Management System</title>
+
+  <defs>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Geist:wght@700&amp;display=swap');
+    </style>
+
+    <!-- Glow on the fold for the inverted mark -->
+    <filter id="fold-glow-dark" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="1.2" result="blur"/>
+      <feFlood flood-color="#A855F7" flood-opacity="0.5" result="color"/>
+      <feComposite in="color" in2="blur" operator="in" result="shadow"/>
+      <feMerge>
+        <feMergeNode in="shadow"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       MARK — Inverted: white container, dark D, purple fold
+       ═══════════════════════════════════════════════════════════ -->
+  <svg x="0" y="10" width="108" height="108" viewBox="0 0 64 64" overflow="visible">
+    <!-- White rounded container (inverted from dark original) -->
+    <rect x="6" y="6" width="52" height="52" rx="10" fill="#ffffff"/>
+
+    <!-- Dark D shape (the white cutout, now filled dark) -->
+    <path d="M20 18 L20 46 L30 46 Q44 46 44 32 Q44 18 30 18 Z" fill="#111827"/>
+
+    <!-- Purple fold triangle (unchanged — brand accent) -->
+    <path d="M44 18 L30 18 L44 32 Z" fill="#A855F7" filter="url(#fold-glow-dark)"/>
+
+    <!-- Fold crease highlight -->
+    <path d="M44 18 L44 32 L30 18" stroke="#ffffff" stroke-width="0.75" fill="none" stroke-linecap="round" opacity="0.55"/>
+  </svg>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       WORDMARK — white text, purple slash
+       ═══════════════════════════════════════════════════════════ -->
+
+  <!-- "D" -->
+  <text
+    x="128"
+    y="98"
+    font-family="Geist, Inter, 'Helvetica Neue', Arial, system-ui, sans-serif"
+    font-weight="700"
+    font-size="84"
+    fill="#ffffff"
+    letter-spacing="-3"
+  >D</text>
+
+  <!-- Purple slash (same geometry as light variant) -->
+  <path d="M214,36 L235,36 L212,98 L191,98 Z" fill="#A855F7"/>
+
+  <!-- "MS" -->
+  <text
+    x="242"
+    y="98"
+    font-family="Geist, Inter, 'Helvetica Neue', Arial, system-ui, sans-serif"
+    font-weight="700"
+    font-size="84"
+    fill="#ffffff"
+    letter-spacing="-3"
+  >MS</text>
+
+</svg>
