@@ -92,7 +92,7 @@ export default function AdminLayout() {
           className={`fixed left-0 top-0 h-screen z-40 transition-all duration-300 ${collapsed ? "w-20" : "w-64"
             }`}
         >
-          <div className="h-full flex flex-col bg-primary text-white shadow-xl">
+          <div className="h-full flex flex-col bg-primary text-primary-foreground shadow-xl">
 
             <div className="flex items-center justify-center py-6 border-b border-white/10">
               <AnimatePresence mode="wait">

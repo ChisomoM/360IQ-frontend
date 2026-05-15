@@ -19,9 +19,9 @@ const buttonVariants = cva(
         orange:
           "bg-orange-500 text-white hover:bg-orange-600 shadow-md hover:shadow-lg active:shadow-sm active:translate-y-0.5",
         tenantPrimary:
-          "bg-primary text-white shadow-md hover:shadow-lg active:shadow-sm active:translate-y-0.5 hover:bg-primary/90",
+          "bg-primary text-primary-foreground shadow-md hover:shadow-lg active:shadow-sm active:translate-y-0.5 hover:bg-primary/90 [&_svg]:text-primary-foreground",
         tenantSecondary:
-          "bg-secondary text-secondary-foreground shadow-sm hover:shadow-md active:shadow-xs",
+          "bg-secondary text-secondary-foreground shadow-sm hover:shadow-md active:shadow-xs [&_svg]:text-secondary-foreground",
         ghost: "hover:bg-ch-primary-50 hover:text-ch-primary-900 transition-colors",
         link: "text-ch-primary-600 underline-offset-4 hover:underline transition-colors",
       },

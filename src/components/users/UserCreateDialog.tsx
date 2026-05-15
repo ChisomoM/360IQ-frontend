@@ -556,7 +556,7 @@ export function UserCreateDialog({ isOpen, onClose, onSubmit }: UserCreateDialog
                     {step === 1 ? (
                         <Button
                             onClick={handleNextStep}
-                            className="h-11 bg-primary text-white hover:bg-primary-dark"
+                            className="h-11 bg-primary text-primary-foreground hover:bg-primary-dark"
                         >
                             Continue
                             <ChevronRight className="h-4 w-4 ml-2" />
@@ -565,7 +565,7 @@ export function UserCreateDialog({ isOpen, onClose, onSubmit }: UserCreateDialog
                         <Button
                             onClick={handleSubmit}
                             disabled={isSubmitting}
-                            className="h-11 bg-primary text-white hover:bg-primary-dark"
+                            className="h-11 bg-primary text-primary-foreground hover:bg-primary-dark"
                         >
                             {isSubmitting ? (
                                 <>

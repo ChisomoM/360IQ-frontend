@@ -187,7 +187,7 @@ export default function MakerCheckerPage() {
                         >
                             <Button
                                 onClick={() => { setEditingRule(undefined); setIsRuleFormOpen(true); }}
-                                className="bg-primary text-white hover:bg-ch-primary-700 font-semibold"
+                                className="bg-primary text-primary-foreground hover:bg-ch-primary-700 font-semibold"
                             >
                                 <Plus className="h-4 w-4 mr-2" />
                                 New Rule

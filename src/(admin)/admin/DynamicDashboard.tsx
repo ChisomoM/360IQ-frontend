@@ -330,7 +330,7 @@ export default function DynamicDashboard() {
                 <p className="text-red-700 text-sm mb-6 leading-relaxed">{error}</p>
                 <button
                   onClick={() => window.location.reload()}
-                  className="px-4 py-2 bg-primary text-white rounded-lg font-medium hover:shadow-premium-md transition-all"
+                  className="px-4 py-2 bg-primary text-primary-foreground rounded-lg font-medium hover:shadow-premium-md transition-all"
                 >
                   Retry
                 </button>
