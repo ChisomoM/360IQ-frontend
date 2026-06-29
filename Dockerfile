@@ -3,31 +3,22 @@ FROM node:22-alpine AS builder
 
 WORKDIR /app
 
-# Copy package files
+RUN npm install -g pnpm
+
 COPY package.json pnpm-lock.yaml ./
 
-# Install dependencies
-RUN npm install -g pnpm && pnpm install --frozen-lockfile
+RUN pnpm install --frozen-lockfile
 
-# Copy source code
 COPY . .
 
-# Build
-RUN pnpm build
+RUN pnpm run build
 
-# Runtime stage  
-FROM node:22-alpine
+# Runtime stage
+FROM nginx:alpine
 
-WORKDIR /app
+COPY --from=builder /app/dist /usr/share/nginx/html
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-# Install simple HTTP server to serve static files
-RUN npm install -g serve
+EXPOSE 80
 
-# Copy built assets from builder
-COPY --from=builder /app/dist ./dist
-
-# Expose port
-EXPOSE 3000
-
-# Serve the app
-CMD ["serve", "-s", "dist", "-l", "3000"]
+CMD ["nginx", "-g", "daemon off;"]
