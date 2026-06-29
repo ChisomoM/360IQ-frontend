@@ -255,8 +255,6 @@ export const file = async (
   const h = new Headers();
   h.append("Content-Type", "application/json");
 
-  // Tenant ID is embedded in JWT token, no need to send X-Tenant-ID header
-
   if (typeof window != "undefined" && !["LOGIN", "ADMIN_LOGIN"].includes(key)) {
     const accessToken = getAccessTokenFromStorage();
     if (accessToken) {
@@ -322,7 +320,6 @@ export const fetchFileBuffer = async (
   // Check if this is a public endpoint first
   const skipPublicEndpoints = ["LOGIN", "ADMIN_LOGIN", "CH_LOGIN", "REGISTER"].includes(key);
 
-  // Tenant context is now embedded in JWT, no need to send X-Tenant-ID header
   const tenantId = fetchOpts?.tenantId || useTenantStore.getState().currentTenantId;
   if (!skipPublicEndpoints && !tenantId) {
     // Tenant context is missing for protected endpoint

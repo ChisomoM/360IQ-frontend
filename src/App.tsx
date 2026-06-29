@@ -11,8 +11,7 @@ import DynamicDashboard from './(admin)/admin/DynamicDashboard';
 import RoleAwareDashboard from './(admin)/admin/RoleAwareDashboard';
 import DashboardConfiguration from './(admin)/admin/DashboardConfiguration';
 
-// Keeping this import just in case we need to roll back to the old user management
-// import TeamManagement from './(admin)/admin/TeamManagement';
+
 import ManageUsers from './(admin)/admin/ManageUsers'; // New User management page
 import { AnalyticsDashboard } from './(admin)/admin/AnalyticsDashboard';
 import ReportsPage from './(admin)/admin/ReportsPage';
@@ -44,7 +43,6 @@ import ControlHubLoginPage from './(controlhub)/ControlHubLoginPage';
 import ControlHubDashboard from './(controlhub)/Dashboard';
 import TenantsList from './(controlhub)/TenantsList';
 import TenantDetail from './(controlhub)/TenantDetail';
-import TeamManagement from './(admin)/admin/TeamManagement';
 
 
 
@@ -76,9 +74,6 @@ function App() {
           <Route path="newdashboard" element={<RoleAwareDashboard />} />
           <Route path="demo-dashboard" element={<DemoDashboard />} />
           <Route path="legacy-dashboard" element={<AdminDashboard />} />
-          {/* We are replacing the old user-management with our shiny new 'users' route, 
-              but leaving this commented out just in case we need to roll back. */}
-          {/* <Route path="user-management" element={<TeamManagement />} /> */}
           <Route path="users" element={<ManageUsers />} />
           <Route path="analytics" element={<AnalyticsDashboard />} />
           <Route path="reports" element={<ReportsPage />} />
