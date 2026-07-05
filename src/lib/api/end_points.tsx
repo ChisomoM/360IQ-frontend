@@ -106,6 +106,26 @@ export const API: Record<string, string> = {
   DASHBOARD_CARD_DEFINITIONS: "dashboard/cards/definitions",
 
 
+  // Onboarding
+  ONBOARDING_STATUS: "onboarding/status",
+  ONBOARDING_UPDATE: "onboarding/details",
+  ONBOARDING_SUBMIT: "onboarding/submit",
+  ONBOARDING_DOCUMENTS: "onboarding/documents",
+  ONBOARDING_TIMELINE: "onboarding/timeline",
+  ONBOARDING_DOWNLOAD: "onboarding/documents/download",
+  ONBOARDING_PREVIEW: "onboarding/invitations/preview",
+  ONBOARDING_CLAIM: "onboarding/invitations/claim",
+
+  // ControlHub Admin Onboarding
+  CH_ONBOARDING: "controlhub/admin/onboarding",
+  CH_ONBOARDING_EXPORT: "controlhub/admin/onboarding/export",
+  CH_ONBOARDING_DOWNLOAD: "controlhub/admin/onboarding/documents/download",
+  CH_ONBOARDING_DETAIL: "controlhub/admin/onboarding/:id",
+  CH_ONBOARDING_TIMELINE: "controlhub/admin/onboarding/:id/timeline",
+  CH_ONBOARDING_TRANSITION: "controlhub/admin/onboarding/:id/transition",
+  CH_ONBOARDING_VERIFY_DOC: "controlhub/admin/onboarding/documents/:id/verify",
+  CH_ONBOARDING_RESEND: "controlhub/admin/onboarding/:id/resend-invitation",
+
   // ControlHub — Platform admin endpoints (meta-DB, no tenant scoping)
   CH_LOGIN: "controlhub/auth/login",
   CH_CLIENTS: "controlhub/clients",

@@ -29,6 +29,8 @@ import StaffApplications from './(admin)/admin/hr/StaffApplications';
 import MySignatures from './(admin)/admin/MySignatures';
 import StaffOnboarding from './(public)/staff-onboarding/StaffOnboarding';
 import LogoExploration from './(public)/logo-exploration/LogoExploration';
+import ClaimInvitation from './(public)/onboarding/ClaimInvitation';
+import OnboardingWizard from './(public)/onboarding/OnboardingWizard';
 import DepartmentDetailPage from './(admin)/admin/DepartmentDetailPage';
 // RBAC — Roles & Maker-Checker Pages
 import RolesManagement from './(admin)/admin/RolesManagement';
@@ -58,6 +60,13 @@ function App() {
 
 
         <Route path="/login" element={<Login />} />
+
+        <Route path="/onboarding/claim" element={<ClaimInvitation />} />
+        <Route path="/onboarding/wizard" element={
+          <ProtectedRoute>
+            <OnboardingWizard />
+          </ProtectedRoute>
+        } />
 
         <Route path="/staff-onboarding" element={<StaffOnboarding />} />
         <Route path="/logo-exploration" element={<LogoExploration />} />

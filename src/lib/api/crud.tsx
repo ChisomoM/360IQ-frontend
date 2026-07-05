@@ -91,7 +91,7 @@ export const fetchData = async (
   h.append("Content-Type", "application/json");
 
   // Check if this is a public endpoint first
-  const skipPublicEndpoints = ["LOGIN", "ADMIN_LOGIN", "CH_LOGIN", "REGISTER"].includes(key);
+  const skipPublicEndpoints = ["LOGIN", "ADMIN_LOGIN", "CH_LOGIN", "REGISTER", "ONBOARDING_PREVIEW", "ONBOARDING_CLAIM"].includes(key);
 
   // Tenant context: required for protected endpoints, optional for public
   const tenantId = fetchOpts?.tenantId || useTenantStore.getState().currentTenantId;
@@ -318,7 +318,7 @@ export const fetchFileBuffer = async (
   const h = new Headers();
 
   // Check if this is a public endpoint first
-  const skipPublicEndpoints = ["LOGIN", "ADMIN_LOGIN", "CH_LOGIN", "REGISTER"].includes(key);
+  const skipPublicEndpoints = ["LOGIN", "ADMIN_LOGIN", "CH_LOGIN", "REGISTER", "ONBOARDING_PREVIEW", "ONBOARDING_CLAIM"].includes(key);
 
   const tenantId = fetchOpts?.tenantId || useTenantStore.getState().currentTenantId;
   if (!skipPublicEndpoints && !tenantId) {
