@@ -41,7 +41,7 @@ const getTokenForEndpoint = (key: string): string | null => {
   if (key.startsWith("CH_")) {
     try {
       if (typeof window === 'undefined') return null;
-      const tokensJson = localStorage.getItem('controlhub_tokens');
+      const tokensJson = localStorage.getItem('ch_tokens');
       if (!tokensJson) return null;
       const tokens = JSON.parse(tokensJson);
       return tokens.token || null;
