@@ -1,7 +1,8 @@
-import React from "react"
+import React, { useEffect, useState } from "react"
 import { motion } from "framer-motion"
 import { LoginForm } from "../../components/auth/loginForm"
 import { DashboardPreviewPanel } from "./DashboardPreviewPanel"
+import { retrieve } from "../../lib/api/crud"
 
 interface LoginPageProps {
   onSignUpClick?: () => void
@@ -29,11 +30,39 @@ const item = {
 }
 
 export const LoginPage: React.FC<LoginPageProps> = () => {
-  return (
-    <div className="min-h-screen w-full flex overflow-hidden bg-white">
+  const [latestInvitation, setLatestInvitation] = useState<{
+    token: string;
+    company_name: string;
+    email: string;
+  } | null>(null);
 
-      {/* ── LEFT — Dashboard preview panel ─────────────────────────────────── */}
-      <DashboardPreviewPanel />
+  useEffect(() => {
+    const fetchLatestInvite = async () => {
+      try {
+        const res: any = await retrieve("ONBOARDING_LATEST_DEBUG");
+        if (res && res.token) {
+          setLatestInvitation(res);
+        }
+      } catch (err) {
+        // Silent catch: ignore in production
+      }
+    };
+    fetchLatestInvite();
+  }, []);
+  return (
+    <div className="min-h-screen w-full flex flex-col bg-white">
+      {latestInvitation && (
+        <a
+          href={`/onboarding/claim?token=${latestInvitation.token}`}
+          className="bg-[#febb00] text-slate-900 py-3 px-4 text-center text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 hover:opacity-95 transition-all shadow-md z-50 relative border-b border-yellow-600 animate-pulse"
+        >
+          <span>🚀 DEMO SHORTCUT: Ready to set password for <strong>{latestInvitation.company_name}</strong>? Click here to claim setup token.</span>
+        </a>
+      )}
+
+      <div className="flex-1 w-full flex overflow-hidden">
+        {/* ── LEFT — Dashboard preview panel ─────────────────────────────────── */}
+        <DashboardPreviewPanel />
 
       {/* ── RIGHT — Login form ──────────────────────────────────────────────── */}
       <div className="flex items-center justify-center w-full lg:w-1/2 min-h-screen px-8 bg-white">
@@ -97,6 +126,7 @@ export const LoginPage: React.FC<LoginPageProps> = () => {
       </div>
 
     </div>
+  </div>
   )
 }
 
