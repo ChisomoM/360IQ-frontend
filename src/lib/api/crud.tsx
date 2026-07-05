@@ -93,9 +93,10 @@ export const fetchData = async (
   // Check if this is a public endpoint first
   const skipPublicEndpoints = ["LOGIN", "ADMIN_LOGIN", "CH_LOGIN", "REGISTER", "ONBOARDING_PREVIEW", "ONBOARDING_CLAIM", "ONBOARDING_LATEST_DEBUG"].includes(key);
 
-  // Tenant context: required for protected endpoints, optional for public
+  // Tenant context: required for protected endpoints, optional for public and ControlHub
+  const isControlHub = key.startsWith("CH_");
   const tenantId = fetchOpts?.tenantId || useTenantStore.getState().currentTenantId;
-  if (!skipPublicEndpoints && !tenantId) {
+  if (!skipPublicEndpoints && !isControlHub && !tenantId) {
     // Tenant context is missing for protected endpoint
     throw new Error("No tenant context. Please log in again.");
   }
@@ -320,8 +321,9 @@ export const fetchFileBuffer = async (
   // Check if this is a public endpoint first
   const skipPublicEndpoints = ["LOGIN", "ADMIN_LOGIN", "CH_LOGIN", "REGISTER", "ONBOARDING_PREVIEW", "ONBOARDING_CLAIM", "ONBOARDING_LATEST_DEBUG"].includes(key);
 
+  const isControlHub = key.startsWith("CH_");
   const tenantId = fetchOpts?.tenantId || useTenantStore.getState().currentTenantId;
-  if (!skipPublicEndpoints && !tenantId) {
+  if (!skipPublicEndpoints && !isControlHub && !tenantId) {
     // Tenant context is missing for protected endpoint
     throw new Error("No tenant context. Please log in again.");
   }

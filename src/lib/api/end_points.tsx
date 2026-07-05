@@ -119,6 +119,7 @@ export const API: Record<string, string> = {
 
   // ControlHub Admin Onboarding
   CH_ONBOARDING: "controlhub/admin/onboarding",
+  CH_ONBOARDING_INITIATE: "controlhub/admin/onboarding/initiate",
   CH_ONBOARDING_EXPORT: "controlhub/admin/onboarding/export",
   CH_ONBOARDING_DOWNLOAD: "controlhub/admin/onboarding/documents/download",
   CH_ONBOARDING_DETAIL: "controlhub/admin/onboarding/:id",

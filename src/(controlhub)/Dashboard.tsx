@@ -38,6 +38,12 @@ export default function ControlHubDashboard() {
   // Successful approval invitation setup link state
   const [claimLink, setClaimLink] = useState<string | null>(null);
 
+  // States for initiating a new onboarding request
+  const [isInitiating, setIsInitiating] = useState(false);
+  const [initCompanyName, setInitCompanyName] = useState("");
+  const [initContactEmail, setInitContactEmail] = useState("");
+  const [isSubmittingInit, setIsSubmittingInit] = useState(false);
+
   const fetchOnboardingRequests = async () => {
     setIsLoadingRequests(true);
     try {
@@ -107,6 +113,37 @@ export default function ControlHubDashboard() {
     }
   };
 
+  const handleInitiateOnboarding = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!initCompanyName.trim() || !initContactEmail.trim()) {
+      toast.error("All fields are required");
+      return;
+    }
+
+    setIsSubmittingInit(true);
+    try {
+      const res: any = await post("CH_ONBOARDING_INITIATE", {
+        company_name: initCompanyName,
+        contact_email: initContactEmail,
+      });
+
+      if (res && res.admin_setup_link) {
+        toast.success("B2B Onboarding Request successfully initiated!");
+        setClaimLink(res.admin_setup_link);
+        setIsInitiating(false);
+        setInitCompanyName("");
+        setInitContactEmail("");
+        fetchOnboardingRequests();
+      } else {
+        toast.error("Failed to generate setup link");
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Failed to initiate onboarding request");
+    } finally {
+      setIsSubmittingInit(false);
+    }
+  };
+
   const handleCopyLink = () => {
     if (claimLink) {
       navigator.clipboard.writeText(claimLink);
@@ -157,9 +194,17 @@ export default function ControlHubDashboard() {
             <h2 className="text-2xl font-bold text-slate-800">Corporate Onboarding Audit Panel</h2>
             <p className="text-sm text-slate-500 mt-1">Review registrations, verify company documents, and transition client lifecycles.</p>
           </div>
-          <Button variant="outline" onClick={fetchOnboardingRequests} className="flex items-center gap-1.5 border-slate-300">
-            ↻ Refresh list
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              onClick={() => setIsInitiating(true)}
+              className="bg-[#7c69ff] hover:bg-[#6853f0] text-white text-xs font-semibold"
+            >
+              + Initiate Onboarding Request
+            </Button>
+            <Button variant="outline" onClick={fetchOnboardingRequests} className="flex items-center gap-1.5 border-slate-300 text-xs">
+              ↻ Refresh list
+            </Button>
+          </div>
         </div>
 
         {isLoadingRequests ? (
@@ -190,10 +235,10 @@ export default function ControlHubDashboard() {
                       </span>
                     </div>
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-6 gap-y-1 text-xs text-slate-500">
-                      <p>Lead: <span className="font-semibold text-slate-700">{req.commercial_lead}</span></p>
+                      <p>Lead: <span className="font-semibold text-slate-700">{req.commercial_lead || "—"}</span></p>
                       <p>Email: <span className="font-semibold text-slate-700">{req.contact_email}</span></p>
-                      <p>Team Size: <span className="font-semibold text-slate-700">{req.sales_team_size} reps</span></p>
-                      <p>Pipeline: <span className="font-semibold text-slate-700">${req.expected_pipeline.toLocaleString()}</span></p>
+                      <p>Team Size: <span className="font-semibold text-slate-700">{req.sales_team_size || 0} reps</span></p>
+                      <p>Pipeline: <span className="font-semibold text-slate-700">${(req.expected_pipeline || 0).toLocaleString()}</span></p>
                     </div>
                   </div>
 
@@ -209,6 +254,62 @@ export default function ControlHubDashboard() {
           </div>
         )}
       </section>
+
+      {/* Onboarding Request Initiation Modal */}
+      {isInitiating && (
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-6">
+          <div className="bg-white rounded-2xl w-full max-w-md overflow-hidden shadow-2xl border border-slate-200">
+            <div className="p-6 bg-[#7c69ff] text-white flex items-center justify-between">
+              <div>
+                <h3 className="text-xl font-bold">Initiate B2B Client Onboarding</h3>
+                <p className="text-xs text-white/70 mt-1">Pre-registers the organization and generates a password setup claim token.</p>
+              </div>
+              <button onClick={() => setIsInitiating(false)} className="text-white/80 hover:text-white">
+                <X className="h-6 w-6" />
+              </button>
+            </div>
+
+            <form onSubmit={handleInitiateOnboarding} className="p-6 space-y-4">
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-slate-500 uppercase">Company Name</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Acme Corporation"
+                  value={initCompanyName}
+                  onChange={(e) => setInitCompanyName(e.target.value)}
+                  className="w-full p-2.5 rounded-lg border border-slate-200 text-xs focus:ring-2 focus:ring-[#7c69ff] focus:border-transparent focus:outline-none"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-slate-500 uppercase">Contact Email</label>
+                <input
+                  type="email"
+                  required
+                  placeholder="e.g. lead@acme.com"
+                  value={initContactEmail}
+                  onChange={(e) => setInitContactEmail(e.target.value)}
+                  className="w-full p-2.5 rounded-lg border border-slate-200 text-xs focus:ring-2 focus:ring-[#7c69ff] focus:border-transparent focus:outline-none"
+                />
+              </div>
+
+              <div className="pt-4 flex items-center justify-end gap-2">
+                <Button variant="outline" type="button" onClick={() => setIsInitiating(false)} className="text-xs border-slate-300">
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={isSubmittingInit}
+                  className="bg-[#7c69ff] hover:bg-[#6853f0] text-white text-xs font-semibold min-w-[120px]"
+                >
+                  {isSubmittingInit ? "Initiating..." : "Create Request"}
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Review Drawer / Modal */}
       {selectedRequest && (
@@ -229,7 +330,7 @@ export default function ControlHubDashboard() {
               <div className="grid grid-cols-2 gap-4 bg-slate-50 p-4 rounded-xl border border-slate-200">
                 <div>
                   <p className="text-xs font-bold text-slate-400 uppercase">Reg Number</p>
-                  <p className="font-semibold text-slate-800 mt-0.5">{selectedRequest.registration_number}</p>
+                  <p className="font-semibold text-slate-800 mt-0.5">{selectedRequest.registration_number || "—"}</p>
                 </div>
                 <div>
                   <p className="text-xs font-bold text-slate-400 uppercase">TPIN Tax Number</p>
@@ -237,11 +338,13 @@ export default function ControlHubDashboard() {
                 </div>
                 <div>
                   <p className="text-xs font-bold text-slate-400 uppercase">Expected pipeline</p>
-                  <p className="font-semibold text-slate-800 mt-0.5">${selectedRequest.expected_pipeline.toLocaleString()}</p>
+                  <p className="font-semibold text-slate-800 mt-0.5">${(selectedRequest.expected_pipeline || 0).toLocaleString()}</p>
                 </div>
                 <div>
                   <p className="text-xs font-bold text-slate-400 uppercase">Address / Location</p>
-                  <p className="font-semibold text-slate-800 mt-0.5">{selectedRequest.location}, {selectedRequest.district}, {selectedRequest.province}</p>
+                  <p className="font-semibold text-slate-800 mt-0.5">
+                    {selectedRequest.location ? `${selectedRequest.location}, ${selectedRequest.district}, ${selectedRequest.province}` : "—"}
+                  </p>
                 </div>
               </div>
 
@@ -354,7 +457,7 @@ export default function ControlHubDashboard() {
         </div>
       )}
 
-      {/* Copy link modal after successful approval */}
+      {/* Copy link modal after successful approval or initiation */}
       {claimLink && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-6">
           <div className="bg-white rounded-2xl w-full max-w-md p-6 text-center space-y-6 shadow-2xl border border-slate-100">
@@ -363,15 +466,15 @@ export default function ControlHubDashboard() {
             </div>
             
             <div className="space-y-2">
-              <h3 className="text-2xl font-extrabold text-slate-800">Tenant Approved!</h3>
+              <h3 className="text-2xl font-extrabold text-slate-800">Operation Success!</h3>
               <p className="text-xs text-slate-400">
-                Unified databases, RBAC rules, legacy organizational roles, and dashboard structures have been seeded.
+                The setup invitation claim token has been created successfully. Use the link below to configure password credentials.
               </p>
             </div>
 
             <div className="space-y-1.5 text-left bg-slate-50 p-4 border border-slate-200 rounded-xl">
               <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">
-                Invitation Claim Link
+                Invitation Setup Link
               </label>
               <div className="flex items-center gap-2 mt-1">
                 <input
