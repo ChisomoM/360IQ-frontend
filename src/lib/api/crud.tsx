@@ -36,6 +36,22 @@ const getAccessTokenFromStorage = (): string | null => {
   }
 };
 
+// Get the correct token depending on whether it is a ControlHub (CH_) or client endpoint
+const getTokenForEndpoint = (key: string): string | null => {
+  if (key.startsWith("CH_")) {
+    try {
+      if (typeof window === 'undefined') return null;
+      const tokensJson = localStorage.getItem('controlhub_tokens');
+      if (!tokensJson) return null;
+      const tokens = JSON.parse(tokensJson);
+      return tokens.token || null;
+    } catch {
+      return null;
+    }
+  }
+  return getAccessTokenFromStorage();
+};
+
 // First, let's create a function to refresh the token
 const refreshAccessToken = async () => {
   try {
@@ -102,7 +118,7 @@ export const fetchData = async (
   }
 
   // fetchOpts.token wins; otherwise read from storage (skip for public endpoints)
-  const accessToken = fetchOpts?.token ?? (skipPublicEndpoints ? null : getAccessTokenFromStorage());
+  const accessToken = fetchOpts?.token ?? (skipPublicEndpoints ? null : getTokenForEndpoint(key));
   if (accessToken) {
     h.append("Authorization", `Bearer ${accessToken}`);
   }
@@ -329,7 +345,7 @@ export const fetchFileBuffer = async (
   }
 
   if (typeof window !== "undefined") {
-    const accessToken = getAccessTokenFromStorage();
+    const accessToken = getTokenForEndpoint(key);
     if (accessToken) {
       h.append("Authorization", `Bearer ${accessToken}`);
     }
