@@ -168,10 +168,22 @@ export const fetchData = async (
       payload = result.data || result;
     }
     // Validate tenant ownership of returned data (security check)
-    if (!fetchOpts?.skipValidation) {
+    if (!fetchOpts?.skipValidation && !isControlHub) {
       validateResponseTenant(payload);
     }
     return payload;
+  }
+
+  // ControlHub sessions have no refresh token — a 401 means the session is dead.
+  // Clear it and send the user to the ControlHub login instead of surfacing
+  // "failed to load" errors on a page that can no longer fetch anything.
+  if (res.status === 401 && key.startsWith("CH_") && key !== "CH_LOGIN") {
+    localStorage.removeItem("ch_tokens");
+    localStorage.removeItem("ch_user");
+    if (!window.location.pathname.startsWith("/controlhub/login")) {
+      window.location.href = "/controlhub/login";
+    }
+    throw new Error("SESSION_EXPIRED");
   }
 
   // If the response is 401, try to refresh the token and retry the request once
@@ -197,7 +209,13 @@ export const fetchData = async (
       sessionStorage.removeItem("accessToken");
       document.cookie =
         "refreshToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-      // UI should catch this and show a toast
+      // Session is unrecoverable — clear it and return to login rather than
+      // leaving the user on a page whose every request fails.
+      localStorage.removeItem("auth_tokens");
+      localStorage.removeItem("auth_user");
+      if (!window.location.pathname.startsWith("/login")) {
+        window.location.href = "/login";
+      }
       throw new Error("SESSION_EXPIRED");
     }
   }
