@@ -137,6 +137,14 @@ export const API: Record<string, string> = {
   CH_CLIENT_BRANDING: "controlhub/clients/:id/branding",
   CH_CLIENT_BRANDING_LOGO: "controlhub/clients/:id/branding/logo",
   CH_CLIENT_SETTINGS: "controlhub/clients/:id/settings",
+
+  // CRM Accounts, Contacts, and Business Units
+  ACCOUNTS: "accounts",
+  ACCOUNT_DETAIL: "accounts/:id",
+  ACCOUNT_CONTACTS: "accounts/:id/contacts",
+  CONTACT_DETAIL: "contacts/:id",
+  ACCOUNT_BUSINESS_UNITS: "accounts/:id/business-units",
+  BUSINESS_UNIT_DETAIL: "business-units/:id",
 };
 
 export const getRoute = (val: string): string => {

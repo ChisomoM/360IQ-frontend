@@ -32,6 +32,8 @@ import LogoExploration from './(public)/logo-exploration/LogoExploration';
 import ClaimInvitation from './(public)/onboarding/ClaimInvitation';
 import OnboardingWizard from './(public)/onboarding/OnboardingWizard';
 import DepartmentDetailPage from './(admin)/admin/DepartmentDetailPage';
+import { AccountsList } from './(admin)/admin/accounts/AccountsList';
+import { AccountDetail } from './(admin)/admin/accounts/AccountDetail';
 // RBAC — Roles & Maker-Checker Pages
 import RolesManagement from './(admin)/admin/RolesManagement';
 import MakerCheckerPage from './(admin)/admin/MakerCheckerPage';
@@ -90,6 +92,8 @@ function App() {
           <Route path="reports/financial-charts" element={<FinancialCharts />} />
           <Route path="departments" element={<Departments />} />
           <Route path="departments/:id" element={<DepartmentDetailPage />} />
+          <Route path="accounts" element={<AccountsList />} />
+          <Route path="accounts/:id" element={<AccountDetail />} />
           <Route path="documents" element={<DocumentsV2 />} />
           {/* <Route path="documents-premium" element={<DocumentsPremium />} /> */}
           <Route path="documents/:id" element={<DocumentDetail />} />

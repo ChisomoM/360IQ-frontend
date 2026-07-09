@@ -202,6 +202,32 @@ export default function AdminLayout() {
                   </motion.div>
                 </SidebarMenuItem>
 
+                {/* CRM Accounts */}
+                <SidebarMenuItem>
+                  {(isActive("/admin/accounts") || location.pathname.startsWith("/admin/accounts")) && (
+                    <motion.div
+                      layoutId="sidebar-active-pill"
+                      className="absolute inset-0 rounded-md bg-secondary"
+                      transition={{ type: 'spring', stiffness: 600, damping: 20 }}
+                    />
+                  )}
+                  <motion.div
+                    whileHover={{ x: 4 }}
+                    transition={{ type: 'spring', stiffness: 350, damping: 10 }}
+                  >
+                    <SidebarMenuButton
+                      asChild
+                      isActive={isActive("/admin/accounts") || location.pathname.startsWith("/admin/accounts")}
+                      className="text-white hover:bg-white/10 data-[active=true]:bg-secondary data-[active=true]:text-black rounded-md transition-colors relative z-10"
+                    >
+                      <Link to="/admin/accounts" className="flex items-center gap-3">
+                        <Building2 className="h-5 w-5" />
+                        {!collapsed && <span>CRM Accounts</span>}
+                      </Link>
+                    </SidebarMenuButton>
+                  </motion.div>
+                </SidebarMenuItem>
+
                 {/* Financials Section */}
                 {hasPermission(user, PERMISSIONS['payments.read']) && (
                   <CollapsibleSidebarSection
