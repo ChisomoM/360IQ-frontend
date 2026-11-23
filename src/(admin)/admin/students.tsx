@@ -105,7 +105,7 @@ export default function Students() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'active':
-        return <Badge className="bg-green-100 text-green-800 border-green-200">Active</Badge>;
+        return <Badge className="bg-positive-tint text-positive border-line">Active</Badge>;
       case 'graduated':
         return <Badge className="bg-blue-100 text-blue-800 border-blue-200">Graduated</Badge>;
       case 'suspended':
@@ -197,7 +197,7 @@ export default function Students() {
 
       {/* Students Table */}
       <Card>
-        <CardHeader className="bg-gradient-to-r from-gray-50 to-gray-100 border-b">
+        <CardHeader className="bg-surface-2 border-b">
           <CardTitle>Enrolled Students</CardTitle>
         </CardHeader>
         <CardContent className="p-0">

@@ -49,7 +49,7 @@ const typeIconMap: Record<string, string> = {
 const typeColorMap: Record<string, string> = {
   lifecycle: 'bg-blue-100 text-blue-700',
   financial: 'bg-green-100 text-green-700',
-  user_activity: 'bg-purple-100 text-purple-700',
+  user_activity: 'bg-signal-tint text-signal-text',
   audit_trail: 'bg-red-100 text-red-700',
   custom: 'bg-gray-100 text-gray-700',
 };

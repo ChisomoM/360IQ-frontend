@@ -71,8 +71,8 @@ export default function ControlHubDashboard() {
   const activityTypeConfig: Record<string, { bg: string; icon: string }> = {
     user: { bg: "bg-ch-primary/10", icon: "text-ch-primary" },
     tenant: { bg: "bg-ch-primary/10", icon: "text-ch-primary" },
-    alert: { bg: "bg-orange-100", icon: "text-orange-600" },
-    success: { bg: "bg-green-100", icon: "text-green-600" },
+    alert: { bg: "bg-caution-tint", icon: "text-caution" },
+    success: { bg: "bg-positive-tint", icon: "text-positive" },
     system: { bg: "bg-ch-secondary/10", icon: "text-ch-secondary" },
   };
 
@@ -103,33 +103,33 @@ export default function ControlHubDashboard() {
             
             // Color schemes for each stat card
             const colorSchemes = [
-              { // Purple - Primary
-                bg: "from-ch-primary/10 to-ch-primary/5",
-                border: "border-ch-primary/20",
-                iconBg: "bg-ch-primary/15",
-                icon: "text-ch-primary",
-                hex: "#7c69ff",
+              { // Signal teal - Primary
+                bg: "bg-surface-1",
+                border: "border-line",
+                iconBg: "bg-signal-tint",
+                icon: "text-signal-text",
+                hex: "var(--chart-1)",
               },
-              { // Cyan - Secondary
-                bg: "from-cyan-50 to-cyan-50/50",
-                border: "border-cyan-200",
-                iconBg: "bg-cyan-100",
-                icon: "text-cyan-600",
-                hex: "#03d8fd",
+              { // Blue - Secondary
+                bg: "bg-surface-1",
+                border: "border-line",
+                iconBg: "bg-positive-tint",
+                icon: "text-positive",
+                hex: "var(--chart-2)",
               },
-              { // Amber
-                bg: "from-amber-50 to-amber-50/50",
-                border: "border-amber-200",
-                iconBg: "bg-amber-100",
-                icon: "text-amber-600",
-                hex: "#f59e0b",
+              { // Caution
+                bg: "bg-surface-1",
+                border: "border-line",
+                iconBg: "bg-caution-tint",
+                icon: "text-caution",
+                hex: "var(--chart-3)",
               },
-              { // Green
-                bg: "from-green-50 to-green-50/50",
-                border: "border-green-200",
-                iconBg: "bg-green-100",
-                icon: "text-green-600",
-                hex: "#10b981",
+              { // Positive
+                bg: "bg-surface-1",
+                border: "border-line",
+                iconBg: "bg-positive-tint",
+                icon: "text-positive",
+                hex: "var(--chart-4)",
               },
             ];
             
@@ -139,7 +139,7 @@ export default function ControlHubDashboard() {
             return (
               <div
                 key={stat.id}
-                className={`bg-gradient-to-br ${scheme.bg} border ${scheme.border} rounded-xl p-6 shadow-sm hover:shadow-md transition-all duration-300 h-full flex flex-col group`}
+                className={`${scheme.bg} border ${scheme.border} rounded-xl p-6 shadow-sm hover:shadow-md transition-all duration-300 h-full flex flex-col group`}
               >
                 {/* Header: Title + Trend */}
                 <div className="flex items-start justify-between mb-6">
@@ -165,8 +165,8 @@ export default function ControlHubDashboard() {
                     <span className="text-3xl font-bold text-gray-900">{stat.value}</span>
                     {stat.trend && (
                       <div className="flex items-center gap-2 mt-2">
-                        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-green-50">
-                          <span className="text-xs font-semibold text-green-700">
+                        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-positive-tint">
+                          <span className="text-xs font-semibold text-positive">
                             {stat.trend.direction === "up" ? "↑" : "↓"} {stat.trend.percentage}%
                           </span>
                         </span>

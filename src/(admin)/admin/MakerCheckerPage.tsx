@@ -250,7 +250,7 @@ export default function MakerCheckerPage() {
                                                         transition={{ type: 'spring', stiffness: 500, damping: 25 }}
                                                         className={`inline-block px-2 py-1 rounded-full text-xs font-semibold ${
                                                             rule.isActive
-                                                                ? 'bg-green-100 text-green-700'
+                                                                ? 'bg-positive-tint text-positive'
                                                                 : 'bg-gray-100 text-gray-500'
                                                         }`}
                                                     >

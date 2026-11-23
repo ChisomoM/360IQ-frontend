@@ -29,9 +29,9 @@ dayjs.extend(relativeTime);
 
 const statusBadge = (status: SignatureRequest['status']) => {
   const map = {
-    pending:  { cls: 'bg-amber-50 text-amber-700 border-amber-300',  label: 'Pending',  icon: <Clock className="h-3 w-3" /> },
-    signed:   { cls: 'bg-green-50 text-green-700 border-green-300',  label: 'Signed',   icon: <CheckCircle className="h-3 w-3" /> },
-    declined: { cls: 'bg-red-50 text-red-700 border-red-300',        label: 'Declined', icon: <XCircle className="h-3 w-3" /> },
+    pending:  { cls: 'bg-caution-tint text-caution border-line',  label: 'Pending',  icon: <Clock className="h-3 w-3" /> },
+    signed:   { cls: 'bg-positive-tint text-positive border-line',  label: 'Signed',   icon: <CheckCircle className="h-3 w-3" /> },
+    declined: { cls: 'bg-risk-tint text-risk border-line',        label: 'Declined', icon: <XCircle className="h-3 w-3" /> },
     expired:  { cls: 'bg-gray-100 text-gray-500 border-gray-300',    label: 'Expired',  icon: <X className="h-3 w-3" /> },
   };
   return map[status] ?? map.pending;
@@ -90,7 +90,7 @@ export default function MySignatures() {
 
       {loading ? (
         <div className="flex items-center justify-center min-h-[40vh]">
-          <Loader2 className="h-10 w-10 animate-spin text-[#1e5631]" />
+          <Loader2 className="h-10 w-10 animate-spin text-primary" />
         </div>
       ) : (
         <>
@@ -108,7 +108,7 @@ export default function MySignatures() {
             <CardContent>
               {pending.length === 0 ? (
                 <div className="text-center py-10">
-                  <CheckCircle className="h-10 w-10 text-green-300 mx-auto mb-3" />
+                  <CheckCircle className="h-10 w-10 text-positive opacity-40 mx-auto mb-3" />
                   <p className="text-gray-500 font-medium">All caught up!</p>
                   <p className="text-sm text-gray-400 mt-1">No pending signature requests.</p>
                 </div>
@@ -239,7 +239,7 @@ function SignatureRequestCard({ request, onSign, onDecline, onViewDocument }: Ca
             </p>
           )}
           {request.signed_at && (
-            <p className="text-xs text-green-600 mt-1">
+            <p className="text-xs text-positive mt-1">
               Signed {dayjs(request.signed_at).format('MMM DD, YYYY HH:mm')}
             </p>
           )}
@@ -262,7 +262,7 @@ function SignatureRequestCard({ request, onSign, onDecline, onViewDocument }: Ca
           {isPending && onSign && (
             <Button
               size="sm"
-              className="bg-[#1e3c21] hover:bg-[#2a5230] text-white"
+              className="bg-primary hover:bg-signal-hover text-white"
               onClick={onSign}
             >
               <PenLine className="h-3.5 w-3.5 mr-1.5" />

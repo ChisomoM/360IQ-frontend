@@ -146,7 +146,7 @@ function StatCard({
           <span className="font-display text-4xl font-extrabold text-slate-900 tracking-tight">
             {value}
           </span>
-          <span className={`font-sans text-xs font-bold ${trendUp ? 'text-emerald-500' : 'text-red-500'}`}>
+          <span className={`font-sans text-xs font-bold ${trendUp ? 'text-positive' : 'text-risk'}`}>
             {trendUp ? '↑' : '↓'} {trend}
           </span>
         </div>
@@ -417,8 +417,8 @@ export default function DemoDashboard() {
   const { user } = useAuth();
   const firstName = user?.first_name || user?.firstName || 'there';
 
-  const primary   = useTenantColor('--tenant-primary',   '#7C69FF');
-  const secondary = useTenantColor('--tenant-secondary', '#03D8FD');
+  const primary   = useTenantColor('--tenant-primary',   '#0A7A67');
+  const secondary = useTenantColor('--tenant-secondary', '#1B63AE');
   const [role, setRole]           = useState<RoleType>('boss');
   const [isSearchOpen, setIsSearchOpen] = useState(false);
 

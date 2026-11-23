@@ -176,7 +176,7 @@ export const STATEMENT_TYPE_INFO: Record<StatementType, StatementTypeInfo> = {
     key: 'cash_flow',
     label: 'Cash Flow',
     description: 'Cash flow statement',
-    color: 'bg-cyan-100 text-cyan-700',
+    color: 'bg-positive-tint text-positive',
     icon: '💧',
   },
   invoice_list: {
@@ -190,7 +190,7 @@ export const STATEMENT_TYPE_INFO: Record<StatementType, StatementTypeInfo> = {
     key: 'payment_list',
     label: 'Payments',
     description: 'Payment list / Transactions',
-    color: 'bg-purple-100 text-purple-700',
+    color: 'bg-signal-tint text-signal-text',
     icon: '💰',
   },
   other: {

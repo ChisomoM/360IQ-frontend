@@ -127,15 +127,15 @@ const MOCK_LOGS: AuditLog[] = [
 // ─── Action config — icon + colour + label for each action type ───────────────
 const ACTION_CONFIG: Record<string, { icon: React.ReactNode; bg: string; text: string; label: string }> = {
   'document.viewed': { icon: <Eye className="h-3.5 w-3.5" />, bg: 'bg-blue-50', text: 'text-blue-600', label: 'Viewed' },
-  'document.downloaded': { icon: <Download className="h-3.5 w-3.5" />, bg: 'bg-purple-50', text: 'text-purple-600', label: 'Downloaded' },
-  'document.uploaded': { icon: <Upload className="h-3.5 w-3.5" />, bg: 'bg-cyan-50', text: 'text-cyan-600', label: 'Uploaded' },
+  'document.downloaded': { icon: <Download className="h-3.5 w-3.5" />, bg: 'bg-signal-tint', text: 'text-signal-text', label: 'Downloaded' },
+  'document.uploaded': { icon: <Upload className="h-3.5 w-3.5" />, bg: 'bg-surface-2', text: 'text-sky-text', label: 'Uploaded' },
   'document.edited': { icon: <FilePen className="h-3.5 w-3.5" />, bg: 'bg-amber-50', text: 'text-amber-600', label: 'Edited' },
-  'document.approved': { icon: <CheckCircle2 className="h-3.5 w-3.5" />, bg: 'bg-emerald-50', text: 'text-emerald-600', label: 'Approved' },
+  'document.approved': { icon: <CheckCircle2 className="h-3.5 w-3.5" />, bg: 'bg-positive-tint', text: 'text-positive', label: 'Approved' },
   'document.rejected': { icon: <XCircle className="h-3.5 w-3.5" />, bg: 'bg-red-50', text: 'text-red-600', label: 'Rejected' },
   'document.deleted': { icon: <Trash2 className="h-3.5 w-3.5" />, bg: 'bg-red-50', text: 'text-red-600', label: 'Deleted' },
-  'user.login': { icon: <LogIn className="h-3.5 w-3.5" />, bg: 'bg-green-50', text: 'text-green-600', label: 'Login' },
+  'user.login': { icon: <LogIn className="h-3.5 w-3.5" />, bg: 'bg-positive-tint', text: 'text-positive', label: 'Login' },
   'user.logout': { icon: <LogOut className="h-3.5 w-3.5" />, bg: 'bg-gray-100', text: 'text-gray-500', label: 'Logout' },
-  'permission.changed': { icon: <Shield className="h-3.5 w-3.5" />, bg: 'bg-indigo-50', text: 'text-indigo-600', label: 'Permission' },
+  'permission.changed': { icon: <Shield className="h-3.5 w-3.5" />, bg: 'bg-surface-2', text: 'text-text-secondary', label: 'Permission' },
 };
 
 const getActionConfig = (action: string) =>
@@ -226,7 +226,7 @@ export default function AuditTrails() {
         className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {[
           { label: 'Total Logs', value: stats.total, color: 'text-ch-primary-600', bg: 'bg-ch-primary/[0.08]', icon: <Activity className="h-5 w-5" /> },
-          { label: 'Today', value: stats.today, color: 'text-emerald-600', bg: 'bg-emerald-500/[0.08]', icon: <CheckCircle2 className="h-5 w-5" /> },
+          { label: 'Today', value: stats.today, color: 'text-positive', bg: 'bg-positive-tint', icon: <CheckCircle2 className="h-5 w-5" /> },
           { label: 'This Week', value: stats.thisWeek, color: 'text-ch-secondary-600', bg: 'bg-ch-secondary/[0.08]', icon: <Filter className="h-5 w-5" /> },
         ].map(({ label, value, color, bg, icon }) => (
           <motion.div key={label} variants={rowVariants}

@@ -209,9 +209,7 @@ export function CreateCardModal({ open, onOpenChange, onCardCreated }: CreateCar
           </Button>
           <Button
             onClick={handleCreateCard}
-            disabled={loading || !title.trim()}
-            className="bg-[#D70F0E] hover:bg-[#C70D0C]"
-          >
+            disabled={loading || !title.trim()}          >
             {loading ? (
               <>
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />

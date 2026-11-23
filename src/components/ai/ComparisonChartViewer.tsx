@@ -16,8 +16,8 @@ import type { Document, ComparisonData } from '@/types/dms';
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const CHART_COLORS = [
-  '#3b82f6', '#10b981', '#f59e0b', '#ef4444',
-  '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16',
+  'var(--chart-1)', 'var(--chart-2)', 'var(--chart-3)', 'var(--chart-4)',
+  'var(--chart-1)', 'var(--chart-2)', 'var(--chart-3)', 'var(--chart-4)',
 ];
 
 type ChartType = 'bar' | 'line' | 'area';
@@ -156,7 +156,7 @@ export function ComparisonChartViewer({ docs, onClearAll }: ComparisonChartViewe
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center h-72 gap-3 text-gray-500">
-        <Loader2 className="h-8 w-8 animate-spin text-[#febb00]" />
+        <Loader2 className="h-8 w-8 animate-spin text-signal-text" />
         <p className="text-sm">Aligning {docs.length} documents…</p>
       </div>
     );
@@ -203,7 +203,7 @@ export function ComparisonChartViewer({ docs, onClearAll }: ComparisonChartViewe
     };
     const sharedElements = (
       <>
-        <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+        <CartesianGrid strokeDasharray="3 3" stroke="var(--line)" />
         <XAxis dataKey="__x" tick={{ fontSize: 11 }} interval="preserveStartEnd" />
         <YAxis tick={{ fontSize: 11 }} tickFormatter={(v: number) => v.toLocaleString()} />
         <Tooltip formatter={(v: number) => v.toLocaleString()} />
@@ -302,7 +302,7 @@ export function ComparisonChartViewer({ docs, onClearAll }: ComparisonChartViewe
                 key={type}
                 variant={chartType === type ? 'default' : 'ghost'}
                 size="sm"
-                className={`h-7 px-2 gap-1 text-xs ${chartType === type ? 'bg-[#febb00] text-black hover:bg-[#febb00]/90' : 'text-gray-500'}`}
+                className={`h-7 px-2 gap-1 text-xs ${chartType === type ? 'bg-signal text-on-signal hover:bg-signal-hover' : 'text-text-muted'}`}
                 onClick={() => setChartType(type)}
                 title={label}
               >

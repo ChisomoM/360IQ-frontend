@@ -35,11 +35,11 @@ export default function TenantBrandingEditor({ tenantId, branding, onChange }: T
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
   const [localBranding, setLocalBranding] = useState<TenantBranding>(branding || {
     logo_url: "",
-    primary_color: "#1e5631",
-    secondary_color: "#febb00",
-    accent_color: "#172E70",
-    destructive_color: "#dc2626",
-    success_color: "#10b981",
+    primary_color: "#0A7A67",
+    secondary_color: "#1B63AE",
+    accent_color: "#0B1B2B",
+    destructive_color: "#B3261E",
+    success_color: "#1F5FA8",
     short_name: "",
     long_name: "",
     tagline: "",
@@ -106,11 +106,11 @@ export default function TenantBrandingEditor({ tenantId, branding, onChange }: T
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-            <ColorPreview label="Primary" color={localBranding.primary_color || "#1e5631"} />
-            <ColorPreview label="Secondary" color={localBranding.secondary_color || "#febb00"} />
-            <ColorPreview label="Accent" color={localBranding.accent_color || "#172E70"} />
-            <ColorPreview label="Destructive" color={localBranding.destructive_color || "#dc2626"} />
-            <ColorPreview label="Success" color={localBranding.success_color || "#10b981"} />
+            <ColorPreview label="Primary" color={localBranding.primary_color || "#0A7A67"} />
+            <ColorPreview label="Secondary" color={localBranding.secondary_color || "#1B63AE"} />
+            <ColorPreview label="Accent" color={localBranding.accent_color || "#0B1B2B"} />
+            <ColorPreview label="Destructive" color={localBranding.destructive_color || "#B3261E"} />
+            <ColorPreview label="Success" color={localBranding.success_color || "#1F5FA8"} />
           </div>
         </CardContent>
       </Card>
@@ -212,11 +212,11 @@ export default function TenantBrandingEditor({ tenantId, branding, onChange }: T
                   <Input 
                     type="color" 
                     className="w-12 h-10 p-1 cursor-pointer" 
-                    value={localBranding.primary_color || "#1e5631"}
+                    value={localBranding.primary_color || "#0A7A67"}
                     onChange={(e) => setLocalBranding({...localBranding, primary_color: e.target.value})}
                   />
                   <Input 
-                    value={localBranding.primary_color || "#1e5631"}
+                    value={localBranding.primary_color || "#0A7A67"}
                     onChange={(e) => setLocalBranding({...localBranding, primary_color: e.target.value})}
                     className="font-mono text-sm"
                   />
@@ -230,11 +230,11 @@ export default function TenantBrandingEditor({ tenantId, branding, onChange }: T
                   <Input 
                     type="color" 
                     className="w-12 h-10 p-1 cursor-pointer" 
-                    value={localBranding.secondary_color || "#febb00"}
+                    value={localBranding.secondary_color || "#1B63AE"}
                     onChange={(e) => setLocalBranding({...localBranding, secondary_color: e.target.value})}
                   />
                   <Input 
-                    value={localBranding.secondary_color || "#febb00"}
+                    value={localBranding.secondary_color || "#1B63AE"}
                     onChange={(e) => setLocalBranding({...localBranding, secondary_color: e.target.value})}
                     className="font-mono text-sm"
                   />
@@ -251,11 +251,11 @@ export default function TenantBrandingEditor({ tenantId, branding, onChange }: T
                   <Input 
                     type="color" 
                     className="w-12 h-10 p-1 cursor-pointer" 
-                    value={localBranding.accent_color || "#172E70"}
+                    value={localBranding.accent_color || "#0B1B2B"}
                     onChange={(e) => setLocalBranding({...localBranding, accent_color: e.target.value})}
                   />
                   <Input 
-                    value={localBranding.accent_color || "#172E70"}
+                    value={localBranding.accent_color || "#0B1B2B"}
                     onChange={(e) => setLocalBranding({...localBranding, accent_color: e.target.value})}
                     className="font-mono text-sm"
                   />
@@ -269,11 +269,11 @@ export default function TenantBrandingEditor({ tenantId, branding, onChange }: T
                   <Input 
                     type="color" 
                     className="w-12 h-10 p-1 cursor-pointer" 
-                    value={localBranding.destructive_color || "#dc2626"}
+                    value={localBranding.destructive_color || "#B3261E"}
                     onChange={(e) => setLocalBranding({...localBranding, destructive_color: e.target.value})}
                   />
                   <Input 
-                    value={localBranding.destructive_color || "#dc2626"}
+                    value={localBranding.destructive_color || "#B3261E"}
                     onChange={(e) => setLocalBranding({...localBranding, destructive_color: e.target.value})}
                     className="font-mono text-sm"
                   />
@@ -290,11 +290,11 @@ export default function TenantBrandingEditor({ tenantId, branding, onChange }: T
                   <Input 
                     type="color" 
                     className="w-12 h-10 p-1 cursor-pointer" 
-                    value={localBranding.success_color || "#10b981"}
+                    value={localBranding.success_color || "#1F5FA8"}
                     onChange={(e) => setLocalBranding({...localBranding, success_color: e.target.value})}
                   />
                   <Input 
-                    value={localBranding.success_color || "#10b981"}
+                    value={localBranding.success_color || "#1F5FA8"}
                     onChange={(e) => setLocalBranding({...localBranding, success_color: e.target.value})}
                     className="font-mono text-sm"
                   />
@@ -312,11 +312,11 @@ export default function TenantBrandingEditor({ tenantId, branding, onChange }: T
             variant="outline" 
             onClick={() => setLocalBranding(branding || {
               logo_url: "",
-              primary_color: "#1e5631",
-              secondary_color: "#febb00",
-              accent_color: "#172E70",
-              destructive_color: "#dc2626",
-              success_color: "#10b981",
+              primary_color: "#0A7A67",
+              secondary_color: "#1B63AE",
+              accent_color: "#0B1B2B",
+              destructive_color: "#B3261E",
+              success_color: "#1F5FA8",
               short_name: "",
               long_name: "",
               tagline: "",

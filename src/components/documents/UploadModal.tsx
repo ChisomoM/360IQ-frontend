@@ -198,7 +198,7 @@ export function UploadModal({
           <div className="w-2/5 bg-slate-50 p-8 border-r border-slate-100 flex flex-col justify-center">
             <div className="mb-8">
               <h3 className="text-xl font-bold text-slate-800">File Ingestion</h3>
-              <p className="text-sm text-slate-500 mt-1">Upload your document to safely archive it in the DIMS vault.</p>
+              <p className="text-sm text-slate-500 mt-1">Upload your document to safely archive it in the vault.</p>
             </div>
 
             {!formData.file ? (

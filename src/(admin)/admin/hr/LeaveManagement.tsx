@@ -31,9 +31,9 @@ const LEAVE_TYPE_LABELS: Record<LeaveType, string> = {
 };
 
 const STATUS_BADGE: Record<LeaveStatus, string> = {
-  pending: 'bg-yellow-100 text-yellow-800',
-  approved: 'bg-green-100 text-green-800',
-  rejected: 'bg-red-100 text-red-800',
+  pending: 'bg-caution-tint text-caution',
+  approved: 'bg-positive-tint text-positive',
+  rejected: 'bg-risk-tint text-risk',
   cancelled: 'bg-gray-100 text-gray-600',
 };
 
@@ -135,7 +135,7 @@ export default function LeaveManagement() {
           <p className="text-gray-600 mt-1">Track and manage staff leave requests</p>
         </div>
         {canRequest && (
-          <Button onClick={() => setShowRequest(true)} className="bg-[#1e5631] hover:bg-[#1e5631]/90">
+          <Button onClick={() => setShowRequest(true)} className="bg-primary hover:bg-signal-hover text-on-signal">
             <Plus className="mr-2 h-4 w-4" /> Request Leave
           </Button>
         )}
@@ -157,7 +157,7 @@ export default function LeaveManagement() {
         <CardContent>
           {loading ? (
             <div className="flex justify-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin text-[#1e5631]" />
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
           ) : requests.length === 0 ? (
             <div className="text-center py-12">
@@ -208,14 +208,14 @@ export default function LeaveManagement() {
                             <Button
                               size="sm"
                               variant="outline"
-                              className="text-green-700 border-green-300 hover:bg-green-50"
+                              className="text-positive border-line hover:bg-positive-tint"
                               onClick={() => setActionTarget({ request: req, mode: 'approve' })}>
                               <CheckCircle className="h-4 w-4" />
                             </Button>
                             <Button
                               size="sm"
                               variant="outline"
-                              className="text-red-700 border-red-300 hover:bg-red-50"
+                              className="text-risk border-line hover:bg-risk-tint"
                               onClick={() => setActionTarget({ request: req, mode: 'reject' })}>
                               <XCircle className="h-4 w-4" />
                             </Button>
@@ -277,7 +277,7 @@ export default function LeaveManagement() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowRequest(false)}>Cancel</Button>
-            <Button onClick={handleRequest} disabled={requesting} className="bg-[#1e5631] hover:bg-[#1e5631]/90">
+            <Button onClick={handleRequest} disabled={requesting} className="bg-primary hover:bg-signal-hover text-on-signal">
               {requesting ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Submit Request'}
             </Button>
           </DialogFooter>
@@ -318,8 +318,8 @@ export default function LeaveManagement() {
               onClick={handleAction}
               disabled={actioning}
               className={actionTarget?.mode === 'approve'
-                ? 'bg-green-700 hover:bg-green-800'
-                : 'bg-red-700 hover:bg-red-800'}>
+                ? 'bg-positive hover:opacity-90 text-white'
+                : 'bg-risk hover:opacity-90 text-white'}>
               {actioning
                 ? <Loader2 className="h-4 w-4 animate-spin" />
                 : actionTarget?.mode === 'approve' ? 'Approve' : 'Reject'}

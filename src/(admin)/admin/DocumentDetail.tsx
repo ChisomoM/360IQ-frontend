@@ -143,30 +143,30 @@ const formatBytes = (bytes: number) => {
 const visibilityConfig = (level: string) => {
   if (level === 'public') return { icon: <Globe className="h-3.5 w-3.5" />, label: 'Public', cls: 'bg-blue-50 text-blue-700 border-blue-200' };
   if (level === 'restricted') return { icon: <Lock className="h-3.5 w-3.5" />, label: 'Restricted', cls: 'bg-red-50 text-red-700 border-red-200' };
-  return { icon: <Shield className="h-3.5 w-3.5" />, label: 'Department', cls: 'bg-purple-50 text-purple-700 border-purple-200' };
+  return { icon: <Shield className="h-3.5 w-3.5" />, label: 'Department', cls: 'bg-signal-tint text-signal-text border-line' };
 };
 
 const statusConfig = (status: string) => {
   const map: Record<string, { cls: string; label: string }> = {
-    active: { cls: 'bg-green-50 text-green-700 border-green-200', label: 'Active' },
+    active: { cls: 'bg-positive-tint text-positive border-line', label: 'Active' },
     archived: { cls: 'bg-gray-100 text-gray-600 border-gray-200', label: 'Archived' },
     approved: { cls: 'bg-blue-50 text-blue-700 border-blue-200', label: 'Approved' },
     rejected: { cls: 'bg-red-50 text-red-700 border-red-200', label: 'Rejected' },
     pending: { cls: 'bg-yellow-50 text-yellow-700 border-yellow-200', label: 'Pending' },
     in_review: { cls: 'bg-orange-50 text-orange-700 border-orange-200', label: 'In Review' },
     changes_requested: { cls: 'bg-amber-50 text-amber-700 border-amber-200', label: 'Changes Requested' },
-    signed: { cls: 'bg-teal-50 text-teal-700 border-teal-200', label: 'Signed' },
+    signed: { cls: 'bg-signal-tint text-signal-text border-line', label: 'Signed' },
   };
   return map[status] ?? { cls: 'bg-gray-100 text-gray-600 border-gray-200', label: status };
 };
 
 const docTypeColor = (type: string) => {
   const map: Record<string, string> = {
-    policy: 'bg-indigo-50 text-indigo-700',
-    minutes: 'bg-teal-50 text-teal-700',
-    report: 'bg-orange-50 text-orange-700',
-    form: 'bg-pink-50 text-pink-700',
-    memo: 'bg-cyan-50 text-cyan-700',
+    policy: 'bg-surface-2 text-sky-text',
+    minutes: 'bg-signal-tint text-signal-text',
+    report: 'bg-caution-tint text-caution',
+    form: 'bg-surface-2 text-text-secondary',
+    memo: 'bg-positive-tint text-positive',
   };
   return map[type] ?? 'bg-gray-100 text-gray-600';
 };
@@ -175,9 +175,9 @@ const docTypeColor = (type: string) => {
 const actionConfig = (action: string) => {
   const map: Record<string, { cls: string; icon: React.ReactNode; label: string }> = {
     viewed: { cls: 'bg-blue-50 text-blue-600', icon: <Eye className="h-3 w-3" />, label: 'Viewed' },
-    downloaded: { cls: 'bg-purple-50 text-purple-600', icon: <Download className="h-3 w-3" />, label: 'Downloaded' },
+    downloaded: { cls: 'bg-signal-tint text-signal-text', icon: <Download className="h-3 w-3" />, label: 'Downloaded' },
     edited: { cls: 'bg-amber-50 text-amber-600', icon: <Pencil className="h-3 w-3" />, label: 'Edited' },
-    approved: { cls: 'bg-green-50 text-green-600', icon: <CheckCircle className="h-3 w-3" />, label: 'Approved' },
+    approved: { cls: 'bg-positive-tint text-positive', icon: <CheckCircle className="h-3 w-3" />, label: 'Approved' },
     rejected: { cls: 'bg-red-50 text-red-600', icon: <XCircle className="h-3 w-3" />, label: 'Rejected' },
   };
   return map[action] ?? { cls: 'bg-gray-50 text-gray-500', icon: <Activity className="h-3 w-3" />, label: action };
@@ -602,7 +602,7 @@ export default function DocumentDetail() {
               whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.94 }}
               transition={{ type: 'spring', stiffness: 500, damping: 30 }}>
               <Button size="sm" onClick={handleAnalyzeWithAI}
-                className="bg-gradient-to-r from-primary to-primary-hover text-white hover:opacity-90 gap-1.5 shadow-sm">
+                className="bg-primary text-white hover:opacity-90 gap-1.5 shadow-sm">
                 <Sparkles className="h-4 w-4" />
                 Analyze with AI
               </Button>
@@ -728,7 +728,7 @@ export default function DocumentDetail() {
                           className="text-gray-400 hover:text-gray-700 transition-colors"
                         >
                           {ownerIdCopied
-                            ? <Check className="h-3.5 w-3.5 text-green-500" />
+                            ? <Check className="h-3.5 w-3.5 text-positive" />
                             : <Copy className="h-3.5 w-3.5" />
                           }
                         </button>
@@ -1026,7 +1026,7 @@ export default function DocumentDetail() {
                         {/* Step status icon */}
                         <div className={cn(
                           'w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 text-white text-xs font-bold',
-                          isDone && 'bg-emerald-500',
+                          isDone && 'bg-positive',
                           isActive && 'bg-ch-primary',
                           isRejected && 'bg-red-500',
                           !isDone && !isActive && !isRejected && 'bg-muted border border-border text-muted-foreground',
@@ -1084,7 +1084,7 @@ export default function DocumentDetail() {
                       : 'Unknown';
                     const statusMap: Record<string, { cls: string; icon: React.ReactNode }> = {
                       pending: { cls: 'bg-amber-50 text-amber-700 border-amber-300', icon: <Clock className="h-3 w-3" /> },
-                      signed: { cls: 'bg-green-50 text-green-700 border-green-300', icon: <CheckCircle className="h-3 w-3" /> },
+                      signed: { cls: 'bg-positive-tint text-positive border-line', icon: <CheckCircle className="h-3 w-3" /> },
                       declined: { cls: 'bg-red-50 text-red-700 border-red-300', icon: <XCircle className="h-3 w-3" /> },
                       expired: { cls: 'bg-gray-100 text-gray-500 border-gray-300', icon: <X className="h-3 w-3" /> },
                     };
@@ -1191,7 +1191,7 @@ export default function DocumentDetail() {
           </Card>
 
           {/* AI card */}
-          <Card className="border-none shadow-md bg-gradient-to-br from-primary/5 to-[#2a5230]/10">
+          <Card className="border border-line shadow-none bg-signal-tint">
             <CardContent className="py-5">
               <div className="flex items-start gap-3">
                 <div className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center flex-shrink-0 mt-0.5">
@@ -1204,7 +1204,7 @@ export default function DocumentDetail() {
                   </p>
                   <Button
                     size="sm"
-                    className="mt-3 bg-primary hover:bg-[#2a5230] text-white text-xs"
+                    className="mt-3 bg-primary hover:bg-signal-hover text-white text-xs"
                     onClick={handleAnalyzeWithAI}
                   >
                     <Sparkles className="h-3.5 w-3.5 mr-1.5" />
@@ -1238,7 +1238,7 @@ export default function DocumentDetail() {
             </Button>
           </div>
           {urlCopied && (
-            <p className="text-xs text-emerald-600 font-medium -mt-1">✓ Link copied — paste it in the browser address bar.</p>
+            <p className="text-xs text-positive font-medium -mt-1">✓ Link copied — paste it in the browser address bar.</p>
           )}
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsShareOpen(false)}>Close</Button>

@@ -232,7 +232,7 @@ export default function SignDocumentModal({ request, open, onClose, onSigned }: 
             {activeView === 'signed' ? (
               <><CheckCircle2 className="h-5 w-5 text-green-600" />Signing Complete</>
             ) : (
-              <><PenLine className="h-5 w-5 text-[#1e3c21]" />Sign Document</>
+              <><PenLine className="h-5 w-5 text-signal-text" />Sign Document</>
             )}
           </DialogTitle>
           <DialogDescription>
@@ -271,7 +271,7 @@ export default function SignDocumentModal({ request, open, onClose, onSigned }: 
             {isPdf && (
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-gray-700 mb-2">
-                  Signature field location <span className="text-[#1e3c21]">(highlighted)</span>
+                  Signature field location <span className="text-signal-text">(highlighted)</span>
                 </p>
                 {loadingPdf ? (
                   <div className="flex items-center justify-center h-64 gap-2 text-gray-400 border rounded-lg">
@@ -318,7 +318,7 @@ export default function SignDocumentModal({ request, open, onClose, onSigned }: 
               </div>
 
               {request.message && (
-                <p className="text-sm text-gray-600 italic border-l-2 border-[#1e3c21] pl-3">
+                <p className="text-sm text-gray-600 italic border-l-2 border-signal pl-3">
                   &ldquo;{request.message}&rdquo;
                 </p>
               )}
@@ -417,7 +417,7 @@ export default function SignDocumentModal({ request, open, onClose, onSigned }: 
                   Download
                 </Button>
               )}
-              <Button onClick={onSigned} className="bg-[#1e3c21] hover:bg-[#2a5230] text-white">
+              <Button onClick={onSigned}>
                 Done
               </Button>
             </>
@@ -427,8 +427,7 @@ export default function SignDocumentModal({ request, open, onClose, onSigned }: 
               <Button
                 onClick={handleSign}
                 disabled={isSigning}
-                className="bg-[#1e3c21] hover:bg-[#2a5230] text-white"
-              >
+                              >
                 {isSigning ? (
                   <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Signing...</>
                 ) : (

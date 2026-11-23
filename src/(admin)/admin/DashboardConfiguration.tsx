@@ -261,7 +261,7 @@ export default function DashboardConfigurationPage() {
 
   if (loading) {
     return (
-      <div className="p-8 space-y-6 bg-gradient-to-b from-slate-50 to-white min-h-screen">
+      <div className="p-8 space-y-6 bg-surface-0 min-h-screen">
         <div className="flex items-center justify-center py-16">
           <Loader2 className="w-8 h-8 animate-spin text-primary" />
         </div>
@@ -271,7 +271,7 @@ export default function DashboardConfigurationPage() {
 
   if (error) {
     return (
-      <div className="p-8 space-y-6 bg-gradient-to-b from-slate-50 to-white min-h-screen">
+      <div className="p-8 space-y-6 bg-surface-0 min-h-screen">
         <div className="flex flex-col items-center justify-center py-16 bg-white rounded-2xl border border-red-200/50 shadow-premium-md">
           <AlertCircle className="w-12 h-12 text-red-500 mb-4" />
           <h3 className="text-lg font-semibold text-red-900">Error</h3>
@@ -282,7 +282,7 @@ export default function DashboardConfigurationPage() {
   }
 
   return (
-    <div className="p-8 space-y-8 bg-gradient-to-b from-slate-50 to-white min-h-screen">
+    <div className="p-8 space-y-8 bg-surface-0 min-h-screen">
       {/* Header */}
       <div className="animate-fade-in-up">
         <div className="mb-2">
@@ -374,7 +374,7 @@ export default function DashboardConfigurationPage() {
           {cardConfigs.length > 0 ? (
             <div className="rounded-xl border border-slate-200/50 overflow-hidden">
               <Table>
-                <TableHeader className="bg-gradient-to-r from-slate-50/50 to-slate-100/50 border-b border-slate-200/50">
+                <TableHeader className="bg-surface-2 border-b border-slate-200/50">
                   <TableRow className="hover:bg-transparent">
                     <TableHead className="font-semibold text-slate-900 text-xs uppercase tracking-wider">Card Name</TableHead>
                     <TableHead className="font-semibold text-slate-900 text-xs uppercase tracking-wider">Type</TableHead>

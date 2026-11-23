@@ -5,31 +5,31 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl text-sm font-medium ring-offset-background transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ch-primary-600 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-semibold transition-all duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
   {
     variants: {
       variant: {
-        default: "bg-ch-primary-600 text-white shadow-md hover:shadow-lg active:shadow-sm active:translate-y-0.5 hover:bg-ch-primary-700 disabled:shadow-sm",
+        default: "bg-signal bg-[image:var(--gradient-button)] text-on-signal hover:brightness-110",
         destructive:
-          "bg-destructive text-destructive-foreground hover:bg-destructive/90 shadow-md hover:shadow-lg active:shadow-sm active:translate-y-0.5",
+          "bg-surface-1 border border-risk text-risk hover:bg-risk-tint",
         outline:
-          "border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 active:bg-gray-100 transition-colors shadow-xs hover:shadow-sm",
+          "border border-line-strong bg-surface-1 text-text-primary hover:bg-surface-2",
         secondary:
-          "bg-ch-secondary-600 text-white shadow-sm hover:shadow-md active:shadow-xs hover:bg-ch-secondary-700",
+          "border border-line-strong bg-surface-1 text-text-primary hover:bg-surface-2",
         orange:
-          "bg-orange-500 text-white hover:bg-orange-600 shadow-md hover:shadow-lg active:shadow-sm active:translate-y-0.5",
+          "bg-caution-tint text-caution border border-caution hover:bg-caution-tint/70",
         tenantPrimary:
-          "bg-primary text-primary-foreground shadow-md hover:shadow-lg active:shadow-sm active:translate-y-0.5 hover:bg-primary/90 [&_svg]:text-primary-foreground",
+          "bg-primary text-primary-foreground hover:bg-primary/90 [&_svg]:text-primary-foreground",
         tenantSecondary:
-          "bg-secondary text-secondary-foreground shadow-sm hover:shadow-md active:shadow-xs [&_svg]:text-secondary-foreground",
-        ghost: "hover:bg-ch-primary-50 hover:text-ch-primary-900 transition-colors",
-        link: "text-ch-primary-600 underline-offset-4 hover:underline transition-colors",
+          "bg-secondary text-secondary-foreground [&_svg]:text-secondary-foreground",
+        ghost: "text-text-secondary hover:bg-surface-2 hover:text-text-primary",
+        link: "text-signal-text underline-offset-4 hover:underline",
       },
       size: {
-        default: "h-11 px-6 py-2.5 text-sm",
-        sm: "h-9 px-3 py-1.5 text-xs rounded-lg",
-        lg: "h-12 px-8 py-3 text-base rounded-2xl",
-        icon: "h-10 w-10 rounded-lg",
+        default: "h-10 px-4 text-sm",
+        sm: "h-8 px-3 text-xs",
+        lg: "h-11 px-6 text-base",
+        icon: "h-10 w-10",
       },
     },
     defaultVariants: {

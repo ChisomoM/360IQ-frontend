@@ -54,7 +54,7 @@ export function TopNavBar() {
 
           <AvatarImage src="" alt={getUserDisplayName()} />
 
-          <AvatarFallback className="bg-[#1e5631] text-white font-semibold text-sm">
+          <AvatarFallback className="bg-signal text-on-signal font-semibold text-sm">
             {getInitials()}
           </AvatarFallback>
 

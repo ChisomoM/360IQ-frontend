@@ -40,16 +40,16 @@ const DynamicCardRenderer = ({ card }: { card: DashboardCard }) => {
       const metricData = card.data as Record<string, any>;
       const hasValue = 'value' in metricData;
       
-      let gradientClass = "bg-gradient-to-br from-primary to-primary/80 text-white shadow-lg border-0";
+      let gradientClass = "bg-primary text-white shadow-lg border-0";
       let textClass = "text-white";
       let subtextClass = "text-white/80";
       
       if (card.card_id.includes('spend') || card.card_id.includes('revenue') || card.title.toLowerCase().includes('spend')) {
-        gradientClass = "bg-gradient-to-br from-green-500 to-green-600 text-white shadow-lg border-0";
+        gradientClass = "bg-positive text-white shadow-lg border-0";
       } else if (card.card_id.includes('headcount') || card.card_id.includes('users') || card.title.toLowerCase().includes('team')) {
-        gradientClass = "bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-lg border-0";
+        gradientClass = "bg-ch-secondary text-white shadow-lg border-0";
       } else if (card.card_id.includes('task') || card.card_id.includes('compliance')) {
-        gradientClass = "bg-gradient-to-br from-orange-500 to-orange-600 text-white shadow-lg border-0";
+        gradientClass = "bg-caution text-white shadow-lg border-0";
       }
       
       const Icon = card.card_id.includes('spend') || card.title.toLowerCase().includes('spend') 
@@ -143,8 +143,8 @@ const DynamicCardRenderer = ({ card }: { card: DashboardCard }) => {
                         <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0.1} />
                       </linearGradient>
                     </defs>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
-                    <XAxis 
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--line)" />
+                    <XAxis
                       dataKey={card.card_id.includes('revenue') ? 'month' : 'label'} 
                       tick={{ fontSize: 12, fill: '#6B7280' }} 
                       axisLine={false} 
@@ -189,7 +189,7 @@ const DynamicCardRenderer = ({ card }: { card: DashboardCard }) => {
                     {card.card_id.includes('hiring') ? (
                       <>
                         <Bar dataKey="applications" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} name="Applications" />
-                        <Bar dataKey="interviews" fill="#10b981" radius={[4, 4, 0, 0]} name="Interviews" />
+                        <Bar dataKey="interviews" fill="var(--chart-2)" radius={[4, 4, 0, 0]} name="Interviews" />
                       </>
                     ) : (
                       <Bar dataKey="value" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
@@ -210,7 +210,7 @@ const DynamicCardRenderer = ({ card }: { card: DashboardCard }) => {
         <Card className="shadow-md border-gray-200 bg-white">
           <CardHeader className="pb-4">
             <CardTitle className="flex items-center gap-2">
-               <Filter className="h-5 w-5 text-indigo-600" />
+               <Filter className="h-5 w-5 text-signal-text" />
                {card.title}
             </CardTitle>
             <CardDescription>{card.description || 'Recent details'}</CardDescription>
@@ -232,10 +232,10 @@ const DynamicCardRenderer = ({ card }: { card: DashboardCard }) => {
                         <td key={h} className="py-3 px-6 text-gray-700">
                           {h.toLowerCase().includes('priority') || h.toLowerCase().includes('status') ? (
                             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold capitalize
-                              ${String(row[h]).toLowerCase() === 'high' || String(row[h]).toLowerCase() === 'urgent' ? 'bg-red-100 text-red-800' : ''}
-                              ${String(row[h]).toLowerCase() === 'medium' ? 'bg-amber-100 text-amber-800' : ''}
-                              ${String(row[h]).toLowerCase() === 'low' || String(row[h]).toLowerCase() === 'open' ? 'bg-green-100 text-green-800' : ''}
-                              ${String(row[h]).toLowerCase() === 'in_progress' ? 'bg-blue-100 text-blue-800' : ''}
+                              ${String(row[h]).toLowerCase() === 'high' || String(row[h]).toLowerCase() === 'urgent' ? 'bg-risk-tint text-risk' : ''}
+                              ${String(row[h]).toLowerCase() === 'medium' ? 'bg-caution-tint text-caution' : ''}
+                              ${String(row[h]).toLowerCase() === 'low' || String(row[h]).toLowerCase() === 'open' ? 'bg-positive-tint text-positive' : ''}
+                              ${String(row[h]).toLowerCase() === 'in_progress' ? 'bg-signal-tint text-signal-text' : ''}
                               ${String(row[h]).toLowerCase() === 'pending' ? 'bg-gray-100 text-gray-800' : ''}
                             `}>
                               {String(row[h]).replace('_', ' ')}
@@ -303,7 +303,7 @@ export default function DynamicDashboard() {
 
   if (loading) {
     return (
-      <div className="p-8 bg-gradient-to-b from-slate-50 to-white min-h-screen flex items-center justify-center">
+      <div className="p-8 bg-surface-0 min-h-screen flex items-center justify-center">
         <div className="flex flex-col items-center justify-center">
           <div className="relative">
             <Loader2 className="w-12 h-12 animate-spin text-primary" />
@@ -318,7 +318,7 @@ export default function DynamicDashboard() {
 
   if (error) {
     return (
-      <div className="p-8 bg-gradient-to-b from-slate-50 to-white min-h-screen flex items-center justify-center">
+      <div className="p-8 bg-surface-0 min-h-screen flex items-center justify-center">
         <div className="w-full max-w-md">
           <Card className="border-red-200/50 shadow-premium-lg bg-white">
             <CardContent className="p-8">
@@ -344,7 +344,7 @@ export default function DynamicDashboard() {
 
   if (!cardsGrouped || (cardsGrouped.top.length === 0 && cardsGrouped.side.length === 0 && cardsGrouped.middle.length === 0)) {
     return (
-      <div className="p-8 bg-gradient-to-b from-slate-50 to-white min-h-screen flex items-center justify-center">
+      <div className="p-8 bg-surface-0 min-h-screen flex items-center justify-center">
         <Card className="w-full max-w-md border-slate-200/50 shadow-premium-sm bg-white">
           <CardContent className="p-8">
             <div className="flex flex-col items-center justify-center text-center">
@@ -361,12 +361,12 @@ export default function DynamicDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
+    <div className="min-h-screen bg-surface-0">
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
         {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white rounded-xl p-6 shadow-sm border border-gray-100 animate-fade-in-up">
           <div>
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+            <h1 className="text-3xl font-bold text-text-primary">
               Management Dashboard
             </h1>
             <p className="text-sm text-muted-foreground mt-1">

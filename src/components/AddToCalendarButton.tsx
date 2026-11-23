@@ -193,7 +193,7 @@ export function AddToCalendarButton({ document, onSuccess }: AddToCalendarProps)
             </div>
           ) : !calendarConnected ? (
             <div className="py-4 space-y-5">
-              <div className="p-5 bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200 rounded-lg">
+              <div className="p-5 bg-positive-tint border border-line rounded-lg">
                 <div className="flex gap-3">
                   <div className="flex-shrink-0 mt-0.5">
                     <AlertCircle className="h-5 w-5 text-blue-600" />

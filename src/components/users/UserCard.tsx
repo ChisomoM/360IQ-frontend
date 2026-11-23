@@ -86,14 +86,14 @@ export function UserCard({
                 ease: [0.16, 1, 0.3, 1],
             }}
             whileHover={{ y: -2, transition: { duration: 0.2 } }}
-            className={`group relative bg-gradient-to-br ${roleColors.bg} to-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-md transition-shadow duration-200`}
+            className={`group relative bg-surface-1 rounded-lg border border-line overflow-hidden transition-colors duration-150`}
         >
             {/* Card Content */}
             <div className="p-4">
                 {/* Header: Avatar + Name + Title + Actions */}
                 <div className="flex gap-3 mb-3">
                     {/* Avatar with colored ring */}
-                    <div className={`relative flex-shrink-0 bg-gradient-to-br ${roleColors.ring} p-0.5 rounded-full`}>
+                    <div className={`relative flex-shrink-0 ${roleSlug === 'user' ? 'bg-line-strong' : 'bg-signal'} p-0.5 rounded-full`}>
                         <Avatar className="h-12 w-12 bg-white border-2 border-white flex items-center justify-center">
                             <AvatarFallback className="bg-white text-gray-600 font-semibold text-sm">
                                 <User className="h-6 w-6 text-gray-600" />

@@ -14,7 +14,7 @@ type CHEndpoint = keyof typeof API;
 
 const chOptions = (): FetchOptions => ({
   token: getControlHubToken() ?? undefined,
-  tenantId: import.meta.env.VITE_TENANT_ID || "dims",
+  tenantId: import.meta.env.VITE_TENANT_ID,
   skipValidation: true,
 });
 

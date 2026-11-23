@@ -100,9 +100,9 @@ export default function Workflows() {
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'approved': return <Badge className="bg-green-100 text-green-800">Approved</Badge>;
-      case 'pending': return <Badge className="bg-yellow-100 text-yellow-800">Pending</Badge>;
-      case 'rejected': return <Badge className="bg-red-100 text-red-800">Rejected</Badge>;
+      case 'approved': return <Badge className="bg-positive-tint text-positive">Approved</Badge>;
+      case 'pending': return <Badge className="bg-caution-tint text-caution">Pending</Badge>;
+      case 'rejected': return <Badge className="bg-risk-tint text-risk">Rejected</Badge>;
       case 'cancelled': return <Badge className="bg-gray-100 text-gray-800">Cancelled</Badge>;
       default: return <Badge>{status}</Badge>;
     }
@@ -146,10 +146,10 @@ export default function Workflows() {
                 </TableHeader>
                 <TableBody>
                   {loading ? (
-                    <TableRow><TableCell colSpan={5} className="text-center py-20"><Loader2 className="h-10 w-10 animate-spin mx-auto text-[#E5600B]" /></TableCell></TableRow>
+                    <TableRow><TableCell colSpan={5} className="text-center py-20"><Loader2 className="h-10 w-10 animate-spin mx-auto text-primary" /></TableCell></TableRow>
                   ) : pendingSteps.length === 0 ? (
                     <TableRow><TableCell colSpan={5} className="text-center py-20 text-gray-500">
-                      <CheckCircle className="h-12 w-12 mx-auto mb-4 opacity-10 text-green-500" />
+                      <CheckCircle className="h-12 w-12 mx-auto mb-4 opacity-10 text-positive" />
                       All caught up! No pending approvals for you.
                     </TableCell></TableRow>
                   ) : (
@@ -162,7 +162,7 @@ export default function Workflows() {
                           {step.workflow?.workflow_type?.replace(/_/g, ' ') || 'approval'}
                         </TableCell>
                         <TableCell>
-                          <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-100">
+                          <Badge variant="outline" className="bg-signal-tint text-signal-text border-line">
                             Step {step.step_number}
                           </Badge>
                         </TableCell>
@@ -173,7 +173,7 @@ export default function Workflows() {
                           <div className="flex justify-end gap-2">
                             <Button 
                               size="sm" 
-                              className="bg-green-600 hover:bg-green-700"
+                              className="bg-positive hover:opacity-90 text-white"
                               onClick={() => {
                                 setSelectedStep(step);
                                 setDecisionType('approve');
@@ -231,7 +231,7 @@ export default function Workflows() {
                 </TableHeader>
                 <TableBody>
                   {loading ? (
-                    <TableRow><TableCell colSpan={5} className="text-center py-20"><Loader2 className="h-10 w-10 animate-spin mx-auto text-[#E5600B]" /></TableCell></TableRow>
+                    <TableRow><TableCell colSpan={5} className="text-center py-20"><Loader2 className="h-10 w-10 animate-spin mx-auto text-primary" /></TableCell></TableRow>
                   ) : workflows.length === 0 ? (
                     <TableRow><TableCell colSpan={5} className="text-center py-20 text-gray-500">No active workflows found.</TableCell></TableRow>
                   ) : (
@@ -274,7 +274,7 @@ export default function Workflows() {
       <Dialog open={isDecisionDialogOpen} onOpenChange={setIsDecisionDialogOpen}>
         <DialogContent className="max-w-md bg-white">
           <DialogHeader>
-            <DialogTitle className={`flex items-center gap-2 ${decisionType === 'approve' ? 'text-green-600' : decisionType === 'request-changes' ? 'text-amber-600' : 'text-red-600'}`}>
+            <DialogTitle className={`flex items-center gap-2 ${decisionType === 'approve' ? 'text-positive' : decisionType === 'request-changes' ? 'text-caution' : 'text-risk'}`}>
               {decisionType === 'approve' ? <CheckCircle className="h-5 w-5" /> : decisionType === 'request-changes' ? <RotateCcw className="h-5 w-5" /> : <XCircle className="h-5 w-5" />}
               {decisionType === 'approve' ? 'Approve' : decisionType === 'request-changes' ? 'Request Changes' : 'Reject'} Workflow Step
             </DialogTitle>
@@ -302,10 +302,10 @@ export default function Workflows() {
               disabled={actionLoading || (decisionType === 'request-changes' && !comments.trim())}
               className={
                 decisionType === 'approve'
-                  ? 'bg-green-600 hover:bg-green-700'
+                  ? 'bg-positive hover:opacity-90 text-white'
                   : decisionType === 'request-changes'
-                  ? 'bg-amber-500 hover:bg-amber-600'
-                  : 'bg-red-600 hover:bg-red-700'
+                  ? 'bg-caution hover:opacity-90 text-white'
+                  : 'bg-risk hover:opacity-90 text-white'
               }
             >
               {actionLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}

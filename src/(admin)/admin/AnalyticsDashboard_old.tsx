@@ -165,16 +165,16 @@ const dummyApplicationFunnel = {
   overall_conversion: 64.7,
 };
 
-const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
+const COLORS = ['var(--chart-1)', 'var(--chart-2)', 'var(--chart-3)', 'var(--chart-4)', 'var(--chart-5)', 'var(--chart-6)'];
 const STATUS_COLORS: Record<string, string> = {
   active: 'hsl(var(--primary))',
-  suspended: '#f59e0b',
-  graduated: '#3b82f6',
-  withdrawn: '#ef4444',
+  suspended: 'var(--caution)',
+  graduated: 'var(--positive)',
+  withdrawn: 'var(--risk)',
   pending: '#94a3b8',
-  under_review: '#f59e0b',
-  approved: '#10b981',
-  rejected: '#ef4444',
+  under_review: 'var(--caution)',
+  approved: 'var(--positive)',
+  rejected: 'var(--risk)',
   enrolled: 'hsl(var(--primary))',
 };
 
@@ -183,11 +183,11 @@ export const AnalyticsDashboard: React.FC = () => {
   const [selectedDepartment, setSelectedDepartment] = useState('all');
 
   return (
-    <div className="p-6 space-y-6 bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen">
+    <div className="p-6 space-y-6 bg-surface-0 min-h-screen">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white rounded-xl p-6 shadow-sm border border-gray-100">
         <div>
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+          <h1 className="text-3xl font-bold text-text-primary">
             Analytics Dashboard
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
@@ -226,7 +226,7 @@ export const AnalyticsDashboard: React.FC = () => {
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card className="bg-gradient-to-br from-primary to-primary/80 text-white shadow-lg hover:shadow-xl transition-shadow border-0">
+        <Card className="bg-primary text-white shadow-lg hover:shadow-xl transition-shadow border-0">
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
               <div className="text-sm font-medium opacity-90">Total Students</div>
@@ -239,7 +239,7 @@ export const AnalyticsDashboard: React.FC = () => {
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-green-500 to-green-600 text-white shadow-lg hover:shadow-xl transition-shadow border-0">
+        <Card className="bg-positive text-white shadow-lg hover:shadow-xl transition-shadow border-0">
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
               <div className="text-sm font-medium opacity-90">Applications</div>
@@ -252,7 +252,7 @@ export const AnalyticsDashboard: React.FC = () => {
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-secondary to-secondary/80 text-secondary-foreground shadow-lg hover:shadow-xl transition-shadow border-0">
+        <Card className="bg-secondary text-secondary-foreground shadow-lg hover:shadow-xl transition-shadow border-0">
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
               <div className="text-sm font-medium opacity-90">Approval Rate</div>
@@ -265,7 +265,7 @@ export const AnalyticsDashboard: React.FC = () => {
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-orange-500 to-orange-600 text-white shadow-lg hover:shadow-xl transition-shadow border-0">
+        <Card className="bg-caution text-white shadow-lg hover:shadow-xl transition-shadow border-0">
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
               <div className="text-sm font-medium opacity-90">Enrolled</div>
@@ -317,7 +317,7 @@ export const AnalyticsDashboard: React.FC = () => {
               </div>
               <div>
                 <p className="text-muted-foreground">Growth Rate</p>
-                <p className="text-lg font-semibold text-green-600">+{dummyEnrollmentTrends.summary.growth_rate}%</p>
+                <p className="text-lg font-semibold text-positive">+{dummyEnrollmentTrends.summary.growth_rate}%</p>
               </div>
             </div>
           </CardContent>
@@ -327,7 +327,7 @@ export const AnalyticsDashboard: React.FC = () => {
         <Card className="shadow-md border-gray-200">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Users className="h-5 w-5 text-green-600" />
+              <Users className="h-5 w-5 text-positive" />
               Student Status Distribution
             </CardTitle>
             <CardDescription>Current enrollment status breakdown</CardDescription>
@@ -373,7 +373,7 @@ export const AnalyticsDashboard: React.FC = () => {
         <Card className="shadow-md border-gray-200">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <FileText className="h-5 w-5 text-purple-600" />
+              <FileText className="h-5 w-5 text-signal-text" />
               Application Volume
             </CardTitle>
             <CardDescription>Application trends by status</CardDescription>
@@ -411,7 +411,7 @@ export const AnalyticsDashboard: React.FC = () => {
                 <XAxis type="number" domain={[0, 100]} />
                 <YAxis dataKey="programme" type="category" tick={{ fontSize: 11 }} width={150} />
                 <Tooltip />
-                <Bar dataKey="approval_rate" fill="#10b981" />
+                <Bar dataKey="approval_rate" fill="var(--chart-1)" />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
@@ -424,7 +424,7 @@ export const AnalyticsDashboard: React.FC = () => {
         <Card className="shadow-md border-gray-200">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Filter className="h-5 w-5 text-indigo-600" />
+              <Filter className="h-5 w-5 text-signal-text" />
               Application Funnel
             </CardTitle>
             <CardDescription>Stage progression with drop-off analysis</CardDescription>
@@ -441,7 +441,7 @@ export const AnalyticsDashboard: React.FC = () => {
                   </div>
                   <div className="relative h-8 bg-gray-200 rounded-lg overflow-hidden">
                     <div
-                      className="absolute inset-y-0 left-0 bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-end pr-2 text-white text-xs font-bold"
+                      className="absolute inset-y-0 left-0 bg-primary flex items-center justify-end pr-2 text-white text-xs font-bold"
                       style={{ width: `${stage.percentage}%` }}
                     >
                       {stage.drop_off_count > 0 && (
@@ -467,7 +467,7 @@ export const AnalyticsDashboard: React.FC = () => {
         <Card className="shadow-md border-gray-200">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <GraduationCap className="h-5 w-5 text-pink-600" />
+              <GraduationCap className="h-5 w-5 text-sky-text" />
               Program Popularity Ranking
             </CardTitle>
             <CardDescription>Top programs by applications</CardDescription>
@@ -476,7 +476,7 @@ export const AnalyticsDashboard: React.FC = () => {
             <div className="space-y-4">
               {dummyProgramPopularity.programs.map((program, index) => (
                 <div key={program.programme} className="flex items-center gap-4">
-                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white font-bold text-sm">
+                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white font-bold text-sm">
                     {program.rank}
                   </div>
                   <div className="flex-1 min-w-0">
@@ -485,7 +485,7 @@ export const AnalyticsDashboard: React.FC = () => {
                   </div>
                   <div className="text-right">
                     <p className="text-sm font-semibold">{program.total_applications}</p>
-                    <p className="text-xs text-green-600">{program.conversion_rate.toFixed(1)}% conv</p>
+                    <p className="text-xs text-positive">{program.conversion_rate.toFixed(1)}% conv</p>
                   </div>
                 </div>
               ))}
@@ -518,10 +518,10 @@ export const AnalyticsDashboard: React.FC = () => {
                   <tr key={reviewer.reviewer_id} className="border-b hover:bg-gray-50">
                     <td className="py-3 font-medium">{reviewer.reviewer_name}</td>
                     <td className="py-3 text-right">{reviewer.total_reviewed}</td>
-                    <td className="py-3 text-right text-green-600">{reviewer.approved}</td>
+                    <td className="py-3 text-right text-positive">{reviewer.approved}</td>
                     <td className="py-3 text-right text-red-600">{reviewer.rejected}</td>
                     <td className="py-3 text-right">
-                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800">
+                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold bg-positive-tint text-positive">
                         {reviewer.approval_rate.toFixed(1)}%
                       </span>
                     </td>

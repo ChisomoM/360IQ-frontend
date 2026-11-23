@@ -13,7 +13,7 @@ import { useAnalyticsData, type AnalyticsFilters } from '@/hooks/useAnalyticsDat
 import { exportToCSV } from '@/lib/csvExport';
 import dayjs from 'dayjs';
 
-const COLORS = ['#6366f1', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#3b82f6', '#14b8a6', '#f97316'];
+const COLORS = ['var(--chart-1)', 'var(--chart-2)', 'var(--chart-3)', 'var(--chart-4)', 'var(--chart-5)', 'var(--chart-6)'];
 
 export const ReportsPage: React.FC = () => {
   const [filters, setFilters] = useState<AnalyticsFilters>({});
@@ -119,7 +119,7 @@ export const ReportsPage: React.FC = () => {
       'Referral Code': item.referralCode || 'N/A',
       'Application Date': item.createdAt ? dayjs(item.createdAt.toDate ? item.createdAt.toDate() : item.createdAt).format('YYYY-MM-DD') : 'N/A',
     }));
-    exportToCSV(exportData, `AVEC_Reports_${dayjs().format('YYYY-MM-DD')}`);
+    exportToCSV(exportData, `360IQ_Reports_${dayjs().format('YYYY-MM-DD')}`);
   };
 
   if (loading) {
@@ -135,11 +135,11 @@ export const ReportsPage: React.FC = () => {
       {/* Header with filters */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white rounded-xl p-6 shadow-sm border border-gray-100">
         <div>
-          <h1 className="text-3xl font-bold text-[#1e3c21]">Reports & Analytics</h1>
+          <h1 className="text-3xl font-bold text-text-primary">Reports & Analytics</h1>
           <p className="text-sm text-muted-foreground mt-1">Comprehensive insights and data visualization</p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button onClick={handleExportCSV} className="bg-[#febb00] text-[#1e3c21] hover:bg-[#e8a900] font-bold" size="sm">
+          <Button onClick={handleExportCSV} className="bg-primary text-on-signal hover:bg-signal-hover font-bold" size="sm">
             <Download className="h-4 w-4 mr-2" />
             Export CSV
           </Button>
@@ -148,9 +148,9 @@ export const ReportsPage: React.FC = () => {
 
       {/* Filters */}
       <Card className="shadow-md border-gray-200">
-        <CardHeader className="bg-[#1e3c21]/5 border-b-2 border-[#1e3c21]/20">
+        <CardHeader className="bg-surface-2 border-b-2 border-line">
           <div className="flex items-center gap-2 text-gray-800">
-            <Filter className="h-5 w-5 text-indigo-600" />
+            <Filter className="h-5 w-5 text-signal-text" />
             <span className="font-semibold">Filters</span>
           </div>
         </CardHeader>
@@ -288,10 +288,10 @@ export const ReportsPage: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Province Distribution */}
         <Card className="shadow-md hover:shadow-lg transition-shadow border-gray-200">
-          <CardHeader className="bg-purple-50/50">
+          <CardHeader className="bg-surface-2">
             <div className="flex justify-between items-center">
               <div className="flex items-center gap-2">
-                <MapPin className="h-5 w-5 text-purple-600" />
+                <MapPin className="h-5 w-5 text-signal-text" />
                 <h3 className="text-lg font-semibold text-gray-800">Applications by Province</h3>
               </div>
               <span className="text-xs text-muted-foreground bg-white px-2 py-1 rounded-full">Click to drill down</span>
@@ -303,7 +303,7 @@ export const ReportsPage: React.FC = () => {
                 config={{
                   count: {
                     label: "Applications",
-                    color: "hsl(var(--chart-1))",
+                    color: "var(--chart-1)",
                   },
                 }}
                 className="h-[280px]"
@@ -316,7 +316,7 @@ export const ReportsPage: React.FC = () => {
                 <ChartTooltip content={<ChartTooltipContent />} />
                 <Bar
                   dataKey="count"
-                  fill="#8b5cf6"
+                  fill="var(--chart-1)"
                   radius={[8, 8, 0, 0]}
                   maxBarSize={60}
                   onClick={(data) => {
@@ -335,9 +335,9 @@ export const ReportsPage: React.FC = () => {
 
         {/* District Distribution (when province selected) */}
         <Card className="shadow-md hover:shadow-lg transition-shadow border-gray-200">
-          <CardHeader className="bg-blue-50/50">
+          <CardHeader className="bg-surface-2">
             <div className="flex items-center gap-2">
-              <BarChart3 className="h-5 w-5 text-cyan-600" />
+              <BarChart3 className="h-5 w-5 text-sky-text" />
               <h3 className="text-lg font-semibold text-gray-800">
                 {selectedProvince ? `Districts in ${selectedProvince}` : 'Select a Province'}
               </h3>
@@ -350,7 +350,7 @@ export const ReportsPage: React.FC = () => {
                   config={{
                     count: {
                       label: "Applications",
-                      color: "hsl(var(--chart-2))",
+                      color: "var(--chart-2)",
                     },
                   }}
                   className="h-[280px]"
@@ -361,7 +361,7 @@ export const ReportsPage: React.FC = () => {
                   <XAxis dataKey="district" style={{ fontSize: '10px' }} angle={-45} textAnchor="end" height={65} />
                   <YAxis style={{ fontSize: '12px' }} />
                   <ChartTooltip content={<ChartTooltipContent />} />
-                  <Bar dataKey="count" fill="#06b6d4" radius={[8, 8, 0, 0]} maxBarSize={50} />
+                  <Bar dataKey="count" fill="var(--chart-2)" radius={[8, 8, 0, 0]} maxBarSize={50} />
                 </BarChart>
               </ChartContainer>
               </div>
@@ -376,9 +376,9 @@ export const ReportsPage: React.FC = () => {
 
         {/* Salary Scale Distribution */}
         <Card className="shadow-md hover:shadow-lg transition-shadow border-gray-200">
-          <CardHeader className="bg-[#1e3c21]/5">
+          <CardHeader className="bg-surface-2">
             <div className="flex items-center gap-2">
-              <TrendingUp className="h-5 w-5 text-green-600" />
+              <TrendingUp className="h-5 w-5 text-positive" />
               <h3 className="text-lg font-semibold text-gray-800">Salary Scale Distribution</h3>
             </div>
           </CardHeader>
@@ -387,7 +387,7 @@ export const ReportsPage: React.FC = () => {
               config={{
                 count: {
                   label: "Applications",
-                  color: "hsl(var(--chart-3))",
+                  color: "var(--chart-3)",
                 },
               }}
               className="h-[280px] w-full"
@@ -397,7 +397,7 @@ export const ReportsPage: React.FC = () => {
                 <XAxis dataKey="scale" style={{ fontSize: '12px' }} />
                 <YAxis style={{ fontSize: '12px' }} />
                 <ChartTooltip content={<ChartTooltipContent />} />
-                <Bar dataKey="count" fill="#10b981" radius={[8, 8, 0, 0]} maxBarSize={60} />
+                <Bar dataKey="count" fill="var(--chart-3)" radius={[8, 8, 0, 0]} maxBarSize={60} />
               </BarChart>
             </ChartContainer>
           </CardContent>
@@ -405,9 +405,9 @@ export const ReportsPage: React.FC = () => {
 
         {/* Referral Source */}
         <Card className="shadow-md hover:shadow-lg transition-shadow border-gray-200">
-          <CardHeader className="bg-[#febb00]/10">
+          <CardHeader className="bg-surface-2">
             <div className="flex items-center gap-2">
-              <PieChartIcon className="h-5 w-5 text-orange-600" />
+              <PieChartIcon className="h-5 w-5 text-caution" />
               <h3 className="text-lg font-semibold text-gray-800">Referral vs Direct Applications</h3>
             </div>
           </CardHeader>
@@ -416,11 +416,11 @@ export const ReportsPage: React.FC = () => {
               config={{
                 withReferral: {
                   label: "With Referral",
-                  color: "hsl(var(--chart-4))",
+                  color: "var(--chart-4)",
                 },
                 direct: {
                   label: "Direct",
-                  color: "hsl(var(--chart-5))",
+                  color: "var(--chart-5)",
                 },
               }}
               className="h-[280px] w-full"
@@ -434,7 +434,7 @@ export const ReportsPage: React.FC = () => {
                   label={({ name, percent }) => `${name} ${percent ? (percent * 100).toFixed(0) : 0}%`}
                   outerRadius={90}
                   innerRadius={0}
-                  fill="#8884d8"
+                  fill="var(--chart-1)"
                   dataKey="value"
                 >
                   {referralData.map((_, index) => (
@@ -449,9 +449,9 @@ export const ReportsPage: React.FC = () => {
 
         {/* Growth Trend */}
         <Card className="lg:col-span-2 shadow-md hover:shadow-lg transition-shadow border-gray-200">
-          <CardHeader className="bg-purple-50/50">
+          <CardHeader className="bg-surface-2">
             <div className="flex items-center gap-2">
-              <TrendingUp className="h-5 w-5 text-indigo-600" />
+              <TrendingUp className="h-5 w-5 text-signal-text" />
               <h3 className="text-lg font-semibold text-gray-800">Application Growth Trend</h3>
             </div>
           </CardHeader>
@@ -460,7 +460,7 @@ export const ReportsPage: React.FC = () => {
               config={{
                 count: {
                   label: "Applications",
-                  color: "hsl(var(--chart-1))",
+                  color: "var(--chart-1)",
                 },
               }}
               className="h-[280px] w-full"
@@ -473,9 +473,9 @@ export const ReportsPage: React.FC = () => {
                 <Line
                   type="monotone"
                   dataKey="count"
-                  stroke="#6366f1"
+                  stroke="var(--chart-1)"
                   strokeWidth={3}
-                  dot={{ fill: '#6366f1', r: 5 }}
+                  dot={{ fill: 'var(--chart-1)', r: 5 }}
                   activeDot={{ r: 7 }}
                 />
               </LineChart>

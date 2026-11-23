@@ -112,7 +112,7 @@ export default function DocumentUploadDialog({
           <div className="w-2/5 bg-slate-50 p-8 border-r border-slate-100 flex flex-col justify-center">
             <div className="mb-8">
               <h3 className="text-xl font-bold text-slate-800">File Ingestion</h3>
-              <p className="text-sm text-slate-500 mt-1">Upload your document to safely archive it in the DIMS vault.</p>
+              <p className="text-sm text-slate-500 mt-1">Upload your document to safely archive it in the vault.</p>
             </div>
 
             {!uploadData.file ? (
@@ -154,7 +154,7 @@ export default function DocumentUploadDialog({
                     </p>
                   </div>
                 </div>
-                <div className="mt-4 flex items-center gap-2 text-green-600 text-[10px] font-bold uppercase tracking-wider bg-green-50 px-3 py-1 rounded-full w-fit">
+                <div className="mt-4 flex items-center gap-2 text-positive text-[10px] font-bold uppercase tracking-wider bg-positive-tint px-3 py-1 rounded-full w-fit">
                   <CheckCircle2 className="h-3 w-3" /> Ready for upload
                 </div>
               </div>

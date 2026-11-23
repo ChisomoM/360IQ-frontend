@@ -34,7 +34,7 @@ Data: ${JSON.stringify(reportData.data, null, 2)}
   });
 };
 
-// Application PDF export removed after pivot to DIMS/Avec.
+// Application PDF export removed after pivot to 360IQ.
 export const exportApplicationToPDF = async () => {
   console.warn('exportApplicationToPDF: application export removed after pivot to DIMS');
   return;

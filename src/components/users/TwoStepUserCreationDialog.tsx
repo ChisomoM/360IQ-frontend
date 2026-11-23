@@ -177,28 +177,28 @@ export function TwoStepUserCreationDialog({
         <DialogHeader className="border-b border-gray-100 pb-6">
           <div className="flex items-center justify-between">
             <div>
-              <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
+              <DialogTitle className="text-2xl font-semibold text-text-primary">
                 Create New User
               </DialogTitle>
               <DialogDescription className="mt-2 text-sm text-gray-500 font-medium">
                 {step === 1 ? 'Step 1: User Details' : 'Step 2: Permission Assignment'}
               </DialogDescription>
             </div>
-            <div className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg border border-blue-200">
-              <span className="text-sm font-semibold text-blue-700">{step}</span>
-              <span className="text-sm text-blue-600">/2</span>
+            <div className="flex items-center gap-1.5 px-3 py-1.5 bg-signal-tint rounded-md border border-line">
+              <span className="text-sm font-semibold text-signal-text">{step}</span>
+              <span className="text-sm text-signal-text">/2</span>
             </div>
           </div>
         </DialogHeader>
 
         {/* Progress Bar */}
         <div className="flex gap-3 my-6">
-          <div className="flex-1 h-1.5 bg-gradient-to-r from-blue-500 to-blue-400 rounded-full transition-all duration-300 shadow-sm" />
+          <div className="flex-1 h-1.5 bg-signal rounded-full transition-all duration-300" />
           <div
-            className={`flex-1 h-1.5 rounded-full transition-all duration-300 shadow-sm ${
+            className={`flex-1 h-1.5 rounded-full transition-all duration-300 ${
               step >= 2
-                ? 'bg-gradient-to-r from-blue-500 to-blue-400'
-                : 'bg-gradient-to-r from-gray-200 to-gray-100'
+                ? 'bg-signal'
+                : 'bg-surface-2'
             }`}
           />
         </div>
@@ -248,7 +248,7 @@ export function TwoStepUserCreationDialog({
                 type="email"
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                placeholder="john.doe@avec.org"
+                placeholder="john.doe@360iq.com"
                 disabled={isSubmitting}
                 className="border-gray-200 rounded-lg focus:border-blue-400 focus:ring-blue-50"
               />
@@ -314,7 +314,7 @@ export function TwoStepUserCreationDialog({
             {isLoadingPermissions ? (
               <div className="flex flex-col items-center justify-center py-16 space-y-4">
                 <div className="relative w-12 h-12">
-                  <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-blue-600 rounded-full animate-spin" style={{maskImage: 'conic-gradient(transparent 70%, black)'}} />
+                  <div className="absolute inset-0 bg-signal rounded-full animate-spin" style={{maskImage: 'conic-gradient(transparent 70%, black)'}} />
                 </div>
                 <p className="text-gray-600 font-medium">Loading permissions...</p>
               </div>
@@ -355,7 +355,6 @@ export function TwoStepUserCreationDialog({
             <Button
               onClick={handleNextStep}
               disabled={isSubmitting}
-              className="bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white rounded-lg shadow-md hover:shadow-lg transition-all"
             >
               Next
               <ChevronRight className="h-4 w-4 ml-2" />
@@ -364,7 +363,6 @@ export function TwoStepUserCreationDialog({
             <Button
               onClick={handleCreateUser}
               disabled={isSubmitting}
-              className="bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-700 hover:to-emerald-600 text-white rounded-lg shadow-md hover:shadow-lg transition-all"
             >
               {isSubmitting && (
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />

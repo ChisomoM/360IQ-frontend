@@ -36,8 +36,8 @@ export default function ControlHubLayout() {
   // Wait for session restore before redirecting
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#0d173b]">
-        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#7c69ff]" />
+      <div className="min-h-screen flex items-center justify-center bg-brand-ink">
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#19C3A6]" />
       </div>
     )
   }
@@ -70,21 +70,21 @@ export default function ControlHubLayout() {
           }`}
         >
 
-          <div className="h-full flex flex-col bg-[#0d173b] text-white shadow-xl">
+          <div className="h-full flex flex-col bg-brand-ink bg-[image:var(--gradient-sidebar)] text-white shadow-xl">
 
-            <div className="flex items-center justify-center py-6 border-b border-[#7c69ff]/20">
+            <div className="flex items-center justify-center py-6 border-b border-[#19C3A6]/20">
               {!collapsed && (
                 <img
-                  src="/logos/avec-logo-light.png"
-                  alt="Avec Logo"
-                  className="h-12 w-auto"
+                  src="/logos/logo/360IQ-horizontal-transparent-for-dark.png"
+                  alt="360IQ"
+                  className="h-10 w-auto"
                 />
               )}
             </div>
 
             <button
               onClick={toggleSidebar}
-              className="absolute -right-3 top-24 bg-white text-[#7c69ff] rounded-full p-1 shadow-lg"
+              className="absolute -right-3 top-24 bg-white text-[#0A7A67] rounded-full p-1 shadow-lg"
             >
               {collapsed
                 ? <ChevronRight className="h-4 w-4"/>
@@ -101,7 +101,7 @@ export default function ControlHubLayout() {
                   <SidebarMenuButton
                     asChild
                     isActive={isActive("/controlhub/dashboard")}
-                    className="text-white hover:bg-white/10 data-[active=true]:bg-[#7c69ff] data-[active=true]:text-white rounded-md"
+                    className="text-white hover:bg-white/10 data-[active=true]:bg-[#0A7A67] data-[active=true]:text-white rounded-md"
                   >
 
                     <Link to="/controlhub/dashboard" className="flex items-center gap-3">
@@ -116,9 +116,9 @@ export default function ControlHubLayout() {
 
                 </SidebarMenuItem>
 
-                {/* Avec ControlHub Section */}
+                {/* 360IQ ControlHub Section */}
                 <CollapsibleSidebarSection
-                  title="Avec ControlHub"
+                  title="360IQ ControlHub"
                   icon={<Building2 className="h-5 w-5" />}
                   collapsed={collapsed}
                   activePaths={["/controlhub/tenants"]}
@@ -128,7 +128,7 @@ export default function ControlHubLayout() {
                       <SidebarMenuButton
                         asChild
                         isActive={isActive("/controlhub/tenants") || location.pathname.startsWith("/controlhub/tenants/")}
-                        className="text-white hover:bg-white/10 data-[active=true]:bg-[#7c69ff] data-[active=true]:text-white rounded-md"
+                        className="text-white hover:bg-white/10 data-[active=true]:bg-[#0A7A67] data-[active=true]:text-white rounded-md"
                       >
                         <Link to="/controlhub/tenants" className="flex items-center gap-3">
                           <Building2 className="h-5 w-5"/>

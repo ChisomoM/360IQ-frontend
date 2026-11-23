@@ -68,9 +68,9 @@ export default function RolesManagement() {
     };
 
     const ROLE_COLORS: Record<string, string> = {
-        super_admin: 'bg-purple-100 text-purple-800',
-        admin: 'bg-blue-100 text-blue-800',
-        user: 'bg-green-100 text-green-800',
+        super_admin: 'bg-signal-tint text-signal-text',
+        admin: 'bg-positive-tint text-positive',
+        user: 'bg-surface-2 text-text-secondary',
     };
 
     return (

@@ -165,10 +165,10 @@ export function DocumentFilters({
             </Badge>
           ))}
           {parsedSearchFilters.statuses?.map(status => (
-            <Badge key={`status-${status}`} variant="secondary" className="bg-purple-100 text-purple-800 flex items-center gap-1 cursor-pointer hover:bg-purple-200 transition-colors">
+            <Badge key={`status-${status}`} variant="secondary" className="bg-signal-tint text-signal-text flex items-center gap-1 cursor-pointer hover:bg-surface-2 transition-colors">
               status: {status}
               <X 
-                className="h-3 w-3 hover:text-purple-900" 
+                className="h-3 w-3 hover:text-text-primary"
                 onClick={() => {
                   const newQuery = removeSearchModifier(searchQuery, 'status', status)
                   onSearchChange(newQuery)

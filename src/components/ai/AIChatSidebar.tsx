@@ -577,7 +577,7 @@ export function AIChatSidebar({
                       </p>
                       <div className="flex flex-wrap gap-1.5">
                         {analysis.themes.map((t, i) => (
-                          <span key={i} className="text-[11px] bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-full">{t}</span>
+                          <span key={i} className="text-[11px] bg-signal-tint text-signal-text px-2 py-0.5 rounded-full">{t}</span>
                         ))}
                       </div>
                     </div>

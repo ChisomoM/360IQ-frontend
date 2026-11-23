@@ -22,21 +22,21 @@ interface SmartCollectionsProps {
 
 // Color to Tailwind classname mapping
 const colorMap: Record<string, string> = {
-  emerald: 'bg-emerald-50 border-emerald-200 hover:border-emerald-300',
-  amber: 'bg-amber-50 border-amber-200 hover:border-amber-300',
-  blue: 'bg-blue-50 border-blue-200 hover:border-blue-300',
-  purple: 'bg-purple-50 border-purple-200 hover:border-purple-300',
-  cyan: 'bg-cyan-50 border-cyan-200 hover:border-cyan-300',
-  rose: 'bg-rose-50 border-rose-200 hover:border-rose-300',
+  emerald: 'bg-signal-tint border-line hover:border-line-strong',
+  amber: 'bg-caution-tint border-line hover:border-line-strong',
+  blue: 'bg-positive-tint border-line hover:border-line-strong',
+  purple: 'bg-surface-2 border-line hover:border-line-strong',
+  cyan: 'bg-surface-2 border-line hover:border-line-strong',
+  rose: 'bg-risk-tint border-line hover:border-line-strong',
 }
 
 const badgeColorMap: Record<string, string> = {
-  emerald: 'bg-emerald-100 text-emerald-700',
-  amber: 'bg-amber-100 text-amber-700',
-  blue: 'bg-blue-100 text-blue-700',
-  purple: 'bg-purple-100 text-purple-700',
-  cyan: 'bg-cyan-100 text-cyan-700',
-  rose: 'bg-rose-100 text-rose-700',
+  emerald: 'bg-signal-tint text-signal-text',
+  amber: 'bg-caution-tint text-caution',
+  blue: 'bg-positive-tint text-positive',
+  purple: 'bg-surface-2 text-text-secondary',
+  cyan: 'bg-surface-2 text-text-secondary',
+  rose: 'bg-risk-tint text-risk',
 }
 
 /**

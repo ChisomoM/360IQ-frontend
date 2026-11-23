@@ -356,7 +356,7 @@ export const AnalyticsDashboard: React.FC = () => {
               icon={<FileText className="h-5 w-5 text-ch-primary-600" />} iconBg="bg-ch-primary/[0.08]" />
             <StatCard label="Approved" value={totalApproved.toLocaleString()}
               sub={`${Math.round((totalApproved / (totalApproved + totalPending + 106)) * 100)}% approval rate`}
-              icon={<CheckCircle className="h-5 w-5 text-emerald-600" />} iconBg="bg-emerald-500/[0.08]" />
+              icon={<CheckCircle className="h-5 w-5 text-positive" />} iconBg="bg-positive-tint" />
             <StatCard label="Pending Review" value={totalPending.toLocaleString()} sub="Awaiting action"
               icon={<Hourglass className="h-5 w-5 text-amber-600" />} iconBg="bg-amber-500/[0.08]" />
             <StatCard label="Avg Approval Time" value={`${avgApproval} days`} sub="Across all departments"
@@ -407,7 +407,7 @@ export const AnalyticsDashboard: React.FC = () => {
               <Card className="border-gray-200">
                 <CardHeader>
                   <CardTitle className="font-display font-semibold text-text-xl text-foreground flex items-center gap-2">
-                    <FileText className="h-4 w-4 text-emerald-600" />Pending vs Approved vs Rejected
+                    <FileText className="h-4 w-4 text-positive" />Pending vs Approved vs Rejected
                   </CardTitle>
                   <CardDescription className="font-sans text-text-xs text-muted-foreground">
                     Monthly document status distribution
@@ -528,7 +528,7 @@ export const AnalyticsDashboard: React.FC = () => {
                               </div>
                             </div>
                             <div className="h-7 bg-muted rounded-lg overflow-hidden">
-                              <div className="h-full bg-gradient-to-r from-ch-primary-500 to-ch-primary-400 rounded-lg flex items-center justify-end pr-3 transition-all duration-500"
+                              <div className="h-full bg-ch-primary-500 rounded-lg flex items-center justify-end pr-3 transition-all duration-500"
                                 style={{ width: `${pct}%` }}>
                                 <span className="text-white text-xs font-bold font-sans">{pct}%</span>
                               </div>
@@ -539,7 +539,7 @@ export const AnalyticsDashboard: React.FC = () => {
                       <div className="pt-2 border-t border-gray-200">
                         <p className="font-sans text-text-xs text-muted-foreground">
                           Overall completion rate:{' '}
-                          <span className="font-bold text-emerald-600">
+                          <span className="font-bold text-positive">
                             {Math.round((MOCK_BOTTLENECKS[MOCK_BOTTLENECKS.length - 1].count / MOCK_BOTTLENECKS[0].count) * 100)}%
                           </span>
                           {' '}({MOCK_BOTTLENECKS[MOCK_BOTTLENECKS.length - 1].count} completed of {MOCK_BOTTLENECKS[0].count} submitted)
@@ -660,7 +660,7 @@ export const AnalyticsDashboard: React.FC = () => {
                                 <td className="py-3">
                                   <div className="flex items-center gap-2">
                                     <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden max-w-[80px]">
-                                      <div className={`h-full rounded-full ${isHigh ? 'bg-emerald-500' : isMid ? 'bg-amber-500' : 'bg-red-500'}`}
+                                      <div className={`h-full rounded-full ${isHigh ? 'bg-positive' : isMid ? 'bg-caution' : 'bg-risk'}`}
                                         style={{ width: `${efficiency}%` }} />
                                     </div>
                                     <span className="font-mono text-text-sm font-bold text-foreground">{efficiency}%</span>

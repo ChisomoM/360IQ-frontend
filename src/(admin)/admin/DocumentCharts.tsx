@@ -30,8 +30,8 @@ function ScrollAnimatedSection({ children, delay = 0 }: { children: React.ReactN
 }
 
 const CHART_COLORS = [
-  '#3b82f6', '#10b981', '#f59e0b', '#ef4444',
-  '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16',
+  'var(--chart-1)', 'var(--chart-2)', 'var(--chart-3)', 'var(--chart-4)',
+  'var(--chart-5)', 'var(--chart-6)',
 ];
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -45,9 +45,9 @@ function isSpreadsheet(doc: Document): boolean {
 
 function extBadgeColor(fileName: string): string {
   const lower = fileName.toLowerCase();
-  if (lower.endsWith('.csv')) return 'bg-green-100 text-green-700';
-  if (lower.endsWith('.xls')) return 'bg-blue-100 text-blue-700';
-  return 'bg-indigo-100 text-indigo-700';
+  if (lower.endsWith('.csv')) return 'bg-signal-tint text-signal-text';
+  if (lower.endsWith('.xls')) return 'bg-positive-tint text-positive';
+  return 'bg-surface-2 text-sky-text';
 }
 
 function getExt(fileName: string): string {
@@ -205,7 +205,7 @@ export default function DocumentCharts() {
           <div className="flex items-center justify-between gap-4">
             {/* Left: Title + Icon */}
             <div className="flex items-center gap-3 flex-shrink-0">
-              <BarChart2 className="h-5 w-5 text-[#febb00]" />
+              <BarChart2 className="h-5 w-5 text-signal-text" />
               <h1 className="text-lg font-semibold text-gray-900">Document Charts</h1>
             </div>
 
@@ -231,7 +231,7 @@ export default function DocumentCharts() {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="h-9 px-3 gap-2 text-sm text-gray-600 hover:bg-purple-50 hover:text-purple-700 border-gray-300"
+                  className="h-9 px-3 gap-2 text-sm text-gray-600 hover:bg-signal-tint hover:text-signal-text border-gray-300"
                   onClick={handleGeneratePredictiveAnalysis}
                   disabled={isPredictiveLoading || (!selected && !isCompareMode) || (isCompareMode && compareSelected.length < 2)}
                   title="Generate AI-powered predictive analysis from chart data"
@@ -247,7 +247,7 @@ export default function DocumentCharts() {
                 <Button
                   variant={isCompareMode ? 'default' : 'outline'}
                   size="sm"
-                  className={`h-9 px-3 gap-2 text-sm ${isCompareMode ? 'bg-[#febb00] text-black hover:bg-[#febb00]/90 border-[#febb00]' : 'text-gray-600'}`}
+                  className={`h-9 px-3 gap-2 text-sm ${isCompareMode ? 'bg-primary text-on-signal hover:bg-signal-hover border-primary' : 'text-gray-600'}`}
                   onClick={toggleCompareMode}
                   title="Toggle compare mode"
                 >
@@ -314,9 +314,9 @@ export default function DocumentCharts() {
                     initial={{ opacity: 0, y: 4 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-                    className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-yellow-50 border border-[#febb00] flex-shrink-0"
+                    className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-signal-tint border border-primary flex-shrink-0"
                   >
-                    <FileSpreadsheet className="h-4 w-4 text-yellow-600 flex-shrink-0" />
+                    <FileSpreadsheet className="h-4 w-4 text-signal-text flex-shrink-0" />
                     <span className="text-xs font-medium text-gray-900 truncate">
                       {selected.title}
                     </span>
@@ -399,7 +399,7 @@ export default function DocumentCharts() {
                       isActive
                         ? isCompareMode
                           ? 'border-gray-300 bg-white shadow-sm'
-                          : 'border-[#febb00] bg-yellow-50 shadow-sm'
+                          : 'border-primary bg-signal-tint shadow-sm'
                         : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50'
                     }`}
                   >
@@ -409,7 +409,7 @@ export default function DocumentCharts() {
                         style={{ backgroundColor: CHART_COLORS[compareIndex % CHART_COLORS.length] }}
                       />
                     ) : (
-                      <FileSpreadsheet className={`h-4 w-4 flex-shrink-0 ${isActive ? 'text-yellow-600' : 'text-gray-400'}`} />
+                      <FileSpreadsheet className={`h-4 w-4 flex-shrink-0 ${isActive ? 'text-signal-text' : 'text-gray-400'}`} />
                     )}
                     <span className="truncate max-w-[150px]">{doc.title}</span>
                     <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded flex-shrink-0 ${extBadgeColor(doc.file_name)}`}>

@@ -29,9 +29,9 @@ import type { CreateTenantPayload, TenantType } from "@/types/tenant";
 const EMPTY_FORM: CreateTenantPayload = {
   name: "",
   type: "company",
-  primary_color: "#7c69ff",
-  secondary_color: "#febb00",
-  accent_color: "#172E70",
+  primary_color: "#0A7A67",
+  secondary_color: "#1B63AE",
+  accent_color: "#0B1B2B",
   admin_email: "",
   admin_password: "",
 };
@@ -53,7 +53,7 @@ function getPasswordStrength(pwd: string): { score: number; label: string; color
   if (s === 2) return { score: 40,  label: "Weak",        color: "bg-orange-500" };
   if (s === 3) return { score: 60,  label: "Fair",        color: "bg-yellow-500" };
   if (s === 4) return { score: 80,  label: "Strong",      color: "bg-blue-500" };
-  return           { score: 100, label: "Very strong", color: "bg-green-500" };
+  return           { score: 100, label: "Very strong", color: "bg-positive" };
 }
 
 interface FieldErrors {
@@ -122,7 +122,7 @@ export default function CreateTenantModal({ isOpen, onClose, onSuccess }: Create
     const e: FieldErrors = {};
     if (!formData.name.trim())    e.name    = "Organization name is required";
     if (!/^#[0-9a-fA-F]{6}$/.test(formData.primary_color))
-      e.primary_color = "Must be a valid hex color (e.g. #7c69ff)";
+      e.primary_color = "Must be a valid hex color (e.g. #0A7A67)";
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -271,21 +271,21 @@ export default function CreateTenantModal({ isOpen, onClose, onSuccess }: Create
                       id="brand-color-picker"
                       type="color"
                       aria-label="Pick brand color"
-                      value={validColor ? formData.primary_color : "#7c69ff"}
+                      value={validColor ? formData.primary_color : "#0A7A67"}
                       onChange={(e) => set("primary_color", e.target.value)}
                       className="h-11 w-14 rounded-lg border border-gray-200 cursor-pointer p-1 bg-white flex-shrink-0 shadow-sm hover:shadow-md transition-shadow"
                     />
                     <Input
                       id="brand-color-text"
                       value={formData.primary_color}
-                      placeholder="#7c69ff"
+                      placeholder="#0A7A67"
                       maxLength={7}
                       onChange={(e) => set("primary_color", e.target.value)}
                       className="font-mono text-sm border-gray-200 rounded-lg"
                     />
                     <div
                       className="h-11 w-20 flex-shrink-0 rounded-lg flex items-center justify-center text-xs font-semibold text-white shadow-sm transition-all"
-                      style={{ backgroundColor: validColor ? formData.primary_color : "#7c69ff" }}
+                      style={{ backgroundColor: validColor ? formData.primary_color : "#0A7A67" }}
                     >
                       Preview
                     </div>
@@ -399,7 +399,7 @@ export default function CreateTenantModal({ isOpen, onClose, onSuccess }: Create
                     ) : (
                       <div
                         className="h-10 w-10 rounded-lg flex items-center justify-center flex-shrink-0 shadow-sm"
-                        style={{ backgroundColor: validColor ? formData.primary_color : "#7c69ff" }}
+                        style={{ backgroundColor: validColor ? formData.primary_color : "#0A7A67" }}
                       >
                         <Building2 className="h-5 w-5 text-white" />
                       </div>
@@ -487,7 +487,7 @@ export default function CreateTenantModal({ isOpen, onClose, onSuccess }: Create
                       }}
                       className={`pr-10 border-gray-200 rounded-lg ${
                         passwordsMatch
-                          ? "border-green-400 focus-visible:ring-green-400"
+                          ? "border-positive focus-visible:ring-positive"
                           : errors.confirm_password
                           ? "border-red-400 focus-visible:ring-red-400"
                           : "focus-visible:ring-ch-primary"
@@ -505,7 +505,7 @@ export default function CreateTenantModal({ isOpen, onClose, onSuccess }: Create
                   </div>
                   {errors.confirm_password && <p className="text-xs text-red-500 font-medium">{errors.confirm_password}</p>}
                   {passwordsMatch && !errors.confirm_password && (
-                    <p className="text-xs text-green-600 flex items-center gap-1 font-medium">
+                    <p className="text-xs text-positive flex items-center gap-1 font-medium">
                       <Check className="h-3 w-3" /> Passwords match
                     </p>
                   )}

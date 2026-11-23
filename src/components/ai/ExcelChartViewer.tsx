@@ -18,8 +18,8 @@ import type { Document, SpreadsheetData, SheetData, ColumnMeta } from '@/types/d
 // ─── Constants ───────────────────────────────────────────────────────────────
 
 const CHART_COLORS = [
-  '#3b82f6', '#10b981', '#f59e0b', '#ef4444',
-  '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16',
+  'var(--chart-1)', 'var(--chart-2)', 'var(--chart-3)', 'var(--chart-4)',
+  'var(--chart-1)', 'var(--chart-2)', 'var(--chart-3)', 'var(--chart-4)',
 ];
 
 type ChartType = 'bar' | 'line' | 'area' | 'pie';
@@ -328,7 +328,7 @@ export function ExcelChartViewer({ document, onClose }: ExcelChartViewerProps) {
     const sharedAxisProps = {
       xAxis: <XAxis dataKey={xKey} tick={{ fontSize: 11 }} interval="preserveStartEnd" />,
       yAxis: <YAxis tick={{ fontSize: 11 }} tickFormatter={(v: number) => v.toLocaleString()} />,
-      cartesian: <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />,
+      cartesian: <CartesianGrid strokeDasharray="3 3" stroke="var(--line)" />,
       tooltip: <Tooltip formatter={(v: number) => v.toLocaleString()} />,
       legend: <Legend />,
     };
@@ -405,7 +405,7 @@ export function ExcelChartViewer({ document, onClose }: ExcelChartViewerProps) {
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center h-72 gap-3 text-gray-500">
-        <Loader2 className="h-8 w-8 animate-spin text-[#febb00]" />
+        <Loader2 className="h-8 w-8 animate-spin text-signal-text" />
         <p className="text-sm">Extracting spreadsheet data…</p>
       </div>
     );
@@ -469,7 +469,7 @@ export function ExcelChartViewer({ document, onClose }: ExcelChartViewerProps) {
                   key={type}
                   variant={chartType === type ? 'default' : 'outline'}
                   size="sm"
-                  className={`h-8 px-2.5 gap-1.5 text-xs ${chartType === type ? 'bg-[#1e3c21] text-white hover:bg-[#1e3c21]' : ''}`}
+                  className={`h-8 px-2.5 gap-1.5 text-xs ${chartType === type ? 'bg-signal text-on-signal hover:bg-signal-hover' : ''}`}
                   onClick={() => setChartType(type)}
                 >
                   <Icon className="h-3.5 w-3.5" />

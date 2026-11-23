@@ -144,9 +144,9 @@ export function DepartmentAssignUsers({
                 const isHead = currentHeadId === user.id;
 
                 return (
-                  <div key={user.id} className={`flex items-center justify-between p-3 ${isAssigned ? 'bg-green-50/50' : 'bg-white'}`}>
+                  <div key={user.id} className={`flex items-center justify-between p-3 ${isAssigned ? 'bg-positive-tint' : 'bg-white'}`}>
                     <div className="flex items-center gap-3 min-w-0">
-                      <UserCircle className={`h-8 w-8 shrink-0 ${isAssigned ? 'text-green-600' : 'text-gray-300'}`} />
+                      <UserCircle className={`h-8 w-8 shrink-0 ${isAssigned ? 'text-positive' : 'text-gray-300'}`} />
                       <div className="min-w-0">
                         <p className="text-sm font-medium text-gray-900 truncate">
                           {user.first_name} {user.last_name}
@@ -162,7 +162,7 @@ export function DepartmentAssignUsers({
                             size="sm"
                             type="button"
                             variant={isHead ? "default" : "outline"}
-                            className={isHead ? "bg-[#febb00] text-[#1e3c21] hover:bg-[#e8a900] h-7 text-xs" : "h-7 text-xs"}
+                            className={isHead ? "bg-primary text-on-signal hover:bg-signal-hover h-7 text-xs" : "h-7 text-xs"}
                             onClick={() => onHeadChange(isHead ? undefined : user.id)}
                             title={isHead ? "Currently the Department Head" : "Make Department Head"}
                           >
@@ -172,7 +172,7 @@ export function DepartmentAssignUsers({
                             size="icon"
                             type="button"
                             variant="ghost"
-                            className="h-7 w-7 text-red-600 hover:text-red-700 hover:bg-red-50"
+                            className="h-7 w-7 text-risk hover:text-risk hover:bg-risk-tint"
                             onClick={() => handleToggleMember(user.id)}
                             title="Remove from department"
                           >
@@ -184,7 +184,7 @@ export function DepartmentAssignUsers({
                           size="sm"
                           type="button"
                           variant="outline"
-                          className="h-7 text-xs border-green-200 text-green-700 hover:bg-green-50"
+                          className="h-7 text-xs border-line text-positive hover:bg-positive-tint"
                           onClick={() => handleToggleMember(user.id)}
                         >
                           Add to Dept

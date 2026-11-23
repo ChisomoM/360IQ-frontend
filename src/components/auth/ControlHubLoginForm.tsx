@@ -44,7 +44,7 @@ export const ControlHubLoginForm: React.FC<ControlHubLoginFormProps> = () => {
           <Input
             id="email"
             type="email"
-            placeholder="admin@avec.com"
+            placeholder="admin@360iq.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             className="h-11"
@@ -81,7 +81,7 @@ export const ControlHubLoginForm: React.FC<ControlHubLoginFormProps> = () => {
 
         <Button
           type="submit"
-          className="w-full h-11 bg-[#7c69ff] hover:bg-[#6b5fd5] text-white font-medium"
+          className="w-full h-11"
           disabled={isLoading}
         >
           {isLoading ? (

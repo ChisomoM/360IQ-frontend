@@ -74,13 +74,13 @@ const reportDataSamples = {
     { month: 'Jun', value: 220000, count: 85 },
   ],
   statusBreakdown: [
-    { name: 'Approved', value: 385, fill: '#10b981' },
-    { name: 'Pending', value: 145, fill: '#f59e0b' },
-    { name: 'Rejected', value: 70, fill: '#ef4444' },
+    { name: 'Approved', value: 385, fill: 'var(--positive)' },
+    { name: 'Pending', value: 145, fill: 'var(--caution)' },
+    { name: 'Rejected', value: 70, fill: 'var(--risk)' },
   ],
 };
 
-const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
+const COLORS = ['var(--chart-1)', 'var(--chart-2)', 'var(--chart-3)', 'var(--chart-4)', 'var(--chart-1)', 'var(--chart-2)'];
 
 export const ReportGenerationResult: React.FC<ReportGenerationResultProps> = ({
   report,
@@ -142,7 +142,7 @@ export const ReportGenerationResult: React.FC<ReportGenerationResultProps> = ({
       <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
         <div className="flex items-start justify-between gap-4 mb-4">
           <div>
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+            <h1 className="text-3xl font-semibold text-text-primary">
               Report Generated
             </h1>
             <p className="text-sm text-muted-foreground mt-2">
@@ -214,7 +214,7 @@ export const ReportGenerationResult: React.FC<ReportGenerationResultProps> = ({
                       <XAxis dataKey="stage" />
                       <YAxis />
                       <Tooltip />
-                      <Bar dataKey="count" fill="#3b82f6" />
+                      <Bar dataKey="count" fill="var(--chart-1)" />
                     </BarChart>
                   </ResponsiveContainer>
                   <div className="grid grid-cols-2 gap-4">
@@ -239,8 +239,8 @@ export const ReportGenerationResult: React.FC<ReportGenerationResultProps> = ({
                       <YAxis />
                       <Tooltip />
                       <Legend />
-                      <Line type="monotone" dataKey="value" stroke="#3b82f6" name="Value ($)" />
-                      <Line type="monotone" dataKey="count" stroke="#10b981" name="Count" />
+                      <Line type="monotone" dataKey="value" stroke="var(--chart-1)" name="Value ($)" />
+                      <Line type="monotone" dataKey="count" stroke="var(--chart-2)" name="Count" />
                     </LineChart>
                   </ResponsiveContainer>
                   <div className="grid grid-cols-2 gap-4">
@@ -266,7 +266,7 @@ export const ReportGenerationResult: React.FC<ReportGenerationResultProps> = ({
                       labelLine={false}
                       label={({ name, value }) => `${name}: ${value}`}
                       outerRadius={80}
-                      fill="#8884d8"
+                      fill="var(--chart-1)"
                       dataKey="value"
                     >
                       {reportDataSamples.statusBreakdown.map((entry, index) => (
@@ -298,10 +298,10 @@ export const ReportGenerationResult: React.FC<ReportGenerationResultProps> = ({
           </Card>
 
           {/* AI Insights */}
-          <Card className="shadow-lg border-primary/20 bg-gradient-to-br from-slate-50 to-slate-100">
+          <Card className="bg-signal-tint iq-grad-border">
             <CardHeader className="border-b border-primary/10">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-gradient-to-br from-purple-500 to-blue-500 rounded-lg">
+                <div className="p-2 bg-signal rounded-md">
                   <Sparkles className="h-5 w-5 text-white" />
                 </div>
                 <div>

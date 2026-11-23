@@ -110,10 +110,10 @@ const itemVariants = {
 
 // Same accent colour logic as the Departments list page — consistent per code
 const accentColors = [
-  { ring: 'from-ch-primary-500 to-ch-primary-600', bg: 'bg-ch-primary-50', text: 'text-ch-primary-700', iconBg: 'bg-ch-primary/[0.08]', iconText: 'text-ch-primary-600' },
-  { ring: 'from-ch-secondary-500 to-ch-secondary-600', bg: 'bg-ch-secondary-50', text: 'text-ch-secondary-700', iconBg: 'bg-ch-secondary/[0.08]', iconText: 'text-ch-secondary-600' },
-  { ring: 'from-emerald-400 to-emerald-500', bg: 'bg-emerald-50', text: 'text-emerald-700', iconBg: 'bg-emerald-500/[0.08]', iconText: 'text-emerald-600' },
-  { ring: 'from-amber-400 to-amber-500', bg: 'bg-amber-50', text: 'text-amber-700', iconBg: 'bg-amber-500/[0.08]', iconText: 'text-amber-600' },
+  { ring: 'from-ch-primary-600 to-ch-primary-600', bg: 'bg-ch-primary-50', text: 'text-ch-primary-700', iconBg: 'bg-ch-primary/[0.08]', iconText: 'text-ch-primary-600' },
+  { ring: 'from-ch-secondary-600 to-ch-secondary-600', bg: 'bg-ch-secondary-50', text: 'text-ch-secondary-700', iconBg: 'bg-ch-secondary/[0.08]', iconText: 'text-ch-secondary-600' },
+  { ring: 'from-ch-tertiary-500 to-ch-tertiary-500', bg: 'bg-surface-2', text: 'text-text-secondary', iconBg: 'bg-surface-2', iconText: 'text-text-secondary' },
+  { ring: 'from-caution to-caution', bg: 'bg-caution-tint', text: 'text-caution', iconBg: 'bg-caution-tint', iconText: 'text-caution' },
 ];
 
 const getAccent = (code: string) => accentColors[code.charCodeAt(0) % accentColors.length];
@@ -130,15 +130,15 @@ const STATUS_CONFIG: Record<string, { cls: string; label: string }> = {
 };
 
 const DOC_TYPE_COLOR: Record<string, string> = {
-  policy: 'bg-indigo-50 text-indigo-700',
-  minutes: 'bg-teal-50 text-teal-700',
-  report: 'bg-orange-50 text-orange-700',
-  form: 'bg-pink-50 text-pink-700',
-  memo: 'bg-cyan-50 text-cyan-700',
+  policy: 'bg-surface-2 text-sky-text',
+  minutes: 'bg-signal-tint text-signal-text',
+  report: 'bg-caution-tint text-caution',
+  form: 'bg-surface-2 text-text-secondary',
+  memo: 'bg-positive-tint text-positive',
 };
 
 const ACTIVITY_CONFIG: Record<string, { color: string; icon: React.ReactNode }> = {
-  approve: { color: 'bg-emerald-50 text-emerald-600', icon: <CheckCircle className="h-3 w-3" /> },
+  approve: { color: 'bg-positive-tint text-positive', icon: <CheckCircle className="h-3 w-3" /> },
   reject: { color: 'bg-danger-light text-danger-fg', icon: <AlertCircle className="h-3 w-3" /> },
   document: { color: 'bg-blue-50 text-blue-600', icon: <FileText className="h-3 w-3" /> },
   edit: { color: 'bg-ch-primary/10 text-ch-primary', icon: <Edit2 className="h-3 w-3" /> },
@@ -573,7 +573,7 @@ export default function DepartmentDetailPage() {
               </code>
               <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium ${dept.is_active ? 'bg-success-light text-success-fg' : 'bg-danger-light text-danger-fg'
                 }`}>
-                <div className={`w-1.5 h-1.5 rounded-full ${dept.is_active ? 'bg-emerald-500' : 'bg-red-400'}`} />
+                <div className={`w-1.5 h-1.5 rounded-full ${dept.is_active ? 'bg-positive' : 'bg-risk'}`} />
                 {dept.is_active ? 'Active' : 'Inactive'}
               </span>
             </div>

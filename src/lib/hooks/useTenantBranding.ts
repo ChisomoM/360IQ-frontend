@@ -1,12 +1,12 @@
 import { useEffect } from 'react';
 import { useTenantStore } from '@/lib/store/tenantStore';
 
-const DEFAULT_PRIMARY_COLOR = '#1e5631';
-const DEFAULT_SECONDARY_COLOR = '#febb00';
-const DEFAULT_ACCENT_COLOR = '#172E70';
-const DEFAULT_DESTRUCTIVE_COLOR = '#dc2626';
-const DEFAULT_SUCCESS_COLOR = '#10b981';
-const DEFAULT_LOGO = '/logos/unilus-logo-3.png';
+const DEFAULT_PRIMARY_COLOR = '#0A7A67';
+const DEFAULT_SECONDARY_COLOR = '#1B63AE';
+const DEFAULT_ACCENT_COLOR = '#0B1B2B';
+const DEFAULT_DESTRUCTIVE_COLOR = '#B3261E';
+const DEFAULT_SUCCESS_COLOR = '#1F5FA8';
+const DEFAULT_LOGO = '/logos/logo/360IQ-horizontal-transparent-for-light.png';
 
 /**
  * Converts a hex color string to its HSL numeric components (e.g., "248 75% 44%").
@@ -101,8 +101,8 @@ export function useTenantBranding() {
     accentColor: branding?.accent_color || DEFAULT_ACCENT_COLOR,
     destructiveColor: branding?.destructive_color || DEFAULT_DESTRUCTIVE_COLOR,
     successColor: branding?.success_color || DEFAULT_SUCCESS_COLOR,
-    tenantName: branding?.long_name || branding?.short_name || 'DIMS',
-    shortName: branding?.short_name || 'DIMS',
+    tenantName: branding?.long_name || branding?.short_name || '360IQ',
+    shortName: branding?.short_name || '360IQ',
     tagline: branding?.tagline || '',
     settings: config?.settings || {},
   };

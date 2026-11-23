@@ -68,9 +68,9 @@ export default function Navbar(){
                     {/* Logo */}
                     <a href="/" className="flex-shrink-0 justify-start grid grid-cols-2">
                         <img
-                            src={isScrolled ? "/logos/unilus-logo-3.png" : "/logos/unilus-logo-3.png"}
-                            alt="University of Lusaka Logo"
-                            className="h-32 w-auto object-contain"
+                            src={isScrolled ? "/logos/logo/360IQ-horizontal-transparent-for-light.png" : "/logos/logo/360IQ-horizontal-transparent-for-dark.png"}
+                            alt="360IQ"
+                            className="h-10 w-auto object-contain"
                         />
                     </a>
 
@@ -80,7 +80,7 @@ export default function Navbar(){
                             <a 
                                 key={item.name}
                                 href={item.href}
-                                className={`px-3 py-2 text-sm font-medium transition-colors duration-200 hover:text-primary-gold ${
+                                className={`px-3 py-2 text-sm font-medium transition-colors duration-200 hover:text-signal-text ${
                                     isScrolled ? "text-gray-800" : "text-white"
                                 }`}
                                 onClick={(e) => handleNavClick(e, item.href)}
@@ -94,13 +94,13 @@ export default function Navbar(){
 
                     <Button 
                     onClick= {() => navigate('/join')}
-                    className="hidden md:block ml-4 px-12 rounded-2xl bg-[#febb00] hover:bg-[#e8a900] text-[#1e3c21] hover:text-[#0f1f15] font-bold hover:shadow-lg shadow-md transition-all duration-300">
+                    className="hidden md:block ml-4 px-12 rounded-2xl bg-signal hover:bg-signal-hover text-on-signal font-bold transition-colors duration-300">
                             Apply Now
                         </Button>
 
                     <Button 
                     onClick= {() => navigate('/join')}
-                    className="md:hidden ml-4 px-6 rounded-xl bg-[#febb00] hover:bg-[#e8a900] text-[#1e3c21] hover:text-[#0f1f15] font-bold hover:shadow-lg shadow-md transition-all duration-300">
+                    className="md:hidden ml-4 px-6 rounded-xl bg-signal hover:bg-signal-hover text-on-signal font-bold transition-colors duration-300">
                             Apply
                         </Button>
 
@@ -130,7 +130,7 @@ export default function Navbar(){
                                     key={item.name}
                                     href={item.href}
                                     className={
-                                        'block px-3 py-2 rounded-md text-base font-medium transition-colors duration-200 text-gray-700 hover:text-primary-gold hover:bg-gray-50'
+                                        'block px-3 py-2 rounded-md text-base font-medium transition-colors duration-200 text-gray-700 hover:text-signal-text hover:bg-gray-50'
                                     }
                                     onClick={(e) => handleNavClick(e, item.href)}
                                 >
@@ -138,7 +138,7 @@ export default function Navbar(){
                                 </a>
                             ))}
                             <div className="px-3 py-2">
-                                <Button onClick={() => navigate('/join')} className="bg-[#febb00] text-[#1e3c21] font-bold hover:bg-[#e8a900] w-full">
+                                <Button onClick={() => navigate('/join')} className="bg-signal text-on-signal font-bold hover:bg-signal-hover w-full">
                                     Apply Now
                                 </Button>
                             </div>

@@ -48,7 +48,7 @@ export default function RoleAwareDashboard() {
                   <XAxis dataKey="name" fontSize={12} tickLine={false} axisLine={false} />
                   <YAxis fontSize={12} tickLine={false} axisLine={false} />
                   <RechartsTooltip cursor={{ fill: 'transparent' }} />
-                  <Bar dataKey="val" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="val" fill="var(--chart-1)" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </ChartCard>
@@ -57,9 +57,9 @@ export default function RoleAwareDashboard() {
                  <ResponsiveContainer width="100%" height={200}>
                   <PieChart>
                     <Pie data={[{ name: 'Pending', value: 400 }, { name: 'Approved', value: 300 }, { name: 'Paid', value: 300 }]} innerRadius={60} outerRadius={80} paddingAngle={5} dataKey="value">
-                      <Cell fill="#f59e0b" />
-                      <Cell fill="#3b82f6" />
-                      <Cell fill="#10b981" />
+                      <Cell fill="var(--caution)" />
+                      <Cell fill="var(--chart-2)" />
+                      <Cell fill="var(--positive)" />
                     </Pie>
                     <RechartsTooltip />
                     <Legend />
@@ -73,7 +73,7 @@ export default function RoleAwareDashboard() {
                     <XAxis dataKey="month" fontSize={12} tickLine={false} axisLine={false}/>
                     <YAxis fontSize={12} tickLine={false} axisLine={false}/>
                     <RechartsTooltip />
-                    <Line type="monotone" dataKey="val" stroke="#10b981" strokeWidth={3} dot={false} />
+                    <Line type="monotone" dataKey="val" stroke="var(--chart-1)" strokeWidth={3} dot={false} />
                   </LineChart>
                 </ResponsiveContainer>
               </ChartCard>
@@ -87,9 +87,9 @@ export default function RoleAwareDashboard() {
                <ResponsiveContainer width="100%" height={200}>
                 <PieChart>
                   <Pie data={[{ name: 'Pending', value: 45 }, { name: 'Signed', value: 300 }, { name: 'Rejected', value: 20 }]} innerRadius={60} outerRadius={80} paddingAngle={5} dataKey="value">
-                    <Cell fill="#f59e0b" />
-                    <Cell fill="#10b981" />
-                    <Cell fill="#ef4444" />
+                    <Cell fill="var(--caution)" />
+                    <Cell fill="var(--positive)" />
+                    <Cell fill="var(--risk)" />
                   </Pie>
                   <RechartsTooltip />
                   <Legend />
@@ -103,7 +103,7 @@ export default function RoleAwareDashboard() {
                   <XAxis dataKey="day" fontSize={12} tickLine={false} axisLine={false}/>
                   <YAxis fontSize={12} tickLine={false} axisLine={false}/>
                   <RechartsTooltip />
-                  <Line type="monotone" dataKey="val" stroke="#8b5cf6" strokeWidth={3} />
+                  <Line type="monotone" dataKey="val" stroke="var(--chart-1)" strokeWidth={3} />
                 </LineChart>
               </ResponsiveContainer>
             </ChartCard>
@@ -120,9 +120,9 @@ export default function RoleAwareDashboard() {
                   <YAxis dataKey="name" type="category" fontSize={12} tickLine={false} axisLine={false}/>
                   <RechartsTooltip />
                   <Legend />
-                  <Bar dataKey="Active" stackId="a" fill="#10b981" />
-                  <Bar dataKey="Expiring" stackId="a" fill="#f59e0b" />
-                  <Bar dataKey="Expired" stackId="a" fill="#ef4444" />
+                  <Bar dataKey="Active" stackId="a" fill="var(--positive)" />
+                  <Bar dataKey="Expiring" stackId="a" fill="var(--caution)" />
+                  <Bar dataKey="Expired" stackId="a" fill="var(--risk)" />
                 </BarChart>
               </ResponsiveContainer>
             </ChartCard>
@@ -133,7 +133,7 @@ export default function RoleAwareDashboard() {
                   <XAxis dataKey="week" fontSize={12} tickLine={false} axisLine={false}/>
                   <YAxis fontSize={12} tickLine={false} axisLine={false}/>
                   <RechartsTooltip />
-                  <Line type="monotone" dataKey="val" stroke="#3b82f6" strokeWidth={3} />
+                  <Line type="monotone" dataKey="val" stroke="var(--chart-2)" strokeWidth={3} />
                 </LineChart>
               </ResponsiveContainer>
             </ChartCard>
@@ -147,8 +147,8 @@ export default function RoleAwareDashboard() {
                <ResponsiveContainer width="100%" height={200}>
                 <PieChart>
                   <Pie data={[{ name: 'Pending', value: 40 }, { name: 'Completed', value: 300 }]} innerRadius={60} outerRadius={80} paddingAngle={5} dataKey="value">
-                    <Cell fill="#f59e0b" />
-                    <Cell fill="#10b981" />
+                    <Cell fill="var(--caution)" />
+                    <Cell fill="var(--positive)" />
                   </Pie>
                   <RechartsTooltip />
                   <Legend />
@@ -162,7 +162,7 @@ export default function RoleAwareDashboard() {
                   <XAxis dataKey="day" fontSize={12} tickLine={false} axisLine={false}/>
                   <YAxis fontSize={12} tickLine={false} axisLine={false}/>
                   <RechartsTooltip />
-                  <Line type="step" dataKey="val" stroke="#6366f1" strokeWidth={3} />
+                  <Line type="step" dataKey="val" stroke="var(--chart-1)" strokeWidth={3} />
                 </LineChart>
               </ResponsiveContainer>
             </ChartCard>
@@ -174,18 +174,18 @@ export default function RoleAwareDashboard() {
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
       {/* Dev Control Panel - To test different roles */}
-      <div className="bg-indigo-900 text-white p-3 flex items-center justify-between shadow-md relative z-50">
+      <div className="bg-ch-tertiary text-white p-3 flex items-center justify-between shadow-md relative z-50">
         <div className="text-sm font-semibold flex items-center gap-2">
           <BarChart3 className="w-4 h-4" /> Dashboard Preview Controller
         </div>
         <div className="flex gap-4">
-          <select value={role} onChange={e => setRole(e.target.value as RoleLevel)} className="bg-indigo-800 border-indigo-700 text-white text-sm rounded px-2 py-1 outline-none">
+          <select value={role} onChange={e => setRole(e.target.value as RoleLevel)} className="bg-ch-tertiary-800 border-ch-tertiary-700 text-white text-sm rounded px-2 py-1 outline-none">
             <option value="SuperAdmin">Role: Super Admin</option>
             <option value="TenantAdmin">Role: Tenant Admin</option>
             <option value="Manager">Role: Manager / HOD</option>
             <option value="User">Role: Regular User</option>
           </select>
-          <select value={department} onChange={e => setDepartment(e.target.value as Department)} className="bg-indigo-800 border-indigo-700 text-white text-sm rounded px-2 py-1 outline-none">
+          <select value={department} onChange={e => setDepartment(e.target.value as Department)} className="bg-ch-tertiary-800 border-ch-tertiary-700 text-white text-sm rounded px-2 py-1 outline-none">
             <option value="Finance">Dept: Finance</option>
             <option value="Registry">Dept: Registry</option>
             <option value="HR">Dept: HR</option>
@@ -199,7 +199,7 @@ export default function RoleAwareDashboard() {
         {/* Sticky Header */}
         <div className="sticky top-0 z-40 bg-white/80 backdrop-blur-md rounded-xl p-6 shadow-sm border border-slate-100 flex flex-col md:flex-row justify-between items-start md:items-center">
           <div>
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent">
+            <h1 className="text-3xl font-bold text-text-primary">
               Welcome back, {user.firstName}
             </h1>
             <p className="text-muted-foreground mt-1 text-sm font-medium">{subtitleMap[role]}</p>
@@ -212,13 +212,13 @@ export default function RoleAwareDashboard() {
         {/* Zone 1: Summary Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {showTotalDocs && (
-            <MetricCard title="Total Documents" value="1,248" trend="+12" trendUp icon={<FileText className="text-indigo-600 w-5 h-5" />} bg="bg-indigo-50" />
+            <MetricCard title="Total Documents" value="1,248" trend="+12" trendUp icon={<FileText className="text-signal-text w-5 h-5" />} bg="bg-signal-tint" />
           )}
           {showApprovals && (
-            <MetricCard title="Pending Approvals" value="4" trend="-2" trendUp={false} icon={<CheckCircle className="text-amber-600 w-5 h-5" />} bg="bg-amber-50" />
+            <MetricCard title="Pending Approvals" value="4" trend="-2" trendUp={false} icon={<CheckCircle className="text-caution w-5 h-5" />} bg="bg-caution-tint" />
           )}
           {showSignatures && (
-            <MetricCard title="Pending Signatures" value="3" icon={<FileSignature className="text-rose-600 w-5 h-5" />} bg="bg-rose-50" />
+            <MetricCard title="Pending Signatures" value="3" icon={<FileSignature className="text-risk w-5 h-5" />} bg="bg-risk-tint" />
           )}
         </div>
 
@@ -228,7 +228,7 @@ export default function RoleAwareDashboard() {
           {/* Zone 2: Left Column (Charts) */}
           <div className="xl:col-span-8 flex flex-col gap-6">
             <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2 pb-2 border-b border-slate-200">
-              <BarChart3 className="w-5 h-5 text-indigo-600" />
+              <BarChart3 className="w-5 h-5 text-signal-text" />
               {department !== 'None' ? `${department} Analytics` : 'Organization Overview'}
             </h2>
             {role === 'SuperAdmin' || role === 'TenantAdmin' ? (
@@ -243,10 +243,10 @@ export default function RoleAwareDashboard() {
           {/* Zone 3: Right Column (Activity Panel) */}
           <div className="xl:col-span-4 flex flex-col gap-6">
              {/* Documents Needing Attention */}
-             <Card className="border-rose-200 shadow-sm rounded-xl overflow-hidden">
-              <CardHeader className="bg-rose-50/80 pb-4 border-b border-rose-100">
-                <CardTitle className="text-base text-rose-900 flex items-center gap-2 font-bold">
-                  <AlertCircle className="w-[18px] h-[18px] text-rose-600" />
+             <Card className="border-line shadow-sm rounded-xl overflow-hidden">
+              <CardHeader className="bg-risk-tint pb-4 border-b border-line">
+                <CardTitle className="text-base text-risk flex items-center gap-2 font-bold">
+                  <AlertCircle className="w-[18px] h-[18px] text-risk" />
                   Requires Attention
                 </CardTitle>
               </CardHeader>
@@ -283,7 +283,7 @@ export default function RoleAwareDashboard() {
                   <Bell className="w-[18px] h-[18px] text-slate-500" />
                   Alerts
                 </CardTitle>
-                <a href="#" className="text-xs text-indigo-600 hover:text-indigo-800 font-semibold tracking-wide">View all</a>
+                <a href="#" className="text-xs text-signal-text hover:text-signal-hover font-semibold tracking-wide">View all</a>
               </CardHeader>
               <CardContent className="pt-4 p-0 px-4">
                  <div className="space-y-4 pb-4">
@@ -302,7 +302,7 @@ export default function RoleAwareDashboard() {
           <div className="flex justify-between items-end border-b border-slate-200 pb-3">
             <div>
               <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                <FileText className="w-5 h-5 text-indigo-600" />
+                <FileText className="w-5 h-5 text-signal-text" />
                 Recent Documents
               </h2>
               <p className="text-sm text-slate-500 mt-1 font-medium">Latest files associated with your workflow</p>
@@ -311,7 +311,7 @@ export default function RoleAwareDashboard() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <DocumentCard title="Q3 Marketing Strategy" type="Word" status="In Progress" author="Alex" />
-            <Button className="h-full min-h-[140px] border-2 border-dashed border-slate-300 hover:border-indigo-400 bg-slate-50/50 hover:bg-indigo-50/50 flex flex-col items-center justify-center text-slate-600 hover:text-indigo-700 gap-3 font-semibold transition-all shadow-sm rounded-xl">
+            <Button className="h-full min-h-[140px] border-2 border-dashed border-slate-300 hover:border-primary bg-slate-50/50 hover:bg-signal-tint flex flex-col items-center justify-center text-slate-600 hover:text-signal-text gap-3 font-semibold transition-all shadow-sm rounded-xl">
               <FileCardIcon />
               Upload New Document
             </Button>
@@ -340,7 +340,7 @@ function MetricCard({ title, value, trend, trendUp, icon, bg }: { title: string,
         <div className="flex items-end gap-3 relative z-10">
           <h3 className="text-4xl font-extrabold text-slate-900 tracking-tight">{value}</h3>
           {trend && (
-            <span className={`text-sm font-bold pb-1.5 ${trendUp ? 'text-emerald-600' : 'text-rose-600'}`}>
+            <span className={`text-sm font-bold pb-1.5 ${trendUp ? 'text-positive' : 'text-risk'}`}>
               {trendUp ? '↗' : '↘'} {trend}
             </span>
           )}
@@ -366,16 +366,16 @@ function ChartCard({ title, desc, children }: { title: string, desc: string, chi
 
 function AttentionItem({ doc, action, label }: { doc: string, action: string, label?: string }) {
   return (
-    <div className="p-4 flex items-center justify-between hover:bg-rose-50/30 transition-colors">
+    <div className="p-4 flex items-center justify-between hover:bg-surface-2 transition-colors">
       <div className="flex-1 min-w-0 pr-4">
         <div className="flex items-center gap-2">
            <p className="font-semibold text-sm text-slate-800 truncate">{doc}</p>
-           {label && <span className="text-[10px] font-bold uppercase tracking-wider text-rose-600 bg-rose-100 px-1.5 py-0.5 rounded">{label}</span>}
+           {label && <span className="text-[10px] font-bold uppercase tracking-wider text-risk bg-risk-tint px-1.5 py-0.5 rounded">{label}</span>}
         </div>
-        <p className="text-xs text-rose-600 font-medium mt-1 w-max px-2 py-0.5 bg-rose-100 rounded">Requires {action}</p>
+        <p className="text-xs text-risk font-medium mt-1 w-max px-2 py-0.5 bg-risk-tint rounded">Requires {action}</p>
       </div>
       <div>
-        <Button size="sm" className={action === 'Sign' ? 'bg-rose-600 hover:bg-rose-700' : 'bg-slate-800 hover:bg-slate-900'}>{action}</Button>
+        <Button size="sm" className={action === 'Sign' ? 'bg-risk hover:opacity-90 text-white' : 'bg-ch-tertiary hover:opacity-90 text-white'}>{action}</Button>
       </div>
     </div>
   );
@@ -393,8 +393,8 @@ function RequestItem({ doc, status, time }: { doc: string, status: string, time:
         <p className="text-sm font-medium text-slate-800 truncate">{doc}</p>
         <div className="flex items-center gap-2 mt-1">
           <span className={`text-[10px] uppercase font-bold px-1.5 py-0.5 rounded ${
-            isApproved ? 'bg-emerald-100 text-emerald-700' : 
-            isRejected ? 'bg-rose-100 text-rose-700' : 'bg-amber-100 text-amber-700'
+            isApproved ? 'bg-positive-tint text-positive' :
+            isRejected ? 'bg-risk-tint text-risk' : 'bg-caution-tint text-caution'
           }`}>{status}</span>
           <span className="text-xs text-slate-400">{time}</span>
         </div>
@@ -406,7 +406,7 @@ function RequestItem({ doc, status, time }: { doc: string, status: string, time:
 function NotificationItem({ msg, time, unread }: { msg: string, time: string, unread?: boolean }) {
   return (
     <div className="flex items-start gap-3 relative">
-      {unread && <div className="absolute -left-1 top-1.5 w-2 h-2 rounded-full bg-indigo-600" />}
+      {unread && <div className="absolute -left-1 top-1.5 w-2 h-2 rounded-full bg-primary" />}
       <div className="flex-1 min-w-0 pl-3">
         <p className={`text-sm ${unread ? 'font-medium text-slate-800' : 'text-slate-600'} leading-snug`}>{msg}</p>
         <span className="text-xs text-slate-400 mt-1 block">{time}</span>
@@ -420,7 +420,7 @@ function DocumentCard({ title, type, status, author }: { title: string, type: st
     <Card className="hover:shadow-md transition-shadow group flex flex-col justify-between cursor-pointer border-slate-200">
       <CardContent className="p-5 flex flex-col h-full gap-4">
         <div className="flex justify-between items-start">
-          <div className="w-10 h-10 rounded bg-indigo-50 flex items-center justify-center text-indigo-600">
+          <div className="w-10 h-10 rounded bg-signal-tint flex items-center justify-center text-signal-text">
              <FileCardIcon />
           </div>
           <span className="text-[10px] uppercase font-bold text-slate-500 bg-slate-100 px-2 py-1 rounded">
@@ -428,12 +428,12 @@ function DocumentCard({ title, type, status, author }: { title: string, type: st
           </span>
         </div>
         <div>
-          <h3 className="font-semibold text-slate-800 group-hover:text-indigo-600 transition-colors line-clamp-2">{title}</h3>
+          <h3 className="font-semibold text-slate-800 group-hover:text-signal-text transition-colors line-clamp-2">{title}</h3>
           <p className="text-xs text-slate-500 mt-1">Edited by {author}</p>
         </div>
         <div className="mt-auto pt-4 border-t border-slate-100 flex justify-between items-center">
           <span className="text-xs font-medium text-slate-600 flex items-center gap-1.5">
-            <span className={`w-1.5 h-1.5 rounded-full ${status.includes('Progress') ? 'bg-amber-400' : 'bg-rose-400'}`} />
+            <span className={`w-1.5 h-1.5 rounded-full ${status.includes('Progress') ? 'bg-caution' : 'bg-risk'}`} />
             {status}
           </span>
         </div>
@@ -540,7 +540,7 @@ function RankingItem({ rank, title, dept, count, conv }: { rank: number; title: 
       </div>
       <div className="text-right">
         <p className="font-bold text-slate-900 text-sm">{count}</p>
-        <p className="text-xs text-emerald-600 font-semibold mt-0.5">{conv} conv</p>
+        <p className="text-xs text-positive font-semibold mt-0.5">{conv} conv</p>
       </div>
     </div>
   );

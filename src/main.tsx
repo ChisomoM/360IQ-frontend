@@ -6,6 +6,9 @@ import './index.css'
 import App from './App.tsx'
 import { AuthProvider } from './lib/context/auth.tsx'
 import { RbacProvider } from './lib/context/RbacContext.tsx'
+import { initTheme } from './lib/theme'
+
+initTheme()
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

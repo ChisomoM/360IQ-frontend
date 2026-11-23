@@ -27,9 +27,9 @@ import type { StaffApplication, ApplicationStatus, ApproveApplicationPayload } f
 import { toast } from 'sonner';
 
 const STATUS_BADGE: Record<ApplicationStatus, string> = {
-  pending: 'bg-yellow-100 text-yellow-800',
-  approved: 'bg-green-100 text-green-800',
-  rejected: 'bg-red-100 text-red-800',
+  pending: 'bg-caution-tint text-caution',
+  approved: 'bg-positive-tint text-positive',
+  rejected: 'bg-risk-tint text-risk',
 };
 
 function formatDate(d?: string) {
@@ -142,7 +142,7 @@ export default function StaffApplications() {
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <ClipboardCheck className="h-6 w-6 text-blue-600" />
+          <ClipboardCheck className="h-6 w-6 text-signal-text" />
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Staff Applications</h1>
             <p className="text-sm text-gray-500">Review and manage staff onboarding applications</p>
@@ -207,10 +207,10 @@ export default function StaffApplications() {
                         </Button>
                         {canManage && app.status === 'pending' && (
                           <>
-                            <Button size="sm" variant="ghost" className="text-green-600 hover:text-green-700" onClick={() => openApprove(app)} title="Approve">
+                            <Button size="sm" variant="ghost" className="text-positive hover:text-positive" onClick={() => openApprove(app)} title="Approve">
                               <CheckCircle className="h-4 w-4" />
                             </Button>
-                            <Button size="sm" variant="ghost" className="text-red-600 hover:text-red-700" onClick={() => openReject(app)} title="Reject">
+                            <Button size="sm" variant="ghost" className="text-risk hover:text-risk" onClick={() => openReject(app)} title="Reject">
                               <XCircle className="h-4 w-4" />
                             </Button>
                           </>
@@ -279,7 +279,7 @@ export default function StaffApplications() {
           </DialogHeader>
           {approveResult ? (
             <div className="space-y-4">
-              <div className="flex items-center gap-2 text-green-600">
+              <div className="flex items-center gap-2 text-positive">
                 <CheckCircle className="h-5 w-5" />
                 <span className="font-semibold">Account created successfully</span>
               </div>
@@ -334,7 +334,7 @@ export default function StaffApplications() {
               </div>
               <DialogFooter className="gap-2">
                 <Button variant="outline" onClick={() => setApproveTarget(null)}>Cancel</Button>
-                <Button onClick={handleApprove} disabled={actionLoading} className="bg-green-600 hover:bg-green-700">
+                <Button onClick={handleApprove} disabled={actionLoading} className="bg-primary hover:bg-signal-hover text-on-signal">
                   {actionLoading && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
                   Approve &amp; Create Account
                 </Button>

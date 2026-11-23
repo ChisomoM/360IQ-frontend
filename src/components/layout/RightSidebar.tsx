@@ -52,14 +52,14 @@ export function RightSidebar({
           className="group relative flex-shrink-0 transition-transform hover:scale-110 active:scale-95"
           title="Account menu"
         >
-          <Avatar className="h-12 w-12 ring-2 ring-[#1e3c21]/20 group-hover:ring-[#1e3c21]/40 transition-all">
+          <Avatar className="h-12 w-12 ring-2 ring-signal/20 group-hover:ring-signal/40 transition-all">
             <AvatarImage src="" alt={getUserDisplayName()} />
-            <AvatarFallback className="bg-gradient-to-br from-[#1e3c21] to-[#2a5230] text-white font-semibold text-sm">
+            <AvatarFallback className="bg-signal text-on-signal font-semibold text-sm">
               {getInitials()}
             </AvatarFallback>
           </Avatar>
           {/* Hover indicator */}
-          <div className="absolute inset-0 rounded-full border-2 border-[#1e3c21]/0 group-hover:border-[#1e3c21]/40 transition-colors" />
+          <div className="absolute inset-0 rounded-full border-2 border-signal/0 group-hover:border-signal/40 transition-colors" />
         </button>
 
         {/* Separator */}
@@ -71,8 +71,8 @@ export function RightSidebar({
           className={cn(
             'p-2.5 rounded-xl transition-all duration-200',
             isChatOpen
-              ? 'bg-gradient-to-br from-[#D70F0E] to-[#E5600B] text-white shadow-lg'
-              : 'text-gray-600 hover:bg-gray-100 active:bg-gray-200'
+              ? 'bg-signal-tint text-signal-text iq-grad-border'
+              : 'text-text-secondary hover:bg-surface-2 active:bg-surface-2'
           )}
           title={isChatOpen ? 'Close AI Assistant' : 'Open AI Assistant'}
         >
@@ -85,8 +85,8 @@ export function RightSidebar({
           className={cn(
             'p-2.5 rounded-xl transition-all duration-200',
             isDocDetailsOpen
-              ? 'bg-[#1e3c21] text-white shadow-lg'
-              : 'text-gray-600 hover:bg-gray-100 active:bg-gray-200'
+              ? 'bg-surface-2 text-text-primary'
+              : 'text-text-secondary hover:bg-surface-2 active:bg-surface-2'
           )}
           title={isDocDetailsOpen ? 'Close document details' : 'Open document details'}
         >

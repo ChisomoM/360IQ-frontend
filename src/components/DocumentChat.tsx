@@ -198,7 +198,7 @@ export function DocumentChat() {
       case 'search':
         return (
           <div className="space-y-4">
-            <p className="text-gray-600 text-sm">Search for documents in your DIMS</p>
+            <p className="text-gray-600 text-sm">Search for documents</p>
             <form onSubmit={handleSearch} className="flex gap-2">
               <Input
                 placeholder="e.g., Q4 financial reports, HR policies..."

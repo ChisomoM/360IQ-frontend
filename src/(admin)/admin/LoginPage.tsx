@@ -47,7 +47,7 @@ export const LoginPage: React.FC<LoginPageProps> = () => {
 
           {/* Mobile-only logo */}
           <motion.div className="lg:hidden flex justify-center mb-10" variants={item}>
-            <img src="/logos/dims-logo.svg" alt="DIMS" style={{ height: "32px", width: "auto" }} />
+            <img src="/logos/logo/360IQ-horizontal-transparent-for-light.png" alt="360IQ" style={{ height: "72px", width: "auto" }} />
           </motion.div>
 
           {/* Login card */}
@@ -57,7 +57,7 @@ export const LoginPage: React.FC<LoginPageProps> = () => {
           >
             {/* Card logo */}
             <motion.div className="mb-8" variants={item}>
-              <img src="/logos/dims-logo.svg" alt="DIMS" style={{ height: "28px", width: "auto" }} />
+              <img src="/logos/logo/360IQ-horizontal-transparent-for-light.png" alt="360IQ" style={{ height: "64px", width: "auto", marginLeft: "-16px" }} />
             </motion.div>
 
             <motion.h2
@@ -71,7 +71,7 @@ export const LoginPage: React.FC<LoginPageProps> = () => {
               className="font-sans text-base text-slate-500 mb-8"
               variants={item}
             >
-              Sign in to your DIMS workspace.
+              Sign in to your 360IQ workspace.
             </motion.p>
 
             <motion.div variants={item}>

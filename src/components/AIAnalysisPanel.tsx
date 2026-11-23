@@ -72,7 +72,7 @@ const AIAnalysisPanel: React.FC<AIAnalysisPanelProps> = ({ onClose }) => {
   const toggleExpanded = () => setIsExpanded((v) => !v);
 
   return (
-    <Card className="shadow-lg border-primary/20 bg-gradient-to-br from-slate-50 to-slate-100">
+    <Card className="bg-signal-tint iq-grad-border">
       <CardHeader
         role="button"
         tabIndex={0}
@@ -89,7 +89,7 @@ const AIAnalysisPanel: React.FC<AIAnalysisPanelProps> = ({ onClose }) => {
       >
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="p-2 bg-gradient-to-br from-purple-500 to-blue-500 rounded-lg shrink-0">
+            <div className="p-2 bg-signal rounded-md shrink-0">
               <Sparkles className="h-5 w-5 text-white" />
             </div>
             <div className="min-w-0">
@@ -168,18 +168,18 @@ const AIAnalysisPanel: React.FC<AIAnalysisPanelProps> = ({ onClose }) => {
             )}
 
             {response && !isLoading && (
-              <div className="p-4 bg-white rounded-lg border border-primary/20 bg-gradient-to-r from-purple-50 to-blue-50">
+              <div className="p-4 rounded-lg bg-signal-tint iq-grad-border">
                 <div className="flex gap-3">
-                  <Sparkles className="h-5 w-5 text-purple-600 flex-shrink-0 mt-0.5" />
-                  <p className="text-sm text-gray-800 leading-relaxed">{response}</p>
+                  <Sparkles className="h-5 w-5 text-signal-text flex-shrink-0 mt-0.5" />
+                  <p className="text-sm text-text-primary leading-relaxed">{response}</p>
                 </div>
               </div>
             )}
           </div>
 
           {/* Note about AI */}
-          <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-            <p className="text-xs text-blue-700">
+          <div className="p-3 bg-positive-tint border border-line rounded-lg">
+            <p className="text-xs text-positive">
               ℹ️ <strong>Note:</strong> AI insights are mocked for demonstration. In production, this will connect to a live backend AI service for real-time analysis.
             </p>
           </div>

@@ -142,7 +142,7 @@ export default function DocumentCard({
         {/* Left: Document thumbnail/icon area */}
         <div className="relative flex-shrink-0">
           {/* Icon background */}
-          <div className="w-16 h-16 bg-gradient-to-br from-tenant-primary/10 to-tenant-primary/5 rounded-lg flex items-center justify-center border border-tenant-primary/10">
+          <div className="w-16 h-16 bg-tenant-primary/10 rounded-lg flex items-center justify-center border border-tenant-primary/10">
             <FileText className="h-8 w-8 text-tenant-primary" />
           </div>
 

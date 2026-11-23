@@ -59,12 +59,12 @@ export function DocumentTable({
   canDelete = true,
 }: DocumentTableProps) {
   const statusColorMap: Record<string, string> = {
-    'active': 'bg-emerald-100 text-emerald-800',
-    'archived': 'bg-gray-100 text-gray-800',
-    'pending': 'bg-amber-100 text-amber-800',
-    'approved': 'bg-blue-100 text-blue-800',
-    'rejected': 'bg-red-100 text-red-800',
-    'action_required': 'bg-purple-100 text-purple-800',
+    'active': 'bg-signal-tint text-signal-text',
+    'archived': 'bg-surface-2 text-text-secondary',
+    'pending': 'bg-caution-tint text-caution',
+    'approved': 'bg-positive-tint text-positive',
+    'rejected': 'bg-risk-tint text-risk',
+    'action_required': 'bg-caution-tint text-caution',
   }
 
   const renderSortIcon = (column: string) => {

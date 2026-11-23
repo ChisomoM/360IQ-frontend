@@ -1,5 +1,6 @@
 /** @type {import('tailwindcss').Config} */
 export default {
+  darkMode: ['variant', ['&:where(.dark, .dark *)', '&:where([data-theme="ink"], [data-theme="ink"] *)']],
   content: [
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
@@ -9,11 +10,31 @@ export default {
 
       // ─────────────────────────────────────────────────────────────────────
       // CONTROLHUB BRAND COLOURS
-      // These are the DIMS / ControlHub identity colours.
+      // These are the ControlHub identity colours.
       // Full shade scales generated from the three base values so you can
       // use ch-primary-100, ch-secondary-500, ch-tertiary-800 etc. anywhere.
       // ─────────────────────────────────────────────────────────────────────
       colors: {
+        // 360IQ semantic tokens (design.md section 2.2). Product UI uses these, never raw hex.
+        'surface-0': 'var(--surface-0)',
+        'surface-1': 'var(--surface-1)',
+        'surface-2': 'var(--surface-2)',
+        line: { DEFAULT: 'var(--line)', strong: 'var(--line-strong)' },
+        'text-primary': 'var(--text-primary)',
+        'text-secondary': 'var(--text-secondary)',
+        'text-muted': 'var(--text-muted)',
+        signal: { DEFAULT: 'var(--signal)', hover: 'var(--signal-hover)', text: 'var(--signal-text)', tint: 'var(--signal-tint)' },
+        'on-signal': 'var(--on-signal)',
+        'sky-text': 'var(--sky-text)',
+        risk: { DEFAULT: 'var(--risk)', tint: 'var(--risk-tint)' },
+        caution: { DEFAULT: 'var(--caution)', tint: 'var(--caution-tint)' },
+        positive: { DEFAULT: 'var(--positive)', tint: 'var(--positive-tint)' },
+        grade: { platinum: 'var(--grade-platinum)', gold: 'var(--grade-gold)', silver: 'var(--grade-silver)', bronze: 'var(--grade-bronze)' },
+        'on-grade': 'var(--on-grade)',
+        focus: 'var(--focus)',
+        // Brand palette: logo files, heroes and slides only
+        brand: { ink: '#0B1B2B', blue: '#2A7FD4', sky: '#4FB8E8', signal: '#19C3A6', paper: '#F4F7F9' },
+
         'ch-primary': 'hsl(var(--ch-primary-500))',
         'ch-primary-50': 'hsl(var(--ch-primary-50))',
         'ch-primary-100': 'hsl(var(--ch-primary-100))',
@@ -89,9 +110,9 @@ export default {
       // JetBrains Mono   — document IDs, timestamps, hashes, code snippets
       // ─────────────────────────────────────────────────────────────────────
       fontFamily: {
-        display: ['Outfit', 'system-ui', 'sans-serif'],
-        sans:    ['Plus Jakarta Sans', 'system-ui', 'sans-serif'],
-        mono:    ['JetBrains Mono', 'Fira Code', 'monospace'],
+        display: ['Urbanist', '"Segoe UI"', 'system-ui', 'sans-serif'],
+        sans:    ['Urbanist', '"Segoe UI"', 'system-ui', 'sans-serif'],
+        mono:    ['"JetBrains Mono"', 'ui-monospace', 'Menlo', 'Consolas', 'monospace'],
       },
 
       fontSize: {
@@ -184,9 +205,11 @@ export default {
         'lg':  '0 12px 16px -4px rgba(16, 24, 40, 0.1), 0 4px 6px -2px rgba(16, 24, 40, 0.05)',
         'xl':  '0 20px 25px -5px rgba(16, 24, 40, 0.1), 0 10px 10px -5px rgba(16, 24, 40, 0.04)',
         '2xl': '0 25px 50px -12px rgba(16, 24, 40, 0.25)',
-        'focus-ring': '0 0 0 4px hsl(var(--ch-secondary-500) / 0.12)',
-        'cyan-glow': '0 0 20px hsl(var(--ch-secondary-500) / 0.3)',
-        'purple-glow': '0 0 20px hsl(var(--ch-primary-500) / 0.3)',
+        'raised': 'var(--shadow-raised)',
+        'overlay': 'var(--shadow-overlay)',
+        'focus-ring': '0 0 0 4px hsl(var(--ch-primary-500) / 0.14)',
+        'cyan-glow': 'none',
+        'purple-glow': 'none',
         'inner': 'inset 0 2px 4px 0 rgba(0, 0, 0, 0.06)',
         'none': '0 0 #0000',
       },

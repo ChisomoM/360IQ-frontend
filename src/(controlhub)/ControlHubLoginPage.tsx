@@ -29,7 +29,7 @@ const ControlHubLoginPage: React.FC<ControlHubLoginPageProps> = () => {
   return (
 
     <motion.div
-      className="min-h-screen w-full flex bg-[#0d173b] relative overflow-hidden"
+      className="min-h-screen w-full flex bg-brand-ink relative overflow-hidden"
       initial="hidden"
       animate="show"
       variants={container}
@@ -43,7 +43,7 @@ const ControlHubLoginPage: React.FC<ControlHubLoginPageProps> = () => {
           style={{ backgroundImage: "url('/controlhub-bg.png')" }}
         >
 
-          <div className="absolute inset-0 bg-[#0d173b]/85" />
+          <div className="absolute inset-0 bg-brand-ink/85" />
 
           <motion.div
             className="relative z-10 flex items-start"
@@ -51,9 +51,9 @@ const ControlHubLoginPage: React.FC<ControlHubLoginPageProps> = () => {
           >
 
             <img
-              src="/logos/avec-logo-light.png"
-              alt="Avec Logo"
-              className="h-24 object-contain transition-transform duration-500 hover:scale-105"
+              src="/logos/logo/360IQ-horizontal-transparent-for-dark.png"
+              alt="360IQ"
+              className="h-28 object-contain -ml-6 transition-transform duration-500 hover:scale-105"
             />
 
           </motion.div>
@@ -63,10 +63,10 @@ const ControlHubLoginPage: React.FC<ControlHubLoginPageProps> = () => {
             variants={item}
           >
 
-            <div className="inline-flex items-center gap-2 bg-[#7c69ff]/20 backdrop-blur-md px-4 py-1.5 rounded-full border border-[#7c69ff]/40 mb-6">
+            <div className="inline-flex items-center gap-2 bg-[#19C3A6]/15 backdrop-blur-md px-4 py-1.5 rounded-full border border-[#19C3A6]/40 mb-6">
 
-              <span className="text-[#7c69ff] font-semibold text-xs uppercase tracking-wider">
-                Avec ControlHub
+              <span className="text-[#19C3A6] font-semibold text-xs uppercase tracking-wider">
+                360IQ ControlHub
               </span>
 
             </div>
@@ -74,7 +74,7 @@ const ControlHubLoginPage: React.FC<ControlHubLoginPageProps> = () => {
             <h1 className="text-4xl font-bold leading-tight mb-5">
 
               Tenant Management &{" "}
-              <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#7c69ff] via-purple-400 to-[#7c69ff]">
+              <span className="text-[#19C3A6]">
                 Organization Infrastructure
               </span>
 
@@ -82,7 +82,7 @@ const ControlHubLoginPage: React.FC<ControlHubLoginPageProps> = () => {
 
             <p className="text-base text-white/80 leading-relaxed">
 
-              The master control center for Avec platform operations. Manage tenants, 
+              The master control center for 360IQ platform operations. Manage tenants, 
               monitor system health, and oversee global configurations with 
               unparalleled precision.
 
@@ -91,28 +91,28 @@ const ControlHubLoginPage: React.FC<ControlHubLoginPageProps> = () => {
             <div className="mt-8 grid grid-cols-2 gap-4 text-sm text-white/75">
 
               <div className="flex items-center gap-2">
-                <span className="text-[#7c69ff]">•</span>
+                <span className="text-[#19C3A6]">•</span>
                 Multi-tenant Orchestration
               </div>
 
               <div className="flex items-center gap-2">
-                <span className="text-[#7c69ff]">•</span>
+                <span className="text-[#19C3A6]">•</span>
                 Global Security Controls
               </div>
 
               <div className="flex items-center gap-2">
-                <span className="text-[#7c69ff]">•</span>
+                <span className="text-[#19C3A6]">•</span>
                 Organization Branding
               </div>
 
               <div className="flex items-center gap-2">
-                <span className="text-[#7c69ff]">•</span>
+                <span className="text-[#19C3A6]">•</span>
                 System-wide Analytics
               </div>
 
             </div>
 
-            <div className="mt-8 w-16 h-1 bg-[#7c69ff] rounded-full" />
+            <div className="mt-8 w-16 h-1 bg-[#19C3A6] rounded-full" />
 
           </motion.div>
 
@@ -133,9 +133,9 @@ const ControlHubLoginPage: React.FC<ControlHubLoginPageProps> = () => {
             >
 
               <img
-                src="/logos/avec-logo-light.png"
-                alt="Avec Logo"
-                className="h-20 bg-[#0d173b] p-4 rounded-xl"
+                src="/logos/logo/360IQ-horizontal-transparent-for-light.png"
+                alt="360IQ"
+                className="h-24 w-auto"
               />
 
             </motion.div>
@@ -146,7 +146,7 @@ const ControlHubLoginPage: React.FC<ControlHubLoginPageProps> = () => {
             >
 
               <motion.h2
-                className="text-3xl font-bold text-[#0d173b] mb-2"
+                className="text-3xl font-bold text-brand-ink mb-2"
                 variants={item}
               >
                 ControlHub Login
@@ -156,7 +156,7 @@ const ControlHubLoginPage: React.FC<ControlHubLoginPageProps> = () => {
                 className="text-sm text-gray-500 mb-8"
                 variants={item}
               >
-                Sign in to manage the Avec multi-tenant ecosystem.
+                Sign in to manage the 360IQ multi-tenant ecosystem.
               </motion.p>
 
               <motion.div variants={item}>
@@ -168,7 +168,7 @@ const ControlHubLoginPage: React.FC<ControlHubLoginPageProps> = () => {
                 variants={item}
               >
 
-              Made with <span className="text-red-500">♥</span> by Avec Team
+              Made with <span className="text-red-500">♥</span> by the 360IQ Team
 
               </motion.p>
 

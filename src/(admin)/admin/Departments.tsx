@@ -138,10 +138,10 @@ function DeptCard({ dept, canManage, onView, onEdit, onDelete, onAssignUsers }: 
   // Pick one of four accent colours based on the first letter of the dept code.
   // Using charCodeAt keeps it consistent — same code always gets same colour.
   const colors = [
-    { ring: 'from-ch-primary-500 to-ch-primary-600', bg: 'bg-ch-primary-50', badgeBg: 'bg-ch-primary/[0.12]', badgeText: 'text-ch-primary-700' },
-    { ring: 'from-ch-secondary-500 to-ch-secondary-600', bg: 'bg-ch-secondary-50', badgeBg: 'bg-ch-secondary/[0.12]', badgeText: 'text-ch-secondary-700' },
-    { ring: 'from-emerald-400 to-emerald-500', bg: 'bg-emerald-50', badgeBg: 'bg-emerald-500/[0.12]', badgeText: 'text-emerald-700' },
-    { ring: 'from-amber-400 to-amber-500', bg: 'bg-amber-50', badgeBg: 'bg-amber-500/[0.12]', badgeText: 'text-amber-700' },
+    { ring: 'from-ch-primary-600 to-ch-primary-600', bg: 'bg-ch-primary-50', badgeBg: 'bg-ch-primary/[0.12]', badgeText: 'text-ch-primary-700' },
+    { ring: 'from-ch-secondary-600 to-ch-secondary-600', bg: 'bg-ch-secondary-50', badgeBg: 'bg-ch-secondary/[0.12]', badgeText: 'text-ch-secondary-700' },
+    { ring: 'from-ch-tertiary-500 to-ch-tertiary-500', bg: 'bg-surface-2', badgeBg: 'bg-surface-2', badgeText: 'text-text-secondary' },
+    { ring: 'from-caution to-caution', bg: 'bg-caution-tint', badgeBg: 'bg-caution-tint', badgeText: 'text-caution' },
   ];
   const color = colors[dept.code.charCodeAt(0) % colors.length];
 
@@ -234,8 +234,8 @@ function DeptCard({ dept, canManage, onView, onEdit, onDelete, onAssignUsers }: 
       {/* Status dot + "View →" ghost link */}
       <div className="flex items-center justify-between mt-auto pt-3 border-t border-gray-200">
         <div className="flex items-center gap-1.5">
-          <div className={`w-1.5 h-1.5 rounded-full ${dept.is_active ? 'bg-emerald-500' : 'bg-muted-foreground'}`} />
-          <span className={`text-xs font-medium font-sans ${dept.is_active ? 'text-emerald-600' : 'text-muted-foreground'}`}>
+          <div className={`w-1.5 h-1.5 rounded-full ${dept.is_active ? 'bg-positive' : 'bg-muted-foreground'}`} />
+          <span className={`text-xs font-medium font-sans ${dept.is_active ? 'text-positive' : 'text-muted-foreground'}`}>
             {dept.is_active ? 'Active' : 'Inactive'}
           </span>
         </div>
@@ -643,7 +643,7 @@ export default function Departments() {
         >
           {[
             { label: 'Total Departments', value: loading ? '—' : totalCount, color: 'text-ch-primary-600', bg: 'bg-ch-primary/[0.08]' },
-            { label: 'Active', value: loading ? '—' : activeCount, color: 'text-emerald-600', bg: 'bg-emerald-500/[0.08]' },
+            { label: 'Active', value: loading ? '—' : activeCount, color: 'text-positive', bg: 'bg-positive-tint' },
             { label: 'Inactive', value: loading ? '—' : totalCount - activeCount, color: 'text-muted-foreground', bg: 'bg-muted' },
             { label: 'This Page', value: loading ? '—' : filteredDepartments.length, color: 'text-ch-secondary-600', bg: 'bg-ch-secondary/[0.08]' },
           ].map(({ label, value, color, bg }) => (

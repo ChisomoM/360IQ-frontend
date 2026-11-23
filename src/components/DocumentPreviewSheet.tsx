@@ -99,7 +99,7 @@ export default function DocumentPreviewSheet({
 
             <div className="space-y-6 py-4">
               {/* Document preview area */}
-              <div className="bg-gradient-to-br from-tenant-primary/10 to-tenant-primary/5 rounded-lg h-48 flex items-center justify-center border-2 border-dashed border-tenant-primary/20">
+              <div className="bg-tenant-primary/10 rounded-lg h-48 flex items-center justify-center border-2 border-dashed border-tenant-primary/20">
                 <div className="text-center">
                   <FileText className="h-12 w-12 text-tenant-primary mx-auto mb-2 opacity-60" />
                   <p className="text-sm text-gray-600">Document Preview</p>

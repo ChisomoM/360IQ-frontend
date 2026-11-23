@@ -79,7 +79,7 @@ export default function TenantDetail() {
     );
   }
 
-  const brandColor = tenant.config?.branding?.primary_color || "#7c69ff";
+  const brandColor = tenant.config?.branding?.primary_color || "#0A7A67";
   const isActive = tenant.status === "active";
 
   return (
@@ -110,8 +110,8 @@ export default function TenantDetail() {
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-3 flex-wrap">
               <h1 className="text-3xl font-bold text-gray-900 tracking-tight">{tenant.name}</h1>
-              <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold ${isActive ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-600"}`}>
-                <div className={`h-1.5 w-1.5 rounded-full ${isActive ? "bg-green-500" : "bg-gray-400"}`} />
+              <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold ${isActive ? "bg-positive-tint text-positive" : "bg-gray-100 text-gray-600"}`}>
+                <div className={`h-1.5 w-1.5 rounded-full ${isActive ? "bg-positive" : "bg-gray-400"}`} />
                 {isActive ? "Active" : "Inactive"}
               </div>
             </div>
@@ -208,7 +208,7 @@ export default function TenantDetail() {
             {/* Branding Preview Card */}
             <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
               <div className="px-5 py-4 border-b border-gray-100 bg-gray-50/40 flex items-center gap-2">
-                <Palette className="h-4 w-4 text-purple-600" />
+                <Palette className="h-4 w-4 text-signal-text" />
                 <h3 className="font-semibold text-gray-900 text-sm">Branding</h3>
               </div>
               <div className="px-5 py-5 flex items-center gap-4">
@@ -228,21 +228,21 @@ export default function TenantDetail() {
             {/* Security Settings Card */}
             <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
               <div className="px-5 py-4 border-b border-gray-100 bg-gray-50/40 flex items-center gap-2">
-                <ShieldCheck className="h-4 w-4 text-green-600" />
+                <ShieldCheck className="h-4 w-4 text-positive" />
                 <h3 className="font-semibold text-gray-900 text-sm">Security & Access</h3>
               </div>
               <div className="divide-y divide-gray-100">
                 <div className="px-5 py-3.5 flex items-center justify-between">
                   <span className="text-xs font-medium text-gray-500">Public Registration</span>
-                  <span className={`inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full ${tenant.config?.settings?.allow_public_reg ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-600"}`}>
-                    <div className={`h-1.5 w-1.5 rounded-full ${tenant.config?.settings?.allow_public_reg ? "bg-green-500" : "bg-gray-400"}`} />
+                  <span className={`inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full ${tenant.config?.settings?.allow_public_reg ? "bg-positive-tint text-positive" : "bg-gray-100 text-gray-600"}`}>
+                    <div className={`h-1.5 w-1.5 rounded-full ${tenant.config?.settings?.allow_public_reg ? "bg-positive" : "bg-gray-400"}`} />
                     {tenant.config?.settings?.allow_public_reg ? "Enabled" : "Disabled"}
                   </span>
                 </div>
                 <div className="px-5 py-3.5 flex items-center justify-between">
                   <span className="text-xs font-medium text-gray-500">Two-Factor Auth</span>
-                  <span className={`inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full ${tenant.config?.settings?.enforce_2fa ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-600"}`}>
-                    <div className={`h-1.5 w-1.5 rounded-full ${tenant.config?.settings?.enforce_2fa ? "bg-green-500" : "bg-gray-400"}`} />
+                  <span className={`inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full ${tenant.config?.settings?.enforce_2fa ? "bg-positive-tint text-positive" : "bg-gray-100 text-gray-600"}`}>
+                    <div className={`h-1.5 w-1.5 rounded-full ${tenant.config?.settings?.enforce_2fa ? "bg-positive" : "bg-gray-400"}`} />
                     {tenant.config?.settings?.enforce_2fa ? "Enforced" : "Optional"}
                   </span>
                 </div>

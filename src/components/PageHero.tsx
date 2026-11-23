@@ -31,7 +31,7 @@ function PageHero({
     //   }}
     >
       {/* 60% overlay to allow hero image visibility */}
-      <div className="absolute inset-0 bg-[#172E70]/60"></div>
+      <div className="absolute inset-0 bg-brand-ink/60"></div>
 
       <motion.div
         initial={{ opacity: shouldReduceMotion ? 1 : 0, scale: shouldReduceMotion ? 1 : 0.995 }}
@@ -46,7 +46,7 @@ function PageHero({
             transition={{ delay: 0.15, duration: 0.5, ease: 'easeOut' }}
             className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-tight font-inter"
           >
-            {title}{highlightText && <span className="text-[#F15A29]"> {highlightText}</span>}
+            {title}{highlightText && <span className="text-brand-signal"> {highlightText}</span>}
           </motion.h1>
           {description && (
             <motion.p

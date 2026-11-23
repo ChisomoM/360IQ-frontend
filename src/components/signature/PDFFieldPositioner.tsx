@@ -261,7 +261,7 @@ export default function PDFFieldPositioner({
             <div
               className={cn(
                 'absolute border-2 rounded flex items-center justify-center',
-                mode === 'place' ? 'border-[#1e3c21] bg-[#1e3c21]/10 cursor-grab' : 'border-[#1e3c21] bg-[#1e3c21]/15 pointer-events-none',
+                mode === 'place' ? 'border-signal bg-signal/10 cursor-grab' : 'border-signal bg-signal/15 pointer-events-none',
               )}
               style={{
                 left: `${field!.x * 100}%`,
@@ -272,12 +272,12 @@ export default function PDFFieldPositioner({
               }}
               onMouseDown={mode === 'place' ? handleFieldMouseDown : undefined}
             >
-              <span className="text-[10px] font-semibold text-[#1e3c21] select-none pointer-events-none truncate px-1">
+              <span className="text-[10px] font-semibold text-signal-text select-none pointer-events-none truncate px-1">
                 {fieldLabel}
               </span>
               {mode === 'place' && (
                 <div
-                  className="absolute bottom-0 right-0 w-3 h-3 cursor-se-resize bg-[#1e3c21] rounded-tl"
+                  className="absolute bottom-0 right-0 w-3 h-3 cursor-se-resize bg-signal rounded-tl"
                   onMouseDown={handleResizeMouseDown}
                   style={{ zIndex: 30 }}
                 />

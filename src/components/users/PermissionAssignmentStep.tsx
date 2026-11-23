@@ -109,13 +109,13 @@ export function PermissionAssignmentStep({
       case 'delete':
         return 'bg-red-50 border-red-200 text-red-700';
       case 'approve':
-        return 'bg-purple-50 border-purple-200 text-purple-700';
+        return 'bg-signal-tint border-line text-signal-text';
       case 'manage':
         return 'bg-orange-50 border-orange-200 text-orange-700';
       case 'export':
         return 'bg-yellow-50 border-yellow-200 text-yellow-700';
       case 'sign':
-        return 'bg-pink-50 border-pink-200 text-pink-700';
+        return 'bg-surface-2 border-line text-text-secondary';
       default:
         return 'bg-gray-50 border-gray-200 text-gray-700';
     }
@@ -123,7 +123,7 @@ export function PermissionAssignmentStep({
 
   return (
     <div className="w-full space-y-6">
-      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 rounded-xl p-4 shadow-sm">
+      <div className="bg-positive-tint border border-line rounded-lg p-4">
         <h3 className="font-semibold text-blue-900 mb-1">Permission Assignment</h3>
         <p className="text-sm text-blue-700 leading-relaxed">
           Assign permissions to control what this user can access and do in the system. Use the quick-select buttons to streamline your workflow.
@@ -147,7 +147,7 @@ export function PermissionAssignmentStep({
               key={resource}
               className="border-gray-150 shadow-sm hover:shadow-md transition-shadow rounded-xl overflow-hidden bg-white"
             >
-              <CardHeader className="pb-3 bg-gradient-to-r from-gray-50 to-gray-25">
+              <CardHeader className="pb-3 bg-surface-2">
                 <div className="flex items-center justify-between gap-4">
                   <button
                     onClick={() => toggleCategory(resource)}
@@ -276,7 +276,7 @@ export function PermissionAssignmentStep({
       </div>
 
       {categories.length === 0 && (
-        <Card className="border-dashed border-gray-250 bg-gradient-to-r from-gray-25 to-gray-50 rounded-xl">
+        <Card className="border-dashed bg-surface-2 rounded-lg">
           <CardContent className="py-16 text-center text-gray-500">
             <p className="font-medium">No permissions available to assign</p>
           </CardContent>

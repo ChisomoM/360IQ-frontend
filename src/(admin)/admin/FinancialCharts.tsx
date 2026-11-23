@@ -26,14 +26,12 @@ import type { FinancialDocument } from '@/types/finance';
 import { toast } from 'sonner';
 
 const CHART_COLORS = [
-  '#3b82f6',
-  '#10b981',
-  '#f59e0b',
-  '#ef4444',
-  '#8b5cf6',
-  '#ec4899',
-  '#06b6d4',
-  '#84cc16',
+  'var(--chart-1)',
+  'var(--chart-2)',
+  'var(--chart-3)',
+  'var(--chart-4)',
+  'var(--chart-5)',
+  'var(--chart-6)',
 ];
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -41,13 +39,13 @@ const CHART_COLORS = [
 function getStatementBadgeColor(statementType: string): string {
   switch (statementType) {
     case 'profit_loss':
-      return 'bg-orange-100 text-orange-700';
+      return 'bg-caution-tint text-caution';
     case 'cash_flow':
-      return 'bg-blue-100 text-blue-700';
+      return 'bg-positive-tint text-positive';
     case 'invoice_list':
-      return 'bg-green-100 text-green-700';
+      return 'bg-signal-tint text-signal-text';
     case 'payment_list':
-      return 'bg-purple-100 text-purple-700';
+      return 'bg-surface-2 text-sky-text';
     case 'balance_sheet':
       return 'bg-gray-100 text-gray-700';
     default:
@@ -100,7 +98,7 @@ function DocListItem({
       onClick={isCompareMode ? onCompareToggle : onSelect}
       className={`w-full text-left px-3 py-3 rounded-lg border transition-all group ${
         active
-          ? 'border-[#febb00] bg-yellow-50 shadow-sm'
+          ? 'border-primary bg-signal-tint shadow-sm'
           : 'border-gray-100 bg-white hover:border-gray-300 hover:bg-gray-50'
       }`}
     >
@@ -113,7 +111,7 @@ function DocListItem({
           />
         ) : (
           <FileSpreadsheet
-            className={`h-4 w-4 mt-0.5 flex-shrink-0 ${active ? 'text-yellow-600' : 'text-gray-400 group-hover:text-gray-600'}`}
+            className={`h-4 w-4 mt-0.5 flex-shrink-0 ${active ? 'text-signal-text' : 'text-gray-400 group-hover:text-gray-600'}`}
           />
         )}
         <div className="min-w-0 flex-1">

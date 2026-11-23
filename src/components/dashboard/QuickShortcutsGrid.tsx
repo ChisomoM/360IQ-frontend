@@ -38,12 +38,9 @@ export function QuickShortcutsGrid({
           key={shortcut.id}
           onClick={() => navigate(shortcut.href)}
           aria-label={shortcut.description || shortcut.label}
-          className="group relative h-auto flex flex-col items-center justify-center gap-3 py-6 lg:py-8 px-3 lg:px-4 rounded-xl bg-white border border-slate-200/50 shadow-premium-sm hover:shadow-premium-lg transition-all duration-300 hover:border-primary/50 hover:-translate-y-1 active:translate-y-0"
+          className="group relative h-auto flex flex-col items-center justify-center gap-3 py-6 lg:py-8 px-3 lg:px-4 rounded-lg bg-surface-1 border border-line transition-colors duration-150 hover:border-line-strong hover:bg-surface-2"
           style={{ animationDelay: `${idx * 50}ms` }}
         >
-          {/* Background gradient on hover */}
-          <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-primary/5 to-primary/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-          
           {/* Icon wrapper */}
           <div className="relative text-3xl lg:text-4xl text-primary group-hover:scale-125 transition-transform duration-300">
             {shortcut.icon}

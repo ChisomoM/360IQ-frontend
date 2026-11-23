@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=JetBrains+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Urbanist:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -13,118 +13,224 @@
 
 /* ── ControlHub / DIMS Default Theme ─────────────────────────────────────── */
 :root {
+  /* 14px root (360IQ density) */
   --font-size: 87.5%;
-  /* Tenant-injected colours — JS overwrites on mount. Fallback = ControlHub. */
-  --tenant-primary: #7C69FF;
-  --tenant-primary-hover: #6352E8;
-  --tenant-primary-light: rgba(124, 105, 255, 0.08);
+
+  /* ── 360IQ brand palette (theme-stable, large graphics only) ── */
+  --brand-ink: #0B1B2B;
+  --brand-blue: #2A7FD4;
+  --brand-sky: #4FB8E8;
+  --brand-signal: #19C3A6;
+  --brand-paper: #F4F7F9;
+
+  /* ── 360IQ semantic tokens: paper (light) is the default theme ── */
+  --surface-0: #F2F5F7;
+  --surface-1: #FFFFFF;
+  --surface-2: #E7EDF2;
+  --line: #D3DCE4;
+  --line-strong: #76899A;
+  --text-primary: #0B1B2B;
+  --text-secondary: #44596B;
+  --text-muted: #5A6E80;
+  --signal: #0A7A67;
+  --signal-hover: #08695A;
+  --on-signal: #FFFFFF;
+  --signal-text: #08705F;
+  --signal-tint: #DFF4EF;
+  --sky-text: #1B63AE;
+  --gradient-start: #1B63AE;
+  --gradient-mid: #1386A6;
+  --gradient-end: #0A8A72;
+  --risk: #B3261E;     --risk-tint: #FCE8E6;
+  --caution: #865400;  --caution-tint: #FCF1D9;
+  --positive: #1F5FA8; --positive-tint: #E3EEFB;
+  --grade-platinum: #DDE9F2; --grade-gold: #F2B84B;
+  --grade-silver: #A9B8C6;   --grade-bronze: #C98656;
+  --on-grade: #0B1B2B;
+  --focus: #0A6B5B;
+  --shadow-raised: 0 2px 8px rgba(11, 27, 43, 0.10);
+  --shadow-overlay: 0 16px 48px rgba(11, 27, 43, 0.18);
+
+  /* gradients: blue into teal, AI surfaces only */
+  --gradient-signal: linear-gradient(90deg, #2A7FD4 0%, #3BB6E6 50%, #2FD8B9 100%);
+  --gradient-signal-deep: linear-gradient(90deg, #1B63AE 0%, #1386A6 50%, #0A8A72 100%);
+  --gradient-hero-ink: radial-gradient(120% 95% at 88% 0%, #1E4E66 0%, #0E2E48 34%, #081A2B 68%, #06131F 100%);
+  --gradient-hero-paper: radial-gradient(120% 95% at 88% 0%, #CDEBF2 0%, #E4F0F7 34%, #F2F5F7 72%);
+  --gradient-button: linear-gradient(90deg, #1B63AE 0%, #0A7A67 100%);
+  --gradient-sidebar: linear-gradient(170deg, #0B1B2B 0%, #0D2A40 52%, #0A3B3F 100%);
+  --gradient-protect: linear-gradient(180deg, rgba(11, 27, 43, 0) 40%, rgba(11, 27, 43, 0.88) 100%);
+  --iq-grad: var(--gradient-signal-deep);
+  --iq-hero: var(--gradient-hero-paper);
+
+  /* ── Tenant-injected colours: JS overwrites on mount. Fallback = 360IQ. ── */
+  --tenant-primary: #0A7A67;
+  --tenant-primary-hover: #08695A;
+  --tenant-primary-light: rgba(10, 122, 103, 0.10);
   --tenant-primary-fg: #FFFFFF;
 
-  --tenant-secondary: #03D8FD;
-  --tenant-secondary-hover: #02B8DA;
-  --tenant-secondary-fg: #063B4D;
+  --tenant-secondary: #1B63AE;
+  --tenant-secondary-hover: #154F8C;
+  --tenant-secondary-fg: #FFFFFF;
 
-  --tenant-accent: #0D173B;
+  --tenant-accent: #0B1B2B;
 
-  /* Semantic — never overridden by tenants */
-  --tenant-destructive: #EF4444;
-  --tenant-success: #10B981;
-  --tenant-warning: #F59E0B;
+  /* Semantic: never overridden by tenants */
+  --tenant-destructive: #B3261E;
+  --tenant-success: #1F5FA8; /* positive is blue in 360IQ, never green */
+  --tenant-warning: #865400;
 
-  /* ── shadcn/ui compatible variables ── */
-  --background: 0 0% 100%;
-  --foreground: 233 63% 8%;
+  /* ── shadcn/ui compatible variables (HSL components) ── */
+  --background: 204 21% 96%;          /* surface-0 */
+  --foreground: 210 59% 11%;          /* text-primary */
 
-  --card: 0 0% 100%;
-  --card-foreground: 233 63% 8%;
+  --card: 0 0% 100%;                  /* surface-1 */
+  --card-foreground: 210 59% 11%;
 
   --popover: 0 0% 100%;
-  --popover-foreground: 233 63% 8%;
+  --popover-foreground: 210 59% 11%;
 
-  --primary: 252 100% 71%;
-  /* #7C69FF */
+  --primary: 170 85% 26%;             /* signal #0A7A67 */
   --primary-foreground: 0 0% 100%;
 
-  --secondary: 189 98% 50%;
-  /* #03D8FD */
-  --secondary-foreground: 210 95% 14%;
+  --secondary: 210 73% 40%;           /* sky-text #1B63AE */
+  --secondary-foreground: 0 0% 100%;
 
-  --muted: 240 5% 96%;
-  --muted-foreground: 240 4% 46%;
+  --muted: 207 25% 93%;               /* surface-2 */
+  --muted-foreground: 207 18% 43%;    /* text-muted */
 
-  --accent: 252 100% 71%;
-  --accent-foreground: 0 0% 100%;
+  --accent: 207 25% 93%;              /* hover/selected rows */
+  --accent-foreground: 210 59% 11%;
 
-  --destructive: 0 84% 60%;
+  --destructive: 4 71% 41%;           /* risk */
   --destructive-foreground: 0 0% 100%;
 
-  --border: 240 6% 90%;
-  --input: 240 6% 90%;
-  --ring: 252 100% 71%;
+  --border: 208 24% 86%;              /* line */
+  --input: 208 24% 86%;
+  --ring: 172 87% 22%;                /* focus */
 
   --radius: 0.5rem;
 
-  /* ── Sidebar (ControlHub navy) ── */
-  --sidebar-background: 233 63% 14%;
-  /* #0D173B */
-  --sidebar-foreground: 0 0% 96%;
-  --sidebar-primary: 189 98% 50%;
-  /* cyan — active items */
-  --sidebar-primary-foreground: 210 95% 14%;
+  /* ── Sidebar (360IQ ink) ── */
+  --sidebar-background: 210 59% 11%;  /* brand-ink */
+  --sidebar-foreground: 210 33% 94%;
+  --sidebar-primary: 172 77% 43%;     /* brand-signal, active items */
+  --sidebar-primary-foreground: 170 85% 8%;
   --sidebar-accent: 0 0% 100% / 0.07;
-  /* white ghost hover */
   --sidebar-accent-foreground: 0 0% 100%;
   --sidebar-border: 0 0% 100% / 0.07;
-  --sidebar-ring: 189 98% 50%;
+  --sidebar-ring: 172 77% 43%;
 
-  /* ── ControlHub colour scales ── */
-  --ch-primary-50: 252 100% 98%;
-  --ch-primary-100: 252 100% 95%;
-  --ch-primary-200: 252 100% 89%;
-  --ch-primary-300: 252 100% 83%;
-  --ch-primary-400: 252 100% 74%;
-  --ch-primary-500: 248 100% 71%;
-  --ch-primary-600: 252 100% 64%;
-  --ch-primary-700: 252 100% 57%;
-  --ch-primary-800: 252 100% 47%;
-  --ch-primary-900: 252 100% 39%;
-  --ch-primary-950: 252 100% 31%;
+  /* ── Legacy ch-* scales, remapped to 360IQ so existing classes inherit the brand ──
+     primary = signal teal, secondary = blue, tertiary = ink */
+  --ch-primary-50: 168 52% 95%;
+  --ch-primary-100: 168 52% 91%;
+  --ch-primary-200: 169 50% 80%;
+  --ch-primary-300: 170 55% 64%;
+  --ch-primary-400: 171 70% 45%;
+  --ch-primary-500: 170 85% 26%;
+  --ch-primary-600: 171 87% 23%;
+  --ch-primary-700: 172 87% 20%;
+  --ch-primary-800: 172 85% 16%;
+  --ch-primary-900: 172 85% 12%;
+  --ch-primary-950: 172 85% 8%;
 
-  --ch-secondary-50: 189 98% 98%;
-  --ch-secondary-100: 189 98% 95%;
-  --ch-secondary-200: 189 98% 89%;
-  --ch-secondary-300: 189 98% 83%;
-  --ch-secondary-400: 189 98% 74%;
-  --ch-secondary-500: 189 98% 50%;
-  --ch-secondary-600: 189 98% 44%;
-  --ch-secondary-700: 189 98% 37%;
-  --ch-secondary-800: 189 98% 30%;
-  --ch-secondary-900: 189 98% 23%;
-  --ch-secondary-950: 189 98% 15%;
+  --ch-secondary-50: 210 70% 97%;
+  --ch-secondary-100: 210 70% 93%;
+  --ch-secondary-200: 210 68% 85%;
+  --ch-secondary-300: 210 66% 72%;
+  --ch-secondary-400: 210 66% 56%;
+  --ch-secondary-500: 210 73% 40%;
+  --ch-secondary-600: 210 73% 35%;
+  --ch-secondary-700: 210 72% 30%;
+  --ch-secondary-800: 210 70% 24%;
+  --ch-secondary-900: 210 66% 18%;
+  --ch-secondary-950: 210 62% 12%;
 
-  --ch-tertiary-50: 225 66% 98%;
-  --ch-tertiary-100: 225 66% 95%;
-  --ch-tertiary-200: 225 66% 89%;
-  --ch-tertiary-300: 225 66% 83%;
-  --ch-tertiary-400: 225 66% 74%;
-  --ch-tertiary-500: 225 66% 26%;
-  --ch-tertiary-600: 225 66% 22%;
-  --ch-tertiary-700: 225 66% 18%;
-  --ch-tertiary-800: 225 66% 14%;
-  --ch-tertiary-900: 225 66% 10%;
-  --ch-tertiary-950: 225 66% 6%;
+  --ch-tertiary-50: 207 30% 97%;
+  --ch-tertiary-100: 207 28% 93%;
+  --ch-tertiary-200: 208 24% 86%;
+  --ch-tertiary-300: 208 20% 72%;
+  --ch-tertiary-400: 208 18% 52%;
+  --ch-tertiary-500: 210 59% 11%;
+  --ch-tertiary-600: 210 59% 9%;
+  --ch-tertiary-700: 210 59% 8%;
+  --ch-tertiary-800: 210 59% 7%;
+  --ch-tertiary-900: 210 59% 5%;
+  --ch-tertiary-950: 210 59% 4%;
 
-  /* ── Chart palette ── */
-  --chart-1: #7C69FF;
-  /* ch-primary */
-  --chart-2: #03D8FD;
-  /* ch-secondary */
-  --chart-3: #B8AEFF;
-  /* ch-primary-300 */
-  --chart-4: #67F0FC;
-  /* ch-secondary-300 */
-  --chart-5: #4ADE80;
-  --chart-6: #FB923C;
+  /* ── Chart palette (design.md section 9). Order is fixed, max four series. ── */
+  --chart-1: var(--signal);
+  --chart-2: var(--positive);
+  --chart-3: var(--grade-gold);
+  --chart-4: var(--text-secondary);
+  --chart-5: var(--sky-text);
+  --chart-6: var(--grade-bronze);
+  --chart-risk: var(--risk);
+  --chart-grid: var(--line);
+  --chart-axis: var(--text-muted);
+}
+
+/* ── 360IQ ink (dark) theme. Toggle with data-theme="ink" on <html>. ── */
+[data-theme="ink"] {
+  --surface-0: #0B1B2B;
+  --surface-1: #12283C;
+  --surface-2: #1A3550;
+  --line: #24425E;
+  --line-strong: #5F7E9A;
+  --text-primary: #E8EEF4;
+  --text-secondary: #A9BCCC;
+  --text-muted: #8BA2B6;
+  --signal: #19C3A6;
+  --signal-hover: #3FD6BB;
+  --on-signal: #04231E;
+  --signal-text: #3BD3B8;
+  --signal-tint: #0E3A3A;
+  --sky-text: #7CCFF4;
+  --gradient-start: #2A7FD4;
+  --gradient-mid: #3BB6E6;
+  --gradient-end: #2FD8B9;
+  --risk: #FF8A7A;     --risk-tint: #3D2226;
+  --caution: #F4BE5C;  --caution-tint: #3A3018;
+  --positive: #8CC4FF; --positive-tint: #16304D;
+  --focus: #5BE0C8;
+  --shadow-raised: 0 2px 8px rgba(2, 8, 14, 0.45);
+  --shadow-overlay: 0 16px 48px rgba(2, 8, 14, 0.6);
+  --iq-grad: var(--gradient-signal);
+  --iq-hero: var(--gradient-hero-ink);
+  --gradient-button: linear-gradient(90deg, #7CCFF4 0%, #19C3A6 100%);
+
+  --tenant-primary: #19C3A6;
+  --tenant-primary-hover: #3FD6BB;
+  --tenant-primary-light: rgba(25, 195, 166, 0.14);
+  --tenant-primary-fg: #04231E;
+  --tenant-secondary: #7CCFF4;
+  --tenant-secondary-hover: #5BBDE8;
+  --tenant-secondary-fg: #06243A;
+  --tenant-accent: #12283C;
+  --tenant-destructive: #FF8A7A;
+  --tenant-success: #8CC4FF;
+  --tenant-warning: #F4BE5C;
+
+  --background: 210 59% 11%;
+  --foreground: 210 33% 94%;
+  --card: 209 55% 16%;
+  --card-foreground: 210 33% 94%;
+  --popover: 209 55% 16%;
+  --popover-foreground: 210 33% 94%;
+  --primary: 172 77% 43%;
+  --primary-foreground: 172 85% 8%;
+  --secondary: 199 82% 76%;
+  --secondary-foreground: 205 85% 13%;
+  --muted: 208 51% 21%;
+  --muted-foreground: 206 20% 66%;
+  --accent: 208 51% 21%;
+  --accent-foreground: 210 33% 94%;
+  --destructive: 8 100% 74%;
+  --destructive-foreground: 4 70% 12%;
+  --border: 209 44% 26%;
+  --input: 209 44% 26%;
+  --ring: 172 87% 68%;
+  --sidebar-background: 209 55% 16%;
 }
 
 .dark {
@@ -172,10 +278,39 @@
   }
 
   body {
-    background-color: var(--background);
-    color: var(--foreground);
+    font-family: 'Urbanist', 'Segoe UI', system-ui, sans-serif;
+    line-height: 1.45;
+    -webkit-font-smoothing: antialiased;
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
     min-width: 320px;
     min-height: 100vh;
+  }
+
+  :where(button, a, input, select, textarea, [role="tab"], [role="switch"], [role="menuitem"]):focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+  }
+}
+
+/* 360IQ gradient helpers: AI surfaces only (logo IQ, one display phrase, meters, AI card borders) */
+.iq-grad-text {
+  background: var(--iq-grad);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+.iq-grad-border {
+  border: 1.5px solid transparent;
+  background: linear-gradient(var(--surface-1), var(--surface-1)) padding-box, var(--iq-grad) border-box;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }
 

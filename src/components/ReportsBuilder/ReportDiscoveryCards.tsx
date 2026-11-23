@@ -154,7 +154,7 @@ const reportTypes: ReportTypeConfig[] = [
 const colorMap: Record<string, string> = {
   blue: 'bg-blue-50 border-blue-200 hover:border-blue-300',
   green: 'bg-green-50 border-green-200 hover:border-green-300',
-  purple: 'bg-purple-50 border-purple-200 hover:border-purple-300',
+  purple: 'bg-signal-tint border-line hover:border-line-strong',
   red: 'bg-red-50 border-red-200 hover:border-red-300',
   gray: 'bg-gray-50 border-gray-200 hover:border-gray-300',
 };
@@ -164,8 +164,8 @@ const badgeColorMap: Record<string, string> = {
   'Finance': 'bg-green-100 text-green-700',
   'Compliance': 'bg-red-100 text-red-700',
   'Auditors': 'bg-red-100 text-red-700',
-  'Advanced': 'bg-purple-100 text-purple-700',
-  'Power Users': 'bg-purple-100 text-purple-700',
+  'Advanced': 'bg-signal-tint text-signal-text',
+  'Power Users': 'bg-signal-tint text-signal-text',
   'Workflow': 'bg-blue-100 text-blue-700',
   'Productivity': 'bg-yellow-100 text-yellow-700',
 };
@@ -221,7 +221,7 @@ export const ReportDiscoveryCards: React.FC<ReportDiscoveryCardsProps> = ({
                   className={`p-3 rounded-lg flex-shrink-0 ${
                     report.color === 'blue' ? 'bg-blue-100' :
                     report.color === 'green' ? 'bg-green-100' :
-                    report.color === 'purple' ? 'bg-purple-100' :
+                    report.color === 'purple' ? 'bg-signal-tint' :
                     report.color === 'red' ? 'bg-red-100' :
                     'bg-gray-100'
                   }`}
@@ -229,7 +229,7 @@ export const ReportDiscoveryCards: React.FC<ReportDiscoveryCardsProps> = ({
                   <Icon className={`h-6 w-6 ${
                     report.color === 'blue' ? 'text-blue-600' :
                     report.color === 'green' ? 'text-green-600' :
-                    report.color === 'purple' ? 'text-purple-600' :
+                    report.color === 'purple' ? 'text-signal-text' :
                     report.color === 'red' ? 'text-red-600' :
                     'text-gray-600'
                   }`} />

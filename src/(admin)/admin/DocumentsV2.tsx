@@ -642,7 +642,7 @@ export default function DocumentsV2() {
                   <div className="w-2/5 bg-slate-50 p-8 border-r border-slate-100 flex flex-col justify-center">
                     <div className="mb-8">
                       <h3 className="text-xl font-bold text-slate-800">File Ingestion</h3>
-                      <p className="text-sm text-slate-500 mt-1">Upload your document to safely archive it in the DIMS vault.</p>
+                      <p className="text-sm text-slate-500 mt-1">Upload your document to safely archive it in the vault.</p>
                     </div>
 
                     {!uploadData.file ? (
@@ -691,7 +691,7 @@ export default function DocumentsV2() {
                             </p>
                           </div>
                         </div>
-                        <div className="mt-4 flex items-center gap-2 text-green-600 text-[10px] font-bold uppercase tracking-wider bg-green-50 px-3 py-1 rounded-full w-fit">
+                        <div className="mt-4 flex items-center gap-2 text-positive text-[10px] font-bold uppercase tracking-wider bg-positive-tint px-3 py-1 rounded-full w-fit">
                           <CheckCircle2 className="h-3 w-3" /> Ready for upload
                         </div>
                       </div>
@@ -896,7 +896,7 @@ export default function DocumentsV2() {
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-gradient-to-r from-rose-50 to-orange-50 border border-rose-200/50 rounded-xl p-6"
+            className="bg-risk-tint border border-line rounded-xl p-6"
           >
             <h2 className="font-display font-semibold text-lg text-gray-900 mb-4">
               Attention Required

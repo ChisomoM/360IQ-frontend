@@ -43,10 +43,10 @@ const getRoleBadgeColor = (roleSlug: string) => {
   switch (roleSlug) {
     case "super_admin": return "bg-red-100 text-red-800 border-red-200";
     case "admin": return "bg-blue-100 text-blue-800 border-blue-200";
-    case "manager": return "bg-purple-100 text-purple-800 border-purple-200";
-    case "records_authority": return "bg-indigo-100 text-indigo-800 border-indigo-200";
-    case "finance_officer": return "bg-yellow-100 text-yellow-800 border-yellow-200";
-    case "hr_officer": return "bg-pink-100 text-pink-800 border-pink-200";
+    case "manager": return "bg-signal-tint text-signal-text border-line";
+    case "records_authority": return "bg-surface-2 text-sky-text border-line";
+    case "finance_officer": return "bg-caution-tint text-caution border-line";
+    case "hr_officer": return "bg-surface-2 text-text-secondary border-line";
     default: return "bg-gray-100 text-gray-800 border-gray-200";
   }
 };

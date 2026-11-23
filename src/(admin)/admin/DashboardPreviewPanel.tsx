@@ -15,9 +15,11 @@ import {
 } from "lucide-react";
 import { BOSS_MINI, BOSS_THROUGHPUT, SHARED_ACTIVITY } from "./mockData";
 
-const CH_P = "#7C69FF";
-const CH_S = "#03D8FD";
-const CH_T = "#0D173B";
+const CH_P = "#0A7A67";
+const CH_S = "#1B63AE";
+const CH_T = "#0B1B2B";
+const CH_P_DARK = "#19C3A6"; // signal teal, bright variant for dark surfaces
+const CH_S_DARK = "#7CCFF4"; // sky, for dark surfaces
 const EASE: [number, number, number, number] = [0.16, 1, 0.3, 1];
 
 const NAV_ITEMS = [
@@ -52,8 +54,8 @@ function DotGrid() {
 function GlowOrbs() {
   return (
     <>
-      <div className="absolute -top-32 -right-32 w-80 h-80 rounded-full pointer-events-none" style={{ background: `radial-gradient(circle, ${CH_P}35 0%, transparent 70%)` }} />
-      <div className="absolute -bottom-24 -left-24 w-72 h-72 rounded-full pointer-events-none" style={{ background: `radial-gradient(circle, ${CH_S}25 0%, transparent 70%)` }} />
+      <div className="absolute -top-32 -right-32 w-80 h-80 rounded-full pointer-events-none" style={{ background: `radial-gradient(circle, ${CH_P_DARK}35 0%, transparent 70%)` }} />
+      <div className="absolute -bottom-24 -left-24 w-72 h-72 rounded-full pointer-events-none" style={{ background: `radial-gradient(circle, ${CH_S_DARK}25 0%, transparent 70%)` }} />
     </>
   );
 }
@@ -64,15 +66,15 @@ function DashboardMockup() {
       {/* Sidebar */}
       <div style={{ width: "200px", minHeight: "700px", backgroundColor: CH_T, flexShrink: 0, display: "flex", flexDirection: "column" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "10px", padding: "20px", borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
-          <div style={{ width: "32px", height: "32px", borderRadius: "10px", background: `linear-gradient(135deg, ${CH_P}, ${CH_S})`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+          <div style={{ width: "32px", height: "32px", borderRadius: "10px", backgroundColor: CH_P_DARK, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
             <FileText size={14} color="white" />
           </div>
-          <span style={{ color: "white", fontWeight: 700, fontSize: "16px", fontFamily: "'Outfit', sans-serif", letterSpacing: "-0.01em" }}>DIMS</span>
+          <span style={{ color: "white", fontWeight: 700, fontSize: "16px", fontFamily: "'Outfit', sans-serif", letterSpacing: "-0.01em" }}>360IQ</span>
         </div>
         <nav style={{ padding: "12px", display: "flex", flexDirection: "column", gap: "2px" }}>
           {NAV_ITEMS.map(({ label, icon: Icon, active }) => (
-            <div key={label} style={{ display: "flex", alignItems: "center", gap: "10px", padding: "10px 12px", borderRadius: "8px", backgroundColor: active ? `${CH_S}18` : "transparent", borderLeft: active ? `2px solid ${CH_S}` : "2px solid transparent", cursor: "default" }}>
-              <Icon size={14} style={{ color: active ? CH_S : "rgba(255,255,255,0.35)", flexShrink: 0 }} />
+            <div key={label} style={{ display: "flex", alignItems: "center", gap: "10px", padding: "10px 12px", borderRadius: "8px", backgroundColor: active ? `${CH_S_DARK}18` : "transparent", borderLeft: active ? `2px solid ${CH_S_DARK}` : "2px solid transparent", cursor: "default" }}>
+              <Icon size={14} style={{ color: active ? CH_S_DARK : "rgba(255,255,255,0.35)", flexShrink: 0 }} />
               <span style={{ fontSize: "12px", fontWeight: active ? 600 : 400, color: active ? "white" : "rgba(255,255,255,0.38)" }}>{label}</span>
             </div>
           ))}
@@ -256,7 +258,7 @@ function AICard({ delay }: { delay: number }) {
         width: "36px",
         height: "36px",
         borderRadius: "10px",
-        background: "linear-gradient(135deg, #A855F7 0%, #7C69FF 100%)",
+        background: CH_P,
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
@@ -283,7 +285,7 @@ function AICard({ delay }: { delay: number }) {
               flex: 1,
               height: `${8 + h * 10}px`,
               borderRadius: "3px",
-              background: `linear-gradient(to top, #A855F7${Math.round(h * 180).toString(16).padStart(2, "0")}, #7C69FF${Math.round(h * 220).toString(16).padStart(2, "0")})`,
+              background: `${CH_P}${Math.round(h * 220).toString(16).padStart(2, "0")}`,
             }}
           />
         ))}
@@ -297,31 +299,31 @@ const SLIDES = [
   {
     heading: ["Stay Organised.", "Work Smarter."],
     sub: "Streamline document workflows, automate approvals, and get real-time insights — all from one platform.",
-    accentColor: CH_P,
+    accentColor: CH_P_DARK,
     features: [
-      { label: "Smart Workflows", color: CH_P },
-      { label: "Automated Approvals", color: CH_P },
-      { label: "Real-time Insights", color: CH_P },
+      { label: "Smart Workflows", color: CH_P_DARK },
+      { label: "Automated Approvals", color: CH_P_DARK },
+      { label: "Real-time Insights", color: CH_P_DARK },
     ],
   },
   {
     heading: ["Your Documents.", "Under Control."],
     sub: "Centralise every contract, policy, and report with role-based access and full version history.",
-    accentColor: CH_S,
+    accentColor: CH_S_DARK,
     features: [
-      { label: "Version Control", color: CH_S },
-      { label: "Role-based Access", color: CH_S },
-      { label: "Secure Storage", color: CH_S },
+      { label: "Version Control", color: CH_S_DARK },
+      { label: "Role-based Access", color: CH_S_DARK },
+      { label: "Secure Storage", color: CH_S_DARK },
     ],
   },
   {
     heading: ["AI-Powered.", "Always Ahead."],
     sub: "Surface risks, extract insights, and auto-classify documents with built-in intelligence — no extra tools needed.",
-    accentColor: "#A855F7",
+    accentColor: CH_P_DARK,
     features: [
-      { label: "Smart Classification", color: "#A855F7" },
-      { label: "Risk Surfacing", color: "#A855F7" },
-      { label: "Predictive Analytics", color: "#A855F7" },
+      { label: "Smart Classification", color: CH_P_DARK },
+      { label: "Risk Surfacing", color: CH_P_DARK },
+      { label: "Predictive Analytics", color: CH_P_DARK },
     ],
   },
 ] as const;
@@ -349,8 +351,7 @@ function TaglineCarousel() {
           <h2 className="font-display font-bold text-3xl text-white leading-tight mb-3">
             {slide.heading[0]}{" "}
             <span
-              className="bg-clip-text text-transparent"
-              style={{ backgroundImage: `linear-gradient(90deg, ${slide.accentColor}, ${CH_S})` }}
+              style={{ color: slide.accentColor }}
             >
               {slide.heading[1]}
             </span>
@@ -411,7 +412,7 @@ export function DashboardPreviewPanel() {
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.5, ease: EASE }}
       >
-        <img src="/logos/dims-logo-dark.svg" alt="DIMS" style={{ height: "34px", width: "auto" }} />
+        <img src="/logos/logo/360IQ-horizontal-transparent-for-dark.png" alt="360IQ" style={{ height: "34px", width: "auto" }} />
       </motion.div>
 
       {/* Dashboard mockup — flex-1 area with overlaid benefit cards */}

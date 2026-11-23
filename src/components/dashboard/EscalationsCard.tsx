@@ -128,7 +128,7 @@ export function EscalationsCard({
           <div className="rounded-xl border border-slate-200/30 overflow-hidden">
             <div className="overflow-x-auto">
               <Table className="min-w-[720px] xl:min-w-0">
-              <TableHeader className="bg-gradient-to-r from-slate-50/80 to-slate-100/50 border-b border-slate-200/50">
+              <TableHeader className="bg-surface-1 border-b border-line">
                 <TableRow className="hover:bg-transparent">
                   <TableHead className="font-bold text-slate-900 text-xs uppercase tracking-wider">Document</TableHead>
                   <TableHead className="font-bold text-slate-900 text-xs uppercase tracking-wider">Department</TableHead>
@@ -172,9 +172,9 @@ export function EscalationsCard({
             </div>
           </div>
         ) : (
-          <div className="flex flex-col items-center justify-center py-16 text-center rounded-xl bg-gradient-to-br from-emerald-50/40 to-emerald-100/20 border border-emerald-200/30">
-            <div className="p-3 bg-emerald-100/50 rounded-full mb-3">
-              <AlertCircle className="w-8 h-8 text-emerald-600" />
+          <div className="flex flex-col items-center justify-center py-16 text-center rounded-lg bg-surface-1 border border-line">
+            <div className="p-3 bg-positive-tint rounded-full mb-3">
+              <AlertCircle className="w-8 h-8 text-positive" />
             </div>
             <p className="text-slate-900 font-bold">All Clear! ✨</p>
             <p className="text-slate-600 text-sm mt-1">No escalations - all approvals are within SLA</p>

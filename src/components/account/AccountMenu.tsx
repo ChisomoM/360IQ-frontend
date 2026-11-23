@@ -1,4 +1,5 @@
-import { LogOut, User, Settings, X } from 'lucide-react';
+import { LogOut, User, Settings, X, Sun, Moon } from 'lucide-react';
+import { useTheme } from '@/lib/theme';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/lib/context/useAuth';
 import { cn } from '@/lib/utils';
@@ -11,6 +12,7 @@ interface AccountMenuProps {
 
 export function AccountMenu({ isOpen, onClose, onLogout }: AccountMenuProps) {
   const { user } = useAuth();
+  const [theme, setTheme] = useTheme();
 
   const getUserDisplayName = () => {
     if (user?.team_member) {
@@ -106,6 +108,18 @@ export function AccountMenu({ isOpen, onClose, onLogout }: AccountMenuProps) {
           >
             <Settings className="h-4 w-4 text-gray-400" />
             <span>Account Settings</span>
+          </button>
+
+          <button
+            onClick={() => setTheme(theme === 'ink' ? 'paper' : 'ink')}
+            className="w-full flex items-center gap-3 px-5 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+          >
+            {theme === 'ink' ? (
+              <Sun className="h-4 w-4 text-gray-400" />
+            ) : (
+              <Moon className="h-4 w-4 text-gray-400" />
+            )}
+            <span>{theme === 'ink' ? 'Switch to Paper (light)' : 'Switch to Ink (dark)'}</span>
           </button>
 
           <div className="my-1 border-t border-gray-100" />

@@ -43,14 +43,14 @@ export const StickyScroll = ({
 
   // Matching the hero gradient style
   const backgroundColors = [
-    "linear-gradient(to bottom right, #fff7ed, #ffffff, #eff6ff)", // from-orange-50 via-white to-blue-50
-    "linear-gradient(to bottom right, #fff7ed, #ffffff, #eff6ff)",
-    "linear-gradient(to bottom right, #fff7ed, #ffffff, #eff6ff)",
+    "var(--surface-0)",
+    "var(--surface-0)",
+    "var(--surface-0)",
   ];
   const linearGradients = [
-    "linear-gradient(to bottom right, #f97316, #fb923c)", // orange gradient
-    "linear-gradient(to bottom right, #3b82f6, #60a5fa)", // blue gradient  
-    "linear-gradient(to bottom right, #a855f7, #c084fc)", // purple gradient
+    "var(--signal-tint)",
+    "var(--positive-tint)",
+    "var(--surface-2)",
   ];
 
   const [backgroundGradient, setBackgroundGradient] = useState(

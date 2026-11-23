@@ -49,7 +49,7 @@ export const PredictiveAnalysisPanel: React.FC<PredictiveAnalysisPanelProps> = (
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Loader2 className="h-5 w-5 animate-spin text-[#febb00]" />
+              <Loader2 className="h-5 w-5 animate-spin text-signal-text" />
               <CardTitle className="text-base">Generating Predictive Analysis</CardTitle>
             </div>
             {onClose && (
@@ -115,12 +115,12 @@ export const PredictiveAnalysisPanel: React.FC<PredictiveAnalysisPanelProps> = (
   };
 
   return (
-    <Card className="border-[#febb00]/30 bg-yellow-50/20 overflow-hidden">
+    <Card className="bg-signal-tint iq-grad-border overflow-hidden">
       {/* Header */}
-      <CardHeader className="pb-3 border-b border-[#febb00]/20 cursor-pointer" onClick={() => setIsExpanded(!isExpanded)}>
+      <CardHeader className="pb-3 border-b border-line cursor-pointer" onClick={() => setIsExpanded(!isExpanded)}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3 flex-1">
-            <TrendingUp className="h-5 w-5 text-[#febb00] flex-shrink-0" />
+            <TrendingUp className="h-5 w-5 text-signal-text flex-shrink-0" />
             <div className="min-w-0">
               <CardTitle className="text-base">Predictive Analysis Results</CardTitle>
               <CardDescription className="text-xs mt-1">
@@ -215,13 +215,13 @@ export const PredictiveAnalysisPanel: React.FC<PredictiveAnalysisPanelProps> = (
           {result.recommendations && result.recommendations.length > 0 && (
             <div>
               <h3 className="font-semibold text-sm text-gray-900 flex items-center gap-2 mb-2">
-                <Lightbulb className="h-4 w-4 text-purple-600" />
+                <Lightbulb className="h-4 w-4 text-signal-text" />
                 Recommendations
               </h3>
               <ul className="space-y-1.5">
                 {result.recommendations.map((rec, idx) => (
                   <li key={idx} className="text-sm text-gray-700 flex gap-2">
-                    <span className="text-purple-600 font-bold min-w-fit">•</span>
+                    <span className="text-signal-text font-bold min-w-fit">•</span>
                     <span>{rec}</span>
                   </li>
                 ))}

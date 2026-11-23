@@ -261,7 +261,7 @@ export default function StudentProfile() {
   const getPaymentStatusBadge = (status: string) => {
     switch (status) {
       case 'verified':
-        return <Badge className="bg-green-100 text-green-800 border-green-200"><CheckCircle className="h-3 w-3 mr-1" />Verified</Badge>;
+        return <Badge className="bg-positive-tint text-positive border-line"><CheckCircle className="h-3 w-3 mr-1" />Verified</Badge>;
       case 'pending':
         return <Badge className="bg-yellow-100 text-yellow-800 border-yellow-200"><Clock className="h-3 w-3 mr-1" />Pending</Badge>;
       case 'rejected':
@@ -274,7 +274,7 @@ export default function StudentProfile() {
   const getDocumentStatusBadge = (status: string) => {
     switch (status) {
       case 'verified':
-        return <Badge className="bg-green-100 text-green-800 border-green-200"><CheckCircle className="h-3 w-3 mr-1" />Verified</Badge>;
+        return <Badge className="bg-positive-tint text-positive border-line"><CheckCircle className="h-3 w-3 mr-1" />Verified</Badge>;
       case 'pending':
         return <Badge className="bg-yellow-100 text-yellow-800 border-yellow-200"><Clock className="h-3 w-3 mr-1" />Pending Review</Badge>;
       case 'rejected':
@@ -289,7 +289,7 @@ export default function StudentProfile() {
       case 'borrowed':
         return <Badge className="bg-blue-100 text-blue-800 border-blue-200"><BookOpen className="h-3 w-3 mr-1" />Borrowed</Badge>;
       case 'returned':
-        return <Badge className="bg-green-100 text-green-800 border-green-200"><CheckCircle className="h-3 w-3 mr-1" />Returned</Badge>;
+        return <Badge className="bg-positive-tint text-positive border-line"><CheckCircle className="h-3 w-3 mr-1" />Returned</Badge>;
       case 'returned_late':
         return <Badge className="bg-orange-100 text-orange-800 border-orange-200"><AlertCircle className="h-3 w-3 mr-1" />Returned Late</Badge>;
       case 'overdue':
@@ -456,7 +456,7 @@ export default function StudentProfile() {
         {/* Library Tab */}
         <TabsContent value="library" className="mt-6">
             <Card>
-                <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b">
+                <CardHeader className="bg-surface-2 border-b">
                     <CardTitle className="flex items-center gap-2">
                         <BookOpen className="h-5 w-5 text-blue-600" /> Library Records
                     </CardTitle>
@@ -526,10 +526,10 @@ export default function StudentProfile() {
         {/* Documents Tab */}
         <TabsContent value="documents" className="mt-6">
             <Card>
-                <CardHeader className="bg-gradient-to-r from-purple-50 to-pink-50 border-b">
+                <CardHeader className="bg-surface-2 border-b">
                     <div className="flex items-center justify-between">
                         <CardTitle className="flex items-center gap-2">
-                            <FileText className="h-5 w-5 text-purple-600" /> Student Documents
+                            <FileText className="h-5 w-5 text-signal-text" /> Student Documents
                         </CardTitle>
                         {!canViewDocuments && (
                             <Badge variant="outline" className="text-orange-600 border-orange-300">
@@ -554,11 +554,11 @@ export default function StudentProfile() {
                                 <div className="flex gap-4 text-sm">
                                     <div className="flex items-center gap-2">
                                         <span className="font-medium">Total Documents:</span>
-                                        <span className="text-purple-600 font-bold">{dummyDocuments.length}</span>
+                                        <span className="text-signal-text font-bold">{dummyDocuments.length}</span>
                                     </div>
                                     <div className="flex items-center gap-2">
                                         <span className="font-medium">Verified:</span>
-                                        <span className="text-green-600 font-bold">
+                                        <span className="text-positive font-bold">
                                             {dummyDocuments.filter(d => d.status === 'verified').length}
                                         </span>
                                     </div>
@@ -625,10 +625,10 @@ export default function StudentProfile() {
         {/* Payments Tab */}
         <TabsContent value="finance" className="mt-6">
             <Card>
-                <CardHeader className="bg-gradient-to-r from-green-50 to-emerald-50 border-b">
+                <CardHeader className="bg-surface-2 border-b">
                     <div className="flex items-center justify-between">
                         <CardTitle className="flex items-center gap-2">
-                            <CreditCard className="h-5 w-5 text-green-600" /> Payment History
+                            <CreditCard className="h-5 w-5 text-positive" /> Payment History
                         </CardTitle>
                         {!canViewFinance && (
                             <Badge variant="outline" className="text-orange-600 border-orange-300">
@@ -650,10 +650,10 @@ export default function StudentProfile() {
                     ) : (
                         <div className="p-6">
                             <div className="grid grid-cols-4 gap-4 mb-6">
-                                <Card className="bg-green-50 border-green-200">
+                                <Card className="bg-positive-tint border-line">
                                     <CardContent className="p-4">
                                         <p className="text-sm text-gray-600 mb-1">Total Paid</p>
-                                        <p className="text-2xl font-bold text-green-700">
+                                        <p className="text-2xl font-bold text-positive">
                                             K {dummyPayments.filter(p => p.status === 'verified').reduce((sum, p) => sum + p.amount, 0).toLocaleString()}
                                         </p>
                                     </CardContent>
@@ -672,10 +672,10 @@ export default function StudentProfile() {
                                         <p className="text-2xl font-bold text-blue-700">{dummyPayments.length}</p>
                                     </CardContent>
                                 </Card>
-                                <Card className="bg-purple-50 border-purple-200">
+                                <Card className="bg-signal-tint border-line">
                                     <CardContent className="p-4">
                                         <p className="text-sm text-gray-600 mb-1">Outstanding</p>
-                                        <p className="text-2xl font-bold text-purple-700">K 2,450</p>
+                                        <p className="text-2xl font-bold text-signal-text">K 2,450</p>
                                     </CardContent>
                                 </Card>
                             </div>
@@ -697,7 +697,7 @@ export default function StudentProfile() {
                                     {dummyPayments.map((payment, index) => (
                                         <TableRow key={payment.id} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
                                             <TableCell className="font-medium">{payment.payment_type}</TableCell>
-                                            <TableCell className="font-bold text-green-600">
+                                            <TableCell className="font-bold text-positive">
                                                 K {payment.amount.toLocaleString()}
                                             </TableCell>
                                             <TableCell>

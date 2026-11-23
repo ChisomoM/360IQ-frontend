@@ -45,13 +45,13 @@ import type { FinancialDocument, FinancialTableData, FinancialChartState } from 
 import { X } from 'lucide-react';
 
 const CHART_COLORS = [
-  '#3b82f6',
-  '#10b981',
-  '#f59e0b',
-  '#ef4444',
-  '#8b5cf6',
-  '#ec4899',
-  '#06b6d4',
+  'var(--chart-1)',
+  'var(--chart-2)',
+  'var(--chart-3)',
+  'var(--chart-4)',
+  'var(--chart-1)',
+  'var(--chart-2)',
+  'var(--chart-3)',
 ];
 
 interface FinancialChartViewerProps {

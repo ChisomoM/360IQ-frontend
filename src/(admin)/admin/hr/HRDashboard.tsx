@@ -14,10 +14,10 @@ import {
 import { getHRAnalytics } from '@/lib/api/hr';
 import type { HRAnalytics } from '@/types/hr';
 
-const CHART_COLORS = ['#1e5631', '#febb00', '#3b82f6', '#ef4444', '#8b5cf6', '#f59e0b'];
+const CHART_COLORS = ['var(--chart-1)', 'var(--chart-2)', 'var(--chart-3)', 'var(--chart-4)', 'var(--chart-5)', 'var(--chart-6)'];
 const CHART_BG_CLASSES = [
-  'bg-[#1e5631]', 'bg-[#febb00]', 'bg-[#3b82f6]',
-  'bg-[#ef4444]', 'bg-[#8b5cf6]', 'bg-[#f59e0b]',
+  'bg-[var(--chart-1)]', 'bg-[var(--chart-2)]', 'bg-[var(--chart-3)]',
+  'bg-[var(--chart-4)]', 'bg-[var(--chart-5)]', 'bg-[var(--chart-6)]',
 ] as const;
 
 const LEAVE_TYPE_LABELS: Record<string, string> = {
@@ -26,9 +26,9 @@ const LEAVE_TYPE_LABELS: Record<string, string> = {
 };
 
 const STATUS_BADGE: Record<string, string> = {
-  pending: 'bg-yellow-100 text-yellow-800',
-  approved: 'bg-green-100 text-green-800',
-  rejected: 'bg-red-100 text-red-800',
+  pending: 'bg-caution-tint text-caution',
+  approved: 'bg-positive-tint text-positive',
+  rejected: 'bg-risk-tint text-risk',
   cancelled: 'bg-gray-100 text-gray-600',
 };
 
@@ -46,7 +46,7 @@ export default function HRDashboard() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[500px]">
-        <Loader2 className="h-10 w-10 animate-spin text-[#1e5631]" />
+        <Loader2 className="h-10 w-10 animate-spin text-primary" />
       </div>
     );
   }
@@ -70,7 +70,7 @@ export default function HRDashboard() {
           <h1 className="text-3xl font-bold text-gray-900">HR Dashboard</h1>
           <p className="text-gray-600 mt-1">Staff records, leave management and workforce analytics</p>
         </div>
-        <Button asChild className="bg-[#1e5631] hover:bg-[#1e5631]/90">
+        <Button asChild className="bg-primary hover:bg-signal-hover text-on-signal">
           <Link to="/admin/hr/staff">
             View Staff Directory <ArrowUpRight className="ml-2 h-4 w-4" />
           </Link>
@@ -82,7 +82,7 @@ export default function HRDashboard() {
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center gap-4">
-              <div className="p-3 bg-green-100 rounded-lg"><Users className="h-6 w-6 text-[#1e5631]" /></div>
+              <div className="p-3 bg-signal-tint rounded-lg"><Users className="h-6 w-6 text-signal-text" /></div>
               <div>
                 <p className="text-sm text-gray-500">Total Staff</p>
                 <p className="text-2xl font-bold">{data.total_staff}</p>
@@ -93,7 +93,7 @@ export default function HRDashboard() {
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center gap-4">
-              <div className="p-3 bg-blue-100 rounded-lg"><UserCheck className="h-6 w-6 text-blue-600" /></div>
+              <div className="p-3 bg-positive-tint rounded-lg"><UserCheck className="h-6 w-6 text-positive" /></div>
               <div>
                 <p className="text-sm text-gray-500">Active Staff</p>
                 <p className="text-2xl font-bold">{data.active_staff}</p>
@@ -104,7 +104,7 @@ export default function HRDashboard() {
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center gap-4">
-              <div className="p-3 bg-yellow-100 rounded-lg"><Calendar className="h-6 w-6 text-yellow-600" /></div>
+              <div className="p-3 bg-caution-tint rounded-lg"><Calendar className="h-6 w-6 text-caution" /></div>
               <div>
                 <p className="text-sm text-gray-500">Pending Leave</p>
                 <p className="text-2xl font-bold">{pendingLeave}</p>
@@ -115,7 +115,7 @@ export default function HRDashboard() {
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center gap-4">
-              <div className="p-3 bg-red-100 rounded-lg"><AlertTriangle className="h-6 w-6 text-red-600" /></div>
+              <div className="p-3 bg-risk-tint rounded-lg"><AlertTriangle className="h-6 w-6 text-risk" /></div>
               <div>
                 <p className="text-sm text-gray-500">Contracts Expiring (90d)</p>
                 <p className="text-2xl font-bold">{data.contracts_expiring_in_90_days}</p>
@@ -127,9 +127,9 @@ export default function HRDashboard() {
 
       {/* Contract Expiry Warning */}
       {data.contracts_expiring_in_30_days > 0 && (
-        <div className="flex items-center gap-3 bg-red-50 border border-red-200 rounded-lg p-4">
-          <AlertTriangle className="h-5 w-5 text-red-600 shrink-0" />
-          <p className="text-red-800 text-sm">
+        <div className="flex items-center gap-3 bg-risk-tint border border-line rounded-lg p-4">
+          <AlertTriangle className="h-5 w-5 text-risk shrink-0" />
+          <p className="text-risk text-sm">
             <span className="font-semibold">{data.contracts_expiring_in_30_days} contract(s)</span> expiring within
             30 days. <Link to="/admin/hr/staff" className="underline">Review staff records</Link>
           </p>
@@ -154,7 +154,7 @@ export default function HRDashboard() {
                   <XAxis type="number" allowDecimals={false} />
                   <YAxis type="category" dataKey="department_name" width={110} tick={{ fontSize: 12 }} />
                   <Tooltip />
-                  <Bar dataKey="count" fill="#1e5631" radius={[0, 4, 4, 0]} />
+                  <Bar dataKey="count" fill="var(--chart-1)" radius={[0, 4, 4, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             )}

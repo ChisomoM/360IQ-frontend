@@ -86,13 +86,13 @@ export default function AdminLayout() {
   };
 
   return (
-    <div className="min-h-screen flex bg-gradient-to-br from-gray-50 via-white to-gray-100">
+    <div className="min-h-screen flex bg-surface-0">
       <SidebarProvider>
         <aside
           className={`fixed left-0 top-0 h-screen z-40 transition-all duration-300 ${collapsed ? "w-20" : "w-64"
             }`}
         >
-          <div className="h-full flex flex-col bg-primary text-primary-foreground shadow-xl">
+          <div className="h-full flex flex-col bg-brand-ink bg-[image:var(--gradient-sidebar)] text-white shadow-xl">
 
             <div className="flex items-center justify-center py-6 border-b border-white/10">
               <AnimatePresence mode="wait">
@@ -111,9 +111,11 @@ export default function AdminLayout() {
                         className="h-12 w-auto"
                       />
                     ) : (
-                      <div className="text-white font-extrabold uppercase tracking-wider text-xl">
-                        {tenantName}
-                      </div>
+                      <img
+                        src="/logos/logo/360IQ-horizontal-transparent-for-dark.png"
+                        alt={tenantName}
+                        className="h-20 w-auto -my-4"
+                      />
                     )}
                   </motion.div>
                 )}
@@ -149,7 +151,7 @@ export default function AdminLayout() {
                     <SidebarMenuButton
                       asChild
                       isActive={isActive("/admin") || isActive("/admin/dashboard")}
-                      className="text-white hover:bg-white/10 data-[active=true]:bg-secondary data-[active=true]:text-black rounded-md transition-colors relative z-10"
+                      className="text-white hover:bg-white/10 data-[active=true]:bg-white/10 data-[active=true]:text-white data-[active=true]:shadow-[inset_3px_0_0_#19C3A6] rounded-md transition-colors relative z-10"
                     >
                       <Link to="/admin/dashboard" className="flex items-center gap-3">
                         <LayoutDashboard className="h-5 w-5" />
@@ -183,7 +185,7 @@ export default function AdminLayout() {
                           <SidebarMenuButton
                             asChild
                             isActive={isActive("/admin/finance/dashboard")}
-                            className="text-white hover:bg-white/10 data-[active=true]:bg-secondary data-[active=true]:text-black rounded-md transition-colors relative z-10"
+                            className="text-white hover:bg-white/10 data-[active=true]:bg-white/10 data-[active=true]:text-white data-[active=true]:shadow-[inset_3px_0_0_#19C3A6] rounded-md transition-colors relative z-10"
                           >
                             <Link to="/admin/finance/dashboard" className="flex items-center gap-3">
                               <Wallet className="h-5 w-5" />
@@ -207,7 +209,7 @@ export default function AdminLayout() {
                           <SidebarMenuButton
                             asChild
                             isActive={isActive("/admin/finance/reports")}
-                            className="text-white hover:bg-white/10 data-[active=true]:bg-secondary data-[active=true]:text-black rounded-md transition-colors relative z-10"
+                            className="text-white hover:bg-white/10 data-[active=true]:bg-white/10 data-[active=true]:text-white data-[active=true]:shadow-[inset_3px_0_0_#19C3A6] rounded-md transition-colors relative z-10"
                           >
                             <Link to="/admin/finance/reports" className="flex items-center gap-3">
                               <PieChart className="h-5 w-5" />
@@ -234,7 +236,7 @@ export default function AdminLayout() {
                           <SidebarMenuButton
                             asChild
                             isActive={isActive("/admin/hr/dashboard")}
-                            className="text-white hover:bg-white/10 data-[active=true]:bg-secondary data-[active=true]:text-black rounded-md transition-colors"
+                            className="text-white hover:bg-white/10 data-[active=true]:bg-white/10 data-[active=true]:text-white data-[active=true]:shadow-[inset_3px_0_0_#19C3A6] rounded-md transition-colors"
                           >
                             <Link to="/admin/hr/dashboard" className="flex items-center gap-3">
                               <BarChart3 className="h-5 w-5" />
@@ -246,7 +248,7 @@ export default function AdminLayout() {
                           <SidebarMenuButton
                             asChild
                             isActive={isActive("/admin/hr/staff")}
-                            className="text-white hover:bg-white/10 data-[active=true]:bg-secondary data-[active=true]:text-black rounded-md transition-colors"
+                            className="text-white hover:bg-white/10 data-[active=true]:bg-white/10 data-[active=true]:text-white data-[active=true]:shadow-[inset_3px_0_0_#19C3A6] rounded-md transition-colors"
                           >
                             <Link to="/admin/hr/staff" className="flex items-center gap-3">
                               <UserCog className="h-5 w-5" />
@@ -258,7 +260,7 @@ export default function AdminLayout() {
                           <SidebarMenuButton
                             asChild
                             isActive={isActive("/admin/hr/leave")}
-                            className="text-white hover:bg-white/10 data-[active=true]:bg-secondary data-[active=true]:text-black rounded-md transition-colors"
+                            className="text-white hover:bg-white/10 data-[active=true]:bg-white/10 data-[active=true]:text-white data-[active=true]:shadow-[inset_3px_0_0_#19C3A6] rounded-md transition-colors"
                           >
                             <Link to="/admin/hr/leave" className="flex items-center gap-3">
                               <ClipboardList className="h-5 w-5" />
@@ -271,7 +273,7 @@ export default function AdminLayout() {
                             <SidebarMenuButton
                               asChild
                               isActive={isActive("/admin/hr/applications")}
-                              className="text-white hover:bg-white/10 data-[active=true]:bg-secondary data-[active=true]:text-black rounded-md transition-colors"
+                              className="text-white hover:bg-white/10 data-[active=true]:bg-white/10 data-[active=true]:text-white data-[active=true]:shadow-[inset_3px_0_0_#19C3A6] rounded-md transition-colors"
                             >
                               <Link to="/admin/hr/applications" className="flex items-center gap-3">
                                 <ClipboardCheck className="h-5 w-5" />
@@ -308,7 +310,7 @@ export default function AdminLayout() {
                         <SidebarMenuButton
                           asChild
                           isActive={isActive("/admin/documents")}
-                          className="text-white hover:bg-white/10 data-[active=true]:bg-secondary data-[active=true]:text-black rounded-md transition-colors relative z-10"
+                          className="text-white hover:bg-white/10 data-[active=true]:bg-white/10 data-[active=true]:text-white data-[active=true]:shadow-[inset_3px_0_0_#19C3A6] rounded-md transition-colors relative z-10"
                         >
                           <Link to="/admin/documents" className="flex items-center gap-3">
                             <FileText className="h-5 w-5" />
@@ -333,7 +335,7 @@ export default function AdminLayout() {
                         <SidebarMenuButton
                           asChild
                           isActive={isActive("/admin/signatures")}
-                          className="text-white hover:bg-white/10 data-[active=true]:bg-secondary data-[active=true]:text-black rounded-md transition-colors relative z-10"
+                          className="text-white hover:bg-white/10 data-[active=true]:bg-white/10 data-[active=true]:text-white data-[active=true]:shadow-[inset_3px_0_0_#19C3A6] rounded-md transition-colors relative z-10"
                         >
                           <Link to="/admin/signatures" className="flex items-center gap-3">
                             <PenLine className="h-5 w-5" />
@@ -371,7 +373,7 @@ export default function AdminLayout() {
                           <SidebarMenuButton
                             asChild
                             isActive={isActive("/admin/analytics")}
-                            className="text-white hover:bg-white/10 data-[active=true]:bg-secondary data-[active=true]:text-black rounded-md transition-colors relative z-10"
+                            className="text-white hover:bg-white/10 data-[active=true]:bg-white/10 data-[active=true]:text-white data-[active=true]:shadow-[inset_3px_0_0_#19C3A6] rounded-md transition-colors relative z-10"
                           >
                             <Link to="/admin/analytics" className="flex items-center gap-3">
                               <BarChart2 className="h-5 w-5" />
@@ -395,7 +397,7 @@ export default function AdminLayout() {
                           <SidebarMenuButton
                             asChild
                             isActive={isActive("/admin/reports")}
-                            className="text-white hover:bg-white/10 data-[active=true]:bg-secondary data-[active=true]:text-black rounded-md transition-colors relative z-10"
+                            className="text-white hover:bg-white/10 data-[active=true]:bg-white/10 data-[active=true]:text-white data-[active=true]:shadow-[inset_3px_0_0_#19C3A6] rounded-md transition-colors relative z-10"
                           >
                             <Link to="/admin/reports" className="flex items-center gap-3">
                               <BarChart3 className="h-5 w-5" />
@@ -419,7 +421,7 @@ export default function AdminLayout() {
                           <SidebarMenuButton
                             asChild
                             isActive={isActive("/admin/reports/document-charts")}
-                            className="text-white hover:bg-white/10 data-[active=true]:bg-secondary data-[active=true]:text-black rounded-md transition-colors relative z-10"
+                            className="text-white hover:bg-white/10 data-[active=true]:bg-white/10 data-[active=true]:text-white data-[active=true]:shadow-[inset_3px_0_0_#19C3A6] rounded-md transition-colors relative z-10"
                           >
                             <Link to="/admin/reports/document-charts" className="flex items-center gap-3">
                               <BarChart2 className="h-5 w-5" />
@@ -456,7 +458,7 @@ export default function AdminLayout() {
                           <SidebarMenuButton
                             asChild
                             isActive={isActive("/admin/departments")}
-                            className="text-white hover:bg-white/10 data-[active=true]:bg-secondary data-[active=true]:text-black rounded-md transition-colors relative z-10"
+                            className="text-white hover:bg-white/10 data-[active=true]:bg-white/10 data-[active=true]:text-white data-[active=true]:shadow-[inset_3px_0_0_#19C3A6] rounded-md transition-colors relative z-10"
                           >
                             <Link to="/admin/departments" className="flex items-center gap-3">
                               <Building2 className="h-5 w-5" />
@@ -498,7 +500,7 @@ export default function AdminLayout() {
                               <SidebarMenuButton
                                 asChild
                                 isActive={isActive("/admin/user-management")}
-                                className="text-white hover:bg-white/10 data-[active=true]:bg-secondary data-[active=true]:text-black rounded-md transition-colors relative z-10"
+                                className="text-white hover:bg-white/10 data-[active=true]:bg-white/10 data-[active=true]:text-white data-[active=true]:shadow-[inset_3px_0_0_#19C3A6] rounded-md transition-colors relative z-10"
                               >
                                 <Link to="/admin/users" className="flex items-center gap-3">
                                   <Users className="h-5 w-5" />
@@ -524,7 +526,7 @@ export default function AdminLayout() {
                               <SidebarMenuButton
                                 asChild
                                 isActive={isActive("/admin/audit-trails")}
-                                className="text-white hover:bg-white/10 data-[active=true]:bg-secondary data-[active=true]:text-black rounded-md transition-colors relative z-10"
+                                className="text-white hover:bg-white/10 data-[active=true]:bg-white/10 data-[active=true]:text-white data-[active=true]:shadow-[inset_3px_0_0_#19C3A6] rounded-md transition-colors relative z-10"
                               >
                                 <Link to="/admin/audit-trails" className="flex items-center gap-3">
                                   <History className="h-5 w-5" />
@@ -550,7 +552,7 @@ export default function AdminLayout() {
                               <SidebarMenuButton
                                 asChild
                                 isActive={isActive("/admin/roles")}
-                                className="text-white hover:bg-white/10 data-[active=true]:bg-secondary data-[active=true]:text-black rounded-md transition-colors relative z-10"
+                                className="text-white hover:bg-white/10 data-[active=true]:bg-white/10 data-[active=true]:text-white data-[active=true]:shadow-[inset_3px_0_0_#19C3A6] rounded-md transition-colors relative z-10"
                               >
                                 <Link to="/admin/roles" className="flex items-center gap-3">
                                   <ShieldCheck className="h-5 w-5" />
@@ -576,7 +578,7 @@ export default function AdminLayout() {
                               <SidebarMenuButton
                                 asChild
                                 isActive={isActive("/admin/maker-checker")}
-                                className="text-white hover:bg-white/10 data-[active=true]:bg-secondary data-[active=true]:text-black rounded-md transition-colors relative z-10"
+                                className="text-white hover:bg-white/10 data-[active=true]:bg-white/10 data-[active=true]:text-white data-[active=true]:shadow-[inset_3px_0_0_#19C3A6] rounded-md transition-colors relative z-10"
                               >
                                 <Link to="/admin/maker-checker" className="flex items-center gap-3">
                                   <ClipboardCheck className="h-5 w-5" />
@@ -603,7 +605,7 @@ export default function AdminLayout() {
                         <SidebarMenuButton
                           asChild
                           isActive={isActive("/admin/settings/dashboard-config")}
-                          className="text-white hover:bg-white/10 data-[active=true]:bg-secondary data-[active=true]:text-black rounded-md transition-colors"
+                          className="text-white hover:bg-white/10 data-[active=true]:bg-white/10 data-[active=true]:text-white data-[active=true]:shadow-[inset_3px_0_0_#19C3A6] rounded-md transition-colors"
                         >
                           <Link to="/admin/settings/dashboard-config" className="flex items-center gap-3">
                             <Settings className="h-5 w-5" />
@@ -617,13 +619,13 @@ export default function AdminLayout() {
 
                 {/* ControlHub Section */}
                 {/* <div className="px-3 pt-4 pb-1 text-xs text-yellow-200 uppercase tracking-wider">
-                  {!collapsed && "Avec ControlHub"}
+                  {!collapsed && "360IQ ControlHub"}
                 </div> 
                 <SidebarMenuItem>
                   <SidebarMenuButton
                     asChild
                     isActive={isActive("/admin/controlhub/dashboard")}
-                    className="text-white hover:bg-green-700 data-[active=true]:bg-[#febb00] data-[active=true]:text-black rounded-md"
+                    className="text-white hover:bg-white/10 data-[active=true]:bg-white/10 data-[active=true]:text-white data-[active=true]:shadow-[inset_3px_0_0_#19C3A6] rounded-md"
                   >
                     <Link to="/admin/controlhub/dashboard" className="flex items-center gap-3">
                       <LayoutDashboard className="h-5 w-5" />
@@ -635,7 +637,7 @@ export default function AdminLayout() {
                   <SidebarMenuButton
                     asChild
                     isActive={isActive("/admin/controlhub/tenants") || location.pathname.startsWith("/admin/controlhub/tenants/")}
-                    className="text-white hover:bg-green-700 data-[active=true]:bg-[#febb00] data-[active=true]:text-black rounded-md"
+                    className="text-white hover:bg-white/10 data-[active=true]:bg-white/10 data-[active=true]:text-white data-[active=true]:shadow-[inset_3px_0_0_#19C3A6] rounded-md"
                   >
                     <Link to="/admin/controlhub/tenants" className="flex items-center gap-3">
                       <Building2 className="h-5 w-5" />

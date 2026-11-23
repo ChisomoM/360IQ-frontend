@@ -34,16 +34,16 @@ const EMPLOYMENT_LABELS: Record<EmploymentType, string> = {
 };
 
 const EMPLOYMENT_BADGE: Record<EmploymentType, string> = {
-  permanent: 'bg-green-100 text-green-800',
-  contract: 'bg-blue-100 text-blue-800',
-  part_time: 'bg-purple-100 text-purple-800',
-  probation: 'bg-yellow-100 text-yellow-800',
+  permanent: 'bg-positive-tint text-positive',
+  contract: 'bg-signal-tint text-signal-text',
+  part_time: 'bg-surface-2 text-sky-text',
+  probation: 'bg-caution-tint text-caution',
 };
 
 const PROFILE_STATUS_BADGE: Record<ProfileStatus, string> = {
-  active: 'bg-green-100 text-green-800',
+  active: 'bg-positive-tint text-positive',
   inactive: 'bg-gray-100 text-gray-600',
-  pending_account: 'bg-orange-100 text-orange-700',
+  pending_account: 'bg-caution-tint text-caution',
 };
 
 const PROFILE_STATUS_LABEL: Record<ProfileStatus, string> = {
@@ -182,7 +182,7 @@ export default function StaffDirectory() {
           <p className="text-gray-600 mt-1">All staff profiles and employment records</p>
         </div>
         {canManage && (
-          <Button onClick={() => setShowCreate(true)} className="bg-[#1e5631] hover:bg-[#1e5631]/90">
+          <Button onClick={() => setShowCreate(true)} className="bg-primary hover:bg-signal-hover text-on-signal">
             <UserCog className="mr-2 h-4 w-4" /> Add Staff Profile
           </Button>
         )}
@@ -216,7 +216,7 @@ export default function StaffDirectory() {
         <CardContent>
           {loading ? (
             <div className="flex justify-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin text-[#7c69ff]" />
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
           ) : filtered.length === 0 ? (
             <div className="text-center py-12">
@@ -260,7 +260,7 @@ export default function StaffDirectory() {
                     <TableCell>{formatDate(p.contract_end_date)}</TableCell>
                     <TableCell>
                       {p.is_onboarded ? (
-                        <Badge className="bg-green-100 text-green-800">Yes</Badge>
+                        <Badge className="bg-positive-tint text-positive">Yes</Badge>
                       ) : (
                         <Badge variant="outline" className="text-gray-500">No</Badge>
                       )}
@@ -295,7 +295,7 @@ export default function StaffDirectory() {
               </SheetHeader>
               <div className="mt-6 space-y-4 text-sm">
                 {!selected.user_id && (
-                  <div className="rounded bg-orange-50 border border-orange-200 p-3 text-xs text-orange-800">
+                  <div className="rounded bg-caution-tint border border-line p-3 text-xs text-caution">
                     This is an offline staff profile — no system account is linked yet.
                     Approve their onboarding application to create an account automatically.
                   </div>
@@ -411,14 +411,14 @@ export default function StaffDirectory() {
                             <p className="font-medium text-sm truncate">{u.first_name} {u.last_name}</p>
                             <p className="text-xs text-gray-500 truncate">{u.email}</p>
                           </div>
-                          {linkedForm.user_id === u.id && <CheckCircle2 className="h-4 w-4 text-green-600 shrink-0" />}
+                          {linkedForm.user_id === u.id && <CheckCircle2 className="h-4 w-4 text-positive shrink-0" />}
                         </button>
                       ))}
                     </div>
                   )}
                 </div>
                 {selectedUserLabel && (
-                  <p className="text-xs text-green-700 flex items-center gap-1">
+                  <p className="text-xs text-positive flex items-center gap-1">
                     <CheckCircle2 className="h-3 w-3" /> {selectedUserLabel}
                   </p>
                 )}
@@ -521,7 +521,7 @@ export default function StaffDirectory() {
 
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowCreate(false)}>Cancel</Button>
-            <Button onClick={handleCreate} disabled={saving} className="bg-[#7c69ff] hover:bg-[#6b5ae6]">
+            <Button onClick={handleCreate} disabled={saving} className="bg-primary hover:bg-signal-hover text-on-signal">
               {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Create Profile'}
             </Button>
           </DialogFooter>

@@ -4,19 +4,21 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
 
 const badgeVariants = cva(
-  "inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-semibold transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-offset-2",
+  "inline-flex items-center h-[22px] rounded-sm border px-2 text-xs font-semibold transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-focus focus:ring-offset-2",
   {
     variants: {
       variant: {
-        default:
-          "border-transparent bg-ch-primary-600 text-white hover:bg-ch-primary-700 shadow-xs",
-        secondary:
-          "border-transparent bg-ch-secondary-600 text-white hover:bg-ch-secondary-700 shadow-xs",
-        destructive:
-          "border-transparent bg-red-600 text-white hover:bg-red-700 shadow-xs",
-        outline: "border-gray-300 text-gray-700 hover:bg-gray-50",
-        subtle: "border-gray-200 bg-gray-50 text-gray-700 hover:bg-gray-100",
-        ghost: "border-transparent text-ch-primary-600 hover:bg-gray-100",
+        default: "border-transparent bg-signal-tint text-signal-text",
+        signal: "border-transparent bg-signal-tint text-signal-text",
+        secondary: "border-transparent bg-positive-tint text-positive",
+        positive: "border-transparent bg-positive-tint text-positive",
+        destructive: "border-transparent bg-risk-tint text-risk",
+        risk: "border-transparent bg-risk-tint text-risk",
+        caution: "border-transparent bg-caution-tint text-caution",
+        neutral: "border-transparent bg-surface-2 text-text-secondary",
+        outline: "border-line-strong text-text-secondary",
+        subtle: "border-transparent bg-surface-2 text-text-secondary",
+        ghost: "border-transparent text-signal-text hover:bg-surface-2",
       },
     },
     defaultVariants: {

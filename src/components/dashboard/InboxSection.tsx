@@ -52,16 +52,16 @@ function ApprovalCard({ item, onReview, onApprove, onSignatureClick }: { item: A
   const isOverdue = item.daysOverdue && item.daysOverdue > 0;
 
   return (
-    <div className="p-4 bg-gradient-to-r from-amber-50/50 to-amber-50/30 border border-amber-200/40 rounded-xl hover:shadow-premium-md transition-all duration-200 hover:border-amber-200/60">
+    <div className="p-4 bg-surface-1 border border-line rounded-lg transition-colors duration-150 hover:bg-surface-2">
       <div className="flex items-start gap-3 mb-3">
         {getApprovalIcon()}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-2 flex-wrap">
-            <Badge variant="outline" className="bg-amber-100/80 text-amber-900 border-amber-200/50 font-medium">
+            <Badge variant="outline" className="bg-caution-tint text-caution border-transparent font-medium">
               {getApprovalLabel()}
             </Badge>
             {isOverdue && (
-              <Badge variant="outline" className="bg-red-100/80 text-red-900 border-red-200/50 text-xs font-semibold">
+              <Badge variant="outline" className="bg-risk-tint text-risk border-transparent text-xs font-semibold">
                 {item.daysOverdue} days overdue
               </Badge>
             )}
@@ -86,7 +86,6 @@ function ApprovalCard({ item, onReview, onApprove, onSignatureClick }: { item: A
         {item.type === 'deletion' && onApprove && (
           <Button
             size="sm"
-            className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-premium-sm hover:shadow-premium-md transition-all"
             onClick={() => onApprove(item.id)}
           >
             Approve
@@ -101,10 +100,10 @@ function SharedDocumentCard({ doc, onDocumentClick }: { doc: SharedDocument; onD
   return (
     <button
       onClick={() => onDocumentClick(doc.id)}
-      className="w-full p-4 bg-gradient-to-r from-blue-50/50 to-blue-50/30 border border-blue-200/40 rounded-xl hover:shadow-premium-md transition-all duration-200 hover:border-blue-200/60 text-left"
+      className="w-full p-4 bg-surface-1 border border-line rounded-lg transition-colors duration-150 hover:bg-surface-2 text-left"
     >
       <div className="flex items-start gap-3">
-        <Share2 className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
+        <Share2 className="h-5 w-5 text-sky-text flex-shrink-0 mt-0.5" />
         <div className="flex-1 min-w-0">
           <p className="font-semibold text-slate-900 truncate">{doc.title}</p>
           <p className="text-sm text-slate-600 mt-1">Shared by {doc.sharedBy}</p>

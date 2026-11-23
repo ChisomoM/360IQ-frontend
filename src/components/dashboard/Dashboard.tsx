@@ -290,7 +290,7 @@ export function Dashboard({ departments = [], categories = [] }: DashboardProps)
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
+    <div className="min-h-screen bg-surface-0">
       <DashboardHeader
         onUploadClick={() => setUploadModalOpen(true)}
         recentSearches={recentSearches}

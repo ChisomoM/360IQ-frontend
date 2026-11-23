@@ -16,8 +16,8 @@ export default function TenantsList() {
   const [isLoading, setIsLoading] = useState(true);
 
   const statusConfig: Record<string, { bg: string; text: string; icon: string; label: string }> = {
-    active: { bg: "bg-green-100", text: "text-green-700", icon: "✓", label: "Active" },
-    pending: { bg: "bg-yellow-100", text: "text-yellow-700", icon: "○", label: "Pending" },
+    active: { bg: "bg-positive-tint", text: "text-positive", icon: "✓", label: "Active" },
+    pending: { bg: "bg-caution-tint", text: "text-caution", icon: "○", label: "Pending" },
     inactive: { bg: "bg-gray-100", text: "text-gray-700", icon: "–", label: "Inactive" },
   };
 
@@ -130,8 +130,8 @@ export default function TenantsList() {
                       <td className="py-4 px-6">
                         <div className="inline-flex items-center gap-2">
                           <div className={`h-2 w-2 rounded-full ${
-                            status.label === 'Active' ? 'bg-green-500' :
-                            status.label === 'Pending' ? 'bg-yellow-500' :
+                            status.label === 'Active' ? 'bg-positive' :
+                            status.label === 'Pending' ? 'bg-caution' :
                             'bg-gray-400'
                           }`} />
                           <span className="text-sm font-medium text-gray-700">{status.label}</span>
