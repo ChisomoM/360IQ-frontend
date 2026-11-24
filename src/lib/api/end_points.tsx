@@ -106,6 +106,28 @@ export const API: Record<string, string> = {
   DASHBOARD_CARD_DEFINITIONS: "dashboard/cards/definitions",
 
 
+  // Onboarding
+  ONBOARDING_STATUS: "onboarding/status",
+  ONBOARDING_UPDATE: "onboarding/details",
+  ONBOARDING_SUBMIT: "onboarding/submit",
+  ONBOARDING_DOCUMENTS: "onboarding/documents",
+  ONBOARDING_TIMELINE: "onboarding/timeline",
+  ONBOARDING_DOWNLOAD: "onboarding/documents/download",
+  ONBOARDING_PREVIEW: "onboarding/invitations/preview",
+  ONBOARDING_CLAIM: "onboarding/invitations/claim",
+  ONBOARDING_LATEST_DEBUG: "onboarding/invitations/latest-debug",
+
+  // ControlHub Admin Onboarding
+  CH_ONBOARDING: "controlhub/admin/onboarding",
+  CH_ONBOARDING_INITIATE: "controlhub/admin/onboarding/initiate",
+  CH_ONBOARDING_EXPORT: "controlhub/admin/onboarding/export",
+  CH_ONBOARDING_DOWNLOAD: "controlhub/admin/onboarding/documents/download",
+  CH_ONBOARDING_DETAIL: "controlhub/admin/onboarding/:id",
+  CH_ONBOARDING_TIMELINE: "controlhub/admin/onboarding/:id/timeline",
+  CH_ONBOARDING_TRANSITION: "controlhub/admin/onboarding/:id/transition",
+  CH_ONBOARDING_VERIFY_DOC: "controlhub/admin/onboarding/documents/:id/verify",
+  CH_ONBOARDING_RESEND: "controlhub/admin/onboarding/:id/resend-invitation",
+
   // ControlHub — Platform admin endpoints (meta-DB, no tenant scoping)
   CH_LOGIN: "controlhub/auth/login",
   CH_CLIENTS: "controlhub/clients",
@@ -115,6 +137,14 @@ export const API: Record<string, string> = {
   CH_CLIENT_BRANDING: "controlhub/clients/:id/branding",
   CH_CLIENT_BRANDING_LOGO: "controlhub/clients/:id/branding/logo",
   CH_CLIENT_SETTINGS: "controlhub/clients/:id/settings",
+
+  // CRM Accounts, Contacts, and Business Units
+  ACCOUNTS: "accounts",
+  ACCOUNT_DETAIL: "accounts/:id",
+  ACCOUNT_CONTACTS: "accounts/:id/contacts",
+  CONTACT_DETAIL: "contacts/:id",
+  ACCOUNT_BUSINESS_UNITS: "accounts/:id/business-units",
+  BUSINESS_UNIT_DETAIL: "business-units/:id",
 };
 
 export const getRoute = (val: string): string => {

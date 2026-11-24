@@ -29,7 +29,11 @@ import StaffApplications from './(admin)/admin/hr/StaffApplications';
 import MySignatures from './(admin)/admin/MySignatures';
 import StaffOnboarding from './(public)/staff-onboarding/StaffOnboarding';
 import LogoExploration from './(public)/logo-exploration/LogoExploration';
+import ClaimInvitation from './(public)/onboarding/ClaimInvitation';
+import OnboardingWizard from './(public)/onboarding/OnboardingWizard';
 import DepartmentDetailPage from './(admin)/admin/DepartmentDetailPage';
+import { AccountsList } from './(admin)/admin/accounts/AccountsList';
+import { AccountDetail } from './(admin)/admin/accounts/AccountDetail';
 // RBAC — Roles & Maker-Checker Pages
 import RolesManagement from './(admin)/admin/RolesManagement';
 import MakerCheckerPage from './(admin)/admin/MakerCheckerPage';
@@ -59,6 +63,13 @@ function App() {
 
         <Route path="/login" element={<Login />} />
 
+        <Route path="/onboarding/claim" element={<ClaimInvitation />} />
+        <Route path="/onboarding/wizard" element={
+          <ProtectedRoute>
+            <OnboardingWizard />
+          </ProtectedRoute>
+        } />
+
         <Route path="/staff-onboarding" element={<StaffOnboarding />} />
         <Route path="/logo-exploration" element={<LogoExploration />} />
         <Route path="*" element={<div>Page Not Found</div>} />
@@ -81,6 +92,8 @@ function App() {
           <Route path="reports/financial-charts" element={<FinancialCharts />} />
           <Route path="departments" element={<Departments />} />
           <Route path="departments/:id" element={<DepartmentDetailPage />} />
+          <Route path="accounts" element={<AccountsList />} />
+          <Route path="accounts/:id" element={<AccountDetail />} />
           <Route path="documents" element={<DocumentsV2 />} />
           {/* <Route path="documents-premium" element={<DocumentsPremium />} /> */}
           <Route path="documents/:id" element={<DocumentDetail />} />
