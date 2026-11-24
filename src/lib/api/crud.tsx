@@ -229,7 +229,8 @@ export const fetchData = async (
     const errorData = await res.json();
     // Support multiple error response formats
     const errorMessage = errorData?.message || errorData?.error || `Error: ${res.status} ${res.statusText}`;
-    throw new Error(errorMessage);
+    // keep the HTTP status and any structured data (for example duplicate matches) for callers that need them
+    throw Object.assign(new Error(errorMessage), { status: res.status, data: errorData?.data });
   } catch (err) {
     // If JSON parsing fails or it's already an error, handle it
     if (err instanceof Error) {
@@ -454,7 +455,8 @@ export const get = async (path: string) => {
   try {
     const errorData = await res.json();
     const errorMessage = errorData?.message || errorData?.error || `Error: ${res.status} ${res.statusText}`;
-    throw new Error(errorMessage);
+    // keep the HTTP status and any structured data (for example duplicate matches) for callers that need them
+    throw Object.assign(new Error(errorMessage), { status: res.status, data: errorData?.data });
   } catch (err) {
     if (err instanceof Error) {
       throw err;

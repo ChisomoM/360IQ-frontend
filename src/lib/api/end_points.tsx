@@ -166,6 +166,21 @@ export const API: Record<string, string> = {
   PROFILES_COMPANY_DOCUMENT: "profiles/companies/:id/documents/:doc_id",
   PROFILES_MERGES: "profiles/merges",
   PROFILES_MERGE_UNDO: "profiles/merges/:id/undo",
+
+  // CaptureIQ: getting leads into 360IQ
+  CAPTURES_META: "captures/meta",
+  CAPTURES: "captures",
+  CAPTURES_COUNT: "captures/count",
+  CAPTURES_LEAD: "captures/lead",
+  CAPTURES_CARD: "captures/card",
+  CAPTURES_VOICE: "captures/voice",
+  CAPTURES_NOTE: "captures/note",
+  CAPTURES_SIGNALS: "captures/signals",
+  CAPTURE: "captures/:id",
+  CAPTURE_IMAGE: "captures/:id/image",
+  CAPTURE_RETRY: "captures/:id/retry",
+  CAPTURE_CONFIRM: "captures/:id/confirm",
+  CAPTURE_REJECT: "captures/:id/reject",
 };
 
 export const getRoute = (val: string): string => {
