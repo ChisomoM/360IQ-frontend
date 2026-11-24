@@ -7,6 +7,8 @@ export type BuyingRole =
   | "CHAMPION"
   | "INFLUENCER"
   | "GATEKEEPER"
+  | "PROCUREMENT"
+  | "BLOCKER"
   | "USER";
 export type Status = "ACTIVE" | "INACTIVE";
 
