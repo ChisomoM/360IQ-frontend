@@ -107,7 +107,7 @@ export const fetchData = async (
   h.append("Content-Type", "application/json");
 
   // Check if this is a public endpoint first
-  const skipPublicEndpoints = ["LOGIN", "ADMIN_LOGIN", "CH_LOGIN", "REGISTER", "ONBOARDING_PREVIEW", "ONBOARDING_CLAIM", "ONBOARDING_LATEST_DEBUG"].includes(key);
+  const skipPublicEndpoints = ["LOGIN", "ADMIN_LOGIN", "CH_LOGIN", "REGISTER", "ONBOARDING_PREVIEW", "ONBOARDING_CLAIM"].includes(key);
 
   // Tenant context: required for protected endpoints, optional for public and ControlHub
   const isControlHub = key.startsWith("CH_");
@@ -257,8 +257,11 @@ export const list = (
   query: Record<string, string> = {}
 ) => fetchData(key, "GET", params, null, query);
 
-export const retrieve = (key: Endpoints, params: Record<string, string> = {}) =>
-  fetchData(key, "GET", params);
+export const retrieve = (
+  key: Endpoints,
+  params: Record<string, string> = {},
+  query: Record<string, string> = {}
+) => fetchData(key, "GET", params, null, query);
 
 export const update = (
   key: Endpoints,
@@ -353,7 +356,7 @@ export const fetchFileBuffer = async (
   const h = new Headers();
 
   // Check if this is a public endpoint first
-  const skipPublicEndpoints = ["LOGIN", "ADMIN_LOGIN", "CH_LOGIN", "REGISTER", "ONBOARDING_PREVIEW", "ONBOARDING_CLAIM", "ONBOARDING_LATEST_DEBUG"].includes(key);
+  const skipPublicEndpoints = ["LOGIN", "ADMIN_LOGIN", "CH_LOGIN", "REGISTER", "ONBOARDING_PREVIEW", "ONBOARDING_CLAIM"].includes(key);
 
   const isControlHub = key.startsWith("CH_");
   const tenantId = fetchOpts?.tenantId || useTenantStore.getState().currentTenantId;

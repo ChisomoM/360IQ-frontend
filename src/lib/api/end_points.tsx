@@ -115,7 +115,6 @@ export const API: Record<string, string> = {
   ONBOARDING_DOWNLOAD: "onboarding/documents/download",
   ONBOARDING_PREVIEW: "onboarding/invitations/preview",
   ONBOARDING_CLAIM: "onboarding/invitations/claim",
-  ONBOARDING_LATEST_DEBUG: "onboarding/invitations/latest-debug",
 
   // ControlHub Admin Onboarding
   CH_ONBOARDING: "controlhub/admin/onboarding",
