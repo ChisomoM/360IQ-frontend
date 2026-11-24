@@ -230,6 +230,48 @@ export default function AdminLayout() {
                   </motion.div>
                 </SidebarMenuItem>
 
+                {/* ProfileIQ: People */}
+                {hasPermission(user, PERMISSIONS['profiles.view']) && (
+                  <SidebarMenuItem>
+                    <motion.div
+                      whileHover={{ x: 4 }}
+                      transition={{ type: 'spring', stiffness: 350, damping: 10 }}
+                    >
+                      <SidebarMenuButton
+                        asChild
+                        isActive={location.pathname.startsWith("/admin/people")}
+                        className="text-white hover:bg-white/10 data-[active=true]:bg-white/10 data-[active=true]:text-white data-[active=true]:shadow-[inset_3px_0_0_var(--brand-signal)] rounded-md transition-colors relative z-10"
+                      >
+                        <Link to="/admin/people" className="flex items-center gap-3">
+                          <Users className="h-5 w-5" />
+                          {!collapsed && <span>People</span>}
+                        </Link>
+                      </SidebarMenuButton>
+                    </motion.div>
+                  </SidebarMenuItem>
+                )}
+
+                {/* ProfileIQ: Companies */}
+                {hasPermission(user, PERMISSIONS['profiles.view']) && (
+                  <SidebarMenuItem>
+                    <motion.div
+                      whileHover={{ x: 4 }}
+                      transition={{ type: 'spring', stiffness: 350, damping: 10 }}
+                    >
+                      <SidebarMenuButton
+                        asChild
+                        isActive={location.pathname.startsWith("/admin/companies")}
+                        className="text-white hover:bg-white/10 data-[active=true]:bg-white/10 data-[active=true]:text-white data-[active=true]:shadow-[inset_3px_0_0_var(--brand-signal)] rounded-md transition-colors relative z-10"
+                      >
+                        <Link to="/admin/companies" className="flex items-center gap-3">
+                          <Building2 className="h-5 w-5" />
+                          {!collapsed && <span>Companies</span>}
+                        </Link>
+                      </SidebarMenuButton>
+                    </motion.div>
+                  </SidebarMenuItem>
+                )}
+
                 {/* Financials Section */}
                 {hasPermission(user, PERMISSIONS['payments.read']) && (
                   <CollapsibleSidebarSection
