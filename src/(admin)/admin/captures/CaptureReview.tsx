@@ -149,7 +149,7 @@ export function CaptureReview() {
         const v = await getCapture(id, person.action === "link" ? person.id : undefined, company.action === "link" ? company.id : undefined);
         setView((cur) => (cur ? { ...cur, person_match: v.person_match, company_match: v.company_match, fields: v.fields } : cur));
         // a chosen record that is no longer a candidate after the edits must not receive the save
-        const stillThere = (m: MatchResult | null, ch: EntityChoice) => ch.action !== "link" || Boolean(m?.candidates?.some((c) => c.id === ch.id));
+        const stillThere = (m: MatchResult | null, ch: EntityChoice) => ch.action !== "link" || Boolean(ch.pick) || Boolean(m?.candidates?.some((c) => c.id === ch.id));
         if (!stillThere(v.person_match, person)) {
           setPerson(defaultChoice(v.person_match));
           setAttention(true);
@@ -542,8 +542,8 @@ export function CaptureReview() {
         {editable && ((view.person_match?.candidates.length ?? 0) > 0 || (view.company_match?.candidates.length ?? 0) > 0) && (
           <Panel title="Already in 360IQ?">
             <div className="space-y-3">
-              <MatchChoice entity="company" match={view.company_match} choice={company} onChange={choose(setCompany)} attention={attention && needsCompanyChoice} />
-              <MatchChoice entity="person" match={view.person_match} choice={person} onChange={choose(setPerson)} attention={attention && needsPersonChoice} />
+              <MatchChoice entity="company" match={view.company_match} choice={company} onChange={choose(setCompany)} attention={attention && needsCompanyChoice} canMerge={Boolean(meta?.permissions.merge)} onMerged={() => void load().then((v) => v && init(v))} />
+              <MatchChoice entity="person" match={view.person_match} choice={person} onChange={choose(setPerson)} attention={attention && needsPersonChoice} canMerge={Boolean(meta?.permissions.merge)} onMerged={() => void load().then((v) => v && init(v))} />
             </div>
           </Panel>
         )}

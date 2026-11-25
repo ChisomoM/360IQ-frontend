@@ -23,7 +23,7 @@ export interface CaptureMeta {
   uncertain_below: number;
   fields: CaptureFieldSpec[];
   recent_events: string[];
-  permissions: { create: boolean; review: boolean; manage: boolean; view_sensitive: boolean };
+  permissions: { create: boolean; review: boolean; manage: boolean; merge?: boolean; view_sensitive: boolean };
 }
 
 export interface CaptureFieldView {
@@ -57,6 +57,8 @@ export interface DraftField {
 export interface EntityChoice {
   action: "" | "link" | "create" | "skip";
   id?: string;
+  /** set when the reviewer deliberately picked a record that is not among the current matches */
+  pick?: boolean;
 }
 
 export interface CaptureDraft {
