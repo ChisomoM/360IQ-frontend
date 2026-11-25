@@ -429,8 +429,8 @@ export function CaptureReview() {
             {view.fields.length === 0 && view.status !== "AI_FAILED" && <p className="text-sm text-text-secondary">The AI did not find any details.</p>}
             {(view.dropped > 0 || view.withheld) && (
               <p className="mt-3 text-xs text-text-muted">
-                {view.withheld ? "Some content was left out because it concerned a protected category (for example health, religion or political views). " : ""}
-                {view.dropped > 0 && !view.withheld ? `${view.dropped} item${view.dropped === 1 ? " was" : "s were"} ignored because it did not fit the allowed fields. ` : ""}
+                {view.withheld ? "Some values may mention a protected category (for example health, religion or political views). They are marked and will not be saved unless you accept or edit them. Do not keep personal details about a person; keep only business facts. " : ""}
+                {view.dropped > 0 ? `${view.dropped} item${view.dropped === 1 ? " was" : "s were"} ignored because it did not fit the allowed fields. ` : ""}
               </p>
             )}
 
