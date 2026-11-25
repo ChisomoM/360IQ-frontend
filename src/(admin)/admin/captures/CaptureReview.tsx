@@ -148,6 +148,16 @@ export function CaptureReview() {
         await saveDraft(id, draft);
         const v = await getCapture(id, person.action === "link" ? person.id : undefined, company.action === "link" ? company.id : undefined);
         setView((cur) => (cur ? { ...cur, person_match: v.person_match, company_match: v.company_match, fields: v.fields } : cur));
+        // a chosen record that is no longer a candidate after the edits must not receive the save
+        const stillThere = (m: MatchResult | null, ch: EntityChoice) => ch.action !== "link" || Boolean(m?.candidates?.some((c) => c.id === ch.id));
+        if (!stillThere(v.person_match, person)) {
+          setPerson(defaultChoice(v.person_match));
+          setAttention(true);
+        }
+        if (!stillThere(v.company_match, company)) {
+          setCompany(defaultChoice(v.company_match));
+          setAttention(true);
+        }
         setDraftState("saved");
       } catch {
         setDraftState("");
