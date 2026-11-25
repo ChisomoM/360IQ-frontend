@@ -42,6 +42,7 @@ export function AddLead() {
   const meta = useCaptureMeta();
   const [method, setMethod] = useState<Method>("form");
   const [eventName, setEventName] = useState(readEvent);
+  const voiceOff = Boolean(meta && !meta.voice_available);
 
   useEffect(() => {
     try {
@@ -113,6 +114,8 @@ export function AddLead() {
               role="tab"
               aria-selected={method === m.id}
               onClick={() => setMethod(m.id)}
+              disabled={m.id === "voice" && voiceOff}
+              title={m.id === "voice" && voiceOff ? "Voice needs an AI provider that can read audio, which is not set up here" : undefined}
               className={cn(
                 "flex min-h-14 flex-col items-center justify-center gap-0.5 rounded-lg px-1 text-xs font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-focus sm:flex-row sm:gap-2 sm:text-sm",
                 method === m.id ? "bg-surface-1 text-text-primary shadow-raised" : "text-text-muted hover:text-text-secondary"
@@ -127,7 +130,8 @@ export function AddLead() {
         <Panel>
           {method === "form" && <LeadForm eventName={eventName} />}
           {method === "card" && <CardCapture eventName={eventName} meta={meta} onDone={sent} />}
-          {method === "voice" && <VoiceCapture eventName={eventName} meta={meta} onDone={sent} />}
+          {method === "voice" && voiceOff && <ErrorBanner tone="caution">Voice debriefs are switched off: no AI provider that can read audio is set up. Use a note instead.</ErrorBanner>}
+          {method === "voice" && !voiceOff && <VoiceCapture eventName={eventName} meta={meta} onDone={sent} />}
           {method === "note" && <NoteCapture eventName={eventName} meta={meta} onDone={sent} />}
         </Panel>
       </div>

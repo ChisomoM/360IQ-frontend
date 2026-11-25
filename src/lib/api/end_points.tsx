@@ -178,6 +178,8 @@ export const API: Record<string, string> = {
   CAPTURES_SIGNALS: "captures/signals",
   CAPTURE: "captures/:id",
   CAPTURE_IMAGE: "captures/:id/image",
+  CAPTURE_AUDIO: "captures/:id/audio",
+  CAPTURE_TRANSCRIPT: "captures/:id/transcript",
   CAPTURE_RETRY: "captures/:id/retry",
   CAPTURE_CONFIRM: "captures/:id/confirm",
   CAPTURE_REJECT: "captures/:id/reject",

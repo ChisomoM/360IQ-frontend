@@ -97,3 +97,14 @@ export async function getSignals(q: { contact_id?: string; account_id?: string }
   const r = (await fetchData("CAPTURES_SIGNALS", "GET", {}, null, q as Record<string, string>)) as SignalView[] | undefined;
   return r ?? [];
 }
+
+/** The kept recording of a capture whose transcription failed, through the authorised endpoint. */
+export async function getCaptureAudio(id: string): Promise<string> {
+  const { buffer, contentType } = await fetchFileBuffer("CAPTURE_AUDIO", { id });
+  return URL.createObjectURL(new Blob([buffer], { type: contentType || "audio/webm" }));
+}
+
+/** Types in what was said, for a recording the AI could not transcribe. The recording is then deleted. */
+export async function saveTranscript(id: string, text: string): Promise<CaptureView> {
+  return await fetchData("CAPTURE_TRANSCRIPT", "POST", { id }, { text });
+}

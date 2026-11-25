@@ -16,6 +16,7 @@ export interface CaptureFieldSpec {
 export interface CaptureMeta {
   methods: CaptureMethod[];
   ai_available: boolean;
+  voice_available: boolean;
   files_ready: boolean;
   limits: { image_bytes: number; audio_bytes: number; audio_seconds: number; note_chars: number };
   audio_retention_hours: number;
@@ -99,6 +100,7 @@ export interface CaptureView {
   text: string;
   has_image: boolean;
   audio_kept: boolean;
+  can_play_audio?: boolean;
   audio_delete_by?: string;
   draft?: CaptureDraft;
   person_match: MatchResult | null;

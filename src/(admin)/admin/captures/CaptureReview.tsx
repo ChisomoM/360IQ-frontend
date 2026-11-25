@@ -11,7 +11,7 @@ import { MaskedNotice, Panel } from "@/components/profiles/ui";
 import { AiBadge, ErrorBanner, METHOD_LABEL, MethodIcon, StatusPill, aiErrorText, fmtTime, useCaptureMeta } from "@/components/captures/parts";
 import { FieldReviewRow, type RowState } from "@/components/captures/FieldReviewRow";
 import { MatchChoice } from "@/components/captures/MatchChoice";
-import { asDecisionRequired, confirmCapture, getCapture, getCaptureImage, rejectCapture, retryCapture, saveDraft } from "@/lib/api/captures";
+import { asDecisionRequired, confirmCapture, getCapture, getCaptureAudio, getCaptureImage, rejectCapture, retryCapture, saveDraft, saveTranscript } from "@/lib/api/captures";
 import { clock } from "@/lib/capture/media";
 import { notifyInboxChanged } from "@/lib/hooks/useCaptureInbox";
 import type { CaptureDraft, CaptureView, ConfirmResult, DraftField, EntityChoice } from "@/types/capture";
@@ -232,6 +232,31 @@ export function CaptureReview() {
     }
   };
 
+  const [audioUrl, setAudioUrl] = useState<string | null>(null);
+  const [typed, setTyped] = useState("");
+  useEffect(() => () => { if (audioUrl) URL.revokeObjectURL(audioUrl); }, [audioUrl]);
+  const loadAudio = async () => {
+    try {
+      setAudioUrl(await getCaptureAudio(id));
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not load the recording");
+    }
+  };
+  const submitTranscript = async () => {
+    setBusy("retry");
+    try {
+      const v = await saveTranscript(id, typed);
+      setView(v);
+      setAudioUrl(null);
+      if (v.status !== "PROCESSING") init(v);
+      notifyInboxChanged();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not save the transcript");
+    } finally {
+      setBusy("");
+    }
+  };
+
   const retry = async () => {
     setBusy("retry");
     try {
@@ -354,10 +379,35 @@ export function CaptureReview() {
           <div className="space-y-2">
             <ErrorBanner tone="caution">{aiErrorText(view.ai_error)}</ErrorBanner>
             {view.audio_kept && (
-              <p className="text-xs text-text-muted">
-                Your recording is kept so you can try again
-                {view.audio_delete_by ? ` and is deleted automatically by ${fmtTime(view.audio_delete_by)}` : ""}. It is also deleted as soon as it is transcribed, or when you finish or reject this capture.
-              </p>
+              <div className="space-y-2">
+                <p className="text-xs text-text-muted">
+                  Your recording is kept until it is transcribed. It is deleted as soon as it is transcribed (by the AI or by you), or when you finish or reject this capture.
+                </p>
+                {view.can_play_audio && (
+                  <div className="space-y-2">
+                    {audioUrl ? (
+                      <audio controls src={audioUrl} className="w-full" />
+                    ) : (
+                      <Button type="button" variant="outline" onClick={() => void loadAudio()}>
+                        Play recording
+                      </Button>
+                    )}
+                    <label className="block text-xs font-medium text-text-secondary" htmlFor="typed-transcript">
+                      Or type what was said
+                    </label>
+                    <textarea
+                      id="typed-transcript"
+                      value={typed}
+                      onChange={(e) => setTyped(e.target.value)}
+                      rows={5}
+                      className="w-full rounded-lg border border-line bg-surface-1 p-2 text-sm"
+                    />
+                    <Button type="button" disabled={!typed.trim() || busy === "retry"} onClick={() => void submitTranscript()}>
+                      Save transcript
+                    </Button>
+                  </div>
+                )}
+              </div>
             )}
             {view.can_retry && (
               <Button type="button" onClick={() => void retry()} disabled={busy === "retry"}>
