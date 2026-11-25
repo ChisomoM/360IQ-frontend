@@ -2,13 +2,14 @@ import { useCallback, useState } from "react";
 import { Loader2, RefreshCw, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { isNetworkError, submitFile, submitNote } from "@/lib/api/captures";
-import { deletePending, savePending, type PendingCapture } from "@/lib/capture/pending";
+import { deletePending, ownsPending, savePending, type PendingCapture } from "@/lib/capture/pending";
 import { notifyInboxChanged } from "@/lib/hooks/useCaptureInbox";
 import type { CaptureView } from "@/types/capture";
 import { ErrorBanner } from "./parts";
 
 /** Sends one stored capture to the server. It is removed from the device only after the server has stored it. */
 export async function sendPending(p: PendingCapture): Promise<CaptureView> {
+  if (!ownsPending(p)) throw new Error("This capture was saved by another user or account and cannot be sent from this session.");
   try {
     const view =
       p.kind === "note"

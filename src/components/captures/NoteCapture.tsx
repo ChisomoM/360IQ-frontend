@@ -8,11 +8,15 @@ import type { CaptureMeta, CaptureView } from "@/types/capture";
 import { ErrorBanner } from "./parts";
 import { SendStatus, useSender } from "./useSender";
 
-const DRAFT_KEY = "captureiq.note-draft";
+import { scopedKey } from "@/lib/capture/pending";
+
+const DRAFT_BASE = "captureiq.note-draft";
+const draftKey = () => scopedKey(DRAFT_BASE);
 
 function readDraft(): string {
   try {
-    return localStorage.getItem(DRAFT_KEY) ?? "";
+    const k = draftKey();
+    return k ? localStorage.getItem(k) ?? "" : "";
   } catch {
     return "";
   }
@@ -29,7 +33,8 @@ export function NoteCapture({ eventName, meta, onDone }: { eventName: string; me
   const limit = meta?.limits.note_chars ?? 8000;
   const sender = useSender("note", (v) => {
     try {
-      localStorage.removeItem(DRAFT_KEY);
+      const k = draftKey();
+      if (k) localStorage.removeItem(k);
     } catch {
       /* ignore */
     }
@@ -39,7 +44,8 @@ export function NoteCapture({ eventName, meta, onDone }: { eventName: string; me
 
   useEffect(() => {
     try {
-      localStorage.setItem(DRAFT_KEY, text);
+      const k = draftKey();
+      if (k) localStorage.setItem(k, text);
     } catch {
       /* the draft is a convenience */
     }

@@ -17,6 +17,29 @@ export interface PendingCapture {
   tzOffset: number;
   createdAt: number;
   lastError?: string;
+  tenantId?: string; // who saved it: a record is only ever shown to and sent by this tenant and user
+  userId?: string;
+}
+
+// The signed-in tenant and user. Set by the auth provider. Without one nothing is read or written.
+let scope: { tenantId: string; userId: string } | null = null;
+
+export function setCaptureScope(tenantId?: string | null, userId?: string | null) {
+  scope = tenantId && userId ? { tenantId, userId } : null;
+}
+
+export function getCaptureScope() {
+  return scope;
+}
+
+/** True when the record belongs to the signed-in tenant and user. Records saved before scoping existed belong to nobody. */
+export function ownsPending(p: Pick<PendingCapture, "tenantId" | "userId">): boolean {
+  return !!scope && p.tenantId === scope.tenantId && p.userId === scope.userId;
+}
+
+/** A browser-storage key that is private to the signed-in tenant and user, or null when nobody is signed in. */
+export function scopedKey(base: string): string | null {
+  return scope ? `${base}:${scope.tenantId}:${scope.userId}` : null;
 }
 
 const DB_NAME = "captureiq";
@@ -60,15 +83,21 @@ async function run<T>(mode: IDBTransactionMode, fn: (s: IDBObjectStore) => IDBRe
 }
 
 export async function savePending(p: PendingCapture): Promise<void> {
-  await run("readwrite", (s) => s.put(p));
+  if (!scope) return;
+  const rec = { ...p, tenantId: p.tenantId ?? scope.tenantId, userId: p.userId ?? scope.userId };
+  if (!ownsPending(rec)) return; // never overwrite or create another user's record
+  await run("readwrite", (s) => s.put(rec));
 }
 
+/** Only the signed-in user's own records. Others stay on the device untouched. */
 export async function listPending(): Promise<PendingCapture[]> {
   const all = await run("readonly", (s) => s.getAll() as IDBRequest<PendingCapture[]>);
-  return (all ?? []).sort((a, b) => a.createdAt - b.createdAt);
+  return (all ?? []).filter(ownsPending).sort((a, b) => a.createdAt - b.createdAt);
 }
 
 export async function deletePending(id: string): Promise<void> {
+  const mine = (await listPending()).some((p) => p.id === id);
+  if (!mine) return;
   await run("readwrite", (s) => s.delete(id));
 }
 

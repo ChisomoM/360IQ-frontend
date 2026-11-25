@@ -1,3 +1,4 @@
+import { scopedKey } from "@/lib/capture/pending";
 import { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Camera, FileText, Inbox, Mic, PenLine } from "lucide-react";
@@ -23,11 +24,13 @@ const METHODS: { id: Method; label: string; icon: typeof FileText }[] = [
   { id: "note", label: "Note", icon: PenLine },
 ];
 
-const EVENT_KEY = "captureiq.event";
+const EVENT_BASE = "captureiq.event";
+const eventKey = () => scopedKey(EVENT_BASE);
 
 function readEvent(): string {
   try {
-    return localStorage.getItem(EVENT_KEY) ?? "";
+    const k = eventKey();
+    return k ? localStorage.getItem(k) ?? "" : "";
   } catch {
     return "";
   }
@@ -42,7 +45,8 @@ export function AddLead() {
 
   useEffect(() => {
     try {
-      localStorage.setItem(EVENT_KEY, eventName);
+      const k = eventKey();
+      if (k) localStorage.setItem(k, eventName);
     } catch {
       /* the event name is a convenience */
     }
