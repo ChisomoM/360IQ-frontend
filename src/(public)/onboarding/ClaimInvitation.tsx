@@ -76,7 +76,7 @@ export default function ClaimInvitation() {
         last_name: lastName,
       });
 
-      toast.success("Account setup successful! You can now log in.");
+      toast.success("Your login is set up. Sign in to complete your company details. The workspace opens once 360IQ approves your company.");
       navigate("/login");
     } catch (err: any) {
       console.error(err);

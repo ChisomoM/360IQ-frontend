@@ -44,10 +44,26 @@ export default function ControlHubDashboard() {
   const [initContactEmail, setInitContactEmail] = useState("");
   const [isSubmittingInit, setIsSubmittingInit] = useState(false);
 
-  const fetchOnboardingRequests = async () => {
+  // "actionable" hides companies that have only registered; "unclaimed" lists those whose setup link nobody has used yet
+  const [listScope, setListScope] = useState<"actionable" | "unclaimed">("actionable");
+  const [resendingId, setResendingId] = useState<string | null>(null);
+
+  const handleResend = async (id: string) => {
+    setResendingId(id);
+    try {
+      await post("CH_ONBOARDING_RESEND", {}, { id });
+      toast.success("A new setup link was sent");
+    } catch (err: any) {
+      toast.error(err.message || "Could not resend the setup link");
+    } finally {
+      setResendingId(null);
+    }
+  };
+
+  const fetchOnboardingRequests = async (scope: "actionable" | "unclaimed" = listScope) => {
     setIsLoadingRequests(true);
     try {
-      const res: any = await retrieve("CH_ONBOARDING", {}, { scope: "actionable" });
+      const res: any = await retrieve("CH_ONBOARDING", {}, { scope });
       if (Array.isArray(res)) {
         setOnboardingRequests(res);
       }
@@ -60,8 +76,9 @@ export default function ControlHubDashboard() {
   };
 
   useEffect(() => {
-    fetchOnboardingRequests();
-  }, []);
+    fetchOnboardingRequests(listScope);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [listScope]);
 
   const handleVerifyDoc = async (docId: string, status: "VERIFIED" | "REJECTED") => {
     try {
@@ -201,7 +218,14 @@ export default function ControlHubDashboard() {
             >
               + Initiate Onboarding Request
             </Button>
-            <Button variant="outline" onClick={fetchOnboardingRequests} className="flex items-center gap-1.5 border-slate-300 text-xs">
+            <Button
+              variant="outline"
+              onClick={() => setListScope(listScope === "actionable" ? "unclaimed" : "actionable")}
+              className="border-slate-300 text-xs"
+            >
+              {listScope === "actionable" ? "Show unclaimed setup links" : "Show needs review"}
+            </Button>
+            <Button variant="outline" onClick={() => fetchOnboardingRequests()} className="flex items-center gap-1.5 border-slate-300 text-xs">
               ↻ Refresh list
             </Button>
           </div>
@@ -242,12 +266,22 @@ export default function ControlHubDashboard() {
                     </div>
                   </div>
 
-                  <Button
-                    onClick={() => setSelectedRequest(req)}
-                    className="bg-[#1e2e70] hover:bg-[#25398a] text-white font-semibold text-xs"
-                  >
-                    Open Review
-                  </Button>
+                  {listScope === "unclaimed" ? (
+                    <Button
+                      disabled={resendingId === req.id}
+                      onClick={() => handleResend(req.id)}
+                      className="bg-[#1e2e70] hover:bg-[#25398a] text-white font-semibold text-xs"
+                    >
+                      {resendingId === req.id ? "Sending..." : "Resend setup link"}
+                    </Button>
+                  ) : (
+                    <Button
+                      onClick={() => setSelectedRequest(req)}
+                      className="bg-[#1e2e70] hover:bg-[#25398a] text-white font-semibold text-xs"
+                    >
+                      Open Review
+                    </Button>
+                  )}
                 </div>
               ))}
             </div>
