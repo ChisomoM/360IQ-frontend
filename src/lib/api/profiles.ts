@@ -243,3 +243,19 @@ export async function listMerges(entity: "PERSON" | "COMPANY", entityId: string)
 }
 
 export type { Candidate };
+
+/**
+ * Runs a save. When the server says another record already has the email, phone or
+ * domain being saved, the user is asked; on yes the save is repeated with confirm_duplicate.
+ */
+export async function withDuplicateConfirm<T>(save: (confirmDuplicate: boolean) => Promise<T>): Promise<T> {
+  try {
+    return await save(false);
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : "";
+    if (/confirm_duplicate/.test(msg) && typeof window !== "undefined" && window.confirm(msg.replace(/ Save again with confirm_duplicate to keep both\.?/, "") + "\n\nSave anyway?")) {
+      return await save(true);
+    }
+    throw e;
+  }
+}

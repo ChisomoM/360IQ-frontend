@@ -4,7 +4,7 @@ import { Loader2, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { createCompany, updateCompany, type CompanyPayload } from "@/lib/api/profiles";
+import { createCompany, updateCompany, withDuplicateConfirm, type CompanyPayload } from "@/lib/api/profiles";
 import type { Company, MatchResult, ProfileMeta, Site } from "@/types/profile";
 import { DuplicatePanel } from "./DuplicatePanel";
 import { EntityPicker } from "./EntityPicker";
@@ -127,7 +127,7 @@ export function CompanyFormDialog({
           onOpenChange(false);
           return;
         }
-        const saved = await updateCompany(company.id, changes);
+        const saved = await withDuplicateConfirm((c) => updateCompany(company.id, c ? { ...changes, confirm_duplicate: true } : changes));
         toast.success("Company updated");
         onSaved(saved, "UPDATED");
         onOpenChange(false);

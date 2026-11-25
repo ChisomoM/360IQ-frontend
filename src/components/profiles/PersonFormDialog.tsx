@@ -4,7 +4,7 @@ import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { createPerson, updatePerson, type PersonPayload } from "@/lib/api/profiles";
+import { createPerson, updatePerson, withDuplicateConfirm, type PersonPayload } from "@/lib/api/profiles";
 import type { MatchResult, Person, ProfileMeta } from "@/types/profile";
 import { DuplicatePanel } from "./DuplicatePanel";
 import { EntityPicker } from "./EntityPicker";
@@ -122,7 +122,7 @@ export function PersonFormDialog({
           onOpenChange(false);
           return;
         }
-        const saved = await updatePerson(person.id, changes);
+        const saved = await withDuplicateConfirm((c) => updatePerson(person.id, c ? { ...changes, confirm_duplicate: true as unknown as string } : changes));
         toast.success("Person updated");
         onSaved(saved, "UPDATED");
         onOpenChange(false);
