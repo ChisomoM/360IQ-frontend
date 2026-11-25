@@ -33,6 +33,16 @@ export function getControlHubToken(): string | null {
   }
 }
 
+/** True when the JWT is expired or undecodable — such sessions must be treated as logged out. */
+export function isJwtExpired(token: string): boolean {
+  try {
+    const { exp } = jwtDecode<{ exp?: number }>(token);
+    return !exp || Date.now() >= exp * 1000;
+  } catch {
+    return true;
+  }
+}
+
 /** Decode JWT and extract tenant_id and optional control-hub flag */
 function extractTenantFromToken(token: string): { tenantId: string | null; isControlHubAdmin: boolean } {
   try {
@@ -97,8 +107,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const storedCHTokens = localStorage.getItem(STORAGE_KEYS.CH_TOKENS);
         const storedCHUser = localStorage.getItem(STORAGE_KEYS.CH_USER);
         if (storedCHTokens && storedCHUser) {
-          setTokens(JSON.parse(storedCHTokens));
-          setUser(JSON.parse(storedCHUser));
+          const chToken = JSON.parse(storedCHTokens)?.token;
+          if (chToken && !isJwtExpired(chToken)) {
+            setTokens(JSON.parse(storedCHTokens));
+            setUser(JSON.parse(storedCHUser));
+          } else {
+            // Expired CH session — drop it so ControlHubLayout redirects to login
+            localStorage.removeItem(STORAGE_KEYS.CH_TOKENS);
+            localStorage.removeItem(STORAGE_KEYS.CH_USER);
+          }
         }
         // No CH session — ControlHubLayout will redirect to /controlhub/login
         setIsLoading(false);
@@ -112,6 +129,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (storedTokens && storedUser) {
         const parsedTokens = JSON.parse(storedTokens);
         const parsedUser = JSON.parse(storedUser);
+
+        // Expired tenant session — treat as logged out instead of rendering
+        // pages whose every API call will 401.
+        const storedToken = parsedTokens?.token || parsedTokens?.access_token;
+        if (storedToken && isJwtExpired(storedToken)) {
+          clearStorage();
+          setIsLoading(false);
+          return;
+        }
 
         setTokens(parsedTokens);
         setUser(parsedUser);

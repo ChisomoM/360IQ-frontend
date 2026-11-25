@@ -1,7 +1,10 @@
-import { Outlet, Link, useLocation } from "react-router-dom"
-import { useState } from "react"
+import { Outlet, Link, useLocation, Navigate } from "react-router-dom"
+import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import type { Document } from "@/types/dms"
+import { retrieve } from "@/lib/api/crud"
+import GatedDashboard from "@/(admin)/onboarding/GatedDashboard"
+import { Loader2 } from "lucide-react"
 
 export type AdminLayoutContext = {
   analyzeDocument: (doc: Document) => void;
@@ -57,6 +60,31 @@ export default function AdminLayout() {
   const [pendingAnalysisDoc, setPendingAnalysisDoc] = useState<Document | null>(null)
   const [pendingChatMessage, setPendingChatMessage] = useState<string | null>(null)
 
+  const [onboardingState, setOnboardingState] = useState<string>("ACTIVE")
+  const [checkingOnboarding, setCheckingOnboarding] = useState(true)
+
+  useEffect(() => {
+    if (!user || user.accountType === "controlhub_admin") {
+      setCheckingOnboarding(false)
+      return
+    }
+
+    const checkOnboardingStatus = async () => {
+      try {
+        const res: any = await retrieve("ONBOARDING_STATUS")
+        if (res && res.state) {
+          setOnboardingState(res.state)
+        }
+      } catch (err) {
+        console.error("Failed to fetch onboarding status:", err)
+      } finally {
+        setCheckingOnboarding(false)
+      }
+    }
+
+    checkOnboardingStatus()
+  }, [user])
+
   const analyzeDocument = (doc: Document) => {
     setPendingAnalysisDoc(doc)
     setIsChatOpen(true)
@@ -84,6 +112,21 @@ export default function AdminLayout() {
     setInitialTab('analyze');
     setIsChatOpen(true);
   };
+
+  if (checkingOnboarding) {
+    return (
+      <div className="min-h-screen w-full flex items-center justify-center bg-[#0d173b]">
+        <Loader2 className="h-10 w-10 animate-spin text-[#7c69ff] mx-auto" />
+      </div>
+    )
+  }
+
+  if (onboardingState !== "ACTIVE") {
+    if (onboardingState === "REGISTERED") {
+      return <Navigate to="/onboarding/wizard" replace />
+    }
+    return <GatedDashboard />
+  }
 
   return (
     <div className="min-h-screen flex bg-surface-0">

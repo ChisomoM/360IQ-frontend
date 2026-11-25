@@ -36,6 +36,22 @@ const getAccessTokenFromStorage = (): string | null => {
   }
 };
 
+// Get the correct token depending on whether it is a ControlHub (CH_) or client endpoint
+const getTokenForEndpoint = (key: string): string | null => {
+  if (key.startsWith("CH_")) {
+    try {
+      if (typeof window === 'undefined') return null;
+      const tokensJson = localStorage.getItem('ch_tokens');
+      if (!tokensJson) return null;
+      const tokens = JSON.parse(tokensJson);
+      return tokens.token || null;
+    } catch {
+      return null;
+    }
+  }
+  return getAccessTokenFromStorage();
+};
+
 // First, let's create a function to refresh the token
 const refreshAccessToken = async () => {
   try {
@@ -91,17 +107,18 @@ export const fetchData = async (
   h.append("Content-Type", "application/json");
 
   // Check if this is a public endpoint first
-  const skipPublicEndpoints = ["LOGIN", "ADMIN_LOGIN", "CH_LOGIN", "REGISTER"].includes(key);
+  const skipPublicEndpoints = ["LOGIN", "ADMIN_LOGIN", "CH_LOGIN", "REGISTER", "ONBOARDING_PREVIEW", "ONBOARDING_CLAIM", "ONBOARDING_LATEST_DEBUG"].includes(key);
 
-  // Tenant context: required for protected endpoints, optional for public
+  // Tenant context: required for protected endpoints, optional for public and ControlHub
+  const isControlHub = key.startsWith("CH_");
   const tenantId = fetchOpts?.tenantId || useTenantStore.getState().currentTenantId;
-  if (!skipPublicEndpoints && !tenantId) {
+  if (!skipPublicEndpoints && !isControlHub && !tenantId) {
     // Tenant context is missing for protected endpoint
     throw new Error("No tenant context. Please log in again.");
   }
 
   // fetchOpts.token wins; otherwise read from storage (skip for public endpoints)
-  const accessToken = fetchOpts?.token ?? (skipPublicEndpoints ? null : getAccessTokenFromStorage());
+  const accessToken = fetchOpts?.token ?? (skipPublicEndpoints ? null : getTokenForEndpoint(key));
   if (accessToken) {
     h.append("Authorization", `Bearer ${accessToken}`);
   }
@@ -151,10 +168,22 @@ export const fetchData = async (
       payload = result.data || result;
     }
     // Validate tenant ownership of returned data (security check)
-    if (!fetchOpts?.skipValidation) {
+    if (!fetchOpts?.skipValidation && !isControlHub) {
       validateResponseTenant(payload);
     }
     return payload;
+  }
+
+  // ControlHub sessions have no refresh token — a 401 means the session is dead.
+  // Clear it and send the user to the ControlHub login instead of surfacing
+  // "failed to load" errors on a page that can no longer fetch anything.
+  if (res.status === 401 && key.startsWith("CH_") && key !== "CH_LOGIN") {
+    localStorage.removeItem("ch_tokens");
+    localStorage.removeItem("ch_user");
+    if (!window.location.pathname.startsWith("/controlhub/login")) {
+      window.location.href = "/controlhub/login";
+    }
+    throw new Error("SESSION_EXPIRED");
   }
 
   // If the response is 401, try to refresh the token and retry the request once
@@ -180,7 +209,13 @@ export const fetchData = async (
       sessionStorage.removeItem("accessToken");
       document.cookie =
         "refreshToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-      // UI should catch this and show a toast
+      // Session is unrecoverable — clear it and return to login rather than
+      // leaving the user on a page whose every request fails.
+      localStorage.removeItem("auth_tokens");
+      localStorage.removeItem("auth_user");
+      if (!window.location.pathname.startsWith("/login")) {
+        window.location.href = "/login";
+      }
       throw new Error("SESSION_EXPIRED");
     }
   }
@@ -318,16 +353,17 @@ export const fetchFileBuffer = async (
   const h = new Headers();
 
   // Check if this is a public endpoint first
-  const skipPublicEndpoints = ["LOGIN", "ADMIN_LOGIN", "CH_LOGIN", "REGISTER"].includes(key);
+  const skipPublicEndpoints = ["LOGIN", "ADMIN_LOGIN", "CH_LOGIN", "REGISTER", "ONBOARDING_PREVIEW", "ONBOARDING_CLAIM", "ONBOARDING_LATEST_DEBUG"].includes(key);
 
+  const isControlHub = key.startsWith("CH_");
   const tenantId = fetchOpts?.tenantId || useTenantStore.getState().currentTenantId;
-  if (!skipPublicEndpoints && !tenantId) {
+  if (!skipPublicEndpoints && !isControlHub && !tenantId) {
     // Tenant context is missing for protected endpoint
     throw new Error("No tenant context. Please log in again.");
   }
 
   if (typeof window !== "undefined") {
-    const accessToken = getAccessTokenFromStorage();
+    const accessToken = getTokenForEndpoint(key);
     if (accessToken) {
       h.append("Authorization", `Bearer ${accessToken}`);
     }
