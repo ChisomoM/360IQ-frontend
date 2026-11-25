@@ -90,10 +90,15 @@ export function CaptureReview() {
   }, [id]);
 
   // first load; keep polling while the AI is still reading
+  // init is read through a ref: it changes when the page metadata arrives, and re-running the load then
+  // would reset everything the reviewer has already edited.
+  const initRef = useRef(init);
+  initRef.current = init;
   useEffect(() => {
     initialised.current = false;
-    void load().then((v) => v && v.status !== "PROCESSING" && init(v));
-  }, [load, init]);
+    dirty.current = false;
+    void load().then((v) => v && v.status !== "PROCESSING" && initRef.current(v));
+  }, [load]);
   useEffect(() => {
     if (view?.status !== "PROCESSING") return;
     const t = setInterval(async () => {
@@ -165,6 +170,18 @@ export function CaptureReview() {
     }, 900);
     return () => clearTimeout(t);
   }, [draft, editable, id, person, company]);
+
+  // edits made less than a second before leaving the page are saved on the way out
+  const draftRef = useRef(draft);
+  draftRef.current = draft;
+  const editableRef = useRef(editable);
+  editableRef.current = editable;
+  useEffect(
+    () => () => {
+      if (dirty.current && editableRef.current && initialised.current) void saveDraft(id, draftRef.current).catch(() => undefined);
+    },
+    [id]
+  );
 
   const touch = () => {
     dirty.current = true;
