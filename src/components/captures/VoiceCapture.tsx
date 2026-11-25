@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { FileAudio, Loader2, Mic, MicOff, RotateCcw, Square } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { newClientKey, tzOffsetMinutes } from "@/lib/capture/pending";
+import { newClientKey, savePending, tzOffsetMinutes } from "@/lib/capture/pending";
 import { classifyMicError, clock, extensionFor, micSupport, pickRecorderType, type MicError } from "@/lib/capture/media";
 import type { CaptureMeta, CaptureView } from "@/types/capture";
 import { ErrorBanner } from "./parts";
@@ -36,6 +36,7 @@ export function VoiceCapture({ eventName, meta, onDone }: { eventName: string; m
   const chunks = useRef<Blob[]>([]);
   const timer = useRef<ReturnType<typeof setInterval> | null>(null);
   const started = useRef(0);
+  const mounted = useRef(true);
 
   const [state, setState] = useState<"idle" | "starting" | "recording" | "ready">("idle");
   const [seconds, setSeconds] = useState(0);
@@ -43,6 +44,8 @@ export function VoiceCapture({ eventName, meta, onDone }: { eventName: string; m
   const [micError, setMicError] = useState<MicError | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
   const sender = useSender("recording", onDone);
+  const keepRef = useRef(sender.keep);
+  keepRef.current = sender.keep;
 
   const releaseMic = useCallback(() => {
     if (timer.current) clearInterval(timer.current);
@@ -51,16 +54,16 @@ export function VoiceCapture({ eventName, meta, onDone }: { eventName: string; m
     stream.current = null;
   }, []);
 
-  useEffect(
-    () => () => {
-      if (recorder.current && recorder.current.state !== "inactive") {
-        recorder.current.onstop = null;
-        recorder.current.stop();
-      }
-      releaseMic();
-    },
-    [releaseMic]
-  );
+  // Leaving the page while recording must not lose the debrief: the recorder is stopped
+  // and its onstop handler stores what was recorded on this device (see onstop below).
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+      if (recorder.current && recorder.current.state !== "inactive") recorder.current.stop();
+      else releaseMic();
+    };
+  }, [releaseMic]);
   useEffect(
     () => () => {
       if (rec) URL.revokeObjectURL(rec.url);
@@ -90,6 +93,13 @@ export function VoiceCapture({ eventName, meta, onDone }: { eventName: string; m
         const blob = new Blob(chunks.current, { type: mime });
         const secs = Math.round((Date.now() - started.current) / 1000);
         releaseMic();
+        if (!mounted.current) {
+          // the user left the page: keep the recording on this device, it appears under "Not sent yet"
+          if (blob.size > 0 && blob.size <= maxBytes) {
+            void savePending({ id: newClientKey(), kind: "voice", blob, filename: `debrief.${extensionFor(mime)}`, eventName, tzOffset: tzOffsetMinutes(), createdAt: Date.now() });
+          }
+          return;
+        }
         if (blob.size === 0) {
           setProblem("Nothing was recorded. Try again.");
           setState("idle");
@@ -102,6 +112,8 @@ export function VoiceCapture({ eventName, meta, onDone }: { eventName: string; m
         }
         setRec({ blob, url: URL.createObjectURL(blob), mime, seconds: secs });
         setState("ready");
+        // stored on this device straight away, so closing the tab before Send does not lose it
+        void keepRef.current({ id: newClientKey(), kind: "voice", blob, filename: `debrief.${extensionFor(mime)}`, eventName, tzOffset: tzOffsetMinutes(), createdAt: Date.now() });
       };
       recorder.current = r;
       r.start(1000); // a chunk every second, so little is lost if the tab is interrupted
@@ -130,6 +142,7 @@ export function VoiceCapture({ eventName, meta, onDone }: { eventName: string; m
     void sender.discard(); // a different file is a different capture
     setRec({ blob: f, url: URL.createObjectURL(f), mime: f.type || "audio/webm", seconds: 0 });
     setState("ready");
+    void sender.keep({ id: newClientKey(), kind: "voice", blob: f, filename: f.name, eventName, tzOffset: tzOffsetMinutes(), createdAt: Date.now() });
   };
 
   const send = () => {

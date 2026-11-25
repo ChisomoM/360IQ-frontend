@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { Loader2, RefreshCw, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { isNetworkError, submitFile, submitNote } from "@/lib/api/captures";
@@ -28,7 +28,10 @@ export async function sendPending(p: PendingCapture): Promise<CaptureView> {
   }
 }
 
-export function sendErrorText(e: unknown, what: string): string {
+export function sendErrorText(e: unknown, what: string, kept = true): string {
+  if (!kept) {
+    return `${isNetworkError(e) ? "No connection." : e instanceof Error ? e.message : "The upload failed."} This browser could not keep a copy of your ${what} on this device, so it is only in this page: stay here and send it again. If you leave, it is lost.`;
+  }
   if (isNetworkError(e)) return `No connection. Your ${what} is kept on this device: send it again when you are back online.`;
   return `${e instanceof Error ? e.message : "The upload failed."} Your ${what} is kept on this device: you can send it again.`;
 }
@@ -38,6 +41,7 @@ export function useSender(what: string, onDone: (v: CaptureView) => void) {
   const [pending, setPending] = useState<PendingCapture | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const keptRef = useRef(true);
 
   const attempt = useCallback(
     async (p: PendingCapture) => {
@@ -48,7 +52,7 @@ export function useSender(what: string, onDone: (v: CaptureView) => void) {
         setPending(null);
         onDone(v);
       } catch (e) {
-        setError(sendErrorText(e, what));
+        setError(sendErrorText(e, what, keptRef.current));
       } finally {
         setBusy(false);
       }
@@ -61,11 +65,19 @@ export function useSender(what: string, onDone: (v: CaptureView) => void) {
       const p = withKeyFor(pending, draft);
       if (pending && pending.id !== p.id) await deletePending(pending.id); // the content changed: a new request replaces the old one
       setPending(p);
-      await savePending(p); // written before the first attempt, so nothing is lost if it fails
+      const saved = await savePending(p); // written before the first attempt, so nothing is lost if it fails
+      keptRef.current = saved;
       await attempt(p);
     },
     [attempt, pending]
   );
+
+  /** Stores a capture on this device as soon as it exists (a finished recording), before the person presses Send. */
+  const keep = useCallback(async (p: PendingCapture) => {
+    setPending(p);
+    keptRef.current = await savePending(p);
+    if (!keptRef.current) setError(sendErrorText(new Error("Not sent yet."), "recording", false));
+  }, []);
 
   const discard = useCallback(async () => {
     if (pending) await deletePending(pending.id);
@@ -73,7 +85,7 @@ export function useSender(what: string, onDone: (v: CaptureView) => void) {
     setError(null);
   }, [pending]);
 
-  return { pending, busy, error, start, retry: () => pending && attempt(pending), discard };
+  return { pending, busy, error, start, keep, retry: () => pending && attempt(pending), discard };
 }
 
 export function SendStatus({ sender }: { sender: ReturnType<typeof useSender> }) {

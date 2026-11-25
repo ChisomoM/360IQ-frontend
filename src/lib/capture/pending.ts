@@ -82,11 +82,12 @@ async function run<T>(mode: IDBTransactionMode, fn: (s: IDBObjectStore) => IDBRe
   }
 }
 
-export async function savePending(p: PendingCapture): Promise<void> {
-  if (!scope) return;
+/** Stores a record on this device. Returns false when it could not be stored (no IndexedDB, blocked site data, full disk). */
+export async function savePending(p: PendingCapture): Promise<boolean> {
+  if (!scope) return false;
   const rec = { ...p, tenantId: p.tenantId ?? scope.tenantId, userId: p.userId ?? scope.userId };
-  if (!ownsPending(rec)) return; // never overwrite or create another user's record
-  await run("readwrite", (s) => s.put(rec));
+  if (!ownsPending(rec)) return false; // never overwrite or create another user's record
+  return (await run("readwrite", (s) => s.put(rec))) !== undefined;
 }
 
 /** Only the signed-in user's own records. Others stay on the device untouched. */
