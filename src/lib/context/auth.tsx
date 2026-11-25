@@ -381,7 +381,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   // Set during render so children's first effects already see the signed-in tenant and user.
-  setCaptureScope(user?.tenantId, user?.id);
+  setCaptureScope(user?.tenantId, user?.id == null ? null : String(user.id));
 
   return (
     <AuthContext.Provider value={value}>
