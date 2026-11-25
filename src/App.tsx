@@ -32,6 +32,15 @@ import LogoExploration from './(public)/logo-exploration/LogoExploration';
 import ClaimInvitation from './(public)/onboarding/ClaimInvitation';
 import OnboardingWizard from './(public)/onboarding/OnboardingWizard';
 import DepartmentDetailPage from './(admin)/admin/DepartmentDetailPage';
+import { AccountsList } from './(admin)/admin/accounts/AccountsList';
+import { AccountDetail } from './(admin)/admin/accounts/AccountDetail';
+import { PeopleList } from './(admin)/admin/profiles/PeopleList';
+import { PersonDetail } from './(admin)/admin/profiles/PersonDetail';
+import { CompaniesList } from './(admin)/admin/profiles/CompaniesList';
+import { CompanyDetail } from './(admin)/admin/profiles/CompanyDetail';
+import { AddLead } from './(admin)/admin/captures/AddLead';
+import { Inbox as LeadInbox } from './(admin)/admin/captures/Inbox';
+import { CaptureReview } from './(admin)/admin/captures/CaptureReview';
 // RBAC — Roles & Maker-Checker Pages
 import RolesManagement from './(admin)/admin/RolesManagement';
 import MakerCheckerPage from './(admin)/admin/MakerCheckerPage';
@@ -90,6 +99,15 @@ function App() {
           <Route path="reports/financial-charts" element={<FinancialCharts />} />
           <Route path="departments" element={<Departments />} />
           <Route path="departments/:id" element={<DepartmentDetailPage />} />
+          <Route path="accounts" element={<AccountsList />} />
+          <Route path="accounts/:id" element={<AccountDetail />} />
+          <Route path="people" element={<PeopleList />} />
+          <Route path="people/:id" element={<PersonDetail />} />
+          <Route path="companies" element={<CompaniesList />} />
+          <Route path="companies/:id" element={<CompanyDetail />} />
+          <Route path="capture" element={<AddLead />} />
+          <Route path="capture/inbox" element={<LeadInbox />} />
+          <Route path="capture/:id" element={<CaptureReview />} />
           <Route path="documents" element={<DocumentsV2 />} />
           {/* <Route path="documents-premium" element={<DocumentsPremium />} /> */}
           <Route path="documents/:id" element={<DocumentDetail />} />

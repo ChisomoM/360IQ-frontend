@@ -115,7 +115,6 @@ export const API: Record<string, string> = {
   ONBOARDING_DOWNLOAD: "onboarding/documents/download",
   ONBOARDING_PREVIEW: "onboarding/invitations/preview",
   ONBOARDING_CLAIM: "onboarding/invitations/claim",
-  ONBOARDING_LATEST_DEBUG: "onboarding/invitations/latest-debug",
 
   // ControlHub Admin Onboarding
   CH_ONBOARDING: "controlhub/admin/onboarding",
@@ -137,6 +136,53 @@ export const API: Record<string, string> = {
   CH_CLIENT_BRANDING: "controlhub/clients/:id/branding",
   CH_CLIENT_BRANDING_LOGO: "controlhub/clients/:id/branding/logo",
   CH_CLIENT_SETTINGS: "controlhub/clients/:id/settings",
+
+  // CRM Accounts, Contacts, and Business Units
+  ACCOUNTS: "accounts",
+  ACCOUNT_DETAIL: "accounts/:id",
+  ACCOUNT_CONTACTS: "accounts/:id/contacts",
+  CONTACT_DETAIL: "contacts/:id",
+  ACCOUNT_BUSINESS_UNITS: "accounts/:id/business-units",
+  BUSINESS_UNIT_DETAIL: "business-units/:id",
+
+  // ProfileIQ: people and company profiles
+  PROFILES_META: "profiles/meta",
+  PROFILES_PEOPLE: "profiles/people",
+  PROFILES_PEOPLE_CHECK: "profiles/people/check-duplicates",
+  PROFILES_PERSON: "profiles/people/:id",
+  PROFILES_PERSON_TIMELINE: "profiles/people/:id/timeline",
+  PROFILES_PERSON_LINKS: "profiles/people/:id/links",
+  PROFILES_PERSON_JOB_CHANGE: "profiles/people/:id/job-change",
+  PROFILES_LINK: "profiles/links/:id",
+  PROFILES_FIELD_CONFIRM: "profiles/fields/:id/confirm",
+  PROFILES_COMPANIES: "profiles/companies",
+  PROFILES_COMPANIES_CHECK: "profiles/companies/check-duplicates",
+  PROFILES_COMPANY: "profiles/companies/:id",
+  PROFILES_COMPANY_PEOPLE: "profiles/companies/:id/people",
+  PROFILES_COMPANY_TIMELINE: "profiles/companies/:id/timeline",
+  PROFILES_COMPANY_DEALS: "profiles/companies/:id/deals",
+  PROFILES_COMPANY_CONTRACTS: "profiles/companies/:id/contracts",
+  PROFILES_COMPANY_DOCUMENTS: "profiles/companies/:id/documents",
+  PROFILES_COMPANY_DOCUMENT: "profiles/companies/:id/documents/:doc_id",
+  PROFILES_MERGES: "profiles/merges",
+  PROFILES_MERGE_UNDO: "profiles/merges/:id/undo",
+
+  // CaptureIQ: getting leads into 360IQ
+  CAPTURES_META: "captures/meta",
+  CAPTURES: "captures",
+  CAPTURES_COUNT: "captures/count",
+  CAPTURES_LEAD: "captures/lead",
+  CAPTURES_CARD: "captures/card",
+  CAPTURES_VOICE: "captures/voice",
+  CAPTURES_NOTE: "captures/note",
+  CAPTURES_SIGNALS: "captures/signals",
+  CAPTURE: "captures/:id",
+  CAPTURE_IMAGE: "captures/:id/image",
+  CAPTURE_AUDIO: "captures/:id/audio",
+  CAPTURE_TRANSCRIPT: "captures/:id/transcript",
+  CAPTURE_RETRY: "captures/:id/retry",
+  CAPTURE_CONFIRM: "captures/:id/confirm",
+  CAPTURE_REJECT: "captures/:id/reject",
 };
 
 export const getRoute = (val: string): string => {

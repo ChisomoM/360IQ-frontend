@@ -17,6 +17,16 @@ export const PERMISSIONS = {
   'users.delete': 'users.delete',
   'users.write': 'users.write',
 
+  // ProfileIQ (people and company profiles)
+  'profiles.view': 'profiles.view',
+  'profiles.manage': 'profiles.manage',
+  'profiles.merge': 'profiles.merge',
+  'profiles.view_sensitive': 'profiles.view_sensitive',
+
+  // CaptureIQ (getting leads in)
+  'capture.create': 'capture.create',
+  'capture.review': 'capture.review',
+
   // Documents Management
   'documents.read': 'documents.read',
   'documents.create': 'documents.create',

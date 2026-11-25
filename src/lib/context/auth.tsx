@@ -19,6 +19,7 @@ import { STORAGE_KEYS } from '../../types/auth';
 import { AuthContext } from './AuthContext';
 import { type UserRole, USER_ROLES } from '../constants';
 import { useTenantStore } from '@/lib/store/tenantStore';
+import { setCaptureScope } from '@/lib/capture/pending';
 import type { TenantConfig } from '@/types/tenant';
 import { BACKEND_URL } from '../api/config';
 
@@ -378,6 +379,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setTokens,
     clearError: () => setError(null),
   };
+
+  // Set during render so children's first effects already see the signed-in tenant and user.
+  setCaptureScope(user?.tenantId, user?.id == null ? null : String(user.id));
 
   return (
     <AuthContext.Provider value={value}>

@@ -13,7 +13,7 @@ import {
   CheckCircle,
 } from "lucide-react";
 import { AreaChart, Area, ResponsiveContainer } from "recharts";
-import { list, post } from "@/lib/api/crud";
+import { retrieve, post } from "@/lib/api/crud";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 
@@ -75,10 +75,26 @@ export default function ControlHubDashboard() {
   const [initContactEmail, setInitContactEmail] = useState("");
   const [isSubmittingInit, setIsSubmittingInit] = useState(false);
 
-  const fetchOnboardingRequests = async () => {
+  // "actionable" hides companies that have only registered; "unclaimed" lists those whose setup link nobody has used yet
+  const [listScope, setListScope] = useState<"actionable" | "unclaimed">("actionable");
+  const [resendingId, setResendingId] = useState<string | null>(null);
+
+  const handleResend = async (id: string) => {
+    setResendingId(id);
+    try {
+      await post("CH_ONBOARDING_RESEND", {}, { id });
+      toast.success("A new setup link was sent");
+    } catch (err: any) {
+      toast.error(err.message || "Could not resend the setup link");
+    } finally {
+      setResendingId(null);
+    }
+  };
+
+  const fetchOnboardingRequests = async (scope: "actionable" | "unclaimed" = listScope) => {
     setIsLoadingRequests(true);
     try {
-      const res: any = await list("CH_ONBOARDING", {}, { scope: "actionable" });
+      const res: any = await retrieve("CH_ONBOARDING", {}, { scope });
       if (Array.isArray(res)) {
         setOnboardingRequests(res);
       }
@@ -91,8 +107,9 @@ export default function ControlHubDashboard() {
   };
 
   useEffect(() => {
-    fetchOnboardingRequests();
-  }, []);
+    fetchOnboardingRequests(listScope);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [listScope]);
 
   const handleVerifyDoc = async (docId: string, status: "VERIFIED" | "REJECTED") => {
     try {
@@ -206,7 +223,7 @@ export default function ControlHubDashboard() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 auto-rows-max">
           {stats.map((stat, idx) => {
             const Icon = stat.icon;
-
+            
             // Color schemes for each stat card
             const colorSchemes = [
               { // Signal teal - Primary
@@ -238,16 +255,16 @@ export default function ControlHubDashboard() {
                 hex: "var(--chart-4)",
               },
             ];
-
+            
             const scheme = colorSchemes[idx % colorSchemes.length];
             const areaData = stat.sparkline.map((v: number) => ({ v }));
-
+            
             return (
               <div
                 key={stat.id}
                 className={`${scheme.bg} border ${scheme.border} rounded-xl p-6 shadow-sm hover:shadow-md transition-all duration-300 h-full flex flex-col group`}
               >
-                {/* Header: Title + Icon */}
+                {/* Header: Title + Trend */}
                 <div className="flex items-start justify-between mb-6">
                   <div className="space-y-1 flex-1">
                     <p className="text-xs font-semibold text-gray-600 tracking-tight">
@@ -257,7 +274,7 @@ export default function ControlHubDashboard() {
                       {stat.subtitle}
                     </p>
                   </div>
-
+                  
                   {/* Icon Badge */}
                   <div className={`h-9 w-9 rounded-lg ${scheme.iconBg} flex items-center justify-center flex-shrink-0 ml-2 shadow-sm`}>
                     <Icon className={`h-5 w-5 ${scheme.icon}`} />
@@ -326,7 +343,14 @@ export default function ControlHubDashboard() {
             >
               + Initiate Onboarding Request
             </Button>
-            <Button variant="outline" onClick={fetchOnboardingRequests} className="flex items-center gap-1.5 border-line text-xs">
+            <Button
+              variant="outline"
+              onClick={() => setListScope(listScope === "actionable" ? "unclaimed" : "actionable")}
+              className="border-line text-xs"
+            >
+              {listScope === "actionable" ? "Show unclaimed setup links" : "Show needs review"}
+            </Button>
+            <Button variant="outline" onClick={() => fetchOnboardingRequests()} className="flex items-center gap-1.5 border-line text-xs">
               ↻ Refresh list
             </Button>
           </div>
@@ -367,12 +391,22 @@ export default function ControlHubDashboard() {
                     </div>
                   </div>
 
-                  <Button
-                    onClick={() => setSelectedRequest(req)}
-                    className="bg-ch-secondary hover:bg-ch-secondary/90 text-white font-semibold text-xs"
-                  >
-                    Open Review
-                  </Button>
+                  {listScope === "unclaimed" ? (
+                    <Button
+                      disabled={resendingId === req.id}
+                      onClick={() => handleResend(req.id)}
+                      className="bg-ch-secondary hover:bg-ch-secondary/90 text-white font-semibold text-xs"
+                    >
+                      {resendingId === req.id ? "Sending..." : "Resend setup link"}
+                    </Button>
+                  ) : (
+                    <Button
+                      onClick={() => setSelectedRequest(req)}
+                      className="bg-ch-secondary hover:bg-ch-secondary/90 text-white font-semibold text-xs"
+                    >
+                      Open Review
+                    </Button>
+                  )}
                 </div>
               ))}
             </div>

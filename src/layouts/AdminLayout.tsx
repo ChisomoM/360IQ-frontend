@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import type { Document } from "@/types/dms"
 import { retrieve } from "@/lib/api/crud"
 import GatedDashboard from "@/(admin)/onboarding/GatedDashboard"
-import { Loader2 } from "lucide-react"
+import { Loader2, MessageSquare } from "lucide-react"
 
 export type AdminLayoutContext = {
   analyzeDocument: (doc: Document) => void;
@@ -39,12 +39,17 @@ import {
   PenLine,
   ShieldCheck,
   Settings,
+  Menu,
+  X,
+  UserPlus,
+  Inbox,
 } from "lucide-react"
 import { AIChatSidebar } from "@/components/ai/AIChatSidebar"
 import { RightSidebar } from "@/components/layout/RightSidebar"
 import { useAuth } from "@/lib/context/useAuth"
 import { hasPermission, PERMISSIONS } from "@/lib/permissions"
 import { useTenantBranding, useTenantBrandingEffect } from "@/lib/hooks/useTenantBranding"
+import { useInboxCount } from "@/lib/hooks/useCaptureInbox"
 
 export default function AdminLayout() {
 
@@ -54,7 +59,21 @@ export default function AdminLayout() {
 
   // Apply tenant branding colors to CSS variables
   useTenantBrandingEffect()
-  const [collapsed, setCollapsed] = useState(false)
+  const [collapsedPref, setCollapsed] = useState(false)
+  // phones and small tablets get a slide-over menu instead of the fixed sidebar
+  const [isDesktop, setIsDesktop] = useState(() => typeof window === "undefined" || window.matchMedia("(min-width: 768px)").matches)
+  const [mobileNav, setMobileNav] = useState(false)
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 768px)")
+    const on = () => setIsDesktop(mq.matches)
+    mq.addEventListener("change", on)
+    return () => mq.removeEventListener("change", on)
+  }, [])
+  useEffect(() => setMobileNav(false), [location.pathname])
+  const collapsed = collapsedPref && isDesktop
+  const canCapture = hasPermission(user, PERMISSIONS['capture.create'])
+  const canReviewLeads = hasPermission(user, PERMISSIONS['capture.review'])
+  const inboxCount = useInboxCount(canCapture || canReviewLeads)
   const [isChatOpen, setIsChatOpen] = useState(false)
   const [isDocDetailsOpen, setIsDocDetailsOpen] = useState(false)
   const [pendingAnalysisDoc, setPendingAnalysisDoc] = useState<Document | null>(null)
@@ -96,7 +115,7 @@ export default function AdminLayout() {
   }
 
   const isActive = (path: string) => location.pathname === path
-  const toggleSidebar = () => setCollapsed(!collapsed)
+  const toggleSidebar = () => setCollapsed(!collapsedPref)
   const handleLogout = () => logout()
 
   const [initialTab, setInitialTab] = useState<'chat' | 'analyze'>('analyze');
@@ -131,9 +150,15 @@ export default function AdminLayout() {
   return (
     <div className="min-h-screen flex bg-surface-0">
       <SidebarProvider>
+        {mobileNav && (
+          <div className="fixed inset-0 z-30 bg-brand-ink/50 md:hidden" aria-hidden="true" onClick={() => setMobileNav(false)} />
+        )}
         <aside
+          id="main-navigation"
+          inert={!isDesktop && !mobileNav ? true : undefined}
+          aria-hidden={!isDesktop && !mobileNav ? true : undefined}
           className={`fixed left-0 top-0 h-screen z-40 transition-all duration-300 ${collapsed ? "w-20" : "w-64"
-            }`}
+            } ${mobileNav ? "translate-x-0" : "-translate-x-full"} md:translate-x-0`}
         >
           <div className="h-full flex flex-col bg-brand-ink bg-[image:var(--gradient-sidebar)] text-white shadow-xl">
 
@@ -167,7 +192,7 @@ export default function AdminLayout() {
 
             <motion.button
               onClick={toggleSidebar}
-              className="absolute -right-3 top-24 bg-white text-primary rounded-full p-1 shadow-lg border border-primary/20"
+              className="absolute -right-3 top-24 hidden md:block bg-white text-primary rounded-full p-1 shadow-lg border border-primary/20"
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.85 }}
               transition={{ type: 'spring', stiffness: 400, damping: 17 }}
@@ -203,6 +228,110 @@ export default function AdminLayout() {
                     </SidebarMenuButton>
                   </motion.div>
                 </SidebarMenuItem>
+
+                {/* CRM Accounts */}
+                <SidebarMenuItem>
+                  {(isActive("/admin/accounts") || location.pathname.startsWith("/admin/accounts")) && (
+                    <motion.div
+                      layoutId="sidebar-active-pill"
+                      className="absolute inset-0 rounded-md bg-secondary"
+                      transition={{ type: 'spring', stiffness: 600, damping: 20 }}
+                    />
+                  )}
+                  <motion.div
+                    whileHover={{ x: 4 }}
+                    transition={{ type: 'spring', stiffness: 350, damping: 10 }}
+                  >
+                    <SidebarMenuButton
+                      asChild
+                      isActive={isActive("/admin/accounts") || location.pathname.startsWith("/admin/accounts")}
+                      className="text-white hover:bg-white/10 data-[active=true]:bg-secondary data-[active=true]:text-black rounded-md transition-colors relative z-10"
+                    >
+                      <Link to="/admin/accounts" className="flex items-center gap-3">
+                        <Building2 className="h-5 w-5" />
+                        {!collapsed && <span>CRM Accounts</span>}
+                      </Link>
+                    </SidebarMenuButton>
+                  </motion.div>
+                </SidebarMenuItem>
+
+                {/* CaptureIQ: Add lead, Lead inbox */}
+                {canCapture && (
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={isActive("/admin/capture")}
+                      className="text-white hover:bg-white/10 data-[active=true]:bg-white/10 data-[active=true]:text-white data-[active=true]:shadow-[inset_3px_0_0_var(--brand-signal)] rounded-md transition-colors relative z-10"
+                    >
+                      <Link to="/admin/capture" className="flex items-center gap-3">
+                        <UserPlus className="h-5 w-5" />
+                        {!collapsed && <span>Add lead</span>}
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                )}
+                {(canCapture || canReviewLeads) && (
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={location.pathname.startsWith("/admin/capture/") && !isActive("/admin/capture")}
+                      className="text-white hover:bg-white/10 data-[active=true]:bg-white/10 data-[active=true]:text-white data-[active=true]:shadow-[inset_3px_0_0_var(--brand-signal)] rounded-md transition-colors relative z-10"
+                    >
+                      <Link to="/admin/capture/inbox" className="flex items-center gap-3" aria-label={inboxCount > 0 ? `Lead inbox, ${inboxCount} to review` : "Lead inbox"}>
+                        <span className="relative">
+                          <Inbox className="h-5 w-5" />
+                          {collapsed && inboxCount > 0 && <span className="absolute -right-1 -top-1 h-2.5 w-2.5 rounded-full bg-signal" />}
+                        </span>
+                        {!collapsed && <span className="flex-1">Lead inbox</span>}
+                        {!collapsed && inboxCount > 0 && (
+                          <span className="rounded-full bg-signal px-2 py-0.5 text-xs font-semibold leading-none text-on-signal">{inboxCount > 99 ? "99+" : inboxCount}</span>
+                        )}
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                )}
+
+                {/* ProfileIQ: People */}
+                {hasPermission(user, PERMISSIONS['profiles.view']) && (
+                  <SidebarMenuItem>
+                    <motion.div
+                      whileHover={{ x: 4 }}
+                      transition={{ type: 'spring', stiffness: 350, damping: 10 }}
+                    >
+                      <SidebarMenuButton
+                        asChild
+                        isActive={location.pathname.startsWith("/admin/people")}
+                        className="text-white hover:bg-white/10 data-[active=true]:bg-white/10 data-[active=true]:text-white data-[active=true]:shadow-[inset_3px_0_0_var(--brand-signal)] rounded-md transition-colors relative z-10"
+                      >
+                        <Link to="/admin/people" className="flex items-center gap-3">
+                          <Users className="h-5 w-5" />
+                          {!collapsed && <span>People</span>}
+                        </Link>
+                      </SidebarMenuButton>
+                    </motion.div>
+                  </SidebarMenuItem>
+                )}
+
+                {/* ProfileIQ: Companies */}
+                {hasPermission(user, PERMISSIONS['profiles.view']) && (
+                  <SidebarMenuItem>
+                    <motion.div
+                      whileHover={{ x: 4 }}
+                      transition={{ type: 'spring', stiffness: 350, damping: 10 }}
+                    >
+                      <SidebarMenuButton
+                        asChild
+                        isActive={location.pathname.startsWith("/admin/companies")}
+                        className="text-white hover:bg-white/10 data-[active=true]:bg-white/10 data-[active=true]:text-white data-[active=true]:shadow-[inset_3px_0_0_var(--brand-signal)] rounded-md transition-colors relative z-10"
+                      >
+                        <Link to="/admin/companies" className="flex items-center gap-3">
+                          <Building2 className="h-5 w-5" />
+                          {!collapsed && <span>Companies</span>}
+                        </Link>
+                      </SidebarMenuButton>
+                    </motion.div>
+                  </SidebarMenuItem>
+                )}
 
                 {/* Financials Section */}
                 {hasPermission(user, PERMISSIONS['payments.read']) && (
@@ -715,8 +844,51 @@ export default function AdminLayout() {
           </div>
         </aside>
 
-        <div className={`flex-1 transition-all duration-300 ${collapsed ? "ml-20" : "ml-64"} mr-20`}>
-          <main className="px-10 py-10 min-h-screen">
+        <div className={`flex-1 min-w-0 transition-all duration-300 ${collapsed ? "md:ml-20" : "md:ml-64"} md:mr-20`}>
+          {/* phone and tablet top bar: the menu and the Add lead entry point */}
+          <div className="sticky top-0 z-20 flex h-14 items-center justify-between gap-2 border-b border-line bg-surface-1 px-4 md:hidden">
+            <button
+              type="button"
+              className="-ml-2 flex h-11 w-11 items-center justify-center rounded-md text-text-primary outline-none focus-visible:ring-2 focus-visible:ring-focus"
+              aria-label={mobileNav ? "Close menu" : "Open menu"}
+              aria-expanded={mobileNav}
+              aria-controls="main-navigation"
+              onClick={() => setMobileNav((o) => !o)}
+            >
+              {mobileNav ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+            </button>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                className="relative flex h-11 w-11 items-center justify-center rounded-md text-text-primary outline-none focus-visible:ring-2 focus-visible:ring-focus"
+                aria-label="Open the AI assistant"
+                onClick={() => setIsChatOpen(true)}
+              >
+                <MessageSquare className="h-5 w-5" />
+              </button>
+              {canReviewLeads && (
+                <Link
+                  to="/admin/capture/inbox"
+                  className="relative flex h-11 w-11 items-center justify-center rounded-md text-text-primary outline-none focus-visible:ring-2 focus-visible:ring-focus"
+                  aria-label={inboxCount > 0 ? `Lead inbox, ${inboxCount} to review` : "Lead inbox"}
+                >
+                  <Inbox className="h-5 w-5" />
+                  {inboxCount > 0 && (
+                    <span className="absolute right-0.5 top-0.5 min-w-5 rounded-full bg-signal px-1 text-center text-xs font-semibold leading-5 text-on-signal">{inboxCount > 99 ? "99+" : inboxCount}</span>
+                  )}
+                </Link>
+              )}
+              {canCapture && (
+                <Link
+                  to="/admin/capture"
+                  className="flex h-11 items-center gap-1.5 rounded-md bg-signal px-4 text-sm font-semibold text-on-signal outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2"
+                >
+                  <UserPlus className="h-4 w-4" /> Add lead
+                </Link>
+              )}
+            </div>
+          </div>
+          <main className="px-4 py-4 md:px-10 md:py-10 min-h-screen">
             <Outlet context={{ analyzeDocument, openChat, openAnalysis, sendChatMessage } as AdminLayoutContext} />
           </main>
         </div>
@@ -733,13 +905,15 @@ export default function AdminLayout() {
         initialTab={initialTab}
       />
 
-      <RightSidebar
-        isChatOpen={isChatOpen}
-        onToggleChat={() => setIsChatOpen(!isChatOpen)}
-        onToggleDocDetails={() => setIsDocDetailsOpen(!isDocDetailsOpen)}
-        isDocDetailsOpen={isDocDetailsOpen}
-        onLogout={handleLogout}
-      />
+      <div className="hidden md:block">
+        <RightSidebar
+          isChatOpen={isChatOpen}
+          onToggleChat={() => setIsChatOpen(!isChatOpen)}
+          onToggleDocDetails={() => setIsDocDetailsOpen(!isDocDetailsOpen)}
+          isDocDetailsOpen={isDocDetailsOpen}
+          onLogout={handleLogout}
+        />
+      </div>
 
     </div>
   )
