@@ -22,10 +22,11 @@ import {
 } from "@/components/profiles/ui";
 import { PersonFormDialog } from "@/components/profiles/PersonFormDialog";
 import { Timeline } from "@/components/profiles/Timeline";
+import { SignalsPanel } from "@/components/profiles/SignalsPanel";
 import { MergeDialog, MergeHistory } from "@/components/profiles/MergeParts";
 import { AddLinkDialog, EndLinkDialog, JobChangeDialog } from "@/components/profiles/LinkDialogs";
 
-type Tab = "overview" | "companies" | "timeline";
+type Tab = "overview" | "companies" | "timeline" | "signals";
 
 function period(l: CompanyLink): string {
   const start = l.start_date ? fmtDate(l.start_date) : "start date not known";
@@ -155,6 +156,7 @@ export function PersonDetail() {
             { id: "overview", label: "Overview" },
             { id: "companies", label: "Companies", count: active.length },
             { id: "timeline", label: "Timeline" },
+            { id: "signals", label: "Signals" },
           ]}
           active={tab}
           onChange={setTab}
@@ -226,6 +228,7 @@ export function PersonDetail() {
           </div>
         )}
 
+        {tab === "signals" && <SignalsPanel entity="person" id={person.id} />}
         {tab === "timeline" && <Timeline entity="person" id={person.id} canManage={canManage} kinds={meta?.interaction_kinds ?? ["NOTE"]} reloadKey={reload} />}
       </div>
 

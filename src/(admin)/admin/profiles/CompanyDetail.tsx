@@ -33,9 +33,10 @@ import {
 import { CompanyFormDialog } from "@/components/profiles/CompanyFormDialog";
 import { PersonFormDialog } from "@/components/profiles/PersonFormDialog";
 import { Timeline } from "@/components/profiles/Timeline";
+import { SignalsPanel } from "@/components/profiles/SignalsPanel";
 import { MergeDialog, MergeHistory } from "@/components/profiles/MergeParts";
 
-type Tab = "overview" | "people" | "timeline" | "deals" | "contracts" | "documents" | "valueiq";
+type Tab = "overview" | "people" | "timeline" | "signals" | "deals" | "contracts" | "documents" | "valueiq";
 
 const SENSITIVE = new Set(["phone", "email", "notes", "background_notes", "reputation_notes", "tax_number"]);
 
@@ -138,6 +139,7 @@ export function CompanyDetail() {
             { id: "overview", label: "Overview" },
             { id: "people", label: "People", count: company.people_count },
             { id: "timeline", label: "Timeline" },
+            { id: "signals", label: "Signals" },
             { id: "deals", label: "Deals" },
             { id: "contracts", label: "Contracts" },
             { id: "documents", label: "Documents" },
@@ -150,6 +152,7 @@ export function CompanyDetail() {
         {tab === "overview" && <OverviewTab company={company} canManage={canManage} canMerge={Boolean(can?.merge)} reload={reload} onChanged={refresh} />}
         {tab === "people" && <PeopleTab companyId={company.id} canManage={canManage} reload={reload} onAdd={() => setAddingPerson(true)} />}
         {tab === "timeline" && <Timeline entity="company" id={company.id} canManage={canManage} kinds={meta?.interaction_kinds ?? ["NOTE"]} reloadKey={reload} />}
+        {tab === "signals" && <SignalsPanel entity="company" id={company.id} />}
         {tab === "deals" && <PlaceholderTab kind="deals" companyId={company.id} />}
         {tab === "contracts" && <PlaceholderTab kind="contracts" companyId={company.id} />}
         {tab === "documents" && <DocumentsTab companyId={company.id} canRead={Boolean(can?.documents_read)} canManage={canManage} />}

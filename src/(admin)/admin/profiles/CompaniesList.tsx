@@ -25,6 +25,10 @@ export function CompaniesList() {
   const [debounced, setDebounced] = useState("");
   const [stage, setStage] = useState(ALL);
   const [size, setSize] = useState(ALL);
+  const [industry, setIndustry] = useState("");
+  const [province, setProvince] = useState("");
+  const [dIndustry, setDIndustry] = useState("");
+  const [dProvince, setDProvince] = useState("");
   const [adding, setAdding] = useState(false);
   const [masked, setMasked] = useState(false);
 
@@ -36,10 +40,19 @@ export function CompaniesList() {
     return () => clearTimeout(t);
   }, [search]);
 
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setDIndustry(industry.trim());
+      setDProvince(province.trim());
+      setPage(1);
+    }, 300);
+    return () => clearTimeout(t);
+  }, [industry, province]);
+
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await listCompanies({ search: debounced, relationship_stage: stage, size_band: size, page, page_size: PAGE_SIZE });
+      const res = await listCompanies({ search: debounced, relationship_stage: stage, size_band: size, industry: dIndustry, province: dProvince, page, page_size: PAGE_SIZE });
       setItems(res.items);
       setTotal(res.total);
       setMasked(res.items.some((c) => c.sensitive_masked));
@@ -48,13 +61,13 @@ export function CompaniesList() {
     } finally {
       setLoading(false);
     }
-  }, [debounced, stage, size, page]);
+  }, [debounced, stage, size, dIndustry, dProvince, page]);
 
   useEffect(() => {
     void load();
   }, [load]);
 
-  const filtered = debounced || stage !== ALL || size !== ALL;
+  const filtered = debounced || stage !== ALL || size !== ALL || dIndustry || dProvince;
 
   return (
     <PageTransition>
@@ -72,6 +85,11 @@ export function CompaniesList() {
         </div>
 
         {masked && <MaskedNotice />}
+
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+          <Input aria-label="Filter by industry" value={industry} onChange={(e) => setIndustry(e.target.value)} placeholder="Industry (exact, for example Mining)" />
+          <Input aria-label="Filter by province" value={province} onChange={(e) => setProvince(e.target.value)} placeholder="Province (exact, for example Copperbelt)" />
+        </div>
 
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_12rem_12rem]">
           <div className="relative min-w-0">
