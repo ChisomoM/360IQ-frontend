@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, expect, it } from "vitest";
-import { ownsPending, scopedKey, setCaptureScope } from "./pending";
+import { ownsPending, scopedKey, setCaptureScope, withKeyFor } from "./pending";
 import { sendPending } from "@/components/captures/useSender";
 
 describe("pending capture scoping (C1)", () => {
@@ -30,5 +30,12 @@ describe("pending capture scoping (C1)", () => {
   it("sendPending refuses another user's record before any request", async () => {
     setCaptureScope("t1", "u2");
     await expect(sendPending(rec)).rejects.toThrow(/another user/);
+  });
+
+  it("issues a new client key when the content changed and keeps it for an unchanged retry (M10)", () => {
+    expect(withKeyFor(rec, { ...rec }).id).toBe("k1");
+    const changed = withKeyFor(rec, { ...rec, text: "different" });
+    expect(changed.id).not.toBe("k1");
+    expect(withKeyFor(rec, { ...rec, eventName: "Expo" }).id).not.toBe("k1");
   });
 });

@@ -110,3 +110,14 @@ export function newClientKey(): string {
 export function tzOffsetMinutes(): number {
   return -new Date().getTimezoneOffset();
 }
+
+/** True when two captures would send the same content, so one request id may be reused for a retry. */
+export function sameContent(a: PendingCapture, b: PendingCapture): boolean {
+  return a.kind === b.kind && (a.text ?? "") === (b.text ?? "") && !!a.dictated === !!b.dictated && a.eventName === b.eventName && (a.blob?.size ?? 0) === (b.blob?.size ?? 0) && a.blob === b.blob;
+}
+
+/** The record to send: the earlier request id is reused only when nothing changed, because the server refuses one id for two different contents. */
+export function withKeyFor(previous: PendingCapture | null, next: PendingCapture): PendingCapture {
+  if (previous && sameContent(previous, next)) return { ...next, id: previous.id };
+  return { ...next, id: newClientKey() };
+}

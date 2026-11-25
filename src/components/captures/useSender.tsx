@@ -2,7 +2,7 @@ import { useCallback, useState } from "react";
 import { Loader2, RefreshCw, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { isNetworkError, submitFile, submitNote } from "@/lib/api/captures";
-import { deletePending, ownsPending, savePending, type PendingCapture } from "@/lib/capture/pending";
+import { deletePending, ownsPending, savePending, withKeyFor, type PendingCapture } from "@/lib/capture/pending";
 import { notifyInboxChanged } from "@/lib/hooks/useCaptureInbox";
 import type { CaptureView } from "@/types/capture";
 import { ErrorBanner } from "./parts";
@@ -57,12 +57,14 @@ export function useSender(what: string, onDone: (v: CaptureView) => void) {
   );
 
   const start = useCallback(
-    async (p: PendingCapture) => {
+    async (draft: PendingCapture) => {
+      const p = withKeyFor(pending, draft);
+      if (pending && pending.id !== p.id) await deletePending(pending.id); // the content changed: a new request replaces the old one
       setPending(p);
       await savePending(p); // written before the first attempt, so nothing is lost if it fails
       await attempt(p);
     },
-    [attempt]
+    [attempt, pending]
   );
 
   const discard = useCallback(async () => {
