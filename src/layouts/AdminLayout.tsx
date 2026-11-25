@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import type { Document } from "@/types/dms"
 import { retrieve } from "@/lib/api/crud"
 import GatedDashboard from "@/(admin)/onboarding/GatedDashboard"
-import { Loader2 } from "lucide-react"
+import { Loader2, MessageSquare } from "lucide-react"
 
 export type AdminLayoutContext = {
   analyzeDocument: (doc: Document) => void;
@@ -155,6 +155,8 @@ export default function AdminLayout() {
         )}
         <aside
           id="main-navigation"
+          inert={!isDesktop && !mobileNav ? true : undefined}
+          aria-hidden={!isDesktop && !mobileNav ? true : undefined}
           className={`fixed left-0 top-0 h-screen z-40 transition-all duration-300 ${collapsed ? "w-20" : "w-64"
             } ${mobileNav ? "translate-x-0" : "-translate-x-full"} md:translate-x-0`}
         >
@@ -856,6 +858,14 @@ export default function AdminLayout() {
               {mobileNav ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
             </button>
             <div className="flex items-center gap-2">
+              <button
+                type="button"
+                className="relative flex h-11 w-11 items-center justify-center rounded-md text-text-primary outline-none focus-visible:ring-2 focus-visible:ring-focus"
+                aria-label="Open the AI assistant"
+                onClick={() => setIsChatOpen(true)}
+              >
+                <MessageSquare className="h-5 w-5" />
+              </button>
               {canReviewLeads && (
                 <Link
                   to="/admin/capture/inbox"
