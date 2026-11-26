@@ -3,7 +3,7 @@ import { Card, CardHeader, CardContent, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, Area, AreaChart } from 'recharts';
-import { TrendingUp, Users, FileText, Download, Calendar, Filter, AlertCircle, RefreshCw } from 'lucide-react';
+import { TrendingUp, Users, FileText, Download, Calendar, Filter, AlertCircle, RefreshCw, GraduationCap } from '@/components/icons';
 import { useAuth } from '@/lib/context/useAuth';
 import { hasPermission, PERMISSIONS } from '@/lib/permissions';
 import { toast } from 'sonner';

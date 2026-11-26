@@ -1,6 +1,7 @@
 import React, { useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { useImageUpload } from '../hooks/useImageUpload';
+import { Upload } from '@/components/icons';
 
 interface FileUploadResult {
   url: string;
@@ -29,7 +30,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({
   maxFiles = 1,
   maxSize = 5 * 1024 * 1024,
   className = '',
-  label = 'Drop files here...'
+  label = 'Drop files here or browse'
 }) => {
   const { uploadFile, uploadMultiple, uploading, progress, error } = useImageUpload();
 
@@ -76,7 +77,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({
       <div
         {...getRootProps()}
         className={`border-2 border-dashed rounded-lg p-4 sm:p-6 text-center cursor-pointer transition-colors
-          ${isDragActive ? 'border-blue-400 bg-blue-50' : 'border-gray-300 hover:border-gray-400'}
+          ${isDragActive ? 'border-signal bg-signal-tint' : 'border-line-strong bg-surface-1 hover:border-signal'}
           ${uploading ? 'opacity-50 cursor-not-allowed' : ''}
         `}
       >
@@ -84,33 +85,31 @@ export const FileUpload: React.FC<FileUploadProps> = ({
 
         {uploading ? (
           <div className="space-y-2">
-            <div className="text-sm text-gray-600">Uploading...</div>
-            <div className="w-full bg-gray-200 rounded-full h-2">
+            <div className="text-sm text-text-secondary">Uploading</div>
+            <div className="h-1.5 w-full overflow-hidden rounded-pill bg-surface-2">
               <div
-                className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                className="h-full rounded-pill bg-signal transition-all duration-300"
                 style={{ width: `${progress}%` }}
               />
             </div>
           </div>
         ) : isDragActive ? (
-          <p className="text-blue-600 text-sm sm:text-base">Drop files here...</p>
+          <p className="text-sm text-signal-text">Drop the files to upload them</p>
         ) : (
           <div>
-            <svg className="mx-auto h-10 w-10 sm:h-12 sm:w-12 text-gray-400 mb-3 sm:mb-4" stroke="currentColor" fill="none" viewBox="0 0 48 48">
-              <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-            <p className="text-gray-600 mb-2 text-sm sm:text-base">
+            <Upload size={32} className="mx-auto mb-3 text-text-muted" />
+            <p className="mb-1 text-sm font-medium text-text-primary">
               {label}
             </p>
-            <p className="text-xs sm:text-sm text-gray-500">
-              Supports: {getSupportedFormats()} (max {maxSize / 1024 / 1024}MB each)
+            <p className="text-xs text-text-muted">
+              {getSupportedFormats()}, up to {maxSize / 1024 / 1024}MB each
             </p>
           </div>
         )}
       </div>
 
       {error && (
-        <div className="mt-2 text-red-600 text-xs sm:text-sm">{error}</div>
+        <div role="alert" className="mt-2 text-xs text-risk">{error}</div>
       )}
     </div>
   );

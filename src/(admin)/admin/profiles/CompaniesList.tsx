@@ -1,14 +1,21 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { Building2, Loader2, MapPin, Plus, Search, Users } from "lucide-react";
+import { Building2, Plus, Search } from "@/components/icons";
 import { PageTransition } from "@/components/PageTransition";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { EmptyState } from "@/components/shared/EmptyState";
+import { PageHeader } from "@/components/shared/PageHeader";
+import { SectionBody } from "@/components/shared/SectionBody";
+import { SectionCard } from "@/components/shared/SectionCard";
+import { TableSkeleton } from "@/components/shared/TableSkeleton";
 import { listCompanies } from "@/lib/api/profiles";
 import type { Company } from "@/types/profile";
-import { EmptyPanel, MaskedNotice, Pager, Pill, STAGE_VARIANT, labelOf, useProfileMeta } from "@/components/profiles/ui";
+import { MaskedNotice, Pager, Pill, STAGE_VARIANT, labelOf, useProfileMeta } from "@/components/profiles/ui";
+import { Field } from "@/components/profiles/formParts";
 import { CompanyFormDialog } from "@/components/profiles/CompanyFormDialog";
 
 const PAGE_SIZE = 20;
@@ -71,117 +78,134 @@ export function CompaniesList() {
 
   return (
     <PageTransition>
-      <div className="w-full min-w-0 space-y-4">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div className="min-w-0">
-            <h1 className="font-display text-display-xs font-bold text-text-primary">Companies</h1>
-            <p className="text-sm text-text-secondary">What you know about each company, who works there, and where it came from.</p>
-          </div>
-          {meta?.permissions.manage && (
-            <Button onClick={() => setAdding(true)}>
-              <Plus className="h-4 w-4" /> Add company
-            </Button>
-          )}
-        </div>
+      <div className="flex w-full min-w-0 flex-col gap-5">
+        <PageHeader
+          title="Companies"
+          description="What you know about each company, who works there, and where it came from."
+          actions={
+            meta?.permissions.manage && (
+              <Button onClick={() => setAdding(true)}>
+                <Plus /> Add company
+              </Button>
+            )
+          }
+        />
 
         {masked && <MaskedNotice />}
 
-        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-          <Input aria-label="Filter by industry" value={industry} onChange={(e) => setIndustry(e.target.value)} placeholder="Industry (exact, for example Mining)" />
-          <Input aria-label="Filter by province" value={province} onChange={(e) => setProvince(e.target.value)} placeholder="Province (exact, for example Copperbelt)" />
-        </div>
-
-        <div className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_12rem_12rem]">
-          <div className="relative min-w-0">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted" />
-            <Input aria-label="Search companies" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search name, alias, domain or industry" className="pl-9" />
+        <SectionCard>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-[1.6fr_1fr_1fr_12rem_12rem]">
+            <Field label="Search" htmlFor="company-search" className="sm:col-span-2 xl:col-span-1">
+              <div className="relative min-w-0">
+                <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
+                <Input id="company-search" aria-label="Search companies" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Name, alias, domain or industry" className="pl-9" />
+              </div>
+            </Field>
+            <Field label="Industry (exact match)" htmlFor="company-industry">
+              <Input id="company-industry" aria-label="Filter by industry" value={industry} onChange={(e) => setIndustry(e.target.value)} placeholder="Mining" />
+            </Field>
+            <Field label="Province (exact match)" htmlFor="company-province">
+              <Input id="company-province" aria-label="Filter by province" value={province} onChange={(e) => setProvince(e.target.value)} placeholder="Copperbelt" />
+            </Field>
+            <Field label="Relationship stage">
+              <Select
+                value={stage}
+                onValueChange={(v) => {
+                  setStage(v);
+                  setPage(1);
+                }}
+              >
+                <SelectTrigger aria-label="Relationship stage">
+                  <SelectValue placeholder="Stage" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={ALL}>All stages</SelectItem>
+                  {(meta?.relationship_stages ?? []).map((s) => (
+                    <SelectItem key={s} value={s}>
+                      {labelOf(s)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </Field>
+            <Field label="Size">
+              <Select
+                value={size}
+                onValueChange={(v) => {
+                  setSize(v);
+                  setPage(1);
+                }}
+              >
+                <SelectTrigger aria-label="Size">
+                  <SelectValue placeholder="Size" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={ALL}>All sizes</SelectItem>
+                  {(meta?.size_bands ?? []).map((s) => (
+                    <SelectItem key={s} value={s}>
+                      {s} people
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </Field>
           </div>
-          <Select
-            value={stage}
-            onValueChange={(v) => {
-              setStage(v);
-              setPage(1);
-            }}
-          >
-            <SelectTrigger aria-label="Relationship stage">
-              <SelectValue placeholder="Stage" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={ALL}>All stages</SelectItem>
-              {(meta?.relationship_stages ?? []).map((s) => (
-                <SelectItem key={s} value={s}>
-                  {labelOf(s)}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select
-            value={size}
-            onValueChange={(v) => {
-              setSize(v);
-              setPage(1);
-            }}
-          >
-            <SelectTrigger aria-label="Size">
-              <SelectValue placeholder="Size" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={ALL}>All sizes</SelectItem>
-              {(meta?.size_bands ?? []).map((s) => (
-                <SelectItem key={s} value={s}>
-                  {s} people
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        </SectionCard>
 
-        {loading ? (
-          <div className="flex justify-center py-16">
-            <Loader2 className="h-6 w-6 animate-spin text-text-muted" />
-          </div>
-        ) : items.length === 0 ? (
-          <EmptyPanel icon={<Building2 className="h-10 w-10" />} title={filtered ? "No company matches" : "No companies yet"}>
-            {filtered ? "Try a different search or clear the filters." : "Add the first company to start building what you know about it."}
-          </EmptyPanel>
-        ) : (
-          <ul className="space-y-2">
-            {items.map((c) => (
-              <li key={c.id}>
-                <Link
-                  to={`/admin/companies/${c.id}`}
-                  className="flex min-w-0 items-start gap-3 rounded-xl border border-line bg-surface-1 p-3 transition-colors hover:bg-surface-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
-                >
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-surface-2 text-text-secondary">
-                    <Building2 className="h-5 w-5" />
-                  </span>
-                  <span className="min-w-0 flex-1">
-                    <span className="block break-words font-medium text-text-primary">{c.name}</span>
-                    <span className="block break-words text-sm text-text-secondary">
-                      {[c.industry, c.size_band && `${c.size_band} people`].filter(Boolean).join(" · ") || <span className="italic text-text-muted">Industry and size not known yet</span>}
-                    </span>
-                    <span className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-text-muted">
-                      {(c.district || c.province) && (
-                        <span className="inline-flex items-center gap-1">
-                          <MapPin className="h-3 w-3" /> {[c.district, c.province].filter(Boolean).join(", ")}
+        <SectionCard padded={false}>
+          <SectionBody
+            loading={loading}
+            skeleton={<TableSkeleton rows={6} columns={4} />}
+            isEmpty={items.length === 0}
+            empty={
+              <EmptyState
+                icon={<Building2 size={24} />}
+                title={filtered ? "No company matches" : "No companies yet"}
+                description={filtered ? "Try a different search or clear the filters." : "Add the first company to start building what you know about it."}
+              />
+            }
+          >
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Company</TableHead>
+                  <TableHead>Stage</TableHead>
+                  <TableHead className="hidden md:table-cell">Industry</TableHead>
+                  <TableHead className="hidden xl:table-cell">Size</TableHead>
+                  <TableHead className="hidden lg:table-cell">Location</TableHead>
+                  <TableHead className="hidden text-right sm:table-cell">People</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {items.map((c) => (
+                  <TableRow key={c.id}>
+                    <TableCell>
+                      <Link to={`/admin/companies/${c.id}`} className="flex min-h-10 min-w-0 items-center gap-3">
+                        <span className="hidden h-9 w-9 shrink-0 place-items-center rounded-sm bg-surface-2 text-text-secondary sm:grid">
+                          <Building2 size={18} />
                         </span>
-                      )}
-                      {c.domain && <span className="break-all">{c.domain}</span>}
-                    </span>
-                  </span>
-                  <span className="flex shrink-0 flex-col items-end gap-1">
-                    <Pill variant={STAGE_VARIANT[c.relationship_stage] ?? "neutral"}>{labelOf(c.relationship_stage)}</Pill>
-                    <span className="inline-flex items-center gap-1 text-xs text-text-muted">
-                      <Users className="h-3 w-3" /> {c.people_count}
-                    </span>
-                  </span>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        )}
-
-        <Pager page={page} pageSize={PAGE_SIZE} total={total} onPage={setPage} />
+                        <span className="min-w-0">
+                          <span className="block break-words font-semibold text-text-primary">{c.name}</span>
+                          {c.domain && <span className="block break-all font-mono text-xs font-normal text-text-muted">{c.domain}</span>}
+                        </span>
+                      </Link>
+                    </TableCell>
+                    <TableCell>
+                      <Pill variant={STAGE_VARIANT[c.relationship_stage] ?? "neutral"}>{labelOf(c.relationship_stage)}</Pill>
+                    </TableCell>
+                    <TableCell className="hidden text-[13px] text-text-secondary md:table-cell">{c.industry || <span className="text-text-muted">Not known yet</span>}</TableCell>
+                    <TableCell className="hidden text-[13px] text-text-secondary xl:table-cell">{c.size_band ? `${c.size_band} people` : <span className="text-text-muted">Not known yet</span>}</TableCell>
+                    <TableCell className="hidden text-[13px] text-text-secondary lg:table-cell">
+                      {[c.district, c.province].filter(Boolean).join(", ") || <span className="text-text-muted">Not known yet</span>}
+                    </TableCell>
+                    <TableCell className="hidden text-right font-mono text-xs text-text-secondary sm:table-cell">{c.people_count}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </SectionBody>
+          <Pager page={page} pageSize={PAGE_SIZE} total={total} onPage={setPage} />
+        </SectionCard>
       </div>
 
       <CompanyFormDialog open={adding} onOpenChange={setAdding} meta={meta} onSaved={(c) => navigate(`/admin/companies/${c.id}`)} />

@@ -17,10 +17,6 @@ export function TopNavBar() {
     return 'User';
   };
 
-  const getUserEmail = () => {
-    return user?.email || 'user@example.com';
-  };
-
   const getInitials = () => {
     const name = getUserDisplayName();
 
@@ -34,23 +30,21 @@ export function TopNavBar() {
 
   return (
 
-    <header className="fixed top-0 right-0 left-64 h-16 bg-white border-b border-gray-200 flex items-center justify-end px-8 shadow-sm z-30">
+    <header className="fixed top-0 right-0 left-0 lg:left-[224px] h-[64px] bg-surface-1 border-b border-line flex items-center justify-end px-4 lg:px-8 z-30">
 
-      <div className="flex items-center gap-4 bg-gray-50 border border-gray-200 rounded-full px-6 py-2">
+      <div className="flex items-center gap-3">
 
         <div className="text-right">
 
-          <p className="text-sm font-semibold text-gray-900">
+          <p className="text-sm font-semibold text-text-primary">
             {getUserDisplayName()}
           </p>
 
-          <p className="text-xs text-gray-500">
-            {getUserEmail()}
-          </p>
+          {user?.email && <p className="text-xs text-text-muted">{user.email}</p>}
 
         </div>
 
-        <Avatar className="h-10 w-10">
+        <Avatar className="h-[36px] w-[36px]">
 
           <AvatarImage src="" alt={getUserDisplayName()} />
 

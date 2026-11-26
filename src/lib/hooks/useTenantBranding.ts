@@ -110,13 +110,25 @@ export function useTenantBranding() {
 
 /**
  * Applies the current tenant's branding colors as CSS custom properties on
- * `document.documentElement`. Call this in a `useEffect` whenever the tenant
- * config changes so the UI reflects the correct brand colors.
+ * `document.documentElement`. Only colours the tenant actually supplies are written:
+ * inline styles beat the stylesheet, so writing defaults would override the ink theme.
  */
 export function useTenantBrandingEffect() {
-  const colors = useTenantBranding();
+  const branding = useTenantStore((state) => state.currentTenantConfig)?.branding;
+  const primary = branding?.primary_color;
+  const secondary = branding?.secondary_color;
+  const accent = branding?.accent_color;
+  const destructive = branding?.destructive_color;
+  const success = branding?.success_color;
 
   useEffect(() => {
+    const root = document.documentElement.style;
+    const applied: string[] = [];
+    const set = (name: string, value: string) => {
+      root.setProperty(name, value);
+      applied.push(name);
+    };
+
     // Helper function to darken a hex color
     const darkenHex = (hex: string, percent: number): string => {
       const num = parseInt(hex.replace("#", ""), 16);
@@ -138,41 +150,43 @@ export function useTenantBrandingEffect() {
     };
 
     // 1. Set Hex Variables (for raw usage)
-    if (colors.primaryColor) {
-      const primaryFgHex = contrastingForegroundHex(colors.primaryColor);
-      document.documentElement.style.setProperty('--tenant-primary', colors.primaryColor);
-      document.documentElement.style.setProperty('--tenant-primary-hover', darkenHex(colors.primaryColor, 10));
-      document.documentElement.style.setProperty('--tenant-primary-light', alphaHex(colors.primaryColor, 0.12));
-      document.documentElement.style.setProperty('--tenant-primary-fg', primaryFgHex);
+    if (primary) {
+      const primaryFgHex = contrastingForegroundHex(primary);
+      set('--tenant-primary', primary);
+      set('--tenant-primary-hover', darkenHex(primary, 10));
+      set('--tenant-primary-light', alphaHex(primary, 0.12));
+      set('--tenant-primary-fg', primaryFgHex);
       // Link to standard shadcn variables
-      const hsl = hexToHSLValues(colors.primaryColor);
-      document.documentElement.style.setProperty('--primary', hsl);
-      document.documentElement.style.setProperty('--primary-foreground', hexToHSLValues(primaryFgHex));
-      document.documentElement.style.setProperty('--sidebar', hsl);
-      document.documentElement.style.setProperty('--ring', hsl);
+      const hsl = hexToHSLValues(primary);
+      set('--primary', hsl);
+      set('--primary-foreground', hexToHSLValues(primaryFgHex));
+      set('--sidebar', hsl);
+      set('--ring', hsl);
     }
-    if (colors.secondaryColor) {
-      const secondaryFgHex = contrastingForegroundHex(colors.secondaryColor);
-      document.documentElement.style.setProperty('--tenant-secondary', colors.secondaryColor);
-      document.documentElement.style.setProperty('--tenant-secondary-hover', darkenHex(colors.secondaryColor, 10));
-      document.documentElement.style.setProperty('--tenant-secondary-fg', secondaryFgHex);
+    if (secondary) {
+      const secondaryFgHex = contrastingForegroundHex(secondary);
+      set('--tenant-secondary', secondary);
+      set('--tenant-secondary-hover', darkenHex(secondary, 10));
+      set('--tenant-secondary-fg', secondaryFgHex);
       // Link to standard shadcn variables
-      const hsl = hexToHSLValues(colors.secondaryColor);
-      document.documentElement.style.setProperty('--secondary', hsl);
-      document.documentElement.style.setProperty('--secondary-foreground', hexToHSLValues(secondaryFgHex));
-      document.documentElement.style.setProperty('--sidebar-primary', hsl);
-      document.documentElement.style.setProperty('--sidebar-primary-foreground', hexToHSLValues(secondaryFgHex));
+      const hsl = hexToHSLValues(secondary);
+      set('--secondary', hsl);
+      set('--secondary-foreground', hexToHSLValues(secondaryFgHex));
+      set('--sidebar-primary', hsl);
+      set('--sidebar-primary-foreground', hexToHSLValues(secondaryFgHex));
     }
-    if (colors.accentColor) {
-      document.documentElement.style.setProperty('--tenant-accent', colors.accentColor);
-      document.documentElement.style.setProperty('--accent', hexToHSLValues(colors.accentColor));
+    if (accent) {
+      set('--tenant-accent', accent);
     }
-    if (colors.destructiveColor) {
-      document.documentElement.style.setProperty('--tenant-destructive', colors.destructiveColor);
-      document.documentElement.style.setProperty('--destructive', hexToHSLValues(colors.destructiveColor));
+    if (destructive) {
+      set('--tenant-destructive', destructive);
+      set('--destructive', hexToHSLValues(destructive));
     }
-    if (colors.successColor) {
-      document.documentElement.style.setProperty('--tenant-success', colors.successColor);
+    if (success) {
+      set('--tenant-success', success);
     }
-  }, [colors.primaryColor, colors.secondaryColor, colors.accentColor, colors.destructiveColor, colors.successColor]);
+
+    // Switching tenants must not leave the previous tenant's colours behind.
+    return () => applied.forEach((name) => root.removeProperty(name));
+  }, [primary, secondary, accent, destructive, success]);
 }

@@ -39,8 +39,8 @@ export const SHARED_PENDING: {
   doc: string; action: string; urgency: UrgencyType; iconKey: 'file' | 'check' | 'alert';
 }[] = [
   { doc: 'Q4 Budget Proposal',           action: 'Awaiting your signature', urgency: 'Urgent',    iconKey: 'file'  },
-  { doc: 'Vendor Agreement — TechCorp',  action: 'Approval needed',         urgency: 'Due Today', iconKey: 'check' },
-  { doc: 'Employee Contract — Sarah M.', action: 'Review required',          urgency: 'Urgent',    iconKey: 'alert' },
+  { doc: 'Vendor Agreement, TechCorp',  action: 'Approval needed',         urgency: 'Due Today', iconKey: 'check' },
+  { doc: 'Employee Contract, Sarah M.', action: 'Review required',          urgency: 'Urgent',    iconKey: 'alert' },
   { doc: 'IT Asset Requisition',         action: 'Awaiting your signature',  urgency: 'Pending',   iconKey: 'file'  },
 ];
 
@@ -55,9 +55,9 @@ export const SHARED_ACTIVITY = [
 export const BOSS_STATS: {
   label: string; value: string; trend: string; trendUp: boolean; chartType: 'bar' | 'line';
 }[] = [
-  { label: 'Total Org Docs',   value: '186', trend: '+8%', trendUp: true,  chartType: 'bar'  },
-  { label: 'Pending Actions',  value: '24',  trend: '+5%', trendUp: true,  chartType: 'bar'  },
-  { label: 'Overdue (Org)',    value: '7',   trend: '−2',  trendUp: false, chartType: 'line' },
+  { label: 'Total organisation documents', value: '186', trend: '+8%', trendUp: true,  chartType: 'bar'  },
+  { label: 'Pending actions',              value: '24',  trend: '+5%', trendUp: true,  chartType: 'bar'  },
+  { label: 'Overdue (organisation)',       value: '7',   trend: '−2',  trendUp: false, chartType: 'line' },
 ];
 
 export const BOSS_MINI = {
@@ -109,9 +109,9 @@ export const BOSS_REJECTIONS = [
 export const DEPT_STATS: {
   label: string; value: string; trend: string; trendUp: boolean; chartType: 'bar' | 'line';
 }[] = [
-  { label: 'Dept Documents',  value: '48', trend: '+6%', trendUp: true,  chartType: 'bar'  },
-  { label: 'Pending (Dept)',  value: '9',  trend: '+3%', trendUp: true,  chartType: 'bar'  },
-  { label: 'Dept Overdue',    value: '3',  trend: '−1',  trendUp: false, chartType: 'line' },
+  { label: 'Department documents', value: '48', trend: '+6%', trendUp: true,  chartType: 'bar'  },
+  { label: 'Department pending',   value: '9',  trend: '+3%', trendUp: true,  chartType: 'bar'  },
+  { label: 'Department overdue',   value: '3',  trend: '−1',  trendUp: false, chartType: 'line' },
 ];
 
 export const DEPT_MINI = {
@@ -122,9 +122,9 @@ export const DEPT_MINI = {
 
 export const DEPT_STAGES = [
   { stage: 'Created',           count: 48 },
-  { stage: 'Under Review',      count: 34 },
-  { stage: 'Pending Approval',  count: 22 },
-  { stage: 'Approved/Rejected', count: 18 },
+  { stage: 'Under review',         count: 34 },
+  { stage: 'Pending approval',     count: 22 },
+  { stage: 'Approved or rejected', count: 18 },
 ];
 
 export const DEPT_TEAM = [
@@ -151,9 +151,9 @@ export const DEPT_VOL_30D = Array.from({ length: 30 }, (_, i) => ({
 export const ADMIN_STATS: {
   label: string; value: string; trend: string; trendUp: boolean; chartType: 'bar' | 'line';
 }[] = [
-  { label: 'My Documents', value: '22', trend: '+4%', trendUp: true,  chartType: 'bar'  },
-  { label: 'My Pending',   value: '5',  trend: '+2',  trendUp: true,  chartType: 'bar'  },
-  { label: 'My Overdue',   value: '1',  trend: '0%',  trendUp: false, chartType: 'line' },
+  { label: 'My documents', value: '22', trend: '+4%', trendUp: true,  chartType: 'bar'  },
+  { label: 'My pending',   value: '5',  trend: '+2',  trendUp: true,  chartType: 'bar'  },
+  { label: 'My overdue',   value: '1',  trend: '0%',  trendUp: false, chartType: 'line' },
 ];
 
 export const ADMIN_MINI = {
@@ -171,9 +171,9 @@ export const ADMIN_DOC_STATUS = [
 ];
 
 export const ADMIN_SUBMISSIONS: { doc: string; status: DocStatus; date: string; dept: string }[] = [
-  { doc: 'Leave Application — Aug',  status: 'approved', date: 'Apr 9',  dept: 'HR'         },
+  { doc: 'Leave Application, Aug',  status: 'approved', date: 'Apr 9',  dept: 'HR'         },
   { doc: 'Q4 Budget Proposal',       status: 'pending',  date: 'Apr 8',  dept: 'Finance'    },
-  { doc: 'Vendor NDA — TechCorp',    status: 'pending',  date: 'Apr 7',  dept: 'Legal'      },
+  { doc: 'Vendor NDA, TechCorp',    status: 'pending',  date: 'Apr 7',  dept: 'Legal'      },
   { doc: 'IT Asset Requisition',     status: 'rejected', date: 'Apr 5',  dept: 'Operations' },
   { doc: 'Office Supplies Request',  status: 'approved', date: 'Apr 3',  dept: 'Operations' },
 ];
@@ -188,9 +188,9 @@ export const ADMIN_WEEKLY = [
 
 export const ADMIN_PENDING: { doc: string; action: string; urgency: UrgencyType }[] = [
   { doc: 'Q4 Budget Proposal',          action: 'Signature required', urgency: 'Urgent'    },
-  { doc: 'Vendor Agreement — TechCorp', action: 'Approval needed',    urgency: 'Due Today' },
+  { doc: 'Vendor Agreement, TechCorp', action: 'Approval needed',    urgency: 'Due Today' },
   { doc: 'IT Asset Requisition',        action: 'Review requested',   urgency: 'Pending'   },
-  { doc: 'Employee NDA — Sarah M.',     action: 'Signature required', urgency: 'Pending'   },
+  { doc: 'Employee NDA, Sarah M.',     action: 'Signature required', urgency: 'Pending'   },
 ];
 
 // ── Boss — Quick Status Summary Table ─────────────────────────────────────────
@@ -221,8 +221,8 @@ export type AlertSeverity = 'critical' | 'warning' | 'info';
 export const BOSS_COMPLIANCE_ALERTS: {
   title: string; desc: string; severity: AlertSeverity; dept: string;
 }[] = [
-  { title: 'Expired NDA — TechCorp',       desc: 'Legal · expired 3 days ago',    severity: 'critical', dept: 'Legal'      },
-  { title: 'SLA breach — Legal Dept',      desc: '68% compliance (target ≥ 90%)', severity: 'critical', dept: 'Legal'      },
+  { title: 'Expired NDA, TechCorp',       desc: 'Legal · expired 3 days ago',    severity: 'critical', dept: 'Legal'      },
+  { title: 'SLA breach, Legal department',      desc: '68% compliance (target ≥ 90%)', severity: 'critical', dept: 'Legal'      },
   { title: 'Missing signatures on 3 docs', desc: 'Finance · pending 8+ days',     severity: 'warning',  dept: 'Finance'    },
   { title: 'Procurement approval overdue', desc: 'Operations · 6 days idle',      severity: 'warning',  dept: 'Operations' },
   { title: 'Policy review due this month', desc: 'HR · annual review cycle',      severity: 'info',     dept: 'HR'         },
@@ -239,14 +239,14 @@ export const DEPT_WEEKLY = [
 // ── Dept — Rejected / Returned in dept ───────────────────────────────────────
 export const DEPT_REJECTIONS: { doc: string; reason: string; date: string }[] = [
   { doc: 'Q3 Supplier Agreement',   reason: 'Missing signatures',  date: 'Apr 8'  },
-  { doc: 'Leave Application — Aug', reason: 'Incomplete form',     date: 'Apr 5'  },
+  { doc: 'Leave Application, Aug', reason: 'Incomplete form',     date: 'Apr 5'  },
   { doc: 'Asset Requisition v2',    reason: 'Budget not approved', date: 'Mar 31' },
 ];
 
 // ── Admin — Urgent items assigned to me ──────────────────────────────────────
 export const ADMIN_URGENT: { doc: string; daysOverdue: number; action: string }[] = [
   { doc: 'Q4 Budget Proposal',          daysOverdue: 9, action: 'Signature required' },
-  { doc: 'Vendor Agreement — TechCorp', daysOverdue: 2, action: 'Approval pending'   },
+  { doc: 'Vendor Agreement, TechCorp', daysOverdue: 2, action: 'Approval pending'   },
 ];
 
 // ── Shared — Recent Uploads ───────────────────────────────────────────────────
@@ -261,8 +261,8 @@ export const RECENT_UPLOADS: {
 }[] = [
   { id: '1', title: 'Procurement Policy v2',        dept: 'Operations', uploadedBy: 'Thandeka M.', date: 'Apr 13', fileType: 'PDF',  status: 'pending'  },
   { id: '2', title: 'Q4 Budget Proposal',            dept: 'Finance',    uploadedBy: 'Chisomo M.',  date: 'Apr 12', fileType: 'XLSX', status: 'pending'  },
-  { id: '3', title: 'Vendor NDA — TechCorp',         dept: 'Legal',      uploadedBy: 'Lindiwe N.',  date: 'Apr 12', fileType: 'PDF',  status: 'approved' },
-  { id: '4', title: 'Leave Application — Sarah M.',  dept: 'HR',         uploadedBy: 'Sarah M.',    date: 'Apr 11', fileType: 'PDF',  status: 'approved' },
+  { id: '3', title: 'Vendor NDA, TechCorp',         dept: 'Legal',      uploadedBy: 'Lindiwe N.',  date: 'Apr 12', fileType: 'PDF',  status: 'approved' },
+  { id: '4', title: 'Leave Application, Sarah M.',  dept: 'HR',         uploadedBy: 'Sarah M.',    date: 'Apr 11', fileType: 'PDF',  status: 'approved' },
   { id: '5', title: 'IT Asset Requisition',          dept: 'Operations', uploadedBy: 'Grace M.',    date: 'Apr 11', fileType: 'PDF',  status: 'rejected' },
   { id: '6', title: 'Q3 Supplier Agreement',         dept: 'Legal',      uploadedBy: 'Sipho D.',    date: 'Apr 10', fileType: 'PDF',  status: 'pending'  },
   { id: '7', title: 'Annual HR Policy Review',       dept: 'HR',         uploadedBy: 'John B.',     date: 'Apr 9',  fileType: 'DOCX', status: 'draft'   },

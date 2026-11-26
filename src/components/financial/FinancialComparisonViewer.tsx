@@ -4,40 +4,51 @@
  */
 
 import { useMemo } from 'react';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
+import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from '@/components/ui/table';
 import {
   BarChart,
   Bar,
   XAxis,
   YAxis,
   CartesianGrid,
+  Tooltip,
   Legend,
   ResponsiveContainer,
-  Cell,
 } from 'recharts';
 import { StatementTypeIndicator } from './StatementTypeIndicator';
-import { getMockFinancialTableData, getMockFinancialComparison, formatCurrency, getVarianceColor, getVarianceIcon } from '@/lib/mocks/mockFinancialData';
-import type { FinancialDocument, FinancialComparisonData } from '@/types/finance';
-import { RotateCw } from 'lucide-react';
+import { getMockFinancialComparison, formatCurrency } from '@/lib/mocks/mockFinancialData';
+import type { FinancialDocument } from '@/types/finance';
+import { RotateCw, GitCompare } from '@/components/icons';
+import { SectionCard } from '@/components/shared/SectionCard';
+import { StatusBadge } from '@/components/shared/StatusBadge';
+import { EmptyState } from '@/components/shared/EmptyState';
+import {
+  axisProps, gridProps, tooltipProps, legendProps, barCursor, seriesColor,
+  BAR_RADIUS, MAX_BAR_SIZE,
+} from '@/components/dashboard/chartTheme';
+import { formatDate } from '@/lib/format';
+import type { Tone } from '@/lib/status';
+import { cn } from '@/lib/utils';
 
-const CHART_COLORS = [
-  'var(--chart-1)',
-  'var(--chart-2)',
-  'var(--chart-3)',
-  'var(--chart-4)',
-  'var(--chart-1)',
-  'var(--chart-2)',
-  'var(--chart-3)',
-];
+const INTERPRETATION: Record<'positive' | 'negative' | 'neutral', { tone: Tone; label: string }> = {
+  positive: { tone: 'positive', label: 'Favourable' },
+  negative: { tone: 'risk', label: 'Unfavourable' },
+  neutral: { tone: 'neutral', label: 'Neutral' },
+};
+
+function SeriesDot({ index }: { index: number }) {
+  return (
+    <span
+      className="inline-block h-2.5 w-2.5 flex-shrink-0 rounded-pill"
+      style={{ backgroundColor: seriesColor(index) }}
+      aria-hidden="true"
+    />
+  );
+}
+
+const varianceClass = (value: number) =>
+  value > 0 ? 'text-positive' : value < 0 ? 'text-risk' : 'text-text-secondary';
 
 interface FinancialComparisonViewerProps {
   docs: FinancialDocument[];
@@ -56,14 +67,14 @@ export function FinancialComparisonViewer({
 
   if (!comparisonData) {
     return (
-      <div className="text-center py-12">
-        <p className="text-gray-500">
-          Could not compare these documents. They may not be compatible.
-        </p>
-        <Button onClick={onClearAll} className="mt-4">
-          Try Again
-        </Button>
-      </div>
+      <SectionCard>
+        <EmptyState
+          icon={<GitCompare size={24} />}
+          title="Couldn't compare these statements"
+          description="They may not be compatible. Clear the selection and choose others."
+          action={{ label: 'Clear selection', onAction: onClearAll }}
+        />
+      </SectionCard>
     );
   }
 
@@ -76,7 +87,7 @@ export function FinancialComparisonViewer({
       const obj: Record<string, any> = {
         account: row[0],
       };
-      comparisonData.series.forEach((series, seriesIdx) => {
+      comparisonData.series.forEach((series) => {
         obj[series.title] = series.rows[idx]?.[1] || 0;
       });
       return obj;
@@ -84,266 +95,170 @@ export function FinancialComparisonViewer({
   }, [comparisonData]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       {/* Header */}
-      <div className="flex items-start justify-between">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900">
-            Comparing {docs.length} Statements
-          </h2>
-          <div className="flex items-center gap-2 mt-2">
-            {docs.map((doc, idx) => (
-              <div key={doc.id} className="flex items-center gap-1">
-                <span
-                  className="inline-block w-3 h-3 rounded-full"
-                  style={{ backgroundColor: CHART_COLORS[idx % CHART_COLORS.length] }}
-                />
-                <span className="text-sm text-gray-600">{doc.title}</span>
-                {idx < docs.length - 1 && (
-                  <span className="text-gray-300 mx-2">•</span>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={onClearAll}
-          className="text-gray-500"
-        >
-          <RotateCw className="h-4 w-4 mr-2" />
-          Clear
-        </Button>
-      </div>
+      <SectionCard
+        title={`Comparing ${docs.length} statements`}
+        actions={
+          <Button variant="ghost" size="sm" onClick={onClearAll}>
+            <RotateCw size={14} />
+            Clear
+          </Button>
+        }
+      >
+        <ul className="flex flex-wrap items-center gap-x-5 gap-y-2">
+          {docs.map((doc, idx) => (
+            <li key={doc.id} className="flex items-center gap-1.5 text-sm text-text-secondary">
+              <SeriesDot index={idx} />
+              {doc.title}
+            </li>
+          ))}
+        </ul>
+      </SectionCard>
 
-      {/* Financial Metrics Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      {/* Financial metrics */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
         {comparisonData.financial_metrics.slice(0, 6).map((metric, idx) => {
           const isMultiValue = metric.values && Object.keys(metric.values).length > 1;
           const singleValue = metric.value ?? 0;
+          const reading = INTERPRETATION[metric.interpretation] ?? INTERPRETATION.neutral;
 
           return (
-            <Card key={idx} className={`border-l-4 ${
-              metric.interpretation === 'positive'
-                ? 'border-l-green-500 bg-green-50'
-                : metric.interpretation === 'negative'
-                ? 'border-l-red-500 bg-red-50'
-                : 'border-l-gray-300 bg-gray-50'
-            }`}>
-              <CardContent className="pt-4">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-700">
-                      {metric.metric}
+            <SectionCard key={idx}>
+              <div className="flex items-start justify-between gap-2">
+                <p className="text-[13px] text-text-secondary">{metric.metric}</p>
+                <StatusBadge tone={reading.tone} label={reading.label} />
+              </div>
+              {isMultiValue ? (
+                <div className="mt-2 space-y-1">
+                  {Object.entries(metric.values || {}).map(([key, value]) => (
+                    <p key={key} className="flex justify-between gap-2 text-xs text-text-muted">
+                      <span className="min-w-0 truncate">{key}</span>
+                      <span className="font-mono text-text-primary">{value.toFixed(1)}{metric.unit}</span>
                     </p>
-                    {isMultiValue ? (
-                      <div className="mt-2 space-y-1">
-                        {Object.entries(metric.values || {}).map(([key, value]) => (
-                          <p key={key} className="text-xs text-gray-600">
-                            {key}: <span className="font-semibold">{value.toFixed(1)}{metric.unit}</span>
-                          </p>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="text-2xl font-bold mt-2">
-                        {singleValue.toFixed(1)}{metric.unit}
-                      </p>
-                    )}
-                  </div>
-                  <Badge
-                    variant={
-                      metric.interpretation === 'positive'
-                        ? 'default'
-                        : metric.interpretation === 'negative'
-                        ? 'destructive'
-                        : 'secondary'
-                    }
-                    className="ml-2"
-                  >
-                    {getVarianceIcon(metric.interpretation)}
-                  </Badge>
+                  ))}
                 </div>
-              </CardContent>
-            </Card>
+              ) : (
+                <p className="mt-2 text-[28px] leading-8 font-semibold tracking-[-0.02em] text-text-primary">
+                  {singleValue.toFixed(1)}{metric.unit}
+                </p>
+              )}
+            </SectionCard>
           );
         })}
       </div>
 
-      {/* Comparison Chart */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Amount Comparison</CardTitle>
-          <CardDescription>
-            Side-by-side comparison of key line items
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="w-full h-[350px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart
-                data={chartData}
-                margin={{ top: 20, right: 30, left: 20, bottom: 120 }}
-              >
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis
-                  dataKey="account"
-                  angle={-45}
-                  textAnchor="end"
-                  height={110}
-                  tick={{ fontSize: 11 }}
+      {/* Comparison chart */}
+      <SectionCard eyebrow="Amounts in $, key line items" title="Amount comparison">
+        <div className="w-full h-[350px]">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart
+              data={chartData}
+              margin={{ top: 8, right: 16, left: 8, bottom: 0 }}
+            >
+              <CartesianGrid {...gridProps} />
+              <XAxis
+                {...axisProps}
+                dataKey="account"
+                angle={-45}
+                textAnchor="end"
+                height={110}
+              />
+              <YAxis {...axisProps} tickFormatter={(v: number) => formatCurrency(v)} />
+              <Tooltip
+                {...tooltipProps}
+                cursor={barCursor}
+                formatter={(value: number) => formatCurrency(Number(value))}
+              />
+              <Legend {...legendProps} verticalAlign="top" />
+              {docs.map((doc, idx) => (
+                <Bar
+                  key={doc.id}
+                  dataKey={doc.title}
+                  fill={seriesColor(idx)}
+                  radius={BAR_RADIUS}
+                  maxBarSize={MAX_BAR_SIZE}
+                  isAnimationActive={false}
                 />
-                <YAxis tick={{ fontSize: 12 }} />
-                <ChartTooltip
-                  content={({ active, payload }) => {
-                    if (!active || !payload) return null;
-                    return (
-                      <div className="bg-white p-2 border border-gray-200 rounded shadow">
-                        {payload.map((entry, idx) => (
-                          <p key={idx} style={{ color: entry.color }} className="text-xs">
-                            {entry.name}: {formatCurrency(Number(entry.value))}
-                          </p>
-                        ))}
-                      </div>
-                    );
-                  }}
-                />
-                <Legend />
-                {docs.map((doc, idx) => (
-                  <Bar
-                    key={doc.id}
-                    dataKey={doc.title}
-                    fill={CHART_COLORS[idx % CHART_COLORS.length]}
-                    isAnimationActive={false}
-                  />
-                ))}
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </CardContent>
-      </Card>
+              ))}
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      </SectionCard>
 
-      {/* Variance Analysis Table */}
+      {/* Variance analysis */}
       {comparisonData.variance_analysis && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Variance Analysis</CardTitle>
-            <CardDescription>
-              Line-by-line variance and percentage change
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-gray-200 bg-gray-50">
-                    <th className="text-left py-2 px-3 font-medium text-gray-700">
-                      Account
-                    </th>
-                    {Object.entries(comparisonData.variance_analysis.by_row[0]?.values || {}).map(
-                      ([key]) => (
-                        <th key={key} className="text-right py-2 px-3 font-medium text-gray-700">
-                          {key}
-                        </th>
-                      )
-                    )}
-                    <th className="text-right py-2 px-3 font-medium text-gray-700">
-                      Variance
-                    </th>
-                    <th className="text-right py-2 px-3 font-medium text-gray-700">
-                      % Change
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {comparisonData.variance_analysis.by_row.map((row, idx) => (
-                    <tr
-                      key={idx}
-                      className={`border-b border-gray-100 hover:bg-gray-50 ${
-                        row.variance_percent > 10
-                          ? 'bg-yellow-50'
-                          : ''
-                      }`}
-                    >
-                      <td className="py-2 px-3 font-medium text-gray-900">
-                        {row.account}
-                      </td>
-                      {Object.entries(row.values).map(([key, value]) => (
-                        <td key={key} className="text-right py-2 px-3 text-gray-700">
-                          {formatCurrency(value)}
-                        </td>
-                      ))}
-                      <td
-                        className={`text-right py-2 px-3 font-semibold ${
-                          row.variance > 0
-                            ? 'text-green-700'
-                            : 'text-red-700'
-                        }`}
-                      >
-                        {formatCurrency(row.variance)}
-                      </td>
-                      <td
-                        className={`text-right py-2 px-3 font-semibold ${
-                          row.variance_percent > 0
-                            ? 'text-green-700'
-                            : row.variance_percent < 0
-                            ? 'text-red-700'
-                            : 'text-gray-700'
-                        }`}
-                      >
-                        {row.variance_percent > 0 ? '+' : ''}
-                        {row.variance_percent.toFixed(1)}%
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </CardContent>
-        </Card>
+        <SectionCard eyebrow="Line by line" title="Variance analysis" padded={false}>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Account</TableHead>
+                  {Object.entries(comparisonData.variance_analysis.by_row[0]?.values || {}).map(
+                    ([key]) => (
+                      <TableHead key={key} className="text-right">
+                        {key}
+                      </TableHead>
+                    )
+                  )}
+                  <TableHead className="text-right">Variance</TableHead>
+                  <TableHead className="text-right">Change (%)</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {comparisonData.variance_analysis.by_row.map((row, idx) => (
+                  <TableRow
+                    key={idx}
+                    className={cn(row.variance_percent > 10 && 'bg-surface-2')}
+                  >
+                    <TableCell className="font-semibold">{row.account}</TableCell>
+                    {Object.entries(row.values).map(([key, value]) => (
+                      <TableCell key={key} className="text-right font-mono text-xs text-text-secondary">
+                        {formatCurrency(value)}
+                      </TableCell>
+                    ))}
+                    <TableCell className={cn('text-right font-mono text-xs', varianceClass(row.variance))}>
+                      {row.variance > 0 ? '+' : ''}
+                      {formatCurrency(row.variance)}
+                    </TableCell>
+                    <TableCell className={cn('text-right font-mono text-xs', varianceClass(row.variance_percent))}>
+                      {row.variance_percent > 0 ? '+' : ''}
+                      {row.variance_percent.toFixed(1)}%
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </SectionCard>
       )}
 
-      {/* Document Details */}
+      {/* Document details */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {docs.map((doc, idx) => (
-          <Card key={doc.id}>
-            <CardHeader className="pb-3">
-              <div className="flex items-start justify-between">
-                <div>
-                  <CardTitle className="text-base">{doc.title}</CardTitle>
-                  <CardDescription className="mt-1">
-                    {doc.file_name}
-                  </CardDescription>
-                </div>
-                <span
-                  className="inline-block w-4 h-4 rounded-full"
-                  style={{ backgroundColor: CHART_COLORS[idx % CHART_COLORS.length] }}
-                />
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-gray-600">Statement Type:</span>
-                <StatementTypeIndicator type={doc.statement_type} showIcon={false} />
+          <SectionCard key={doc.id} title={doc.title} actions={<SeriesDot index={idx} />}>
+            <p className="mb-3 font-mono text-xs text-text-muted">{doc.file_name}</p>
+            <dl className="space-y-2 text-sm">
+              <div className="flex items-center justify-between gap-3">
+                <dt className="text-text-muted">Statement type</dt>
+                <dd><StatementTypeIndicator type={doc.statement_type} showIcon={false} /></dd>
               </div>
               {doc.fiscal_year && (
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-gray-600">Fiscal Year:</span>
-                  <span className="font-semibold">{doc.fiscal_year}</span>
+                <div className="flex items-center justify-between gap-3">
+                  <dt className="text-text-muted">Fiscal year</dt>
+                  <dd className="font-mono text-xs text-text-primary">{doc.fiscal_year}</dd>
                 </div>
               )}
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-gray-600">Currency:</span>
-                <span className="font-semibold">{doc.currency}</span>
+              <div className="flex items-center justify-between gap-3">
+                <dt className="text-text-muted">Currency</dt>
+                <dd className="font-mono text-xs text-text-primary">{doc.currency}</dd>
               </div>
-              <div className="flex items-center justify-between text-sm text-gray-500">
-                <span>Uploaded:</span>
-                <span className="text-xs">
-                  {new Date(doc.created_at).toLocaleDateString()}
-                </span>
+              <div className="flex items-center justify-between gap-3">
+                <dt className="text-text-muted">Uploaded</dt>
+                <dd className="font-mono text-xs text-text-primary">{formatDate(doc.created_at)}</dd>
               </div>
-            </CardContent>
-          </Card>
+            </dl>
+          </SectionCard>
         ))}
       </div>
     </div>

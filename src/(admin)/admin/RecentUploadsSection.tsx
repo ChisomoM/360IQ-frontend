@@ -1,49 +1,39 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { ChevronRight, Upload, Plus } from 'lucide-react';
+import { ChevronRight, Upload, Plus } from '@/components/icons';
 import { DocumentCardV2 } from '@/components/documents/DocumentCardV2';
+import { Button } from '@/components/ui/button';
+import { SectionCard } from '@/components/shared/SectionCard';
+import { SectionBody } from '@/components/shared/SectionBody';
+import { EmptyState } from '@/components/shared/EmptyState';
 import type { Document } from '@/types/dms';
 import type { RoleType } from './mockData';
 import { fetchData } from '@/lib/api/crud';
 
-// ── Local constants ───────────────────────────────────────────────────────────
-const EASE_CUSTOM: [number, number, number, number] = [0.16, 1, 0.3, 1];
-const STAGGER = { hidden: {}, visible: { transition: { staggerChildren: 0.06 } } };
-const FADE_UP = {
-  hidden:  { opacity: 0, y: 10 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.35, ease: EASE_CUSTOM } },
-};
-const SPRING_BTN = { type: 'spring', stiffness: 500, damping: 30 } as const;
+const GRID = 'grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4';
 
-// ── Upload Action Card ────────────────────────────────────────────────────────
+// ── Upload action card ────────────────────────────────────────────────────────
 function UploadActionCard({ onClick }: { onClick: () => void }) {
   return (
-    <motion.button
+    <button
+      type="button"
       onClick={onClick}
-      className="h-full w-full rounded-2xl overflow-hidden border-2 border-dashed border-slate-300 hover:border-slate-400 bg-slate-50 hover:bg-slate-100 transition-all duration-300 cursor-pointer"
-      whileHover={{ y: -3 }}
-      whileTap={{ scale: 0.99 }}
-      transition={{ type: 'spring', stiffness: 400, damping: 28 }}
+      className="flex h-full min-h-[9rem] w-full flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-line-strong bg-surface-1 px-4 py-6 text-center transition-colors hover:bg-surface-2"
     >
-      <div className="h-full w-full flex flex-col items-center justify-center gap-3 px-4 py-6 text-center">
-        <div className="w-14 h-14 rounded-xl border border-dashed border-slate-300 bg-white flex items-center justify-center">
-          <Plus size={24} className="text-slate-600" />
-        </div>
-        <p className="font-sans text-sm font-semibold text-slate-700">Upload Document</p>
-      </div>
-    </motion.button>
+      <span className="grid h-12 w-12 place-items-center rounded-sm bg-field text-text-secondary">
+        <Plus size={24} />
+      </span>
+      <span className="text-sm font-semibold text-text-primary">Add a document</span>
+    </button>
   );
 }
 
-// ── Recent Uploads Section ────────────────────────────────────────────────────
+// ── Recent uploads section ────────────────────────────────────────────────────
 interface RecentUploadsSectionProps {
-  primary: string;
-  secondary: string;
   role: RoleType;
 }
 
-export function RecentUploadsSection({ primary: _primary, secondary: _secondary, role }: RecentUploadsSectionProps) {
+export function RecentUploadsSection({ role }: RecentUploadsSectionProps) {
   const navigate = useNavigate();
   const [documents, setDocuments] = useState<Document[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -94,72 +84,52 @@ export function RecentUploadsSection({ primary: _primary, secondary: _secondary,
   };
 
   return (
-    <div>
-      {/* Section header */}
-      <div className="flex items-center justify-between mb-4">
-        <div>
-          <h2 className="font-display font-semibold text-xl text-gray-900">Recent Uploads</h2>
-          <p className="font-sans text-xs text-slate-400 mt-0.5">
-            {role === 'admin' ? 'Your latest uploads' : role === 'dept' ? 'Finance &amp; HR uploads' : 'Org-wide — latest documents'}
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
-          <motion.button
-            onClick={() => navigate('/admin/documents?upload=true')}
-            className="flex items-center gap-2 h-9 px-4 rounded-xl bg-primary text-primary-fg font-sans text-sm font-semibold"
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.97 }}
-            transition={SPRING_BTN}
-          >
-            <Upload size={14} />
-            Upload New
-          </motion.button>
-          <motion.button
-            onClick={() => navigate('/admin/documents')}
-            className="flex items-center gap-1.5 h-9 px-3 rounded-xl font-sans text-sm font-semibold text-slate-500 hover:text-slate-800 hover:bg-slate-50 transition-colors"
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.97 }}
-            transition={SPRING_BTN}
-          >
-            View All
-            <ChevronRight size={14} />
-          </motion.button>
-        </div>
-      </div>
-
-      {/* Grid — 4 columns with upload card as 5th */}
-      {isLoading ? (
-        <div className="flex flex-col items-center justify-center py-12 text-center bg-white rounded-2xl border border-slate-100">
-          <p className="font-sans text-sm font-semibold text-slate-500">Loading recent documents...</p>
-        </div>
-      ) : visibleDocuments.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-12 text-center bg-white rounded-2xl border border-slate-100">
-          <Upload size={32} className="text-slate-300 mb-3" />
-          <p className="font-sans text-sm font-semibold text-slate-500">No recent uploads</p>
-          <p className="font-sans text-xs text-slate-400 mt-1">Documents uploaded by your team will appear here</p>
-        </div>
-      ) : (
-        <motion.div
-          className="grid grid-cols-4 gap-4 auto-rows-fr"
-          variants={STAGGER}
-          initial="hidden"
-          animate="visible"
-        >
+    <SectionCard
+      eyebrow={role === 'admin' ? 'Your latest uploads' : role === 'dept' ? 'Finance and HR uploads' : 'Latest across the organisation'}
+      title="Recent uploads"
+      actions={
+        <>
+          <Button variant="ghost" onClick={() => navigate('/admin/documents')}>
+            View all
+            <ChevronRight size={16} />
+          </Button>
+          <Button onClick={handleUploadClick}>
+            <Upload size={16} />
+            Upload document
+          </Button>
+        </>
+      }
+    >
+      <SectionBody
+        loading={isLoading}
+        skeleton={
+          <div role="status" aria-busy="true" aria-label="Loading" className={GRID}>
+            {[1, 2, 3, 4].map((i) => <div key={i} className="skeleton h-36 rounded-lg" />)}
+          </div>
+        }
+        isEmpty={visibleDocuments.length === 0}
+        empty={
+          <EmptyState
+            icon={<Upload size={24} />}
+            title="No recent uploads"
+            description="Documents uploaded by your team appear here."
+          />
+        }
+      >
+        <div className={`${GRID} auto-rows-fr`}>
           {visibleDocuments.map((doc) => (
-            <motion.div key={doc.id} variants={FADE_UP} className="h-full">
+            <div key={doc.id} className="h-full min-w-0">
               <DocumentCardV2
                 document={doc}
                 onDownload={handleDownload}
                 onView={handleView}
                 onVersions={handleVersions}
               />
-            </motion.div>
+            </div>
           ))}
-          <motion.div variants={FADE_UP} className="h-full">
-            <UploadActionCard onClick={handleUploadClick} />
-          </motion.div>
-        </motion.div>
-      )}
-    </div>
+          <UploadActionCard onClick={handleUploadClick} />
+        </div>
+      </SectionBody>
+    </SectionCard>
   );
 }

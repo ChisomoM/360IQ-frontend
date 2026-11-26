@@ -1,24 +1,38 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { toast } from "sonner";
 import {
   Loader2,
-  Building2,
   FileText,
-  Upload,
   ArrowRight,
   ArrowLeft,
-  CheckCircle,
   FileUp,
-  Trash2,
   Lock,
-} from "lucide-react";
+} from "@/components/icons";
 import { post, update, retrieve } from "@/lib/api/crud";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { PageHeader } from "@/components/shared/PageHeader";
+import { SectionBody } from "@/components/shared/SectionBody";
+import { SectionCard } from "@/components/shared/SectionCard";
+import { StatusBadge } from "@/components/shared/StatusBadge";
+import { Field } from "@/components/profiles/formParts";
+import { PublicHeader, Stepper } from "../PublicParts";
+import { onboardingStateBadge } from "../onboardingState";
 
-const EASE = [0.16, 1, 0.3, 1];
+const EASE = [0.16, 1, 0.3, 1] as const;
+// A select item cannot have an empty value, so "no type" uses a placeholder value that maps back to "".
+const NO_TYPE = "__none";
+
+const STEPS = [
+  { title: "Company details", short: "Company", description: "Legal identification and address." },
+  { title: "Sales profile", short: "Sales", description: "Settings that fit your sales team." },
+  { title: "Compliance documents", short: "Documents", description: "Upload your company certificates for verification. PDF or image, 10 MB at most." },
+  { title: "Review and submit", short: "Review", description: "Check the details. The registration is locked while it is reviewed." },
+];
 
 const verticalsList = [
   "FinTech",
@@ -42,14 +56,15 @@ const integrationsList = [
 ];
 
 const allowedDocTypesList = [
-  { slug: "certificate_of_incorporation", label: "Certificate of Incorporation" },
-  { slug: "tax_clearance_certificate", label: "Tax Clearance Certificate" },
-  { slug: "standard_nda", label: "Signed Standard NDA" },
-  { slug: "data_protection_policy", label: "Data Protection Policy" },
+  { slug: "certificate_of_incorporation", label: "Certificate of incorporation" },
+  { slug: "tax_clearance_certificate", label: "Tax clearance certificate" },
+  { slug: "standard_nda", label: "Signed standard NDA" },
+  { slug: "data_protection_policy", label: "Data protection policy" },
 ];
 
 export default function OnboardingWizard() {
   const navigate = useNavigate();
+  const reduce = useReducedMotion();
   const [step, setStep] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -99,7 +114,7 @@ export default function OnboardingWizard() {
 
           // If the profile is already active or submitted/under review, they shouldn't edit
           if (res.state === "ACTIVE") {
-            toast.success("Onboarding is complete!");
+            toast.success("Onboarding is complete");
             navigate("/admin/dashboard");
           }
         }
@@ -133,7 +148,7 @@ export default function OnboardingWizard() {
         industry_verticals: selectedVerticals,
         integrations_config: selectedIntegrations,
       });
-      toast.success("Draft saved successfully");
+      toast.success("Draft saved");
     } catch (err: any) {
       console.error(err);
       toast.error(err.message || "Failed to save draft");
@@ -155,12 +170,12 @@ export default function OnboardingWizard() {
     formData.append("document_type", docType);
     formData.append("file", file);
 
-    const toastId = toast.loading(`Uploading ${file.name}...`);
+    const toastId = toast.loading(`Uploading ${file.name}…`);
     try {
       const res: any = await post("ONBOARDING_DOCUMENTS", formData);
       if (res) {
         setUploadedDocs((prev) => [...prev, res]);
-        toast.success("Document uploaded successfully", { id: toastId });
+        toast.success("Document uploaded", { id: toastId });
       }
     } catch (err: any) {
       console.error(err);
@@ -195,7 +210,7 @@ export default function OnboardingWizard() {
 
       if (res) {
         setOnboardingState(res.state);
-        toast.success("Corporate onboarding profile submitted for review!");
+        toast.success("Submitted for review");
         navigate("/admin/dashboard");
       }
     } catch (err: any) {
@@ -220,180 +235,100 @@ export default function OnboardingWizard() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen w-full flex items-center justify-center bg-[#0d173b]">
-        <Loader2 className="h-10 w-10 animate-spin text-[#7c69ff]" />
+      <div className="min-h-screen w-full bg-surface-0">
+        <PublicHeader />
+        <main className="mx-auto w-full max-w-3xl px-4 py-8 sm:px-6">
+          <SectionCard padded={false}>
+            <SectionBody loading>{null}</SectionBody>
+          </SectionCard>
+        </main>
       </div>
     );
   }
 
   const isLocked = onboardingState === "SUBMITTED" || onboardingState === "UNDER_REVIEW";
+  const badge = onboardingStateBadge(onboardingState);
+  const current = STEPS[step - 1];
 
   return (
-    <div className="min-h-screen w-full bg-[#f4f7fe] py-12 px-6">
-      <div className="max-w-4xl mx-auto bg-white rounded-2xl shadow-xl overflow-hidden border border-slate-100 flex flex-col md:flex-row min-h-[600px]">
-        {/* Left pane: progress sidebar */}
-        <div className="md:w-80 bg-gradient-to-b from-[#1e2e70] to-[#0d173b] p-8 text-white flex flex-col justify-between">
-          <div className="space-y-8">
-            <div className="flex items-center gap-3">
-              <Building2 className="h-7 w-7 text-[#febb00]" />
-              <span className="font-display font-extrabold text-xl tracking-tight">360IQ B2B CRM</span>
-            </div>
+    <div className="min-h-screen w-full bg-surface-0 text-text-primary">
+      <PublicHeader actions={<StatusBadge tone={badge.tone} label={badge.label} />} />
 
-            <div className="space-y-6">
-              {[
-                { stepNum: 1, label: "Company Information" },
-                { stepNum: 2, label: "Commercial Parameters" },
-                { stepNum: 3, label: "Compliance & Documents" },
-                { stepNum: 4, label: "Review & Submit" },
-              ].map((s) => (
-                <div key={s.stepNum} className="flex items-center gap-4">
-                  <div
-                    className={`h-8 w-8 rounded-full flex items-center justify-center font-semibold text-xs border-2 transition-all ${
-                      step === s.stepNum
-                        ? "bg-[#febb00] text-[#0d173b] border-[#febb00]"
-                        : step > s.stepNum
-                        ? "bg-[#10b981] border-[#10b981] text-white"
-                        : "border-white/30 text-white/50"
-                    }`}
-                  >
-                    {step > s.stepNum ? "✓" : s.stepNum}
-                  </div>
-                  <div>
-                    <p className={`text-xs font-semibold uppercase tracking-wider ${
-                      step === s.stepNum ? "text-[#febb00]" : "text-white/60"
-                    }`}>
-                      {s.label}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+      <main className="mx-auto flex w-full max-w-3xl flex-col gap-5 px-4 py-8 sm:px-6">
+        <PageHeader crumb="Company onboarding" title="Register your company" />
 
-          <div className="pt-8 border-t border-white/10 text-xs text-white/50 flex flex-col gap-2">
-            <p>Onboarding Profile State: <span className="font-semibold text-yellow-300">{onboardingState}</span></p>
-            {isLocked && (
-              <p className="flex items-center gap-1 text-red-300">
-                <Lock className="h-3 w-3" /> Locked - Under Review
-              </p>
-            )}
-          </div>
-        </div>
+        {isLocked && (
+          <p className="flex items-center gap-2 rounded-lg bg-field px-4 py-3 text-sm text-text-secondary">
+            <Lock size={18} className="shrink-0" />
+            Locked while your registration is under review.
+          </p>
+        )}
 
-        {/* Right pane: form wizards */}
-        <div className="flex-1 p-8 sm:p-10 flex flex-col justify-between">
+        <Stepper steps={STEPS.map((s) => s.short)} current={step - 1} />
+
+        <SectionCard eyebrow={`Step ${step} of ${STEPS.length}`} title={current.title}>
           <AnimatePresence mode="wait">
             <motion.div
               key={step}
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              transition={{ duration: 0.4, ease: EASE }}
-              className="space-y-6"
+              initial={reduce ? false : { opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={reduce ? undefined : { opacity: 0, y: -8 }}
+              transition={{ duration: 0.2, ease: EASE }}
+              className="space-y-4"
             >
+              <p className="text-sm text-text-secondary">{current.description}</p>
+
               {/* STEP 1: COMPANY INFO */}
               {step === 1 && (
-                <div className="space-y-5">
-                  <h3 className="text-2xl font-bold text-slate-800 tracking-tight">Company Details</h3>
-                  <p className="text-sm text-slate-500">Provide legal identification and address parameters.</p>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="space-y-1">
-                      <label className="text-xs font-bold text-slate-600 uppercase">Company Name</label>
-                      <Input
-                        value={companyName}
-                        onChange={(e) => setCompanyName(e.target.value)}
-                        placeholder="Enterprise Corp"
-                        disabled={isLocked}
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <label className="text-xs font-bold text-slate-600 uppercase">Company Type</label>
-                      <select
-                        value={companyType}
-                        onChange={(e) => setCompanyType(e.target.value)}
-                        className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm focus:ring-2 focus:ring-ring focus:ring-offset-2"
-                        disabled={isLocked}
-                      >
-                        <option value="">Select Company Type</option>
-                        <option value="enterprise">Enterprise</option>
-                        <option value="startup">Startup</option>
-                        <option value="mid-market">Mid-Market</option>
-                        <option value="agency">Agency</option>
-                      </select>
-                    </div>
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    <Field label="Company name" htmlFor="ob-name">
+                      <Input id="ob-name" value={companyName} onChange={(e) => setCompanyName(e.target.value)} placeholder="Zambezi Logistics Ltd" disabled={isLocked} />
+                    </Field>
+                    <Field label="Company type" htmlFor="ob-type">
+                      <Select value={companyType || NO_TYPE} onValueChange={(v) => setCompanyType(v === NO_TYPE ? "" : v)} disabled={isLocked}>
+                        <SelectTrigger id="ob-type">
+                          <SelectValue placeholder="Choose a company type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value={NO_TYPE}>Choose a company type</SelectItem>
+                          <SelectItem value="enterprise">Enterprise</SelectItem>
+                          <SelectItem value="startup">Startup</SelectItem>
+                          <SelectItem value="mid-market">Mid-market</SelectItem>
+                          <SelectItem value="agency">Agency</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </Field>
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="space-y-1">
-                      <label className="text-xs font-bold text-slate-600 uppercase">PACRA Reg Number</label>
-                      <Input
-                        value={registrationNumber}
-                        onChange={(e) => setRegistrationNumber(e.target.value)}
-                        placeholder="LCO-19920-A"
-                        disabled={isLocked}
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <label className="text-xs font-bold text-slate-600 uppercase">Tax TPIN Number</label>
-                      <Input
-                        value={taxNumber}
-                        onChange={(e) => setTaxNumber(e.target.value)}
-                        placeholder="TPIN-100239-X"
-                        disabled={isLocked}
-                      />
-                    </div>
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    <Field label="PACRA registration number" htmlFor="ob-reg">
+                      <Input id="ob-reg" value={registrationNumber} onChange={(e) => setRegistrationNumber(e.target.value)} disabled={isLocked} className="font-mono" />
+                    </Field>
+                    <Field label="TPIN (tax number)" htmlFor="ob-tax">
+                      <Input id="ob-tax" value={taxNumber} onChange={(e) => setTaxNumber(e.target.value)} disabled={isLocked} className="font-mono" />
+                    </Field>
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="space-y-1">
-                      <label className="text-xs font-bold text-slate-600 uppercase">Commercial Lead Name</label>
-                      <Input
-                        value={commercialLead}
-                        onChange={(e) => setCommercialLead(e.target.value)}
-                        placeholder="Sarah Connor"
-                        disabled={isLocked}
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <label className="text-xs font-bold text-slate-600 uppercase">Contact Phone</label>
-                      <Input
-                        value={contactPhone}
-                        onChange={(e) => setContactPhone(e.target.value)}
-                        placeholder="+260 977 123 456"
-                        disabled={isLocked}
-                      />
-                    </div>
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    <Field label="Commercial lead name" htmlFor="ob-lead">
+                      <Input id="ob-lead" value={commercialLead} onChange={(e) => setCommercialLead(e.target.value)} placeholder="Mutinta Banda" disabled={isLocked} />
+                    </Field>
+                    <Field label="Contact phone" htmlFor="ob-phone">
+                      <Input id="ob-phone" value={contactPhone} onChange={(e) => setContactPhone(e.target.value)} placeholder="+260 97 123 4567" disabled={isLocked} />
+                    </Field>
                   </div>
 
-                  <div className="grid grid-cols-3 gap-2">
-                    <div className="space-y-1">
-                      <label className="text-xs font-bold text-slate-600 uppercase">City / Location</label>
-                      <Input
-                        value={locationName}
-                        onChange={(e) => setLocationName(e.target.value)}
-                        placeholder="Lusaka"
-                        disabled={isLocked}
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <label className="text-xs font-bold text-slate-600 uppercase">District</label>
-                      <Input
-                        value={district}
-                        onChange={(e) => setDistrict(e.target.value)}
-                        placeholder="Lusaka District"
-                        disabled={isLocked}
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <label className="text-xs font-bold text-slate-600 uppercase">Province</label>
-                      <Input
-                        value={province}
-                        onChange={(e) => setProvince(e.target.value)}
-                        placeholder="Lusaka Province"
-                        disabled={isLocked}
-                      />
-                    </div>
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                    <Field label="City or location" htmlFor="ob-city">
+                      <Input id="ob-city" value={locationName} onChange={(e) => setLocationName(e.target.value)} placeholder="Lusaka" disabled={isLocked} />
+                    </Field>
+                    <Field label="District" htmlFor="ob-district">
+                      <Input id="ob-district" value={district} onChange={(e) => setDistrict(e.target.value)} placeholder="Lusaka" disabled={isLocked} />
+                    </Field>
+                    <Field label="Province" htmlFor="ob-province">
+                      <Input id="ob-province" value={province} onChange={(e) => setProvince(e.target.value)} placeholder="Lusaka" disabled={isLocked} />
+                    </Field>
                   </div>
                 </div>
               )}
@@ -401,177 +336,91 @@ export default function OnboardingWizard() {
               {/* STEP 2: COMMERCIAL PARAMETERS */}
               {step === 2 && (
                 <div className="space-y-5">
-                  <h3 className="text-2xl font-bold text-slate-800 tracking-tight">Commercial & Pipeline</h3>
-                  <p className="text-sm text-slate-500">Tune CRM settings to fit your organization's sales profile.</p>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="space-y-1">
-                      <label className="text-xs font-bold text-slate-600 uppercase">Sales Team Size</label>
-                      <Input
-                        type="number"
-                        value={salesTeamSize}
-                        onChange={(e) => setSalesTeamSize(Number(e.target.value))}
-                        min={1}
-                        disabled={isLocked}
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <label className="text-xs font-bold text-slate-600 uppercase">Expected Annual Pipeline ($)</label>
-                      <Input
-                        type="number"
-                        value={expectedPipeline}
-                        onChange={(e) => setExpectedPipeline(Number(e.target.value))}
-                        min={1000}
-                        disabled={isLocked}
-                      />
-                    </div>
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    <Field label="Sales team size" htmlFor="ob-team">
+                      <Input id="ob-team" type="number" value={salesTeamSize} onChange={(e) => setSalesTeamSize(Number(e.target.value))} min={1} disabled={isLocked} className="font-mono" />
+                    </Field>
+                    <Field label="Expected annual pipeline (USD)" htmlFor="ob-pipeline">
+                      <Input id="ob-pipeline" type="number" value={expectedPipeline} onChange={(e) => setExpectedPipeline(Number(e.target.value))} min={1000} disabled={isLocked} className="font-mono" />
+                    </Field>
                   </div>
 
-                  <div className="space-y-2">
-                    <label className="text-xs font-bold text-slate-600 uppercase block">Industry Verticals</label>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                      {verticalsList.map((v) => (
-                        <button
-                          key={v}
-                          type="button"
-                          onClick={() => !isLocked && toggleVertical(v)}
-                          className={`px-3 py-2 rounded-lg text-xs font-semibold border transition-all text-left flex items-center justify-between ${
-                            selectedVerticals.includes(v)
-                              ? "bg-[#1e2e70] border-[#1e2e70] text-white shadow-md"
-                              : "bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100"
-                          }`}
-                          disabled={isLocked}
-                        >
-                          <span>{v}</span>
-                          {selectedVerticals.includes(v) && <span>✓</span>}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
+                  <ChoiceGroup legend="Industry verticals" options={verticalsList} selected={selectedVerticals} disabled={isLocked} onToggle={(v) => !isLocked && toggleVertical(v)} />
 
-                  <div className="space-y-2">
-                    <label className="text-xs font-bold text-slate-600 uppercase block">Third-Party Integrations</label>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                      {integrationsList.map((i) => (
-                        <button
-                          key={i}
-                          type="button"
-                          onClick={() => !isLocked && toggleIntegration(i)}
-                          className={`px-3 py-2 rounded-lg text-xs font-semibold border transition-all text-left flex items-center justify-between ${
-                            selectedIntegrations.includes(i)
-                              ? "bg-[#7c69ff] border-[#7c69ff] text-white shadow-md"
-                              : "bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100"
-                          }`}
-                          disabled={isLocked}
-                        >
-                          <span>{i}</span>
-                          {selectedIntegrations.includes(i) && <span>✓</span>}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
+                  <ChoiceGroup legend="Integrations" options={integrationsList} selected={selectedIntegrations} disabled={isLocked} onToggle={(i) => !isLocked && toggleIntegration(i)} />
                 </div>
               )}
 
               {/* STEP 3: COMPLIANCE DOCUMENTS */}
               {step === 3 && (
-                <div className="space-y-5">
-                  <h3 className="text-2xl font-bold text-slate-800 tracking-tight">Compliance Documents</h3>
-                  <p className="text-sm text-slate-500">Upload corporate certificates for verification. (Max 10MB, PDF/Images)</p>
-
-                  <div className="space-y-4">
-                    {allowedDocTypesList.map((docType) => {
-                      const uploaded = uploadedDocs.find((d) => d.document_type === docType.slug);
-                      return (
-                        <div
-                          key={docType.slug}
-                          className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 bg-slate-50 rounded-xl border border-slate-200 gap-3"
-                        >
-                          <div className="flex items-center gap-3">
-                            <div className={`p-2.5 rounded-lg ${
-                              uploaded ? "bg-emerald-100 text-emerald-600" : "bg-slate-200 text-slate-500"
-                            }`}>
-                              <FileText className="h-5 w-5" />
-                            </div>
-                            <div>
-                              <p className="text-sm font-bold text-slate-700">{docType.label}</p>
-                              {uploaded ? (
-                                <p className="text-xs text-emerald-600 font-semibold flex items-center gap-1 mt-0.5">
-                                  <CheckCircle className="h-3.5 w-3.5" /> Checked in • {uploaded.verification_status}
-                                </p>
-                              ) : (
-                                <p className="text-xs text-slate-400 mt-0.5">Awaiting upload</p>
-                              )}
-                            </div>
+                <ul className="divide-y divide-line">
+                  {allowedDocTypesList.map((docType) => {
+                    const uploaded = uploadedDocs.find((d) => d.document_type === docType.slug);
+                    return (
+                      <li key={docType.slug} className="flex flex-col items-start justify-between gap-3 py-3 sm:flex-row sm:items-center">
+                        <div className="flex min-w-0 items-center gap-3">
+                          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-sm bg-surface-2 text-text-secondary">
+                            <FileText size={20} />
+                          </span>
+                          <div className="min-w-0">
+                            <p className="text-sm font-semibold text-text-primary">{docType.label}</p>
+                            {uploaded ? (
+                              <p className="mt-1 flex flex-wrap items-center gap-1.5 text-xs text-text-muted">
+                                Uploaded
+                                {uploaded.verification_status && <StatusBadge status={uploaded.verification_status} />}
+                              </p>
+                            ) : (
+                              <p className="mt-0.5 text-xs text-text-muted">Not uploaded yet</p>
+                            )}
                           </div>
+                        </div>
 
-                          {!uploaded && !isLocked ? (
-                            <label className="cursor-pointer bg-white hover:bg-slate-100 border border-slate-300 text-slate-700 text-xs font-semibold px-4 py-2 rounded-lg flex items-center gap-1.5 shadow-sm transition-all active:scale-95">
-                              <FileUp className="h-4 w-4" /> Upload File
+                        {!uploaded && !isLocked ? (
+                          <Button asChild variant="secondary" size="sm">
+                            <label className="cursor-pointer focus-within:ring-2 focus-within:ring-focus">
+                              <FileUp /> Upload file
                               <input
                                 type="file"
                                 accept=".pdf,image/png,image/jpeg"
                                 onChange={(e) => handleDocumentUpload(docType.slug, e)}
-                                className="hidden"
+                                className="sr-only"
+                                aria-label={`Upload ${docType.label}`}
                               />
                             </label>
-                          ) : (
-                            uploaded && (
-                              <div className="flex items-center gap-2">
-                                <a
-                                  href={`/api/v1/onboarding/documents/download?bucket=${uploaded.tenant_id}&object=${encodeURIComponent(uploaded.file_path)}`}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="text-xs text-[#1e2e70] hover:underline font-semibold"
-                                >
-                                  View
-                                </a>
-                              </div>
-                            )
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
+                          </Button>
+                        ) : (
+                          uploaded && (
+                            <a
+                              href={`/api/v1/onboarding/documents/download?bucket=${uploaded.tenant_id}&object=${encodeURIComponent(uploaded.file_path)}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-sm font-semibold text-signal-text hover:underline"
+                            >
+                              View
+                            </a>
+                          )
+                        )}
+                      </li>
+                    );
+                  })}
+                </ul>
               )}
 
               {/* STEP 4: REVIEW & SUBMIT */}
               {step === 4 && (
-                <div className="space-y-6">
-                  <h3 className="text-2xl font-bold text-slate-800 tracking-tight">Review Submission</h3>
-                  <p className="text-sm text-slate-500">Confirm details before locking profile for audit.</p>
-
-                  <div className="bg-slate-50 rounded-xl border border-slate-200 p-5 space-y-4 text-sm text-slate-600">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <p className="text-xs font-bold text-slate-400 uppercase">Company Name</p>
-                        <p className="font-semibold text-slate-800 mt-0.5">{companyName || "N/A"}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs font-bold text-slate-400 uppercase">Commercial Lead</p>
-                        <p className="font-semibold text-slate-800 mt-0.5">{commercialLead || "N/A"}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs font-bold text-slate-400 uppercase">PACRA Reg</p>
-                        <p className="font-semibold text-slate-800 mt-0.5">{registrationNumber || "N/A"}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs font-bold text-slate-400 uppercase">Sales Team Size</p>
-                        <p className="font-semibold text-slate-800 mt-0.5">{salesTeamSize} reps</p>
-                      </div>
-                    </div>
-
-                    <div className="pt-3 border-t border-slate-200">
-                      <p className="text-xs font-bold text-slate-400 uppercase">Uploaded Documents</p>
-                      <p className="font-semibold text-slate-800 mt-1">{uploadedDocs.length} files submitted</p>
-                    </div>
-                  </div>
+                <div className="space-y-4">
+                  <dl className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <ReviewItem label="Company name" value={companyName || "Not provided"} />
+                    <ReviewItem label="Commercial lead" value={commercialLead || "Not provided"} />
+                    <ReviewItem label="PACRA registration number" value={registrationNumber || "Not provided"} mono={Boolean(registrationNumber)} />
+                    <ReviewItem label="Sales team size" value={`${salesTeamSize} reps`} />
+                    <ReviewItem label="Uploaded documents" value={`${uploadedDocs.length} ${uploadedDocs.length === 1 ? "file" : "files"}`} />
+                  </dl>
 
                   {onboardingState === "INFO_REQUESTED" && (
-                    <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-sm text-amber-800">
-                      <p className="font-semibold">Compliance feedback requires adjustments:</p>
-                      <p className="mt-1 font-sans text-amber-700">Please review uploaded incorporation cards or NDAs.</p>
+                    <div className="rounded-md bg-caution-tint px-4 py-3 text-sm text-caution">
+                      <p className="font-semibold">Changes requested</p>
+                      <p className="mt-1">Please review the uploaded incorporation documents or NDA.</p>
                     </div>
                   )}
                 </div>
@@ -580,59 +429,74 @@ export default function OnboardingWizard() {
           </AnimatePresence>
 
           {/* Navigation Controls */}
-          <div className="flex items-center justify-between border-t border-slate-100 pt-6 mt-8">
+          <div className="mt-6 flex flex-wrap items-center justify-between gap-2 border-t border-line pt-5">
             <div>
               {step > 1 && (
-                <Button
-                  variant="outline"
-                  onClick={() => setStep((prev) => prev - 1)}
-                  className="flex items-center gap-1"
-                >
-                  <ArrowLeft className="h-4 w-4" /> Back
+                <Button variant="secondary" onClick={() => setStep((prev) => prev - 1)}>
+                  <ArrowLeft /> Back
                 </Button>
               )}
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="ml-auto flex items-center gap-2">
               {!isLocked && (
-                <Button
-                  variant="ghost"
-                  onClick={handleSaveDraft}
-                  disabled={isSaving}
-                  className="text-slate-500 hover:text-slate-800"
-                >
-                  {isSaving ? "Saving..." : "Save Draft"}
+                <Button variant="ghost" onClick={handleSaveDraft} disabled={isSaving}>
+                  {isSaving ? "Saving…" : "Save draft"}
                 </Button>
               )}
 
               {step < 4 ? (
-                <Button
-                  onClick={() => setStep((prev) => prev + 1)}
-                  className="bg-[#1e2e70] hover:bg-[#25398a] text-white flex items-center gap-1.5"
-                >
-                  Next <ArrowRight className="h-4 w-4" />
+                <Button onClick={() => setStep((prev) => prev + 1)}>
+                  Continue <ArrowRight />
                 </Button>
               ) : (
                 !isLocked && (
-                  <Button
-                    onClick={handleSubmitProfile}
-                    disabled={isSubmitting}
-                    className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold flex items-center gap-1.5 shadow-md"
-                  >
+                  <Button onClick={handleSubmitProfile} disabled={isSubmitting}>
                     {isSubmitting ? (
                       <>
-                        <Loader2 className="h-4 w-4 animate-spin" /> Submitting...
+                        <Loader2 className="animate-spin" /> Submitting…
                       </>
                     ) : (
-                      "Submit Profile for Review"
+                      "Submit for review"
                     )}
                   </Button>
                 )
               )}
             </div>
           </div>
-        </div>
+        </SectionCard>
+      </main>
+    </div>
+  );
+}
+
+function ChoiceGroup({ legend, options, selected, disabled, onToggle }: {
+  legend: string;
+  options: string[];
+  selected: string[];
+  disabled: boolean;
+  onToggle: (option: string) => void;
+}) {
+  return (
+    <fieldset className="min-w-0">
+      <legend className="mb-2 text-[13px] font-medium text-text-secondary">{legend}</legend>
+      <div className="grid grid-cols-1 gap-2 min-[420px]:grid-cols-2 sm:grid-cols-3">
+        {options.map((o) => (
+          <label key={o} className="flex min-h-10 cursor-pointer items-center gap-2 rounded-md bg-field px-3 py-2 text-sm text-text-primary hover:bg-field-hover">
+            <Checkbox checked={selected.includes(o)} onCheckedChange={() => onToggle(o)} disabled={disabled} />
+            {o}
+          </label>
+        ))}
       </div>
+    </fieldset>
+  );
+}
+
+function ReviewItem({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
+  return (
+    <div className="min-w-0">
+      <dt className="text-xs font-medium text-text-muted">{label}</dt>
+      <dd className={`mt-0.5 break-words text-sm font-semibold text-text-primary ${mono ? "font-mono" : ""}`}>{value}</dd>
     </div>
   );
 }

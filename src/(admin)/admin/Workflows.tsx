@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import {
   Table,
@@ -8,6 +7,7 @@ import {
   TableCell,
   TableHead,
   TableHeader,
+  TableHeaderRow,
   TableRow,
 } from '@/components/ui/table';
 import {
@@ -25,13 +25,25 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
-import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
-import { CheckCircle, XCircle, Clock, Eye, Loader2, RotateCcw } from 'lucide-react';
+import { CheckCircle, XCircle, Eye, Loader2, RefreshCw, RotateCcw, Workflow as WorkflowIcon } from '@/components/icons';
+import { PageHeader } from '@/components/shared/PageHeader';
+import { SectionCard } from '@/components/shared/SectionCard';
+import { StatusBadge } from '@/components/shared/StatusBadge';
+import { SectionBody } from '@/components/shared/SectionBody';
+import { EmptyState } from '@/components/shared/EmptyState';
+import { TableSkeleton } from '@/components/shared/TableSkeleton';
+import { DocumentStatusBadge } from '@/components/documents/DocumentStatusBadge';
+import { formatDate } from '@/lib/format';
 import { toast } from 'sonner';
 import { fetchData } from '@/lib/api/crud';
 import type { Workflow, WorkflowStep, Document } from '@/types/dms';
-import dayjs from 'dayjs';
+
+/** "financial_approval" reads as "Financial approval". */
+const sentenceCase = (value: string) => {
+  const words = value.replace(/_/g, ' ').toLowerCase();
+  return words.charAt(0).toUpperCase() + words.slice(1);
+};
 
 export default function Workflows() {
   const navigate = useNavigate();
@@ -85,8 +97,8 @@ export default function Workflows() {
         'request-changes': 'WORKFLOW_STEP_REQUEST_CHANGES',
       } as const;
       await fetchData(endpointMap[decisionType], 'POST', { id: selectedStep.id }, { comments });
-      const actionLabel = decisionType === 'request-changes' ? 'Changes requested' : `Step ${decisionType}d`;
-      toast.success(`${actionLabel} successfully`);
+      const actionLabel = decisionType === 'request-changes' ? 'Changes requested' : decisionType === 'approve' ? 'Step approved' : 'Step rejected';
+      toast.success(actionLabel);
       setIsDecisionDialogOpen(false);
       setComments('');
       fetchWorkflowData();
@@ -98,218 +110,201 @@ export default function Workflows() {
     }
   };
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'approved': return <Badge className="bg-positive-tint text-positive">Approved</Badge>;
-      case 'pending': return <Badge className="bg-caution-tint text-caution">Pending</Badge>;
-      case 'rejected': return <Badge className="bg-risk-tint text-risk">Rejected</Badge>;
-      case 'cancelled': return <Badge className="bg-gray-100 text-gray-800">Cancelled</Badge>;
-      default: return <Badge>{status}</Badge>;
-    }
+  const openDecision = (step: WorkflowStep, type: 'approve' | 'reject' | 'request-changes') => {
+    setSelectedStep(step);
+    setDecisionType(type);
+    setIsDecisionDialogOpen(true);
   };
 
   return (
-    <div className="w-full space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Workflows & Approvals</h1>
-          <p className="text-gray-600 mt-1">Review pending requests and track document progression</p>
-        </div>
-        <Button onClick={fetchWorkflowData} variant="outline" disabled={loading}>
-          {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Clock className="h-4 w-4 mr-2" />}
-          Refresh
-        </Button>
-      </div>
+    <div className="flex w-full flex-col gap-5">
+      <PageHeader
+        title="Workflows and approvals"
+        description="Review pending requests and track each document's progress."
+        actions={
+          <Button onClick={fetchWorkflowData} variant="secondary" disabled={loading}>
+            {loading ? <Loader2 className="animate-spin" /> : <RefreshCw />}
+            Refresh
+          </Button>
+        }
+      />
 
       <Tabs defaultValue="pending" className="w-full">
-        <TabsList className="bg-white p-1 rounded-xl shadow-sm border border-gray-100">
-          <TabsTrigger value="pending" className="rounded-lg data-[state=active]:bg-primary-blue data-[state=active]:text-white px-6">
-            Pending My Approval ({pendingSteps.length})
+        <TabsList>
+          <TabsTrigger value="pending" className="gap-2">
+            Waiting for you
+            <span className="rounded-pill bg-surface-2 px-1.5 font-mono text-xs">{pendingSteps.length}</span>
           </TabsTrigger>
-          <TabsTrigger value="all" className="rounded-lg data-[state=active]:bg-primary-blue data-[state=active]:text-white px-6">
-            All Workflows ({workflows.length})
+          <TabsTrigger value="all" className="gap-2">
+            All workflows
+            <span className="rounded-pill bg-surface-2 px-1.5 font-mono text-xs">{workflows.length}</span>
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="pending" className="mt-6">
-          <Card className="border-none shadow-lg overflow-hidden">
-            <CardContent className="p-0">
+        <TabsContent value="pending">
+          <SectionCard padded={false}>
+            <SectionBody
+              loading={loading}
+              skeleton={<TableSkeleton rows={6} columns={5} />}
+              isEmpty={pendingSteps.length === 0}
+              empty={
+                <EmptyState
+                  icon={<CheckCircle size={24} />}
+                  title="Nothing to approve"
+                  description="Approval requests assigned to you appear here."
+                />
+              }
+            >
               <Table>
-                <TableHeader className="bg-gray-900">
-                  <TableRow>
-                    <TableHead className="text-white">Document</TableHead>
-                    <TableHead className="text-white">Workflow Type</TableHead>
-                    <TableHead className="text-white">Step</TableHead>
-                    <TableHead className="text-white">Requested</TableHead>
-                    <TableHead className="text-white text-right">Actions</TableHead>
-                  </TableRow>
+                <TableHeader>
+                  <TableHeaderRow>
+                    <TableHead>Document</TableHead>
+                    <TableHead>Workflow type</TableHead>
+                    <TableHead>Step</TableHead>
+                    <TableHead>Requested</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableHeaderRow>
                 </TableHeader>
                 <TableBody>
-                  {loading ? (
-                    <TableRow><TableCell colSpan={5} className="text-center py-20"><Loader2 className="h-10 w-10 animate-spin mx-auto text-primary" /></TableCell></TableRow>
-                  ) : pendingSteps.length === 0 ? (
-                    <TableRow><TableCell colSpan={5} className="text-center py-20 text-gray-500">
-                      <CheckCircle className="h-12 w-12 mx-auto mb-4 opacity-10 text-positive" />
-                      All caught up! No pending approvals for you.
-                    </TableCell></TableRow>
-                  ) : (
-                    pendingSteps.map((step) => (
-                      <TableRow key={step.id} className="hover:bg-gray-50 transition-colors">
-                        <TableCell className="font-semibold text-gray-900 py-4">
-                          {step.workflow?.document?.title || documents[step.workflow?.document_id ?? '']?.title || 'Unknown Document'}
-                        </TableCell>
-                        <TableCell className="uppercase text-xs font-bold text-gray-500">
-                          {step.workflow?.workflow_type?.replace(/_/g, ' ') || 'approval'}
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant="outline" className="bg-signal-tint text-signal-text border-line">
-                            Step {step.step_number}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-sm text-gray-600">
-                          {step.created_at ? dayjs(step.created_at).format('MMM DD, YYYY') : '—'}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex justify-end gap-2">
-                            <Button 
-                              size="sm" 
-                              className="bg-positive hover:opacity-90 text-white"
-                              onClick={() => {
-                                setSelectedStep(step);
-                                setDecisionType('approve');
-                                setIsDecisionDialogOpen(true);
-                              }}
-                            >
-                              <CheckCircle className="h-4 w-4 mr-1" /> Approve
-                            </Button>
-                            <Button 
-                              size="sm"
-                              variant="outline"
-                              className="border-amber-400 text-amber-700 hover:bg-amber-50"
-                              onClick={() => {
-                                setSelectedStep(step);
-                                setDecisionType('request-changes');
-                                setIsDecisionDialogOpen(true);
-                              }}
-                            >
-                              <RotateCcw className="h-4 w-4 mr-1" /> Request Changes
-                            </Button>
-                            <Button 
-                              size="sm" 
-                              variant="destructive"
-                              onClick={() => {
-                                setSelectedStep(step);
-                                setDecisionType('reject');
-                                setIsDecisionDialogOpen(true);
-                              }}
-                            >
-                              <XCircle className="h-4 w-4 mr-1" /> Reject
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )}
+                  {pendingSteps.map((step) => (
+                    <TableRow key={step.id}>
+                      <TableCell className="text-[13px] font-semibold text-text-primary">
+                        {step.workflow?.document?.title || documents[step.workflow?.document_id ?? '']?.title || 'Unknown document'}
+                      </TableCell>
+                      <TableCell className="text-[13px] text-text-secondary">
+                        {sentenceCase(step.workflow?.workflow_type || 'approval')}
+                      </TableCell>
+                      <TableCell>
+                        <StatusBadge tone="neutral">Step <span className="font-mono">{step.step_number}</span></StatusBadge>
+                      </TableCell>
+                      <TableCell className="whitespace-nowrap font-mono text-xs text-text-secondary">
+                        {formatDate(step.created_at) || 'Not recorded'}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-2">
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            onClick={() => openDecision(step, 'approve')}
+                          >
+                            <CheckCircle /> Approve
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => openDecision(step, 'request-changes')}
+                          >
+                            <RotateCcw /> Request changes
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            onClick={() => openDecision(step, 'reject')}
+                          >
+                            <XCircle /> Reject
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
                 </TableBody>
               </Table>
-            </CardContent>
-          </Card>
+            </SectionBody>
+          </SectionCard>
         </TabsContent>
 
-        <TabsContent value="all" className="mt-6">
-          <Card className="border-none shadow-lg overflow-hidden">
-            <CardContent className="p-0">
-               <Table>
-                <TableHeader className="bg-gray-900">
-                  <TableRow>
-                    <TableHead className="text-white">Workflow ID</TableHead>
-                    <TableHead className="text-white">Document</TableHead>
-                    <TableHead className="text-white">Progress</TableHead>
-                    <TableHead className="text-white">Status</TableHead>
-                    <TableHead className="text-white text-right">Actions</TableHead>
-                  </TableRow>
+        <TabsContent value="all">
+          <SectionCard padded={false}>
+            <SectionBody
+              loading={loading}
+              skeleton={<TableSkeleton rows={6} columns={5} />}
+              isEmpty={workflows.length === 0}
+              empty={
+                <EmptyState
+                  icon={<WorkflowIcon size={24} />}
+                  title="No workflows yet"
+                  description="Approval workflows and their progress appear here."
+                />
+              }
+            >
+              <Table>
+                <TableHeader>
+                  <TableHeaderRow>
+                    <TableHead>Workflow ID</TableHead>
+                    <TableHead>Document</TableHead>
+                    <TableHead>Progress</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableHeaderRow>
                 </TableHeader>
                 <TableBody>
-                  {loading ? (
-                    <TableRow><TableCell colSpan={5} className="text-center py-20"><Loader2 className="h-10 w-10 animate-spin mx-auto text-primary" /></TableCell></TableRow>
-                  ) : workflows.length === 0 ? (
-                    <TableRow><TableCell colSpan={5} className="text-center py-20 text-gray-500">No active workflows found.</TableCell></TableRow>
-                  ) : (
-                    workflows.map((wf) => (
-                      <TableRow key={wf.id} className="hover:bg-gray-50 transition-colors">
-                        <TableCell className="font-mono text-xs text-gray-500">
-                          {wf.id.split('-')[0]}...
-                        </TableCell>
-                        <TableCell className="font-semibold text-gray-900">
-                          {wf.document?.title || documents[wf.document_id]?.title || 'Unknown Document'}
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                             <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
-                               <div
-                                 className="h-full bg-primary-blue transition-all"
-                                 style={{ width: `${(wf.current_step_index / wf.total_steps) * 100}%` }}
-                               />
-                             </div>
-                             <span className="text-xs font-bold text-gray-600">{wf.current_step_index}/{wf.total_steps}</span>
+                  {workflows.map((wf) => (
+                    <TableRow key={wf.id}>
+                      <TableCell className="font-mono text-xs text-text-secondary" title={wf.id}>
+                        {wf.id.split('-')[0]}…
+                      </TableCell>
+                      <TableCell className="text-[13px] font-semibold text-text-primary">
+                        {wf.document?.title || documents[wf.document_id]?.title || 'Unknown document'}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex min-w-[8rem] items-center gap-2">
+                          <div className="h-1.5 flex-1 overflow-hidden rounded-pill bg-surface-2">
+                            <div
+                              className="h-full rounded-pill bg-signal transition-all"
+                              style={{ width: `${(wf.current_step_index / wf.total_steps) * 100}%` }}
+                            />
                           </div>
-                        </TableCell>
-                        <TableCell>{getStatusBadge(wf.status)}</TableCell>
-                        <TableCell className="text-right">
-                          <Button variant="ghost" size="sm" onClick={() => navigate(`/admin/documents/${wf.document_id}`)}>
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )}
+                          <span className="font-mono text-xs text-text-secondary">{wf.current_step_index}/{wf.total_steps}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell><DocumentStatusBadge status={wf.status} /></TableCell>
+                      <TableCell className="text-right">
+                        <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="View document" title="View document" onClick={() => navigate(`/admin/documents/${wf.document_id}`)}>
+                          <Eye />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
                 </TableBody>
               </Table>
-            </CardContent>
-          </Card>
+            </SectionBody>
+          </SectionCard>
         </TabsContent>
       </Tabs>
 
-      {/* Decision Dialog */}
+      {/* Decision dialog */}
       <Dialog open={isDecisionDialogOpen} onOpenChange={setIsDecisionDialogOpen}>
-        <DialogContent className="max-w-md bg-white">
+        <DialogContent className="max-w-[480px]">
           <DialogHeader>
-            <DialogTitle className={`flex items-center gap-2 ${decisionType === 'approve' ? 'text-positive' : decisionType === 'request-changes' ? 'text-caution' : 'text-risk'}`}>
-              {decisionType === 'approve' ? <CheckCircle className="h-5 w-5" /> : decisionType === 'request-changes' ? <RotateCcw className="h-5 w-5" /> : <XCircle className="h-5 w-5" />}
-              {decisionType === 'approve' ? 'Approve' : decisionType === 'request-changes' ? 'Request Changes' : 'Reject'} Workflow Step
+            <DialogTitle>
+              {decisionType === 'approve' ? 'Approve this step' : decisionType === 'request-changes' ? 'Request changes' : 'Reject this step'}
             </DialogTitle>
             <DialogDescription>
               {decisionType === 'request-changes'
-                ? 'Describe what changes are needed. The document will be returned to the initiator for revision.'
-                : 'Provide comments for this decision. This will be visible in the workflow history.'}
+                ? 'Describe what needs to change. The document goes back to the person who started the workflow.'
+                : 'Add a comment for this decision. It is shown in the workflow history.'}
             </DialogDescription>
           </DialogHeader>
-          
-          <div className="py-4">
-            <Label>Comments{decisionType === 'request-changes' ? ' (required)' : ''}</Label>
-            <Textarea 
+
+          <div className="space-y-1.5">
+            <Label htmlFor="decision-comments">Comments{decisionType === 'request-changes' ? ' (required)' : ''}</Label>
+            <Textarea
+              id="decision-comments"
               value={comments}
               onChange={(e) => setComments(e.target.value)}
-              placeholder={decisionType === 'request-changes' ? 'Describe the changes needed...' : 'Reason for approval/rejection...'}
-              className="mt-2"
+              placeholder={decisionType === 'request-changes' ? 'Update the notice period in clause 4' : 'Checked against the signed copy'}
             />
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDecisionDialogOpen(false)}>Cancel</Button>
-            <Button 
-              onClick={handleDecision} 
+            <Button variant="secondary" onClick={() => setIsDecisionDialogOpen(false)}>Cancel</Button>
+            <Button
+              onClick={handleDecision}
               disabled={actionLoading || (decisionType === 'request-changes' && !comments.trim())}
-              className={
-                decisionType === 'approve'
-                  ? 'bg-positive hover:opacity-90 text-white'
-                  : decisionType === 'request-changes'
-                  ? 'bg-caution hover:opacity-90 text-white'
-                  : 'bg-risk hover:opacity-90 text-white'
-              }
+              variant={decisionType === 'reject' ? 'destructive' : 'default'}
             >
-              {actionLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {decisionType === 'approve' ? 'Confirm Approval' : decisionType === 'request-changes' ? 'Send Request' : 'Confirm Rejection'}
+              {actionLoading && <Loader2 className="animate-spin" />}
+              {decisionType === 'approve' ? 'Approve step' : decisionType === 'request-changes' ? 'Send request' : 'Reject step'}
             </Button>
           </DialogFooter>
         </DialogContent>

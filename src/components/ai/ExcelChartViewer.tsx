@@ -7,20 +7,21 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip, Legend,
   ResponsiveContainer,
 } from 'recharts';
-import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
-import { Loader2, BarChart2, LineChart as LineIcon, AreaChart as AreaIcon, PieChart as PieIcon, TableIcon, X, AlertTriangle, RefreshCw } from 'lucide-react';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from '@/components/ui/table';
+import { SectionCard } from '@/components/shared/SectionCard';
+import { Loader2, BarChart2, LineChart as LineIcon, AreaChart as AreaIcon, PieChart as PieIcon, TableIcon, X, AlertTriangle, RefreshCw, Check } from '@/components/icons';
+import {
+  axisProps, gridProps, tooltipProps, legendProps, barCursor, lineCursor, seriesColor,
+  BAR_RADIUS, MAX_BAR_SIZE,
+} from '@/components/dashboard/chartTheme';
 import { list } from '@/lib/api/crud';
+import { cn } from '@/lib/utils';
 import type { Document, SpreadsheetData, SheetData, ColumnMeta } from '@/types/dms';
 
 // ─── Constants ───────────────────────────────────────────────────────────────
-
-const CHART_COLORS = [
-  'var(--chart-1)', 'var(--chart-2)', 'var(--chart-3)', 'var(--chart-4)',
-  'var(--chart-1)', 'var(--chart-2)', 'var(--chart-3)', 'var(--chart-4)',
-];
 
 type ChartType = 'bar' | 'line' | 'area' | 'pie';
 
@@ -131,35 +132,35 @@ function DataPreviewTable({ sheet, maxRows = 8 }: { sheet: SheetData; maxRows?: 
   const rows = sheet.rows.slice(0, maxRows);
 
   return (
-    <div className="overflow-x-auto rounded-lg border border-gray-100">
-      <table className="w-full text-xs">
-        <thead className="bg-gray-50">
-          <tr>
-            {headers.map((h) => (
-              <th key={h} className="px-3 py-2 text-left font-semibold text-gray-600 whitespace-nowrap border-b border-gray-100">
-                {h}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((row, ri) => (
-            <tr key={ri} className="even:bg-gray-50/50">
-              {headers.map((_, ci) => (
-                <td key={ci} className="px-3 py-1.5 text-gray-700 whitespace-nowrap border-b border-gray-50">
-                  {row[ci] ?? <span className="text-gray-300">—</span>}
-                </td>
+    <SectionCard padded={false}>
+      <div className="overflow-x-auto">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              {headers.map((h) => (
+                <TableHead key={h} className="whitespace-nowrap">{h}</TableHead>
               ))}
-            </tr>
-          ))}
-        </tbody>
-      </table>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {rows.map((row, ri) => (
+              <TableRow key={ri}>
+                {headers.map((_, ci) => (
+                  <TableCell key={ci} className="whitespace-nowrap font-mono text-xs text-text-secondary">
+                    {row[ci] ?? <span className="text-text-muted">Empty</span>}
+                  </TableCell>
+                ))}
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
       {sheet.rows.length > maxRows && (
-        <p className="px-3 py-2 text-xs text-gray-400 bg-gray-50 border-t border-gray-100">
+        <p className="border-t border-line px-4 py-3 text-xs text-text-muted">
           Showing {maxRows} of {sheet.rows.length} rows
         </p>
       )}
-    </div>
+    </SectionCard>
   );
 }
 
@@ -209,7 +210,7 @@ export function ExcelChartViewer({ document, onClose }: ExcelChartViewerProps) {
         setYKeys(ay);
       }
     } catch (err: any) {
-      const message = err?.message || 'Failed to load spreadsheet data';
+      const message = err?.message || "Couldn't load the spreadsheet data";
       console.error('ExcelChartViewer: Error loading data', { error: message, fullError: err });
       setError(message);
     } finally {
@@ -285,14 +286,14 @@ export function ExcelChartViewer({ document, onClose }: ExcelChartViewerProps) {
       let message = 'Select X and Y axes to render the chart';
       if (!currentSheet) message = 'No sheet selected or data not loaded';
       if (chartData.length === 0 && currentSheet) message = 'Sheet has no data rows';
-      if (xKey === '' && currentSheet) message = 'Please select an X axis column';
-      if (yKeys.length === 0 && currentSheet && xKey) message = 'Please select at least one Y axis column';
-      
+      if (xKey === '' && currentSheet) message = 'Select an X axis column';
+      if (yKeys.length === 0 && currentSheet && xKey) message = 'Select at least one Y axis column';
+
       console.log('ExcelChartViewer: Showing fallback message', { message });
-      
+
       return (
-        <div className="flex flex-col items-center justify-center h-64 text-gray-400 gap-2">
-          <BarChart2 className="h-12 w-12 opacity-20" />
+        <div className="flex flex-col items-center justify-center h-64 text-text-muted gap-2">
+          <BarChart2 size={32} />
           <p className="text-sm">{message}</p>
         </div>
       );
@@ -315,22 +316,22 @@ export function ExcelChartViewer({ document, onClose }: ExcelChartViewerProps) {
           <PieChart>
             <Pie data={pieData} cx="50%" cy="50%" outerRadius={120} dataKey="value" nameKey="name" label={({ name, percent }) => `${name} (${((percent ?? 0) * 100).toFixed(1)}%)`}>
               {pieData.map((_, i) => (
-                <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />
+                <Cell key={i} fill={seriesColor(i)} stroke="var(--surface-1)" />
               ))}
             </Pie>
-            <Tooltip formatter={(v: number) => v.toLocaleString()} />
-            <Legend />
+            <Tooltip {...tooltipProps} formatter={(v: number) => v.toLocaleString()} />
+            <Legend {...legendProps} />
           </PieChart>
         </ResponsiveContainer>
       );
     }
 
     const sharedAxisProps = {
-      xAxis: <XAxis dataKey={xKey} tick={{ fontSize: 11 }} interval="preserveStartEnd" />,
-      yAxis: <YAxis tick={{ fontSize: 11 }} tickFormatter={(v: number) => v.toLocaleString()} />,
-      cartesian: <CartesianGrid strokeDasharray="3 3" stroke="var(--line)" />,
-      tooltip: <Tooltip formatter={(v: number) => v.toLocaleString()} />,
-      legend: <Legend />,
+      xAxis: <XAxis {...axisProps} dataKey={xKey} interval="preserveStartEnd" />,
+      yAxis: <YAxis {...axisProps} tickFormatter={(v: number) => v.toLocaleString()} />,
+      cartesian: <CartesianGrid {...gridProps} />,
+      tooltip: <Tooltip {...tooltipProps} cursor={chartType === 'bar' ? barCursor : lineCursor} formatter={(v: number) => v.toLocaleString()} />,
+      legend: <Legend {...legendProps} />,
     };
 
     if (chartType === 'bar') {
@@ -348,7 +349,7 @@ export function ExcelChartViewer({ document, onClose }: ExcelChartViewerProps) {
             {sharedAxisProps.tooltip}
             {sharedAxisProps.legend}
             {yKeys.map((k, i) => (
-              <Bar key={k} dataKey={k} fill={CHART_COLORS[i % CHART_COLORS.length]} radius={[3, 3, 0, 0]} />
+              <Bar key={k} dataKey={k} fill={seriesColor(i)} radius={BAR_RADIUS} maxBarSize={MAX_BAR_SIZE} />
             ))}
           </BarChart>
         </ResponsiveContainer>
@@ -365,7 +366,7 @@ export function ExcelChartViewer({ document, onClose }: ExcelChartViewerProps) {
             {sharedAxisProps.tooltip}
             {sharedAxisProps.legend}
             {yKeys.map((k, i) => (
-              <Line key={k} type="monotone" dataKey={k} stroke={CHART_COLORS[i % CHART_COLORS.length]} strokeWidth={2} dot={chartData.length <= 30} />
+              <Line key={k} type="monotone" dataKey={k} stroke={seriesColor(i)} strokeWidth={2} dot={false} />
             ))}
           </LineChart>
         </ResponsiveContainer>
@@ -376,21 +377,13 @@ export function ExcelChartViewer({ document, onClose }: ExcelChartViewerProps) {
       return (
         <ResponsiveContainer width="100%" height={320}>
           <AreaChart {...commonProps}>
-            <defs>
-              {yKeys.map((k, i) => (
-                <linearGradient key={k} id={`grad-${i}`} x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor={CHART_COLORS[i % CHART_COLORS.length]} stopOpacity={0.3} />
-                  <stop offset="95%" stopColor={CHART_COLORS[i % CHART_COLORS.length]} stopOpacity={0} />
-                </linearGradient>
-              ))}
-            </defs>
             {sharedAxisProps.cartesian}
             {sharedAxisProps.xAxis}
             {sharedAxisProps.yAxis}
             {sharedAxisProps.tooltip}
             {sharedAxisProps.legend}
             {yKeys.map((k, i) => (
-              <Area key={k} type="monotone" dataKey={k} stroke={CHART_COLORS[i % CHART_COLORS.length]} fill={`url(#grad-${i})`} strokeWidth={2} />
+              <Area key={k} type="monotone" dataKey={k} stroke={seriesColor(i)} fill={seriesColor(i)} fillOpacity={0.12} strokeWidth={2} />
             ))}
           </AreaChart>
         </ResponsiveContainer>
@@ -404,22 +397,26 @@ export function ExcelChartViewer({ document, onClose }: ExcelChartViewerProps) {
 
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center h-72 gap-3 text-gray-500">
-        <Loader2 className="h-8 w-8 animate-spin text-signal-text" />
-        <p className="text-sm">Extracting spreadsheet data…</p>
-      </div>
+      <SectionCard>
+        <div role="status" className="flex flex-col items-center justify-center h-72 gap-3 text-text-secondary">
+          <Loader2 size={32} className="animate-spin text-signal-text" />
+          <p className="text-sm">Reading the spreadsheet…</p>
+        </div>
+      </SectionCard>
     );
   }
 
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center h-72 gap-4 text-gray-500">
-        <AlertTriangle className="h-10 w-10 text-red-400" />
-        <p className="text-sm text-center max-w-xs text-red-600">{error}</p>
-        <Button variant="outline" size="sm" onClick={fetchChartData}>
-          <RefreshCw className="h-3 w-3 mr-1" /> Retry
-        </Button>
-      </div>
+      <SectionCard>
+        <div role="alert" className="flex flex-col items-center justify-center h-72 gap-4">
+          <AlertTriangle size={24} className="text-risk" />
+          <p className="text-sm text-center max-w-xs text-text-secondary">{error}</p>
+          <Button variant="secondary" size="sm" onClick={fetchChartData}>
+            <RefreshCw size={14} /> Try again
+          </Button>
+        </div>
+      </SectionCard>
     );
   }
 
@@ -427,30 +424,28 @@ export function ExcelChartViewer({ document, onClose }: ExcelChartViewerProps) {
 
   return (
     <div className="flex flex-col gap-5 w-full">
-      {/* Header */}
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <h3 className="font-semibold text-gray-900 leading-tight">{document.title}</h3>
-          <p className="text-xs text-gray-400 mt-0.5 font-mono uppercase">
-            {document.file_name} · {data?.sheets.length ?? 0} sheet{(data?.sheets.length ?? 0) !== 1 ? 's' : ''} · {currentSheet?.rows.length ?? 0} rows
-          </p>
-        </div>
-        <Button variant="ghost" size="icon" onClick={onClose} className="text-gray-400 hover:text-gray-700 flex-shrink-0">
-          <X className="h-4 w-4" />
-        </Button>
-      </div>
-
       {/* Controls */}
-      <Card className="border border-gray-100 shadow-none bg-gray-50/60">
-        <CardContent className="p-4 space-y-4">
+      <SectionCard
+        title={document.title}
+        actions={
+          <Button variant="ghost" size="icon" onClick={onClose} aria-label="Close spreadsheet" className="flex-shrink-0">
+            <X size={18} />
+          </Button>
+        }
+      >
+        <div className="space-y-4">
+          <p className="font-mono text-xs text-text-muted">
+            {document.file_name}, {data?.sheets.length ?? 0} sheet{(data?.sheets.length ?? 0) !== 1 ? 's' : ''}, {currentSheet?.rows.length ?? 0} rows
+          </p>
+
           {/* Row 1: sheet + chart type */}
           <div className="flex flex-wrap gap-3 items-center">
             {/* Sheet selector — only shown for multi-sheet files */}
             {(data?.sheets.length ?? 0) > 1 && (
               <div className="flex items-center gap-2 flex-shrink-0">
-                <span className="text-xs font-medium text-gray-500 whitespace-nowrap">Sheet</span>
+                <span className="text-xs font-medium text-text-secondary whitespace-nowrap">Sheet</span>
                 <Select value={selectedSheet} onValueChange={handleSheetChange}>
-                  <SelectTrigger className="h-8 w-44 text-xs bg-white">
+                  <SelectTrigger className="h-8 w-44 text-xs" aria-label="Sheet">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -463,30 +458,26 @@ export function ExcelChartViewer({ document, onClose }: ExcelChartViewerProps) {
             )}
 
             {/* Chart type toggle */}
-            <div className="flex items-center gap-1 ml-auto">
-              {CHART_TYPES.map(({ type, label, Icon }) => (
-                <Button
-                  key={type}
-                  variant={chartType === type ? 'default' : 'outline'}
-                  size="sm"
-                  className={`h-8 px-2.5 gap-1.5 text-xs ${chartType === type ? 'bg-signal text-on-signal hover:bg-signal-hover' : ''}`}
-                  onClick={() => setChartType(type)}
-                >
-                  <Icon className="h-3.5 w-3.5" />
-                  {label}
-                </Button>
-              ))}
-            </div>
+            <Tabs value={chartType} onValueChange={(v) => setChartType(v as ChartType)} className="ml-auto">
+              <TabsList aria-label="Chart type">
+                {CHART_TYPES.map(({ type, label, Icon }) => (
+                  <TabsTrigger key={type} value={type} className="gap-1.5">
+                    <Icon size={14} />
+                    {label}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+            </Tabs>
           </div>
 
           {/* Row 2: axis selectors */}
           <div className="flex flex-wrap gap-3 items-start">
             {/* X axis */}
             <div className="space-y-1 flex-shrink-0">
-              <p className="text-xs font-medium text-gray-500">X Axis {chartType === 'pie' ? '(Label)' : ''}</p>
+              <p className="text-xs font-medium text-text-secondary">X axis {chartType === 'pie' ? '(label)' : ''}</p>
               <Select value={xKey} onValueChange={setXKey}>
-                <SelectTrigger className="h-8 w-44 text-xs bg-white">
-                  <SelectValue placeholder="Select column…" />
+                <SelectTrigger className="h-8 w-44 text-xs" aria-label="X axis column">
+                  <SelectValue placeholder="Select column" />
                 </SelectTrigger>
                 <SelectContent>
                   {allColNames.filter((col) => !!col).map((col) => (
@@ -498,13 +489,13 @@ export function ExcelChartViewer({ document, onClose }: ExcelChartViewerProps) {
 
             {/* Y axis — multi-select via toggle badges (hidden for pie multi-series) */}
             <div className="space-y-1 flex-1 min-w-0">
-              <p className="text-xs font-medium text-gray-500">
-                {chartType === 'pie' ? 'Value' : 'Y Axis'} {chartType !== 'pie' && '(click to toggle)'}
+              <p className="text-xs font-medium text-text-secondary">
+                {chartType === 'pie' ? 'Value' : 'Y axis'} {chartType !== 'pie' && '(select one or more)'}
               </p>
               {chartType === 'pie' ? (
                 <Select value={yKeys[0] ?? ''} onValueChange={(v) => setYKeys([v])}>
-                  <SelectTrigger className="h-8 w-44 text-xs bg-white">
-                    <SelectValue placeholder="Select column…" />
+                  <SelectTrigger className="h-8 w-44 text-xs" aria-label="Value column">
+                    <SelectValue placeholder="Select column" />
                   </SelectTrigger>
                   <SelectContent>
                     {numericColumns.length > 0
@@ -515,43 +506,48 @@ export function ExcelChartViewer({ document, onClose }: ExcelChartViewerProps) {
                 </Select>
               ) : (
                 <div className="flex flex-wrap gap-1.5">
-                  {(numericColumns.length > 0 ? numericColumns : allColNames.filter((c) => c !== xKey)).map((col, i) => (
-                    <button
-                      key={col}
-                      onClick={() => toggleYKey(col)}
-                      className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${
-                        yKeys.includes(col)
-                          ? 'text-white'
-                          : 'bg-white border border-gray-200 text-gray-600 hover:border-gray-400'
-                      }`}
-                      style={yKeys.includes(col) ? { backgroundColor: CHART_COLORS[i % CHART_COLORS.length] } : undefined}
-                    >
-                      {col}
-                    </button>
-                  ))}
+                  {(numericColumns.length > 0 ? numericColumns : allColNames.filter((c) => c !== xKey)).map((col) => {
+                    const seriesIndex = yKeys.indexOf(col);
+                    const active = seriesIndex !== -1;
+                    return (
+                      <button
+                        type="button"
+                        key={col}
+                        onClick={() => toggleYKey(col)}
+                        aria-pressed={active}
+                        className={cn(
+                          'inline-flex items-center gap-1.5 rounded-pill px-2.5 py-1 text-xs font-medium transition-colors',
+                          active ? 'bg-surface-2 font-semibold text-text-primary' : 'bg-field text-text-secondary hover:bg-field-hover',
+                        )}
+                      >
+                        {active && (
+                          <>
+                            <span className="h-2 w-2 rounded-pill" style={{ backgroundColor: seriesColor(seriesIndex) }} aria-hidden="true" />
+                            <Check size={12} />
+                          </>
+                        )}
+                        {col}
+                      </button>
+                    );
+                  })}
                 </div>
               )}
             </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </SectionCard>
 
       {/* Chart */}
-      <Card className="border border-gray-100 shadow-none w-full overflow-visible">
-        <CardContent className="p-4 pt-5 w-full min-h-96 overflow-visible">
-          {renderChart()}
-        </CardContent>
-      </Card>
+      <SectionCard className="w-full" bodyClassName="min-h-96">
+        {renderChart()}
+      </SectionCard>
 
       {/* Data preview toggle */}
       <div>
-        <button
-          onClick={() => setShowTable((p) => !p)}
-          className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-gray-700 transition-colors"
-        >
-          <TableIcon className="h-3.5 w-3.5" />
+        <Button variant="ghost" size="sm" onClick={() => setShowTable((p) => !p)} aria-expanded={showTable}>
+          <TableIcon size={14} />
           {showTable ? 'Hide' : 'Show'} raw data preview
-        </button>
+        </Button>
         {showTable && currentSheet && (
           <div className="mt-2">
             <DataPreviewTable sheet={currentSheet} maxRows={10} />
@@ -563,14 +559,13 @@ export function ExcelChartViewer({ document, onClose }: ExcelChartViewerProps) {
       {currentSheet && (
         <div className="flex flex-wrap gap-2">
           {currentSheet.columns.map((col) => (
-            <Badge
+            <span
               key={col.name}
-              variant="outline"
-              className={`text-xs px-2 py-0.5 ${col.kind === 'numeric' ? 'border-blue-200 text-blue-700 bg-blue-50' : 'border-gray-200 text-gray-600'}`}
+              className="inline-flex items-center gap-1 rounded-pill bg-surface-2 px-2.5 py-0.5 text-xs text-text-secondary"
             >
               {col.name}
-              <span className="ml-1 opacity-50">{col.kind === 'numeric' ? '#' : 'Aa'}</span>
-            </Badge>
+              <span className="font-mono text-text-muted">{col.kind === 'numeric' ? '#' : 'Aa'}</span>
+            </span>
           ))}
         </div>
       )}

@@ -1,8 +1,22 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Plus, Search, ExternalLink, RefreshCw } from "lucide-react";
+import { Plus, Search, ExternalLink, RefreshCw, Building2 } from "@/components/icons";
 import { Input } from "@/components/ui/input";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { PageHeader } from "@/components/shared/PageHeader";
+import { SectionCard } from "@/components/shared/SectionCard";
+import { StatusBadge } from "@/components/shared/StatusBadge";
+import { EmptyState } from "@/components/shared/EmptyState";
+import { TableSkeleton } from "@/components/shared/TableSkeleton";
+import { formatDate } from "@/lib/format";
 import type { Tenant } from "@/types/tenant";
 import CreateTenantModal from "@/(controlhub)/CreateTenantModal";
 import { chGet } from "@/lib/api/controlhub";
@@ -14,12 +28,6 @@ export default function TenantsList() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-
-  const statusConfig: Record<string, { bg: string; text: string; icon: string; label: string }> = {
-    active: { bg: "bg-positive-tint", text: "text-positive", icon: "✓", label: "Active" },
-    pending: { bg: "bg-caution-tint", text: "text-caution", icon: "○", label: "Pending" },
-    inactive: { bg: "bg-gray-100", text: "text-gray-700", icon: "–", label: "Inactive" },
-  };
 
   const fetchTenants = useCallback(async () => {
     setIsLoading(true);
@@ -38,136 +46,130 @@ export default function TenantsList() {
     fetchTenants();
   }, [fetchTenants]);
 
-  const filteredTenants = tenants.filter(t => 
-    t.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+  const filteredTenants = tenants.filter(t =>
+    t.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     t.type.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  return (
-    <div className="space-y-10">
-      {/* Page Header */}
-      <div>
-        <h1 className="text-4xl font-bold tracking-tight text-gray-900">Tenants</h1>
-        <p className="text-gray-600 text-lg mt-2">Manage and configure your tenant ecosystem</p>
-      </div>
+  // Anything other than active or pending reads as inactive
+  const statusKey = (status: string) =>
+    status === "active" || status === "pending" ? status : "inactive";
 
-      {/* Controls */}
-      <div className="flex items-center gap-3">
-        <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-          <Input 
-            placeholder="Search tenants..." 
-            className="pl-9 border-gray-200 rounded-lg"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </div>
-        <Button 
-          variant="outline" 
-          size="icon" 
-          onClick={fetchTenants} 
-          disabled={isLoading}
-        >
-          <RefreshCw className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
-        </Button>
-        <Button 
-          onClick={() => setIsModalOpen(true)}
-          className="bg-ch-primary text-white hover:bg-ch-primary/90"
-        >
-          <Plus className="mr-2 h-4 w-4" /> New Tenant
-        </Button>
-      </div>
+  return (
+    <div className="flex flex-col gap-5">
+      <PageHeader
+        title="Tenants"
+        description="Manage and configure client organisations."
+        actions={
+          <>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={fetchTenants}
+              disabled={isLoading}
+              aria-label="Refresh tenants"
+              title="Refresh tenants"
+            >
+              <RefreshCw className={isLoading ? "animate-spin" : undefined} />
+            </Button>
+            <Button onClick={() => setIsModalOpen(true)}>
+              <Plus /> Create tenant
+            </Button>
+          </>
+        }
+      />
 
       {/* Tenants Table */}
-      <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
-        {/* Table Header */}
-        <div className="px-6 py-4 border-b border-gray-200 bg-gray-50/40">
-          <div className="flex items-center justify-between">
-            <h3 className="font-semibold text-gray-900">All Tenants</h3>
-            <span className="text-sm text-gray-500">{filteredTenants.length} organization{filteredTenants.length !== 1 ? 's' : ''}</span>
+      <SectionCard
+        title="All tenants"
+        padded={false}
+        actions={
+          <span className="text-xs text-text-muted">
+            <span className="font-mono">{filteredTenants.length}</span> {filteredTenants.length === 1 ? "organisation" : "organisations"}
+          </span>
+        }
+      >
+        <div className="px-4 pb-4 border-b border-line">
+          <div className="relative max-w-sm">
+            <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
+            <Input
+              aria-label="Search tenants"
+              placeholder="Search by name or type"
+              className="pl-9"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
           </div>
         </div>
 
         {/* Table Content */}
         {isLoading ? (
-          <div className="h-32 flex items-center justify-center text-gray-500">
-            <RefreshCw className="h-5 w-5 animate-spin mr-2" />
-            Loading tenants…
-          </div>
+          <TableSkeleton rows={5} columns={5} />
         ) : filteredTenants.length > 0 ? (
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="border-b border-gray-200">
-                <tr>
-                  <th className="text-left py-3 px-6 font-semibold text-xs text-gray-600 uppercase tracking-tight">Tenant</th>
-                  <th className="text-left py-3 px-6 font-semibold text-xs text-gray-600 uppercase tracking-tight">Type</th>
-                  <th className="text-left py-3 px-6 font-semibold text-xs text-gray-600 uppercase tracking-tight">Status</th>
-                  <th className="text-left py-3 px-6 font-semibold text-xs text-gray-600 uppercase tracking-tight">Created</th>
-                  <th className="text-right py-3 px-6 font-semibold text-xs text-gray-600 uppercase tracking-tight">Action</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {filteredTenants.map((tenant) => {
-                  const status = statusConfig[tenant.status] || statusConfig.inactive;
-                  return (
-                    <tr
-                      key={tenant.id}
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead scope="col">Tenant</TableHead>
+                <TableHead scope="col">Type</TableHead>
+                <TableHead scope="col">Status</TableHead>
+                <TableHead scope="col">Created</TableHead>
+                <TableHead scope="col" className="text-right">Action</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredTenants.map((tenant) => (
+                <TableRow
+                  key={tenant.id}
+                  onClick={() => navigate(`/controlhub/tenants/${tenant.id}`)}
+                  className="cursor-pointer group"
+                >
+                  {/* Tenant name + ID */}
+                  <TableCell>
+                    <div className="font-semibold text-text-primary">{tenant.name}</div>
+                    <div className="text-xs text-text-muted mt-1 font-mono">{tenant.id}</div>
+                  </TableCell>
+
+                  {/* Type */}
+                  <TableCell className="text-text-secondary capitalize">
+                    {tenant.type.replace("-", " ")}
+                  </TableCell>
+
+                  {/* Status */}
+                  <TableCell>
+                    <StatusBadge status={statusKey(tenant.status)} />
+                  </TableCell>
+
+                  {/* Created */}
+                  <TableCell className="whitespace-nowrap font-mono text-xs text-text-secondary">
+                    {formatDate(tenant.created_at)}
+                  </TableCell>
+
+                  {/* Action */}
+                  <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
+                    <Button
+                      variant="ghost"
+                      size="sm"
                       onClick={() => navigate(`/controlhub/tenants/${tenant.id}`)}
-                      className="hover:bg-gray-50/60 transition-colors duration-150 cursor-pointer group"
                     >
-                      {/* Tenant Name + DB */}
-                      <td className="py-4 px-6">
-                        <div className="font-medium text-gray-900 text-sm">{tenant.name}</div>
-                        <div className="text-xs text-gray-400 mt-1 font-mono">{tenant.id}</div>
-                      </td>
-
-                      {/* Type */}
-                      <td className="py-4 px-6">
-                        <span className="text-sm text-gray-600 capitalize">{tenant.type.replace("-", " ")}</span>
-                      </td>
-
-                      {/* Status */}
-                      <td className="py-4 px-6">
-                        <div className="inline-flex items-center gap-2">
-                          <div className={`h-2 w-2 rounded-full ${
-                            status.label === 'Active' ? 'bg-positive' :
-                            status.label === 'Pending' ? 'bg-caution' :
-                            'bg-gray-400'
-                          }`} />
-                          <span className="text-sm font-medium text-gray-700">{status.label}</span>
-                        </div>
-                      </td>
-
-                      {/* Created */}
-                      <td className="py-4 px-6">
-                        <span className="text-sm text-gray-600">{new Date(tenant.created_at).toLocaleDateString()}</span>
-                      </td>
-
-                      {/* Action */}
-                      <td className="py-4 px-6 text-right" onClick={(e) => e.stopPropagation()}>
-                        <button
-                          onClick={() => navigate(`/controlhub/tenants/${tenant.id}`)}
-                          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium text-ch-primary opacity-0 group-hover:opacity-100 bg-ch-primary/5 group-hover:bg-ch-primary/10 transition-all duration-200"
-                        >
-                          View <ExternalLink className="h-3 w-3" />
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+                      View <ExternalLink />
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         ) : (
-          <div className="h-32 flex items-center justify-center text-gray-500">
-            No tenants found matching your search.
-          </div>
+          <EmptyState
+            icon={<Building2 size={24} />}
+            title="No tenants found"
+            description={searchTerm ? "No tenants match your search." : "Create a tenant to set up a client organisation."}
+          />
         )}
-      </div>
+      </SectionCard>
 
-      <CreateTenantModal 
-        isOpen={isModalOpen} 
-        onClose={() => setIsModalOpen(false)} 
+      <CreateTenantModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
         onSuccess={() => {
           setIsModalOpen(false);
           fetchTenants();

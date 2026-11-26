@@ -4,9 +4,7 @@ import { toast } from 'sonner';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -17,8 +15,14 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Loader2, PenLine, FileText, XCircle, Clock, CheckCircle, X } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { Loader2, PenLine, FileText, CheckCircle } from '@/components/icons';
+import { PageHeader } from '@/components/shared/PageHeader';
+import { SectionCard } from '@/components/shared/SectionCard';
+import { StatusBadge } from '@/components/shared/StatusBadge';
+import { EmptyState } from '@/components/shared/EmptyState';
+import { TableSkeleton } from '@/components/shared/TableSkeleton';
+import { DocumentStatusBadge } from '@/components/documents/DocumentStatusBadge';
+import { formatDateTime } from '@/lib/format';
 
 import { getMySignatureRequests, declineSignature } from '@/lib/api/signatures';
 import type { SignatureRequest } from '@/types/signatures';
@@ -26,16 +30,6 @@ import SignDocumentModal from '@/components/signature/SignDocumentModal';
 import SavedSignatureManager from '@/components/signature/SavedSignatureManager';
 
 dayjs.extend(relativeTime);
-
-const statusBadge = (status: SignatureRequest['status']) => {
-  const map = {
-    pending:  { cls: 'bg-caution-tint text-caution border-line',  label: 'Pending',  icon: <Clock className="h-3 w-3" /> },
-    signed:   { cls: 'bg-positive-tint text-positive border-line',  label: 'Signed',   icon: <CheckCircle className="h-3 w-3" /> },
-    declined: { cls: 'bg-risk-tint text-risk border-line',        label: 'Declined', icon: <XCircle className="h-3 w-3" /> },
-    expired:  { cls: 'bg-gray-100 text-gray-500 border-gray-300',    label: 'Expired',  icon: <X className="h-3 w-3" /> },
-  };
-  return map[status] ?? map.pending;
-};
 
 export default function MySignatures() {
   const navigate = useNavigate();
@@ -74,84 +68,68 @@ export default function MySignatures() {
   const completed = requests.filter((r) => r.status !== 'pending');
 
   return (
-    <div className="w-full space-y-6">
+    <div className="flex w-full flex-col gap-5">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">My Signatures</h1>
-        <p className="text-gray-500 text-sm mt-0.5">Documents waiting for your signature</p>
-      </div>
-
-      {/* Saved Signature Manager */}
-      <Card className="border-none shadow-md">
-        <CardContent className="pt-5">
-          <SavedSignatureManager />
-        </CardContent>
-      </Card>
+      <PageHeader title="My signatures" description="Documents waiting for your signature." />
 
       {loading ? (
-        <div className="flex items-center justify-center min-h-[40vh]">
-          <Loader2 className="h-10 w-10 animate-spin text-primary" />
-        </div>
+        <SectionCard title="Awaiting your signature" padded={false}>
+          <TableSkeleton rows={4} columns={3} />
+        </SectionCard>
       ) : (
         <>
           {/* Pending */}
-          <Card className="border-none shadow-md">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base font-semibold text-gray-700 flex items-center gap-2">
-                <Clock className="h-4 w-4" />
-                Awaiting Your Signature
+          <SectionCard
+            title={
+              <span className="flex items-center gap-2">
+                Awaiting your signature
                 {pending.length > 0 && (
-                  <Badge className="bg-amber-100 text-amber-800 border-0 ml-1">{pending.length}</Badge>
+                  <span className="rounded-pill bg-surface-2 px-1.5 font-mono text-xs font-medium text-text-secondary">{pending.length}</span>
                 )}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {pending.length === 0 ? (
-                <div className="text-center py-10">
-                  <CheckCircle className="h-10 w-10 text-positive opacity-40 mx-auto mb-3" />
-                  <p className="text-gray-500 font-medium">All caught up!</p>
-                  <p className="text-sm text-gray-400 mt-1">No pending signature requests.</p>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {pending.map((req) => (
-                    <SignatureRequestCard
-                      key={req.id}
-                      request={req}
-                      onSign={() => setSignTarget(req)}
-                      onDecline={() => setDeclineTarget(req)}
-                      onViewDocument={() => navigate(`/admin/documents/${req.document_id}`)}
-                    />
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+              </span>
+            }
+          >
+            {pending.length === 0 ? (
+              <EmptyState
+                className="py-6"
+                icon={<CheckCircle size={24} />}
+                title="Nothing to sign"
+                description="Requests for your signature appear here."
+              />
+            ) : (
+              <div className="space-y-3">
+                {pending.map((req) => (
+                  <SignatureRequestCard
+                    key={req.id}
+                    request={req}
+                    onSign={() => setSignTarget(req)}
+                    onDecline={() => setDeclineTarget(req)}
+                    onViewDocument={() => navigate(`/admin/documents/${req.document_id}`)}
+                  />
+                ))}
+              </div>
+            )}
+          </SectionCard>
 
           {/* Completed */}
           {completed.length > 0 && (
-            <Card className="border-none shadow-md">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base font-semibold text-gray-700 flex items-center gap-2">
-                  <CheckCircle className="h-4 w-4" />
-                  Completed
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {completed.map((req) => (
-                    <SignatureRequestCard
-                      key={req.id}
-                      request={req}
-                      onViewDocument={() => navigate(`/admin/documents/${req.document_id}`)}
-                    />
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+            <SectionCard title="Completed">
+              <div className="space-y-3">
+                {completed.map((req) => (
+                  <SignatureRequestCard
+                    key={req.id}
+                    request={req}
+                    onViewDocument={() => navigate(`/admin/documents/${req.document_id}`)}
+                  />
+                ))}
+              </div>
+            </SectionCard>
           )}
         </>
       )}
+
+      {/* Saved signature manager */}
+      <SavedSignatureManager />
 
       {/* Sign modal */}
       {signTarget && (
@@ -165,13 +143,11 @@ export default function MySignatures() {
 
       {/* Decline confirmation */}
       <AlertDialog open={!!declineTarget} onOpenChange={(v) => { if (!v) setDeclineTarget(null); }}>
-        <AlertDialogContent className="bg-white">
+        <AlertDialogContent className="max-w-[480px]">
           <AlertDialogHeader>
-            <AlertDialogTitle>Decline Signature Request</AlertDialogTitle>
+            <AlertDialogTitle>Decline this signature request?</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to decline signing{' '}
-              <strong>"{declineTarget?.document?.title}"</strong>?
-              The requester will be notified.
+              You will not sign <strong>"{declineTarget?.document?.title}"</strong>. The requester will be notified.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -179,10 +155,10 @@ export default function MySignatures() {
             <AlertDialogAction
               onClick={handleDecline}
               disabled={isDeclinig}
-              className="bg-red-600 hover:bg-red-700 text-white"
+              className={buttonVariants({ variant: 'destructive' })}
             >
-              {isDeclinig && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Decline
+              {isDeclinig && <Loader2 className="animate-spin" />}
+              Decline request
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -201,79 +177,73 @@ interface CardProps {
 }
 
 function SignatureRequestCard({ request, onSign, onDecline, onViewDocument }: CardProps) {
-  const badge = statusBadge(request.status);
   const isPending = request.status === 'pending';
   const isExpired = request.status === 'expired';
 
   return (
-    <div className={cn(
-      'p-4 rounded-lg border',
-      isPending ? 'bg-amber-50 border-amber-200' : 'bg-gray-50 border-gray-100'
-    )}>
+    <div className="rounded-md border border-line p-4">
       <div className="flex items-start gap-3">
-        <div className="p-2 bg-white rounded-lg border border-gray-100 flex-shrink-0">
-          <FileText className="h-4 w-4 text-gray-500" />
+        <div className="grid h-9 w-9 shrink-0 place-items-center rounded-sm bg-field text-text-secondary">
+          <FileText size={18} />
         </div>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-1 flex-wrap">
-            <Badge variant="outline" className={cn('border text-xs flex items-center gap-1', badge.cls)}>
-              {badge.icon} {badge.label}
-            </Badge>
+        <div className="min-w-0 flex-1">
+          <div className="mb-1 flex flex-wrap items-center gap-2">
+            <DocumentStatusBadge status={request.status} />
             {request.expires_at && isPending && (
-              <span className="text-xs text-gray-500">
-                Expires {dayjs(request.expires_at).fromNow()}
-              </span>
+              <StatusBadge tone="caution">
+                <span title={formatDateTime(request.expires_at)}>Expires {dayjs(request.expires_at).fromNow()}</span>
+              </StatusBadge>
             )}
-            <span className="text-xs text-gray-400 ml-auto">
-              Order #{request.sign_order}
+            <span className="ml-auto text-xs text-text-muted">
+              Order <span className="font-mono">#{request.sign_order}</span>
             </span>
           </div>
-          <p className="font-medium text-gray-900 truncate">{request.document?.title ?? 'Document'}</p>
-          <p className="text-sm text-gray-500 mt-0.5">
+          <p className="truncate text-sm font-semibold text-text-primary">{request.document?.title ?? 'Document'}</p>
+          <p className="mt-0.5 text-[13px] text-text-secondary">
             Requested by {request.requested_by?.first_name} {request.requested_by?.last_name}
-            {' · '}{dayjs(request.created_at).fromNow()}
+            {' · '}
+            <span title={formatDateTime(request.created_at)}>{dayjs(request.created_at).fromNow()}</span>
           </p>
           {request.message && (
-            <p className="text-xs text-gray-500 italic mt-1 border-l-2 border-gray-300 pl-2">
-              {request.message}
+            <p className="mt-1 text-xs text-text-muted">
+              "{request.message}"
             </p>
           )}
           {request.signed_at && (
-            <p className="text-xs text-positive mt-1">
-              Signed {dayjs(request.signed_at).format('MMM DD, YYYY HH:mm')}
+            <p className="mt-1 text-xs text-positive">
+              Signed <span className="font-mono">{formatDateTime(request.signed_at)}</span>
             </p>
           )}
           {request.decline_note && (
-            <p className="text-xs text-red-500 mt-1">Declined: {request.decline_note}</p>
+            <p className="mt-1 text-xs text-risk">Declined: {request.decline_note}</p>
           )}
         </div>
       </div>
 
       {(isPending || !isExpired) && (
-        <div className="flex gap-2 mt-3">
-          <Button
-            size="sm"
-            variant="outline"
-            className="text-gray-600"
-            onClick={onViewDocument}
-          >
-            View Document
-          </Button>
+        <div className="mt-3 flex flex-wrap gap-2">
           {isPending && onSign && (
             <Button
               size="sm"
-              className="bg-primary hover:bg-signal-hover text-white"
+              variant="secondary"
               onClick={onSign}
             >
-              <PenLine className="h-3.5 w-3.5 mr-1.5" />
+              <PenLine />
               Sign
             </Button>
           )}
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={onViewDocument}
+          >
+            View document
+          </Button>
           {isPending && onDecline && (
             <Button
               size="sm"
-              variant="outline"
-              className="text-red-500 hover:text-red-600 hover:bg-red-50 border-red-100"
+              variant="ghost"
+              className="text-risk hover:text-risk"
               onClick={onDecline}
             >
               Decline

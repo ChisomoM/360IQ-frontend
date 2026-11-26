@@ -13,7 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Settings, X, Filter } from 'lucide-react'
+import { X, Filter } from '@/components/icons'
 
 interface AdvancedFilters {
   status?: string
@@ -72,36 +72,33 @@ export function AdvancedFilterBuilder({
     <Popover open={isOpen} onOpenChange={setIsOpen}>
       <PopoverTrigger asChild>
         <Button
-          className={`gap-2 h-9 px-3 text-xs ${
-            hasActiveFilters
-              ? 'bg-primary/5 border border-primary text-primary'
-              : 'border'
-          }`}
+          variant="secondary"
+          className={hasActiveFilters ? 'border-signal bg-signal-tint text-signal-text' : undefined}
         >
-          <Filter className="h-4 w-4" />
-          Filters
+          <Filter />
+          {hasActiveFilters ? 'Filters on' : 'Filters'}
         </Button>
       </PopoverTrigger>
 
       <PopoverContent className="w-72 p-0">
-        <div className="border-b border-gray-200 p-4">
-          <h3 className="font-display font-semibold text-text-sm text-gray-900">
-            Advanced Filters
+        <div className="border-b border-line p-4">
+          <h3 className="font-semibold text-sm text-text-primary">
+            Advanced filters
           </h3>
         </div>
 
         <div className="space-y-4 p-4">
           {/* Status Filter */}
           <div>
-            <label htmlFor="status-filter" className="font-sans font-medium text-text-xs text-gray-700 block mb-2">
+            <label htmlFor="status-filter" className="block mb-1.5 text-xs font-medium text-text-secondary">
               Status
             </label>
             <Select value={filters.status || 'all'} onValueChange={handleStatusChange}>
-              <SelectTrigger id="status-filter" className="h-9">
+              <SelectTrigger id="status-filter">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
+                <SelectItem value="all">All statuses</SelectItem>
                 <SelectItem value="active">Active</SelectItem>
                 <SelectItem value="inactive">Inactive</SelectItem>
                 <SelectItem value="suspended">Suspended</SelectItem>
@@ -112,7 +109,7 @@ export function AdvancedFilterBuilder({
           {/* Date Range */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label htmlFor="date-from" className="font-sans font-medium text-text-xs text-gray-700 block mb-2">
+              <label htmlFor="date-from" className="block mb-1.5 text-xs font-medium text-text-secondary">
                 From
               </label>
               <Input
@@ -120,11 +117,11 @@ export function AdvancedFilterBuilder({
                 type="date"
                 value={filters.dateRange?.from || ''}
                 onChange={(e) => handleDateChange('from', e.target.value)}
-                className="h-9 text-text-xs"
+                className="font-mono"
               />
             </div>
             <div>
-              <label htmlFor="date-to" className="font-sans font-medium text-text-xs text-gray-700 block mb-2">
+              <label htmlFor="date-to" className="block mb-1.5 text-xs font-medium text-text-secondary">
                 To
               </label>
               <Input
@@ -132,25 +129,19 @@ export function AdvancedFilterBuilder({
                 type="date"
                 value={filters.dateRange?.to || ''}
                 onChange={(e) => handleDateChange('to', e.target.value)}
-                className="h-9 text-text-xs"
+                className="font-mono"
               />
             </div>
           </div>
         </div>
 
-        <div className="flex gap-2 border-t border-gray-200 p-4">
-          <Button
-            className="flex-1 h-9 text-xs border rounded-lg"
-            onClick={handleReset}
-          >
-            <X className="h-4 w-4 mr-1" />
+        <div className="flex justify-end gap-2 border-t border-line p-4">
+          <Button size="sm" variant="ghost" onClick={handleReset}>
+            <X />
             Reset
           </Button>
-          <Button
-            className="flex-1 h-9 text-xs bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg"
-            onClick={handleApply}
-          >
-            Apply
+          <Button size="sm" onClick={handleApply}>
+            Apply filters
           </Button>
         </div>
       </PopoverContent>

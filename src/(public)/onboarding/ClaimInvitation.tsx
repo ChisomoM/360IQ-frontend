@@ -1,18 +1,26 @@
 import React, { useEffect, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { toast } from "sonner";
-import { Loader2, ShieldCheck, Building2, KeyRound } from "lucide-react";
+import { Loader2, ShieldAlert, KeyRound } from "@/components/icons";
 import { post, retrieve } from "@/lib/api/crud";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/shared/EmptyState";
+import { PageHeader } from "@/components/shared/PageHeader";
+import { SectionBody } from "@/components/shared/SectionBody";
+import { SectionCard } from "@/components/shared/SectionCard";
+import { StatusBadge } from "@/components/shared/StatusBadge";
+import { Field } from "@/components/profiles/formParts";
+import { HeroShell } from "../PublicParts";
 
-const EASE = [0.16, 1, 0.3, 1];
+const EASE = [0.16, 1, 0.3, 1] as const;
 
 export default function ClaimInvitation() {
   const [searchParams] = useSearchParams();
   const token = searchParams.get("token");
   const navigate = useNavigate();
+  const reduce = useReducedMotion();
 
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -88,150 +96,82 @@ export default function ClaimInvitation() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen w-full flex items-center justify-center bg-[#0d173b]">
-        <div className="text-center text-white space-y-4">
-          <Loader2 className="h-10 w-10 animate-spin mx-auto text-[#7c69ff]" />
-          <p className="text-sm font-sans tracking-wide text-white/70">
-            Verifying invitation credentials...
-          </p>
-        </div>
-      </div>
+      <HeroShell>
+        <SectionCard title="Checking your invitation" padded={false}>
+          <SectionBody loading>{null}</SectionBody>
+        </SectionCard>
+      </HeroShell>
     );
   }
 
   if (!invitePreview) {
     return (
-      <div className="min-h-screen w-full flex items-center justify-center bg-[#0d173b]">
-        <div className="bg-white p-8 rounded-2xl max-w-md w-full text-center space-y-6 shadow-2xl">
-          <div className="h-14 w-14 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto">
-            <ShieldCheck className="h-8 w-8" />
-          </div>
-          <h2 className="text-2xl font-bold text-slate-800">Invalid Link</h2>
-          <p className="text-sm text-slate-500">
-            This invitation link is invalid, expired, or has already been claimed.
-          </p>
-          <Button onClick={() => navigate("/login")} className="w-full">
-            Return to Login
-          </Button>
-        </div>
-      </div>
+      <HeroShell>
+        <SectionCard padded={false}>
+          <EmptyState
+            icon={<ShieldAlert size={24} />}
+            title="This link does not work"
+            description="The invitation link is invalid, has expired, or has already been used."
+            action={{ label: "Return to sign in", onAction: () => navigate("/login") }}
+          />
+        </SectionCard>
+      </HeroShell>
     );
   }
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-[#0d173b] px-6 relative overflow-hidden">
-      {/* Decorative gradients */}
-      <div className="absolute top-0 left-1/4 w-96 h-96 bg-purple-600/10 rounded-full blur-3xl" />
-      <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-blue-600/15 rounded-full blur-3xl" />
-
+    <HeroShell>
       <motion.div
-        className="w-full max-w-lg bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl overflow-hidden border border-white/20 p-8 sm:p-10 relative z-10"
-        initial={{ opacity: 0, y: 30 }}
+        initial={reduce ? false : { opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, ease: EASE }}
+        transition={{ duration: 0.25, ease: EASE }}
       >
-        <div className="space-y-6 text-center">
-          <div className="inline-flex items-center gap-2 bg-[#7c69ff]/10 border border-[#7c69ff]/30 px-4 py-1.5 rounded-full mb-2">
-            <Building2 className="h-4 w-4 text-[#7c69ff]" />
-            <span className="text-[#7c69ff] font-semibold text-xs uppercase tracking-wide">
+        <SectionCard>
+          <div className="space-y-3">
+            <StatusBadge tone="neutral" className="h-auto min-h-[1.572rem] max-w-full whitespace-normal py-0.5">
               {invitePreview.company_name}
-            </span>
+            </StatusBadge>
+            <PageHeader title="Set up your account" description="Create the administrator sign-in for your company's 360IQ workspace." />
           </div>
 
-          <h2 className="text-3xl font-bold text-slate-900 tracking-tight">
-            Configure CRM Account
-          </h2>
-          <p className="text-sm text-slate-500 max-w-md mx-auto">
-            Set up your administrative credentials for the 360IQ B2B CRM intelligence portal.
-          </p>
-        </div>
-
-        <form onSubmit={handleSubmit} className="mt-8 space-y-5">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-600 uppercase tracking-wide">
-                First Name
-              </label>
-              <Input
-                placeholder="John"
-                value={firstName}
-                onChange={(e) => setFirstName(e.target.value)}
-                required
-                className="h-11 focus:ring-2 focus:ring-[#7c69ff] text-sm"
-              />
+          <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <Field label="First name" htmlFor="claim-first">
+                <Input id="claim-first" placeholder="Natasha" value={firstName} onChange={(e) => setFirstName(e.target.value)} required className="h-11" />
+              </Field>
+              <Field label="Last name" htmlFor="claim-last">
+                <Input id="claim-last" placeholder="Lungu" value={lastName} onChange={(e) => setLastName(e.target.value)} required className="h-11" />
+              </Field>
             </div>
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-600 uppercase tracking-wide">
-                Last Name
-              </label>
-              <Input
-                placeholder="Doe"
-                value={lastName}
-                onChange={(e) => setLastName(e.target.value)}
-                required
-                className="h-11 focus:ring-2 focus:ring-[#7c69ff] text-sm"
-              />
-            </div>
-          </div>
 
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-600 uppercase tracking-wide">
-              Primary Administrator Email
-            </label>
-            <Input
-              value={invitePreview.email}
-              disabled
-              className="h-11 bg-slate-50 text-slate-400 border-slate-200 text-sm font-medium"
-            />
-          </div>
+            <Field label="Administrator email" htmlFor="claim-email">
+              <Input id="claim-email" value={invitePreview.email} disabled className="h-11" />
+            </Field>
 
-          <div className="space-y-1.5 relative">
-            <label className="text-xs font-semibold text-slate-600 uppercase tracking-wide">
-              Password
-            </label>
-            <div className="relative">
-              <Input
-                type="password"
-                placeholder="Create a strong password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                className="h-11 pr-10 focus:ring-2 focus:ring-[#7c69ff] text-sm"
-              />
-              <KeyRound className="absolute right-3.5 top-3.5 h-4 w-4 text-slate-400" />
-            </div>
-          </div>
+            <Field label="Password" htmlFor="claim-password" hint="At least 8 characters">
+              <div className="relative">
+                <Input id="claim-password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required className="h-11 pr-10" />
+                <KeyRound size={16} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-text-muted" />
+              </div>
+            </Field>
 
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-600 uppercase tracking-wide">
-              Confirm Password
-            </label>
-            <Input
-              type="password"
-              placeholder="Re-enter password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              required
-              className="h-11 focus:ring-2 focus:ring-[#7c69ff] text-sm"
-            />
-          </div>
+            <Field label="Confirm password" htmlFor="claim-confirm">
+              <Input id="claim-confirm" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required className="h-11" />
+            </Field>
 
-          <Button
-            type="submit"
-            disabled={isSubmitting}
-            className="w-full h-11 bg-gradient-to-r from-[#1e2e70] to-[#7c69ff] hover:opacity-90 text-white font-medium shadow-lg transition-all duration-300 mt-6 rounded-lg text-sm"
-          >
-            {isSubmitting ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Provisioning Account...
-              </>
-            ) : (
-              "Complete Setup & Activate"
-            )}
-          </Button>
-        </form>
+            <Button type="submit" size="lg" disabled={isSubmitting} className="w-full">
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="animate-spin" />
+                  Setting up your account…
+                </>
+              ) : (
+                "Set up account"
+              )}
+            </Button>
+          </form>
+        </SectionCard>
       </motion.div>
-    </div>
+    </HeroShell>
   );
 }

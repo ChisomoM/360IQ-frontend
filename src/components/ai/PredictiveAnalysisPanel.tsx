@@ -6,11 +6,15 @@ import {
   TrendingUp,
   Lightbulb,
   CheckCircle,
+  Sparkles,
   X,
   Loader2,
-} from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+  type LucideIcon,
+} from '@/components/icons';
+import { Button } from '@/components/ui/button';
+import { SectionCard } from '@/components/shared/SectionCard';
+import { StatusBadge } from '@/components/shared/StatusBadge';
+import type { Tone } from '@/lib/status';
 
 interface PredictiveAnalysisResult {
   summary: string;
@@ -27,8 +31,29 @@ interface PredictiveAnalysisPanelProps {
   onClose?: () => void;
 }
 
+function AnalysisList({ title, Icon, items, iconClass }: {
+  title: string;
+  Icon: LucideIcon;
+  items: string[];
+  iconClass: string;
+}) {
+  return (
+    <div>
+      <h3 className="mb-2 flex items-center gap-2 text-sm font-semibold text-text-primary">
+        <Icon size={16} className={iconClass} />
+        {title}
+      </h3>
+      <ul className="list-disc space-y-1.5 pl-5">
+        {items.map((item, idx) => (
+          <li key={idx} className="text-sm text-text-secondary">{item}</li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 /**
- * Displays predictive analysis results in an collapsible panel
+ * Displays predictive analysis results in a collapsible panel
  */
 export const PredictiveAnalysisPanel: React.FC<PredictiveAnalysisPanelProps> = ({
   result,
@@ -42,61 +67,36 @@ export const PredictiveAnalysisPanel: React.FC<PredictiveAnalysisPanelProps> = (
     return null;
   }
 
+  const closeButton = onClose && (
+    <Button variant="ghost" size="sm" onClick={onClose} aria-label="Close analysis">
+      <X size={16} />
+    </Button>
+  );
+
   // Loading state
   if (isLoading) {
     return (
-      <Card className="border-amber-200 bg-amber-50/50">
-        <CardHeader className="pb-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Loader2 className="h-5 w-5 animate-spin text-signal-text" />
-              <CardTitle className="text-base">Generating Predictive Analysis</CardTitle>
-            </div>
-            {onClose && (
-              <button
-                onClick={onClose}
-                className="text-gray-400 hover:text-gray-600 transition"
-                aria-label="Close"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            )}
-          </div>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-gray-500">
-            Analyzing your data and generating insights. This may take a moment...
-          </p>
-        </CardContent>
-      </Card>
+      <SectionCard tone="ai" actions={closeButton} title="Predictive analysis">
+        <p role="status" className="flex items-center gap-2 text-sm text-signal-text">
+          <Loader2 size={18} className="animate-spin" />
+          360IQ is reading your chart data…
+        </p>
+      </SectionCard>
     );
   }
 
   // Error state
   if (error) {
     return (
-      <Card className="border-red-200 bg-red-50/50">
-        <CardHeader className="pb-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-red-500" />
-              <CardTitle className="text-base text-red-900">Analysis Failed</CardTitle>
-            </div>
-            {onClose && (
-              <button
-                onClick={onClose}
-                className="text-gray-400 hover:text-gray-600 transition"
-                aria-label="Close"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            )}
+      <SectionCard actions={closeButton} title="Predictive analysis">
+        <div role="alert" className="flex items-start gap-2 text-risk">
+          <AlertTriangle size={18} className="mt-0.5 flex-shrink-0" />
+          <div>
+            <p className="text-sm font-semibold">Couldn't complete the analysis</p>
+            <p className="mt-1 text-sm">{error}</p>
           </div>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-red-700">{error}</p>
-        </CardContent>
-      </Card>
+        </div>
+      </SectionCard>
     );
   }
 
@@ -106,135 +106,73 @@ export const PredictiveAnalysisPanel: React.FC<PredictiveAnalysisPanelProps> = (
   const confLevel = result.confidence_indicators?.predictability || 'unknown';
   const dataQuality = result.confidence_indicators?.data_quality || 'unknown';
 
-  const getConfidenceBadgeColor = (level: string | boolean) => {
+  const confidenceTone = (level: string | boolean): Tone => {
     const levelStr = String(level).toLowerCase();
-    if (levelStr === 'high') return 'bg-green-100 text-green-800';
-    if (levelStr === 'medium') return 'bg-yellow-100 text-yellow-800';
-    if (levelStr === 'low') return 'bg-orange-100 text-orange-800';
-    return 'bg-gray-100 text-gray-800';
+    if (levelStr === 'high') return 'positive';
+    if (levelStr === 'medium' || levelStr === 'low') return 'caution';
+    return 'neutral';
   };
 
   return (
-    <Card className="bg-signal-tint iq-grad-border overflow-hidden">
-      {/* Header */}
-      <CardHeader className="pb-3 border-b border-line cursor-pointer" onClick={() => setIsExpanded(!isExpanded)}>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3 flex-1">
-            <TrendingUp className="h-5 w-5 text-signal-text flex-shrink-0" />
-            <div className="min-w-0">
-              <CardTitle className="text-base">Predictive Analysis Results</CardTitle>
-              <CardDescription className="text-xs mt-1">
-                AI-generated insights and forecasts based on chart data
-              </CardDescription>
-            </div>
-          </div>
-          <div className="flex items-center gap-2 flex-shrink-0">
-            {onClose && (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onClose();
-                }}
-                className="text-gray-400 hover:text-gray-600 transition"
-                aria-label="Close"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            )}
-            <button
-              className="text-gray-500 hover:text-gray-700 transition"
-              aria-label={isExpanded ? 'Collapse' : 'Expand'}
-            >
-              {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-            </button>
-          </div>
-        </div>
-      </CardHeader>
-
-      {/* Content */}
+    <SectionCard
+      tone="ai"
+      eyebrow={
+        <span className="flex items-center gap-1.5 text-signal-text">
+          <Sparkles size={16} />
+          Forecast from chart data
+        </span>
+      }
+      title="Predictive analysis"
+      actions={
+        <>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setIsExpanded(!isExpanded)}
+            aria-expanded={isExpanded}
+            aria-label={isExpanded ? 'Collapse analysis' : 'Expand analysis'}
+          >
+            {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+          </Button>
+          {closeButton}
+        </>
+      }
+    >
       {isExpanded && (
-        <CardContent className="pt-4 space-y-4">
-          {/* Confidence Indicators */}
-          <div className="flex gap-2 flex-wrap">
-            <Badge className={`text-xs ${getConfidenceBadgeColor(dataQuality)}`}>
-              Data Quality: {dataQuality}
-            </Badge>
-            <Badge className={`text-xs ${getConfidenceBadgeColor(confLevel)}`}>
-              Predictability: {confLevel}
-            </Badge>
+        <div className="space-y-4">
+          {/* Confidence indicators */}
+          <div className="flex flex-wrap gap-2">
+            <StatusBadge tone={confidenceTone(dataQuality)}>Data quality: {String(dataQuality)}</StatusBadge>
+            <StatusBadge tone={confidenceTone(confLevel)}>Predictability: {String(confLevel)}</StatusBadge>
           </div>
 
           {/* Summary */}
           <div>
-            <h3 className="font-semibold text-sm text-gray-900 flex items-center gap-2 mb-2">
-              <CheckCircle className="h-4 w-4 text-blue-600" />
+            <h3 className="mb-2 flex items-center gap-2 text-sm font-semibold text-text-primary">
+              <CheckCircle size={16} className="text-signal-text" />
               Summary
             </h3>
-            <p className="text-sm text-gray-700 leading-relaxed bg-blue-50/50 p-3 rounded border border-blue-100">
-              {result.summary}
-            </p>
+            <p className="text-sm leading-relaxed text-text-primary">{result.summary}</p>
           </div>
 
-          {/* Key Predictions */}
           {result.key_predictions && result.key_predictions.length > 0 && (
-            <div>
-              <h3 className="font-semibold text-sm text-gray-900 flex items-center gap-2 mb-2">
-                <TrendingUp className="h-4 w-4 text-green-600" />
-                Key Predictions
-              </h3>
-              <ul className="space-y-1.5">
-                {result.key_predictions.map((pred, idx) => (
-                  <li key={idx} className="text-sm text-gray-700 flex gap-2">
-                    <span className="text-green-600 font-bold min-w-fit">→</span>
-                    <span>{pred}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
+            <AnalysisList title="Key predictions" Icon={TrendingUp} items={result.key_predictions} iconClass="text-signal-text" />
           )}
 
-          {/* Anomalies & Risks */}
           {result.anomalies_and_risks && result.anomalies_and_risks.length > 0 && (
-            <div>
-              <h3 className="font-semibold text-sm text-gray-900 flex items-center gap-2 mb-2">
-                <AlertTriangle className="h-4 w-4 text-orange-600" />
-                Anomalies & Risks to Watch
-              </h3>
-              <ul className="space-y-1.5">
-                {result.anomalies_and_risks.map((risk, idx) => (
-                  <li key={idx} className="text-sm text-gray-700 flex gap-2">
-                    <span className="text-orange-600 font-bold min-w-fit">⚠</span>
-                    <span>{risk}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
+            <AnalysisList title="Anomalies and risks to watch" Icon={AlertTriangle} items={result.anomalies_and_risks} iconClass="text-caution" />
           )}
 
-          {/* Recommendations */}
           {result.recommendations && result.recommendations.length > 0 && (
-            <div>
-              <h3 className="font-semibold text-sm text-gray-900 flex items-center gap-2 mb-2">
-                <Lightbulb className="h-4 w-4 text-signal-text" />
-                Recommendations
-              </h3>
-              <ul className="space-y-1.5">
-                {result.recommendations.map((rec, idx) => (
-                  <li key={idx} className="text-sm text-gray-700 flex gap-2">
-                    <span className="text-signal-text font-bold min-w-fit">•</span>
-                    <span>{rec}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
+            <AnalysisList title="Recommendations" Icon={Lightbulb} items={result.recommendations} iconClass="text-signal-text" />
           )}
 
           {/* Footer note */}
-          <p className="text-xs text-gray-400 italic border-t border-gray-200 pt-3">
-            Predictions are based on visible data patterns. For best results, ensure your data is complete and representative.
+          <p className="border-t border-line pt-3 text-xs text-text-muted">
+            Based on the patterns in the selected chart data. Check that the data is complete before you rely on a prediction.
           </p>
-        </CardContent>
+        </div>
       )}
-    </Card>
+    </SectionCard>
   );
 };

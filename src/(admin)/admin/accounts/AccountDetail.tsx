@@ -18,14 +18,15 @@ import {
   Building,
   Clock,
   ExternalLink,
-} from "lucide-react";
+} from "@/components/icons";
 
 import { PageTransition } from "@/components/PageTransition";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Select,
@@ -34,6 +35,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { EmptyState } from "@/components/shared/EmptyState";
+import { PageHeader } from "@/components/shared/PageHeader";
+import { SectionCard } from "@/components/shared/SectionCard";
+import { StatusBadge } from "@/components/shared/StatusBadge";
+import { Field } from "@/components/profiles/formParts";
 import {
   getAccount,
   createContact,
@@ -43,16 +49,16 @@ import {
   updateBusinessUnit,
   deleteBusinessUnit,
 } from "@/lib/api/accounts";
+import { formatDate, money } from "@/lib/format";
 import type {
   Account,
   Contact,
   BusinessUnit,
-  LifecycleStage,
-  StrategicTier,
   Seniority,
   BuyingRole,
   Status,
 } from "@/types/account";
+import { GradeChip, RecordStatusBadge, SENIORITY_LABEL, StageBadge, enumLabel } from "./accountUi";
 
 const SENIORITIES: Seniority[] = ["C_LEVEL", "VP", "DIRECTOR", "MANAGER", "STAFF"];
 const BUYING_ROLES: BuyingRole[] = [
@@ -64,6 +70,8 @@ const BUYING_ROLES: BuyingRole[] = [
   "USER",
 ];
 const STATUS_OPTIONS: Status[] = ["ACTIVE", "INACTIVE"];
+// A select item cannot have an empty value, so "unassigned" uses a placeholder value that maps back to "".
+const UNASSIGNED = "__none";
 
 export function AccountDetail() {
   const { id } = useParams<{ id: string }>();
@@ -128,11 +136,11 @@ export function AccountDetail() {
     e.preventDefault();
     if (!id) return;
     if (!contactFirst.trim() && !contactLast.trim()) {
-      toast.error("First Name or Last Name is required");
+      toast.error("Enter a first name or a last name.");
       return;
     }
     if (!contactEmail.trim()) {
-      toast.error("Email is required");
+      toast.error("Enter an email address.");
       return;
     }
 
@@ -156,10 +164,10 @@ export function AccountDetail() {
 
       if (editingContact) {
         await updateContact(editingContact.id, payload);
-        toast.success("Contact updated successfully");
+        toast.success("Contact updated");
       } else {
         await createContact(id, payload);
-        toast.success("Contact created successfully");
+        toast.success("Contact added");
       }
       setIsContactOpen(false);
       fetchAccountDetail();
@@ -195,10 +203,10 @@ export function AccountDetail() {
   };
 
   const handleDeleteContact = async (contactId: string, name: string) => {
-    if (!confirm(`Are you sure you want to remove the contact "${name}"?`)) return;
+    if (!confirm(`Remove the contact "${name}"?`)) return;
     try {
       await deleteContact(contactId);
-      toast.success("Contact deleted successfully");
+      toast.success("Contact deleted");
       fetchAccountDetail();
     } catch (err: any) {
       toast.error(err?.message || "Failed to delete contact");
@@ -226,7 +234,7 @@ export function AccountDetail() {
     e.preventDefault();
     if (!id) return;
     if (!buName.trim()) {
-      toast.error("Business Unit Name is required");
+      toast.error("Enter the business unit name.");
       return;
     }
 
@@ -241,10 +249,10 @@ export function AccountDetail() {
 
       if (editingBU) {
         await updateBusinessUnit(editingBU.id, payload);
-        toast.success("Business Unit updated successfully");
+        toast.success("Business unit updated");
       } else {
         await createBusinessUnit(id, payload);
-        toast.success("Business Unit registered successfully");
+        toast.success("Business unit added");
       }
       setIsBUOpen(false);
       fetchAccountDetail();
@@ -271,10 +279,10 @@ export function AccountDetail() {
   };
 
   const handleDeleteBU = async (buId: string, name: string) => {
-    if (!confirm(`Are you sure you want to delete the business unit "${name}"?`)) return;
+    if (!confirm(`Delete the business unit "${name}"?`)) return;
     try {
       await deleteBusinessUnit(buId);
-      toast.success("Business unit deleted successfully");
+      toast.success("Business unit deleted");
       fetchAccountDetail();
     } catch (err: any) {
       toast.error(err?.message || "Failed to delete business unit");
@@ -288,41 +296,12 @@ export function AccountDetail() {
     setBuHeadContactId("");
   };
 
-  const getLifecycleColor = (stage?: LifecycleStage) => {
-    switch (stage) {
-      case "CUSTOMER":
-        return "bg-green-500/10 text-green-600 border border-green-500/20";
-      case "PROSPECT":
-        return "bg-blue-500/10 text-blue-600 border border-blue-500/20";
-      case "LEAD":
-        return "bg-indigo-500/10 text-indigo-600 border border-indigo-500/20";
-      case "CHURNED":
-        return "bg-red-500/10 text-red-600 border border-red-500/20";
-      default:
-        return "bg-slate-500/10 text-slate-600 border-none";
-    }
-  };
-
-  const getTierColor = (tier?: StrategicTier) => {
-    switch (tier) {
-      case "PLATINUM":
-        return "bg-purple-500/10 text-purple-600 border border-purple-500/20";
-      case "GOLD":
-        return "bg-amber-500/10 text-amber-600 border border-amber-500/20";
-      case "SILVER":
-        return "bg-slate-500/10 text-slate-600 border border-slate-500/20";
-      case "BRONZE":
-        return "bg-orange-500/10 text-orange-600 border border-orange-500/20";
-      default:
-        return "bg-slate-500/10 text-slate-600 border-none";
-    }
-  };
-
   if (isLoading || !account) {
     return (
-      <div className="min-h-[50vh] flex flex-col items-center justify-center gap-3">
-        <Loader2 className="h-8 w-8 text-primary animate-spin" />
-        <span className="text-slate-500 font-sans text-sm">Loading enterprise profile...</span>
+      <div role="status" aria-busy="true" aria-label="Loading" className="flex w-full flex-col gap-5">
+        <div className="skeleton h-9 w-64 max-w-full rounded-md" />
+        <div className="skeleton h-10 w-80 max-w-full rounded-lg" />
+        <div className="skeleton h-64 w-full rounded-lg" />
       </div>
     );
   }
@@ -332,298 +311,229 @@ export function AccountDetail() {
 
   return (
     <PageTransition>
-      <div className="space-y-6">
-        {/* Back Link */}
-        <Link
-          to="/admin/accounts"
-          className="inline-flex items-center gap-2 text-sm text-slate-500 hover:text-slate-900 transition-colors"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Back to Accounts Directory
-        </Link>
+      <div className="flex w-full min-w-0 flex-col gap-5">
+        <div className="space-y-3">
+          <PageHeader
+            crumb={
+              <Link to="/admin/accounts" className="inline-flex items-center gap-1 font-medium text-signal-text hover:underline">
+                <ArrowLeft size={14} />
+                Accounts
+              </Link>
+            }
+            title={<span className="break-words">{account.name}</span>}
+            description={account.legal_name ? `Legal name: ${account.legal_name}` : undefined}
+          />
 
-        {/* Profile Card Header */}
-        <div className="bg-white border border-slate-100 rounded-2xl p-6 shadow-sm flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-          <div className="flex flex-col md:flex-row md:items-start gap-4">
-            <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center text-primary flex-shrink-0 border border-primary/20">
-              <Building2 className="h-8 w-8" />
-            </div>
-            <div className="space-y-1">
-              <div className="flex flex-wrap items-center gap-2">
-                <h1 className="font-display font-bold text-2xl text-slate-900 tracking-tight">
-                  {account.name}
-                </h1>
-                {account.is_strategic_account && (
-                  <Badge className="bg-purple-500/10 text-purple-600 border border-purple-500/20 font-bold px-2 py-0.5 rounded-full">
-                    ABM Strategic Target
-                  </Badge>
-                )}
-              </div>
-              {account.legal_name && (
-                <p className="text-sm font-sans text-slate-500 font-medium">Legal Name: {account.legal_name}</p>
+          <div className="flex flex-wrap items-center gap-1.5">
+            <StageBadge stage={account.lifecycle_stage} />
+            <GradeChip tier={account.strategic_tier} />
+            <RecordStatusBadge status={account.status} />
+            {account.is_strategic_account && <StatusBadge tone="neutral">Strategic account</StatusBadge>}
+          </div>
+
+          {(account.website || account.email || account.phone) && (
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[13px] text-text-secondary">
+              {account.website && (
+                <a
+                  href={account.website.startsWith("http") ? account.website : `https://${account.website}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex min-w-0 items-center gap-1.5 break-all font-medium text-signal-text hover:underline"
+                >
+                  <Globe size={16} />
+                  {account.website}
+                  <ExternalLink size={14} />
+                </a>
               )}
-              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 pt-1.5 text-xs font-sans text-slate-500">
-                {account.website && (
-                  <a
-                    href={account.website.startsWith("http") ? account.website : `https://${account.website}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="flex items-center gap-1 hover:text-primary transition-colors font-medium"
-                  >
-                    <Globe className="h-3.5 w-3.5" />
-                    {account.website}
-                    <ExternalLink className="h-3 w-3" />
-                  </a>
-                )}
-                {account.email && (
-                  <span className="flex items-center gap-1">
-                    <Mail className="h-3.5 w-3.5" />
-                    {account.email}
-                  </span>
-                )}
-                {account.phone && (
-                  <span className="flex items-center gap-1">
-                    <Phone className="h-3.5 w-3.5" />
-                    {account.phone}
-                  </span>
-                )}
-              </div>
+              {account.email && (
+                <span className="flex min-w-0 items-center gap-1.5 break-all">
+                  <Mail size={16} />
+                  {account.email}
+                </span>
+              )}
+              {account.phone && (
+                <span className="flex items-center gap-1.5 font-mono text-xs">
+                  <Phone size={16} />
+                  {account.phone}
+                </span>
+              )}
             </div>
-          </div>
-
-          <div className="flex flex-wrap gap-2.5">
-            <Badge className={`${getLifecycleColor(account.lifecycle_stage)} font-bold text-xs rounded-full px-3 py-1 shadow-none`}>
-              {account.lifecycle_stage}
-            </Badge>
-            <Badge className={`${getTierColor(account.strategic_tier)} font-bold text-xs rounded-full px-3 py-1 shadow-none`}>
-              {account.strategic_tier}
-            </Badge>
-            <Badge variant={account.status === "ACTIVE" ? "default" : "secondary"} className="rounded-full shadow-none text-xs px-3 py-1">
-              Status: {account.status}
-            </Badge>
-          </div>
+          )}
         </div>
 
-        {/* Tabs System */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="bg-slate-100/80 p-1 rounded-xl h-11 border border-slate-200/50">
-            <TabsTrigger value="overview" className="rounded-lg px-4 font-semibold text-xs tracking-wide uppercase">
-              Overview
-            </TabsTrigger>
-            <TabsTrigger value="contacts" className="rounded-lg px-4 font-semibold text-xs tracking-wide uppercase flex items-center gap-1.5">
-              Contacts ({account.contacts?.length || 0})
-            </TabsTrigger>
-            <TabsTrigger value="business-units" className="rounded-lg px-4 font-semibold text-xs tracking-wide uppercase flex items-center gap-1.5">
-              Business Units ({account.business_units?.length || 0})
-            </TabsTrigger>
-          </TabsList>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="min-w-0">
+          <div className="max-w-full overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <TabsList className="w-max">
+              <TabsTrigger value="overview">Overview</TabsTrigger>
+              <TabsTrigger value="contacts" className="gap-1.5">
+                Contacts
+                <span className="rounded-pill bg-surface-2 px-1.5 font-mono text-xs text-text-secondary">{account.contacts?.length || 0}</span>
+              </TabsTrigger>
+              <TabsTrigger value="business-units" className="gap-1.5">
+                Business units
+                <span className="rounded-pill bg-surface-2 px-1.5 font-mono text-xs text-text-secondary">{account.business_units?.length || 0}</span>
+              </TabsTrigger>
+            </TabsList>
+          </div>
 
           {/* Overview Tab Content */}
           <TabsContent value="overview">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <div className="lg:col-span-2 space-y-6">
-                {/* Account Details */}
-                <div className="bg-white border border-slate-100 rounded-2xl p-6 shadow-sm space-y-6">
-                  <h3 className="font-display font-bold text-lg text-slate-900 border-b border-slate-100 pb-3">
-                    Corporate Identifiers & Sizing
-                  </h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                    <FieldView label="Registration Number" value={account.registration_number} />
-                    <FieldView label="Tax Number (TIN)" value={account.tax_number} />
-                    <FieldView label="Industry Sector" value={account.industry} />
-                    <FieldView label="Sub-Sector" value={account.sub_sector} />
-                    <FieldView label="Employee Count" value={account.employee_count ? account.employee_count.toLocaleString() : "—"} />
-                    <FieldView label="Annual Revenue" value={account.annual_revenue ? `$${account.annual_revenue.toLocaleString()}` : "—"} />
-                  </div>
-                </div>
+            <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-[1.35fr_1fr]">
+              <div className="grid min-w-0 gap-5">
+                <SectionCard title="Identifiers and size">
+                  <dl className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <FieldView label="Registration number" value={account.registration_number} mono />
+                    <FieldView label="Tax number (TPIN)" value={account.tax_number} mono />
+                    <FieldView label="Industry" value={account.industry} />
+                    <FieldView label="Sub-sector" value={account.sub_sector} />
+                    <FieldView label="Employee count" value={account.employee_count ? account.employee_count.toLocaleString() : undefined} mono />
+                    <FieldView label="Annual revenue" value={account.annual_revenue ? money(account.annual_revenue, "USD") : undefined} mono />
+                  </dl>
+                </SectionCard>
 
-                {/* Location Details */}
-                <div className="bg-white border border-slate-100 rounded-2xl p-6 shadow-sm space-y-6">
-                  <h3 className="font-display font-bold text-lg text-slate-900 border-b border-slate-100 pb-3">
-                    Physical Address & Region
-                  </h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <SectionCard title="Address">
+                  <dl className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <div className="sm:col-span-2">
-                      <FieldView label="Street Address" value={account.address} />
+                      <FieldView label="Street address" value={account.address} />
                     </div>
-                    <FieldView label="District / City" value={account.district} />
-                    <FieldView label="Province / State" value={account.province} />
+                    <FieldView label="District or city" value={account.district} />
+                    <FieldView label="Province" value={account.province} />
                     <FieldView label="Country" value={account.country} />
-                  </div>
-                </div>
-
-                {/* Notes and Tags */}
-                <div className="bg-white border border-slate-100 rounded-2xl p-6 shadow-sm space-y-6">
-                  <h3 className="font-display font-bold text-lg text-slate-900 border-b border-slate-100 pb-3">
-                    CRM Intelligence notes
-                  </h3>
-                  <div className="space-y-4 font-sans text-sm">
-                    <div>
-                      <span className="text-slate-400 block font-semibold text-xs uppercase tracking-wider mb-1">Tags</span>
-                      <div className="flex flex-wrap gap-1.5">
-                        {account.tags && account.tags.length > 0 ? (
-                          account.tags.map((tag) => (
-                            <Badge key={tag} className="bg-slate-100 text-slate-700 border-none font-medium hover:bg-slate-200">
-                              {tag}
-                            </Badge>
-                          ))
-                        ) : (
-                          <span className="text-slate-400 text-xs italic">No tags assigned</span>
-                        )}
-                      </div>
-                    </div>
-                    <div>
-                      <span className="text-slate-400 block font-semibold text-xs uppercase tracking-wider mb-1">Internal Notes</span>
-                      <p className="text-slate-700 whitespace-pre-line leading-relaxed font-sans">
-                        {account.notes || "No notes registered for this account."}
-                      </p>
-                    </div>
-                  </div>
-                </div>
+                  </dl>
+                </SectionCard>
               </div>
 
-              {/* Sidebar Info */}
-              <div className="space-y-6">
-                <div className="bg-white border border-slate-100 rounded-2xl p-6 shadow-sm space-y-6">
-                  <h3 className="font-display font-bold text-lg text-slate-900 border-b border-slate-100 pb-3">
-                    Relationship Details
-                  </h3>
-                  <div className="space-y-4">
+              <div className="grid min-w-0 gap-5">
+                <SectionCard title="Relationship">
+                  <dl className="grid gap-4">
+                    <SidebarFieldView label="Account manager" value={account.owner_name || "Unassigned"} icon={<Briefcase size={16} />} />
                     <SidebarFieldView
-                      label="Account Manager"
-                      value={account.owner_name || "Unassigned"}
-                      icon={<Briefcase className="h-4 w-4 text-slate-400" />}
-                    />
-                    <SidebarFieldView
-                      label="Primary Contact Person"
+                      label="Primary contact"
                       value={
                         primaryContact
                           ? `${primaryContact.first_name || ""} ${primaryContact.last_name || ""}`.trim()
                           : "No primary contact"
                       }
-                      icon={<UserCheck className="h-4 w-4 text-slate-400" />}
+                      icon={<UserCheck size={16} />}
                     />
-                    <SidebarFieldView
-                      label="Parent Account"
-                      value={account.parent_account_name || "None"}
-                      icon={<Building className="h-4 w-4 text-slate-400" />}
-                    />
-                    <SidebarFieldView
-                      label="Created At"
-                      value={new Date(account.created_at).toLocaleDateString()}
-                      icon={<Clock className="h-4 w-4 text-slate-400" />}
-                    />
+                    <SidebarFieldView label="Parent account" value={account.parent_account_name || "None"} icon={<Building size={16} />} />
+                    <SidebarFieldView label="Created" value={formatDate(account.created_at)} icon={<Clock size={16} />} />
+                  </dl>
+                </SectionCard>
+
+                <SectionCard title="Notes and tags">
+                  <div className="space-y-4 text-sm">
+                    <div>
+                      <p className="mb-1.5 text-xs font-medium text-text-muted">Tags</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {account.tags && account.tags.length > 0 ? (
+                          account.tags.map((tag) => (
+                            <StatusBadge key={tag} tone="neutral">
+                              {tag}
+                            </StatusBadge>
+                          ))
+                        ) : (
+                          <span className="text-xs text-text-muted">No tags</span>
+                        )}
+                      </div>
+                    </div>
+                    <div>
+                      <p className="mb-1 text-xs font-medium text-text-muted">Internal notes</p>
+                      <p className="whitespace-pre-line break-words text-text-primary">
+                        {account.notes || "No notes for this account."}
+                      </p>
+                    </div>
                   </div>
-                </div>
+                </SectionCard>
               </div>
             </div>
           </TabsContent>
 
           {/* Contacts Tab Content */}
           <TabsContent value="contacts">
-            <div className="bg-white border border-slate-100 rounded-2xl p-6 shadow-sm space-y-4">
-              <div className="flex items-center justify-between border-b border-slate-100 pb-4">
-                <div>
-                  <h3 className="font-display font-bold text-lg text-slate-900">Buying Committee / Contacts</h3>
-                  <p className="text-xs text-slate-500 font-sans mt-0.5">
-                    Track decision-makers, champions, economic buyers, and stakeholders.
-                  </p>
-                </div>
-                <Button onClick={openCreateContact} className="bg-primary text-white hover:bg-primary/95 rounded-xl h-10 gap-1.5 shadow-sm font-medium">
-                  <Plus className="h-4.5 w-4.5" />
-                  Add Contact
+            <SectionCard
+              title="Buying committee"
+              actions={
+                <Button onClick={openCreateContact}>
+                  <Plus />
+                  Add contact
                 </Button>
-              </div>
-
+              }
+              padded={false}
+            >
               {!account.contacts || account.contacts.length === 0 ? (
-                <div className="p-12 text-center text-slate-500 font-sans">
-                  No contacts registered for this account. Click "Add Contact" to associate a decision maker.
-                </div>
+                <EmptyState
+                  icon={<Users size={24} />}
+                  title="No contacts yet"
+                  description="Add decision makers, champions and other stakeholders for this account."
+                />
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+                <div className="grid grid-cols-1 gap-4 px-6 pb-6 md:grid-cols-2 xl:grid-cols-3">
                   {account.contacts.map((c) => (
-                    <div key={c.id} className="p-4 border border-slate-100 rounded-xl bg-slate-50/50 hover:bg-slate-50/80 transition-all flex flex-col justify-between gap-4">
-                      <div>
+                    <div key={c.id} className="flex min-w-0 flex-col justify-between gap-3 rounded-md border border-line p-4">
+                      <div className="min-w-0">
                         <div className="flex items-start justify-between gap-3">
-                          <div>
-                            <h4 className="font-sans font-semibold text-slate-900 flex items-center gap-1.5">
+                          <div className="min-w-0">
+                            <h3 className="break-words text-sm font-semibold text-text-primary">
                               {c.first_name} {c.last_name}
-                              {c.is_primary && (
-                                <Badge className="bg-green-500/10 text-green-600 border-none font-semibold text-[10px] py-0 px-2 h-4">
-                                  Primary
-                                </Badge>
-                              )}
-                            </h4>
-                            <p className="text-xs text-slate-500 font-sans font-medium mt-0.5">
-                              {c.job_title} {c.department && `• ${c.department}`}
+                            </h3>
+                            <p className="mt-0.5 break-words text-xs text-text-muted">
+                              {c.job_title} {c.department && `· ${c.department}`}
                             </p>
                           </div>
 
-                          <div className="flex items-center gap-1">
-                            <Button
-                              onClick={() => openEditContact(c)}
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 text-slate-400 hover:text-slate-900"
-                              title="Edit"
-                            >
-                              <Edit2 className="h-4 w-4" />
+                          <div className="flex shrink-0 items-center gap-1">
+                            <Button onClick={() => openEditContact(c)} variant="ghost" size="icon" aria-label={`Edit ${c.first_name} ${c.last_name}`} title="Edit">
+                              <Edit2 />
                             </Button>
                             <Button
                               onClick={() => handleDeleteContact(c.id, `${c.first_name} ${c.last_name}`)}
                               variant="ghost"
                               size="icon"
-                              className="h-8 w-8 text-red-400 hover:text-red-600 hover:bg-red-50"
+                              className="text-risk"
+                              aria-label={`Delete ${c.first_name} ${c.last_name}`}
                               title="Delete"
                             >
-                              <Trash2 className="h-4 w-4" />
+                              <Trash2 />
                             </Button>
                           </div>
                         </div>
 
-                        <div className="mt-3 grid grid-cols-1 gap-1 text-xs font-sans text-slate-600">
+                        <div className="mt-3 grid grid-cols-1 gap-1 text-[13px] text-text-secondary">
                           {c.email && (
-                            <span className="flex items-center gap-1.5">
-                              <Mail className="h-3.5 w-3.5 text-slate-400" />
+                            <span className="flex min-w-0 items-center gap-1.5 break-all">
+                              <Mail size={14} className="shrink-0 text-text-muted" />
                               {c.email}
                             </span>
                           )}
                           {c.phone && (
                             <span className="flex items-center gap-1.5">
-                              <Phone className="h-3.5 w-3.5 text-slate-400" />
-                              {c.phone}
+                              <Phone size={14} className="shrink-0 text-text-muted" />
+                              <span className="font-mono text-xs">{c.phone}</span>
                             </span>
                           )}
                           {c.mobile && (
                             <span className="flex items-center gap-1.5">
-                              <Phone className="h-3.5 w-3.5 text-slate-400" />
-                              {c.mobile} (Mobile)
+                              <Phone size={14} className="shrink-0 text-text-muted" />
+                              <span className="font-mono text-xs">{c.mobile}</span> (mobile)
                             </span>
                           )}
                           {c.linkedin_url && (
-                            <a
-                              href={c.linkedin_url}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="flex items-center gap-1.5 hover:text-primary transition-colors"
-                            >
-                              <Globe className="h-3.5 w-3.5 text-slate-400" />
-                              LinkedIn Profile
-                              <ExternalLink className="h-2.5 w-2.5" />
+                            <a href={c.linkedin_url} target="_blank" rel="noreferrer" className="flex items-center gap-1.5 text-signal-text hover:underline">
+                              <Globe size={14} className="shrink-0" />
+                              LinkedIn profile
+                              <ExternalLink size={12} />
                             </a>
                           )}
                         </div>
                       </div>
 
-                      <div className="border-t border-slate-100 pt-3 flex flex-wrap gap-2 items-center">
-                        <Badge className="bg-blue-500/10 text-blue-600 border-none font-semibold text-[10px] px-2 py-0.5">
-                          {c.seniority || "STAFF"}
-                        </Badge>
-                        <Badge className="bg-purple-500/10 text-purple-600 border-none font-semibold text-[10px] px-2 py-0.5">
-                          {c.buying_role || "USER"}
-                        </Badge>
+                      <div className="flex flex-wrap items-center gap-1.5 border-t border-line pt-3">
+                        {c.is_primary && <StatusBadge tone="positive">Primary</StatusBadge>}
+                        <StatusBadge tone="neutral">{SENIORITY_LABEL[c.seniority || "STAFF"]}</StatusBadge>
+                        <StatusBadge tone="neutral">{enumLabel(c.buying_role || "USER")}</StatusBadge>
                         {c.notes && (
-                          <span className="text-[11px] text-slate-400 truncate flex-1 font-sans font-medium" title={c.notes}>
+                          <span className="min-w-0 flex-1 basis-full truncate text-xs text-text-muted" title={c.notes}>
                             Note: {c.notes}
                           </span>
                         )}
@@ -632,287 +542,190 @@ export function AccountDetail() {
                   ))}
                 </div>
               )}
-            </div>
+            </SectionCard>
           </TabsContent>
 
           {/* Business Units Tab Content */}
           <TabsContent value="business-units">
-            <div className="bg-white border border-slate-100 rounded-2xl p-6 shadow-sm space-y-4">
-              <div className="flex items-center justify-between border-b border-slate-100 pb-4">
-                <div>
-                  <h3 className="font-display font-bold text-lg text-slate-900">Business Units</h3>
-                  <p className="text-xs text-slate-500 font-sans mt-0.5">
-                    Divide large enterprise accounts into departments, subsidiaries, or regional divisions.
-                  </p>
-                </div>
-                <Button onClick={openCreateBU} className="bg-primary text-white hover:bg-primary/95 rounded-xl h-10 gap-1.5 shadow-sm font-medium">
-                  <Plus className="h-4.5 w-4.5" />
-                  Add Business Unit
+            <SectionCard
+              title="Business units"
+              actions={
+                <Button onClick={openCreateBU}>
+                  <Plus />
+                  Add business unit
                 </Button>
-              </div>
-
+              }
+              padded={false}
+            >
               {!account.business_units || account.business_units.length === 0 ? (
-                <div className="p-12 text-center text-slate-500 font-sans">
-                  No business units segments registered for this account.
-                </div>
+                <EmptyState
+                  icon={<Building2 size={24} />}
+                  title="No business units yet"
+                  description="Split large accounts into departments, subsidiaries or regional divisions."
+                />
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+                <div className="grid grid-cols-1 gap-4 px-6 pb-6 md:grid-cols-2 xl:grid-cols-3">
                   {account.business_units.map((bu) => (
-                    <div key={bu.id} className="p-4 border border-slate-100 rounded-xl bg-slate-50/50 hover:bg-slate-50/80 transition-all flex flex-col justify-between gap-4">
-                      <div>
+                    <div key={bu.id} className="flex min-w-0 flex-col justify-between gap-3 rounded-md border border-line p-4">
+                      <div className="min-w-0">
                         <div className="flex items-start justify-between gap-3">
-                          <div>
-                            <h4 className="font-sans font-semibold text-slate-900">{bu.name}</h4>
+                          <div className="min-w-0">
+                            <h3 className="break-words text-sm font-semibold text-text-primary">{bu.name}</h3>
                             {bu.region && (
-                              <p className="text-xs text-slate-500 font-sans font-medium mt-0.5 flex items-center gap-1">
-                                <MapPin className="h-3 w-3" />
+                              <p className="mt-0.5 flex items-center gap-1 text-xs text-text-muted">
+                                <MapPin size={12} />
                                 {bu.region}
                               </p>
                             )}
                           </div>
 
-                          <div className="flex items-center gap-1">
-                            <Button
-                              onClick={() => openEditBU(bu)}
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 text-slate-400 hover:text-slate-900"
-                              title="Edit"
-                            >
-                              <Edit2 className="h-4 w-4" />
+                          <div className="flex shrink-0 items-center gap-1">
+                            <Button onClick={() => openEditBU(bu)} variant="ghost" size="icon" aria-label={`Edit ${bu.name}`} title="Edit">
+                              <Edit2 />
                             </Button>
                             <Button
                               onClick={() => handleDeleteBU(bu.id, bu.name)}
                               variant="ghost"
                               size="icon"
-                              className="h-8 w-8 text-red-400 hover:text-red-600 hover:bg-red-50"
+                              className="text-risk"
+                              aria-label={`Delete ${bu.name}`}
                               title="Delete"
                             >
-                              <Trash2 className="h-4 w-4" />
+                              <Trash2 />
                             </Button>
                           </div>
                         </div>
 
-                        {bu.description && (
-                          <p className="text-xs text-slate-600 font-sans mt-3 leading-relaxed">
-                            {bu.description}
-                          </p>
-                        )}
+                        {bu.description && <p className="mt-3 break-words text-[13px] text-text-secondary">{bu.description}</p>}
                       </div>
 
-                      <div className="border-t border-slate-100 pt-3 flex items-center gap-2 text-xs font-sans text-slate-500">
-                        <Users className="h-3.5 w-3.5 text-slate-400" />
-                        <span>Head Contact: </span>
-                        <span className="font-semibold text-slate-900">
-                          {bu.head_contact_name || "Unassigned"}
-                        </span>
+                      <div className="flex items-center gap-2 border-t border-line pt-3 text-xs text-text-muted">
+                        <Users size={14} />
+                        <span>Head contact:</span>
+                        <span className="font-semibold text-text-primary">{bu.head_contact_name || "Unassigned"}</span>
                       </div>
                     </div>
                   ))}
                 </div>
               )}
-            </div>
+            </SectionCard>
           </TabsContent>
         </Tabs>
 
         {/* Dialog for Contact Create/Edit */}
         <Dialog open={isContactOpen} onOpenChange={() => setIsContactOpen(false)}>
-          <DialogContent className="max-w-2xl bg-white p-0 overflow-hidden border-none shadow-2xl rounded-2xl">
-            <DialogHeader className="px-8 py-6 border-b border-slate-100">
-              <DialogTitle className="font-display font-bold text-xl text-slate-900">
-                {editingContact ? `Edit Contact Details` : "Add Contact Person"}
-              </DialogTitle>
-              <p className="text-slate-500 text-xs mt-1">
-                Establish buying committee roles and contact details for the CRM dashboard.
-              </p>
+          <DialogContent className="max-h-[92vh] w-[calc(100%-1rem)] max-w-2xl overflow-y-auto p-4 sm:p-6">
+            <DialogHeader>
+              <DialogTitle>{editingContact ? "Edit contact" : "Add a contact"}</DialogTitle>
+              <DialogDescription>Record their buying role and how to reach them.</DialogDescription>
             </DialogHeader>
 
-            <form onSubmit={handleContactSubmit}>
-              <div className="p-8 space-y-5 overflow-y-auto max-h-[60vh]">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label className="font-semibold text-slate-700">First Name</Label>
-                    <Input
-                      value={contactFirst}
-                      onChange={(e) => setContactFirst(e.target.value)}
-                      placeholder="First Name"
-                      className="h-10 border-slate-200 rounded-lg"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="font-semibold text-slate-700">Last Name</Label>
-                    <Input
-                      value={contactLast}
-                      onChange={(e) => setContactLast(e.target.value)}
-                      placeholder="Last Name"
-                      className="h-10 border-slate-200 rounded-lg"
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label className="font-semibold text-slate-700">Email Address *</Label>
-                  <Input
-                    type="email"
-                    value={contactEmail}
-                    onChange={(e) => setContactEmail(e.target.value)}
-                    placeholder="name@company.com"
-                    className="h-10 border-slate-200 rounded-lg"
-                    required
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label className="font-semibold text-slate-700">Job Title</Label>
-                    <Input
-                      value={contactJob}
-                      onChange={(e) => setContactJob(e.target.value)}
-                      placeholder="e.g. Chief Technical Officer"
-                      className="h-10 border-slate-200 rounded-lg"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="font-semibold text-slate-700">Department / Function</Label>
-                    <Input
-                      value={contactDept}
-                      onChange={(e) => setContactDept(e.target.value)}
-                      placeholder="e.g. IT Procurement"
-                      className="h-10 border-slate-200 rounded-lg"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label className="font-semibold text-slate-700">Work Phone</Label>
-                    <Input
-                      value={contactPhone}
-                      onChange={(e) => setContactPhone(e.target.value)}
-                      placeholder="Phone"
-                      className="h-10 border-slate-200 rounded-lg"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="font-semibold text-slate-700">Mobile Phone</Label>
-                    <Input
-                      value={contactMobile}
-                      onChange={(e) => setContactMobile(e.target.value)}
-                      placeholder="Mobile"
-                      className="h-10 border-slate-200 rounded-lg"
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label className="font-semibold text-slate-700">LinkedIn URL</Label>
-                  <Input
-                    value={contactLinkedIn}
-                    onChange={(e) => setContactLinkedIn(e.target.value)}
-                    placeholder="https://linkedin.com/in/username"
-                    className="h-10 border-slate-200 rounded-lg"
-                  />
-                </div>
-
-                <div className="grid grid-cols-3 gap-4">
-                  <div className="space-y-2">
-                    <Label className="font-semibold text-slate-700">Seniority</Label>
-                    <Select
-                      value={contactSeniority}
-                      onValueChange={(v) => setContactSeniority(v as Seniority)}
-                    >
-                      <SelectTrigger className="h-10 border-slate-200 bg-white rounded-lg">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {SENIORITIES.map((s) => (
-                          <SelectItem key={s} value={s}>
-                            {s}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="font-semibold text-slate-700">Buying Committee Role</Label>
-                    <Select
-                      value={contactBuyingRole}
-                      onValueChange={(v) => setContactBuyingRole(v as BuyingRole)}
-                    >
-                      <SelectTrigger className="h-10 border-slate-200 bg-white rounded-lg">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {BUYING_ROLES.map((r) => (
-                          <SelectItem key={r} value={r}>
-                            {r}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="font-semibold text-slate-700">Status</Label>
-                    <Select
-                      value={contactStatus}
-                      onValueChange={(v) => setContactStatus(v as Status)}
-                    >
-                      <SelectTrigger className="h-10 border-slate-200 bg-white rounded-lg">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {STATUS_OPTIONS.map((s) => (
-                          <SelectItem key={s} value={s}>
-                            {s}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2 p-3 bg-slate-50 border border-slate-100 rounded-xl">
-                  <input
-                    type="checkbox"
-                    id="contactIsPrimary"
-                    checked={contactIsPrimary}
-                    onChange={(e) => setContactIsPrimary(e.target.checked)}
-                    className="h-4 w-4 rounded text-primary focus:ring-primary border-slate-300"
-                  />
-                  <Label htmlFor="contactIsPrimary" className="cursor-pointer text-sm text-slate-900 font-semibold">
-                    Set as Primary Account Contact
-                  </Label>
-                </div>
-
-                <div className="space-y-2">
-                  <Label className="font-semibold text-slate-700">Notes / Professional Bio</Label>
-                  <textarea
-                    value={contactNotes}
-                    onChange={(e) => setContactNotes(e.target.value)}
-                    placeholder="E.g. Prefers email contact, key decision maker, intro via mutual connections."
-                    className="w-full min-h-[80px] border border-slate-200 rounded-lg p-3 text-sm focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary font-sans"
-                  />
-                </div>
+            <form onSubmit={handleContactSubmit} className="space-y-4">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <Field label="First name" htmlFor="ct-first">
+                  <Input id="ct-first" value={contactFirst} onChange={(e) => setContactFirst(e.target.value)} placeholder="Natasha" />
+                </Field>
+                <Field label="Last name" htmlFor="ct-last">
+                  <Input id="ct-last" value={contactLast} onChange={(e) => setContactLast(e.target.value)} placeholder="Lungu" />
+                </Field>
               </div>
 
-              <DialogFooter className="px-8 py-4 border-t border-slate-100 bg-slate-50 flex justify-end gap-3">
-                <Button type="button" variant="outline" onClick={() => setIsContactOpen(false)} className="h-10 rounded-lg">
+              <Field label="Email address (required)" htmlFor="ct-email">
+                <Input id="ct-email" type="email" value={contactEmail} onChange={(e) => setContactEmail(e.target.value)} placeholder="name@company.co.zm" required />
+              </Field>
+
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <Field label="Job title" htmlFor="ct-job">
+                  <Input id="ct-job" value={contactJob} onChange={(e) => setContactJob(e.target.value)} placeholder="Head of IT" />
+                </Field>
+                <Field label="Department" htmlFor="ct-dept">
+                  <Input id="ct-dept" value={contactDept} onChange={(e) => setContactDept(e.target.value)} placeholder="Procurement" />
+                </Field>
+              </div>
+
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <Field label="Work phone" htmlFor="ct-phone">
+                  <Input id="ct-phone" value={contactPhone} onChange={(e) => setContactPhone(e.target.value)} placeholder="+260 21 123 4567" />
+                </Field>
+                <Field label="Mobile phone" htmlFor="ct-mobile">
+                  <Input id="ct-mobile" value={contactMobile} onChange={(e) => setContactMobile(e.target.value)} placeholder="+260 97 123 4567" />
+                </Field>
+              </div>
+
+              <Field label="LinkedIn URL" htmlFor="ct-linkedin">
+                <Input id="ct-linkedin" value={contactLinkedIn} onChange={(e) => setContactLinkedIn(e.target.value)} placeholder="https://linkedin.com/in/username" />
+              </Field>
+
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                <Field label="Seniority" htmlFor="ct-seniority">
+                  <Select value={contactSeniority} onValueChange={(v) => setContactSeniority(v as Seniority)}>
+                    <SelectTrigger id="ct-seniority">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {SENIORITIES.map((s) => (
+                        <SelectItem key={s} value={s}>
+                          {SENIORITY_LABEL[s]}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </Field>
+                <Field label="Buying role" htmlFor="ct-role">
+                  <Select value={contactBuyingRole} onValueChange={(v) => setContactBuyingRole(v as BuyingRole)}>
+                    <SelectTrigger id="ct-role">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {BUYING_ROLES.map((r) => (
+                        <SelectItem key={r} value={r}>
+                          {enumLabel(r)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </Field>
+                <Field label="Status" htmlFor="ct-status">
+                  <Select value={contactStatus} onValueChange={(v) => setContactStatus(v as Status)}>
+                    <SelectTrigger id="ct-status">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {STATUS_OPTIONS.map((s) => (
+                        <SelectItem key={s} value={s}>
+                          {enumLabel(s)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </Field>
+              </div>
+
+              <div className="flex items-center gap-2 rounded-md bg-field p-3">
+                <Checkbox id="contactIsPrimary" checked={contactIsPrimary} onCheckedChange={(v) => setContactIsPrimary(v === true)} />
+                <Label htmlFor="contactIsPrimary" className="cursor-pointer text-sm font-semibold text-text-primary">
+                  Set as the primary account contact
+                </Label>
+              </div>
+
+              <Field label="Notes" htmlFor="ct-notes">
+                <Textarea id="ct-notes" rows={3} value={contactNotes} onChange={(e) => setContactNotes(e.target.value)} placeholder="Prefers email. Key decision maker." />
+              </Field>
+
+              <DialogFooter className="gap-2">
+                <Button type="button" variant="secondary" onClick={() => setIsContactOpen(false)}>
                   Cancel
                 </Button>
-                <Button
-                  type="submit"
-                  disabled={isContactSubmitting}
-                  className="h-10 bg-primary text-white hover:bg-primary/95 rounded-lg px-5"
-                >
+                <Button type="submit" disabled={isContactSubmitting}>
                   {isContactSubmitting ? (
                     <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Saving...
+                      <Loader2 className="animate-spin" />
+                      Saving…
                     </>
                   ) : editingContact ? (
-                    "Save Contact"
+                    "Save contact"
                   ) : (
-                    "Add Contact"
+                    "Add contact"
                   )}
                 </Button>
               </DialogFooter>
@@ -922,85 +735,55 @@ export function AccountDetail() {
 
         {/* Dialog for Business Unit Create/Edit */}
         <Dialog open={isBUOpen} onOpenChange={() => setIsBUOpen(false)}>
-          <DialogContent className="max-w-2xl bg-white p-0 overflow-hidden border-none shadow-2xl rounded-2xl">
-            <DialogHeader className="px-8 py-6 border-b border-slate-100">
-              <DialogTitle className="font-display font-bold text-xl text-slate-900">
-                {editingBU ? `Edit Business Unit` : "Register Business Unit Segment"}
-              </DialogTitle>
-              <p className="text-slate-500 text-xs mt-1">
-                Delineate divisions, subsidiaries, or regions for key account mapping.
-              </p>
+          <DialogContent className="max-h-[92vh] w-[calc(100%-1rem)] max-w-2xl overflow-y-auto p-4 sm:p-6">
+            <DialogHeader>
+              <DialogTitle>{editingBU ? "Edit business unit" : "Add a business unit"}</DialogTitle>
+              <DialogDescription>A division, subsidiary or region of this account.</DialogDescription>
             </DialogHeader>
 
-            <form onSubmit={handleBUSubmit}>
-              <div className="p-8 space-y-5 overflow-y-auto max-h-[60vh]">
-                <div className="space-y-2">
-                  <Label className="font-semibold text-slate-700">Business Unit Name *</Label>
-                  <Input
-                    value={buName}
-                    onChange={(e) => setBuName(e.target.value)}
-                    placeholder="e.g. Acme EMEA Division"
-                    className="h-10 border-slate-200 rounded-lg"
-                    required
-                  />
-                </div>
+            <form onSubmit={handleBUSubmit} className="space-y-4">
+              <Field label="Business unit name (required)" htmlFor="bu-name">
+                <Input id="bu-name" value={buName} onChange={(e) => setBuName(e.target.value)} placeholder="Copperbelt division" required />
+              </Field>
 
-                <div className="space-y-2">
-                  <Label className="font-semibold text-slate-700">Region / Territory</Label>
-                  <Input
-                    value={buRegion}
-                    onChange={(e) => setBuRegion(e.target.value)}
-                    placeholder="e.g. Europe, Middle East & Africa"
-                    className="h-10 border-slate-200 rounded-lg"
-                  />
-                </div>
+              <Field label="Region or territory" htmlFor="bu-region">
+                <Input id="bu-region" value={buRegion} onChange={(e) => setBuRegion(e.target.value)} placeholder="Copperbelt" />
+              </Field>
 
-                <div className="space-y-2">
-                  <Label className="font-semibold text-slate-700">Division Head (Select from Account Contacts)</Label>
-                  <Select value={buHeadContactId} onValueChange={setBuHeadContactId}>
-                    <SelectTrigger className="h-10 border-slate-200 bg-white rounded-lg">
-                      <SelectValue placeholder="Assign Head Contact" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="">Unassigned</SelectItem>
-                      {account.contacts?.map((c) => (
-                        <SelectItem key={c.id} value={c.id}>
-                          {c.first_name || c.last_name ? `${c.first_name || ""} ${c.last_name || ""}` : c.email} ({c.job_title || "No Title"})
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+              <Field label="Head contact (from this account's contacts)" htmlFor="bu-head">
+                <Select value={buHeadContactId || UNASSIGNED} onValueChange={(v) => setBuHeadContactId(v === UNASSIGNED ? "" : v)}>
+                  <SelectTrigger id="bu-head">
+                    <SelectValue placeholder="Unassigned" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={UNASSIGNED}>Unassigned</SelectItem>
+                    {account.contacts?.map((c) => (
+                      <SelectItem key={c.id} value={c.id}>
+                        {c.first_name || c.last_name ? `${c.first_name || ""} ${c.last_name || ""}` : c.email} ({c.job_title || "No title"})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </Field>
 
-                <div className="space-y-2">
-                  <Label className="font-semibold text-slate-700">Description</Label>
-                  <textarea
-                    value={buDescription}
-                    onChange={(e) => setBuDescription(e.target.value)}
-                    placeholder="Enter division operations details, size, and notes."
-                    className="w-full min-h-[100px] border border-slate-200 rounded-lg p-3 text-sm focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary font-sans"
-                  />
-                </div>
-              </div>
+              <Field label="Description" htmlFor="bu-description">
+                <Textarea id="bu-description" rows={4} value={buDescription} onChange={(e) => setBuDescription(e.target.value)} placeholder="What the unit does, its size and notes" />
+              </Field>
 
-              <DialogFooter className="px-8 py-4 border-t border-slate-100 bg-slate-50 flex justify-end gap-3">
-                <Button type="button" variant="outline" onClick={() => setIsBUOpen(false)} className="h-10 rounded-lg">
+              <DialogFooter className="gap-2">
+                <Button type="button" variant="secondary" onClick={() => setIsBUOpen(false)}>
                   Cancel
                 </Button>
-                <Button
-                  type="submit"
-                  disabled={isBUSubmitting}
-                  className="h-10 bg-primary text-white hover:bg-primary/95 rounded-lg px-5"
-                >
+                <Button type="submit" disabled={isBUSubmitting}>
                   {isBUSubmitting ? (
                     <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Saving...
+                      <Loader2 className="animate-spin" />
+                      Saving…
                     </>
                   ) : editingBU ? (
-                    "Save Business Unit"
+                    "Save business unit"
                   ) : (
-                    "Create Business Unit"
+                    "Add business unit"
                   )}
                 </Button>
               </DialogFooter>
@@ -1016,12 +799,13 @@ export function AccountDetail() {
 interface FieldViewProps {
   label: string;
   value?: string | number | null;
+  mono?: boolean;
 }
-function FieldView({ label, value }: FieldViewProps) {
+function FieldView({ label, value, mono }: FieldViewProps) {
   return (
-    <div className="font-sans text-sm">
-      <span className="text-slate-400 block font-semibold text-xs uppercase tracking-wider mb-0.5">{label}</span>
-      <span className="text-slate-900 font-medium">{value || "—"}</span>
+    <div className="min-w-0 text-sm">
+      <dt className="mb-0.5 text-xs font-medium text-text-muted">{label}</dt>
+      <dd className={value ? `break-words text-text-primary ${mono ? "font-mono text-[13px]" : ""}` : "text-text-muted"}>{value || "Not recorded"}</dd>
     </div>
   );
 }
@@ -1033,13 +817,11 @@ interface SidebarFieldViewProps {
 }
 function SidebarFieldView({ label, value, icon }: SidebarFieldViewProps) {
   return (
-    <div className="flex items-start gap-2.5 text-sm font-sans">
-      <div className="mt-1 flex-shrink-0">{icon}</div>
-      <div className="flex-1 min-w-0">
-        <span className="text-slate-400 block font-semibold text-xs uppercase tracking-wider leading-none mb-1">
-          {label}
-        </span>
-        <span className="text-slate-900 font-semibold truncate block">{value}</span>
+    <div className="flex items-start gap-3 text-sm">
+      <span className="grid h-8 w-8 shrink-0 place-items-center rounded-sm bg-surface-2 text-text-secondary">{icon}</span>
+      <div className="min-w-0 flex-1">
+        <dt className="text-xs font-medium text-text-muted">{label}</dt>
+        <dd className="break-words font-semibold text-text-primary">{value}</dd>
       </div>
     </div>
   );

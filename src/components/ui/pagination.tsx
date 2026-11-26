@@ -1,5 +1,5 @@
 import * as React from "react";
-import { ChevronLeft, ChevronRight, MoreHorizontal } from "lucide-react";
+import { ChevronLeft, ChevronRight, MoreHorizontal } from "@/components/icons";
 
 import { cn } from "@/lib/utils";
 import { type ButtonProps, buttonVariants } from "@/components/ui/button";
@@ -50,9 +50,11 @@ const PaginationLink = ({
     aria-current={isActive ? "page" : undefined}
     className={cn(
       buttonVariants({
-        variant: isActive ? "outline" : "ghost",
+        variant: isActive ? "soft" : "ghost",
         size,
       }),
+      "cursor-pointer",
+      !isActive && "text-text-secondary hover:text-text-primary",
       className
     )}
     {...props}
@@ -98,7 +100,7 @@ const PaginationEllipsis = ({
 }: React.ComponentProps<"span">) => (
   <span
     aria-hidden
-    className={cn("flex h-9 w-9 items-center justify-center", className)}
+    className={cn("flex h-9 w-9 items-center justify-center text-text-muted", className)}
     {...props}
   >
     <MoreHorizontal className="h-4 w-4" />

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Loader2, Plus, Trash2 } from "lucide-react";
+import { Loader2, Plus, Trash2 } from "@/components/icons";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -8,7 +8,7 @@ import { createCompany, updateCompany, withDuplicateConfirm, type CompanyPayload
 import type { Company, MatchResult, ProfileMeta, Site } from "@/types/profile";
 import { DuplicatePanel } from "./DuplicatePanel";
 import { EntityPicker } from "./EntityPicker";
-import { Field, SelectField, SensitiveField } from "./formParts";
+import { Field, FormError, SelectField, SensitiveField } from "./formParts";
 
 interface Form {
   name: string;
@@ -196,11 +196,11 @@ export function CompanyFormDialog({
             <SensitiveField id="cf-email" label="Email" type="email" value={form.email} onChange={set("email")} masked={masked} hasSavedValue={Boolean(company?.email)} />
           </div>
 
-          <div className="space-y-2 rounded-lg border border-line p-3">
+          <div className="space-y-2 rounded-md border border-line p-3">
             <div className="flex items-center justify-between gap-2">
-              <p className="text-sm font-medium text-text-primary">Sites and locations</p>
-              <Button type="button" variant="outline" size="sm" onClick={() => setSites((s) => [...s, emptySite()])}>
-                <Plus className="h-4 w-4" /> Add site
+              <p className="text-sm font-semibold text-text-primary">Sites and locations</p>
+              <Button type="button" variant="secondary" size="sm" onClick={() => setSites((s) => [...s, emptySite()])}>
+                <Plus /> Add site
               </Button>
             </div>
             {sites.length === 0 && <p className="text-sm text-text-muted">No extra sites recorded.</p>}
@@ -210,17 +210,17 @@ export function CompanyFormDialog({
                 <Input aria-label={`Site ${i + 1} address`} placeholder="Address" value={s.address} onChange={(e) => setSite(i, "address", e.target.value)} />
                 <Input aria-label={`Site ${i + 1} district`} placeholder="District" value={s.district} onChange={(e) => setSite(i, "district", e.target.value)} />
                 <Button type="button" variant="ghost" size="icon" aria-label={`Remove site ${i + 1}`} onClick={() => setSites((x) => x.filter((_, j) => j !== i))}>
-                  <Trash2 className="h-4 w-4" />
+                  <Trash2 />
                 </Button>
               </div>
             ))}
           </div>
 
-          <div className="space-y-2 rounded-lg border border-line p-3">
-            <p className="text-sm font-medium text-text-primary">Parent company</p>
+          <div className="space-y-2 rounded-md border border-line p-3">
+            <p className="text-sm font-semibold text-text-primary">Parent company</p>
             {parent ? (
               <div className="flex items-center justify-between gap-2 text-sm">
-                <span className="min-w-0 break-words font-medium">{parent.name}</span>
+                <span className="min-w-0 break-words font-semibold">{parent.name}</span>
                 <Button type="button" variant="ghost" size="sm" onClick={() => setParent(null)}>
                   Remove
                 </Button>
@@ -235,17 +235,13 @@ export function CompanyFormDialog({
           <SensitiveField id="cf-notes" label="Other notes" multiline value={form.notes} onChange={set("notes")} masked={masked} hasSavedValue={Boolean(company?.notes)} />
 
           {dupes && <DuplicatePanel match={dupes} entity="company" busy={busy} onCreateAnyway={() => void submit(true)} />}
-          {error && (
-            <p role="alert" className="rounded-md bg-risk-tint px-3 py-2 text-sm text-risk">
-              {error}
-            </p>
-          )}
-          <DialogFooter className="gap-2 sm:gap-0">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+          {error && <FormError>{error}</FormError>}
+          <DialogFooter className="gap-2">
+            <Button type="button" variant="secondary" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
             <Button type="submit" disabled={busy || Boolean(dupes)}>
-              {busy && <Loader2 className="h-4 w-4 animate-spin" />}
+              {busy && <Loader2 className="animate-spin" />}
               {editing ? "Save changes" : "Add company"}
             </Button>
           </DialogFooter>

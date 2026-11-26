@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useCallback, useRef } from "react";
 import {
   Sheet,
   SheetContent,
@@ -9,7 +9,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
+import { StatusBadge } from "@/components/shared/StatusBadge";
 import { toast } from "sonner";
 import { chPost } from "@/lib/api/controlhub";
 import {
@@ -19,11 +19,9 @@ import {
   ChevronRight,
   ChevronLeft,
   Check,
-  Database,
-  Palette,
-  Shield,
   Upload,
-} from "lucide-react";
+  Loader2,
+} from "@/components/icons";
 import type { CreateTenantPayload, TenantType } from "@/types/tenant";
 
 const EMPTY_FORM: CreateTenantPayload = {
@@ -37,10 +35,12 @@ const EMPTY_FORM: CreateTenantPayload = {
 };
 
 const TENANT_TYPES: { value: TenantType; label: string; description: string }[] = [
-  { value: "higher-academic", label: "Higher Academic", description: "Universities & colleges" },
+  { value: "higher-academic", label: "Higher academic", description: "Universities and colleges" },
   { value: "parastetal",      label: "Parastatal",      description: "Government-linked bodies" },
-  { value: "company",         label: "Private Company", description: "Enterprises & SMEs" },
+  { value: "company",         label: "Private company", description: "Enterprises and SMEs" },
 ];
+
+const COLOR_SWATCH = "h-10 w-12 flex-shrink-0 cursor-pointer rounded-md border border-line-strong bg-surface-1 p-1";
 
 function getPasswordStrength(pwd: string): { score: number; label: string; color: string } {
   let s = 0;
@@ -49,10 +49,10 @@ function getPasswordStrength(pwd: string): { score: number; label: string; color
   if (/[A-Z]/.test(pwd))     s++;
   if (/[0-9]/.test(pwd))     s++;
   if (/[^A-Za-z0-9]/.test(pwd)) s++;
-  if (s <= 1) return { score: 20,  label: "Very weak",   color: "bg-red-500" };
-  if (s === 2) return { score: 40,  label: "Weak",        color: "bg-orange-500" };
-  if (s === 3) return { score: 60,  label: "Fair",        color: "bg-yellow-500" };
-  if (s === 4) return { score: 80,  label: "Strong",      color: "bg-blue-500" };
+  if (s <= 1) return { score: 20,  label: "Very weak",   color: "bg-risk" };
+  if (s === 2) return { score: 40,  label: "Weak",        color: "bg-risk" };
+  if (s === 3) return { score: 60,  label: "Fair",        color: "bg-caution" };
+  if (s === 4) return { score: 80,  label: "Strong",      color: "bg-positive" };
   return           { score: 100, label: "Very strong", color: "bg-positive" };
 }
 
@@ -120,9 +120,9 @@ export default function CreateTenantModal({ isOpen, onClose, onSuccess }: Create
 
   const validateStep1 = (): boolean => {
     const e: FieldErrors = {};
-    if (!formData.name.trim())    e.name    = "Organization name is required";
+    if (!formData.name.trim())    e.name    = "Enter the organisation name.";
     if (!/^#[0-9a-fA-F]{6}$/.test(formData.primary_color))
-      e.primary_color = "Must be a valid hex color (e.g. #0A7A67)";
+      e.primary_color = "Enter a hex colour, like #0A7A67.";
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -130,17 +130,17 @@ export default function CreateTenantModal({ isOpen, onClose, onSuccess }: Create
   const validateStep2 = (): boolean => {
     const e: FieldErrors = {};
     if (!formData.admin_email.trim())
-      e.admin_email = "Admin email is required";
+      e.admin_email = "Enter the admin email.";
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.admin_email))
-      e.admin_email = "Enter a valid email address";
+      e.admin_email = "Enter a full email address, like name@company.co.zm.";
     if (!formData.admin_password)
-      e.admin_password = "Password is required";
+      e.admin_password = "Enter a password.";
     else if (formData.admin_password.length < 8)
-      e.admin_password = "Password must be at least 8 characters";
+      e.admin_password = "Use at least 8 characters.";
     if (!confirmPassword)
-      e.confirm_password = "Please confirm your password";
+      e.confirm_password = "Confirm the password.";
     else if (formData.admin_password !== confirmPassword)
-      e.confirm_password = "Passwords do not match";
+      e.confirm_password = "Passwords do not match.";
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -166,11 +166,11 @@ export default function CreateTenantModal({ isOpen, onClose, onSuccess }: Create
       }
 
       await chPost("CH_CLIENT_ONBOARD", body);
-      toast.success(`"${formData.name}" has been provisioned successfully!`);
+      toast.success(`"${formData.name}" created`);
       handleClose();
       onSuccess();
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "Failed to register tenant. Please try again.";
+      const msg = err instanceof Error ? err.message : "Failed to register tenant. Try again.";
       toast.error(msg);
     } finally {
       setLoading(false);
@@ -184,30 +184,23 @@ export default function CreateTenantModal({ isOpen, onClose, onSuccess }: Create
 
   return (
     <Sheet open={isOpen} onOpenChange={handleClose}>
-      <SheetContent side="right" className="w-full sm:max-w-[500px] p-0 bg-white flex flex-col">
+      <SheetContent side="right" className="w-full sm:max-w-[500px] p-0 flex flex-col">
 
         {/* ── Header ── */}
-        <SheetHeader className="px-6 pt-8 pb-6 border-b border-gray-200 bg-white flex-shrink-0">
-          <div className="mb-6">
-            <SheetTitle className="text-gray-900 text-2xl font-bold leading-tight">
-              Register Tenant
-            </SheetTitle>
-            <SheetDescription className="text-gray-600 text-sm mt-2">
-              Set up a new organization in your ecosystem
-            </SheetDescription>
-          </div>
+        <SheetHeader className="px-6 pt-8 pb-4 border-b border-line flex-shrink-0">
+          <SheetTitle>Create tenant</SheetTitle>
+          <SheetDescription>
+            Set up a new organisation.
+          </SheetDescription>
 
-          {/* Progress Bar - Refined */}
+          {/* Progress bar */}
           <div className="pt-2">
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-medium text-gray-700">
-                Step {step} of 2
-              </span>
-              <span className="text-xs text-gray-500">{step === 1 ? '50' : '100'}%</span>
-            </div>
-            <div className="h-1 bg-gray-100 rounded-full overflow-hidden">
+            <p className="mb-2 text-xs text-text-muted">
+              Step <span className="font-mono">{step}</span> of <span className="font-mono">2</span>
+            </p>
+            <div className="h-1.5 bg-surface-2 rounded-pill overflow-hidden" aria-hidden="true">
               <div
-                className="h-full bg-ch-primary transition-all duration-300"
+                className="h-full rounded-pill bg-signal transition-all duration-300"
                 style={{ width: `${step === 1 ? 50 : 100}%` }}
               />
             </div>
@@ -216,64 +209,59 @@ export default function CreateTenantModal({ isOpen, onClose, onSuccess }: Create
 
         {/* ── Body ── */}
         <form id="create-tenant-form" onSubmit={handleSubmit} className="flex-1 overflow-y-auto">
-          <div className="px-6 py-8 space-y-6">
+          <div className="px-6 py-6 space-y-5">
 
-            {/* ════ STEP 1 — Organization ════ */}
+            {/* ════ STEP 1: Organisation ════ */}
             {step === 1 && (
               <>
                 {/* Org name */}
-                <div className="space-y-2.5">
-                  <Label htmlFor="org-name" className="text-sm font-semibold text-gray-900">
-                    Organization Name<span className="text-red-500 ml-1">*</span>
-                  </Label>
+                <div className="space-y-1.5">
+                  <Label htmlFor="org-name">Organisation name</Label>
                   <Input
                     id="org-name"
-                    placeholder="e.g. University of Southern Africa"
+                    placeholder="Zambezi Logistics Ltd"
                     value={formData.name}
                     onChange={(e) => handleNameChange(e.target.value)}
-                    className={`border-gray-200 rounded-lg ${errors.name ? "border-red-400 focus-visible:ring-red-400" : "focus-visible:ring-ch-primary"}`}
+                    aria-invalid={!!errors.name}
                     autoFocus
                   />
-                  {errors.name && <p className="text-xs text-red-500 font-medium">{errors.name}</p>}
+                  {errors.name && <p className="text-xs text-risk">{errors.name}</p>}
                 </div>
 
-                {/* Org type — card selection */}
-                <div className="space-y-2.5">
-                  <Label className="text-sm font-semibold text-gray-900">
-                    Organization Type<span className="text-red-500 ml-1">*</span>
-                  </Label>
-                  <div className="grid grid-cols-3 gap-2">
+                {/* Org type: card selection */}
+                <div className="space-y-1.5">
+                  <Label>Organisation type</Label>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                     {TENANT_TYPES.map((t) => (
                       <button
                         key={t.value}
                         type="button"
+                        aria-pressed={formData.type === t.value}
                         onClick={() => set("type", t.value)}
-                        className={`rounded-lg border p-3 text-left transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-ch-primary ${
+                        className={`rounded-md border p-3 text-left transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-focus ${
                           formData.type === t.value
-                            ? "border-ch-primary bg-ch-primary/5 shadow-sm"
-                            : "border-gray-200 bg-white hover:border-gray-300"
+                            ? "border-signal bg-signal-tint"
+                            : "border-line bg-surface-1 hover:bg-surface-2"
                         }`}
                       >
-                        <p className="text-sm font-medium leading-tight text-gray-900">{t.label}</p>
-                        <p className="text-xs text-gray-500 mt-1 leading-snug">{t.description}</p>
+                        <p className="text-sm font-semibold leading-tight text-text-primary">{t.label}</p>
+                        <p className="text-xs text-text-muted mt-1 leading-snug">{t.description}</p>
                       </button>
                     ))}
                   </div>
                 </div>
 
                 {/* Brand color */}
-                <div className="space-y-2.5">
-                  <Label htmlFor="brand-color-text" className="text-sm font-semibold text-gray-900">
-                    Brand Color
-                  </Label>
-                  <div className="flex items-center gap-2.5">
+                <div className="space-y-1.5">
+                  <Label htmlFor="brand-color-text">Brand colour</Label>
+                  <div className="flex items-center gap-2">
                     <input
                       id="brand-color-picker"
                       type="color"
-                      aria-label="Pick brand color"
+                      aria-label="Pick brand colour"
                       value={validColor ? formData.primary_color : "#0A7A67"}
                       onChange={(e) => set("primary_color", e.target.value)}
-                      className="h-11 w-14 rounded-lg border border-gray-200 cursor-pointer p-1 bg-white flex-shrink-0 shadow-sm hover:shadow-md transition-shadow"
+                      className={COLOR_SWATCH}
                     />
                     <Input
                       id="brand-color-text"
@@ -281,67 +269,71 @@ export default function CreateTenantModal({ isOpen, onClose, onSuccess }: Create
                       placeholder="#0A7A67"
                       maxLength={7}
                       onChange={(e) => set("primary_color", e.target.value)}
-                      className="font-mono text-sm border-gray-200 rounded-lg"
+                      aria-invalid={!!errors.primary_color}
+                      className="font-mono"
                     />
+                    {/* White label previews text on the tenant's own colour */}
                     <div
-                      className="h-11 w-20 flex-shrink-0 rounded-lg flex items-center justify-center text-xs font-semibold text-white shadow-sm transition-all"
+                      className="h-10 w-20 flex-shrink-0 rounded-md flex items-center justify-center text-xs font-semibold text-white"
                       style={{ backgroundColor: validColor ? formData.primary_color : "#0A7A67" }}
                     >
                       Preview
                     </div>
                   </div>
-                  {errors.primary_color && <p className="text-xs text-red-500 font-medium">{errors.primary_color}</p>}
+                  {errors.primary_color && <p className="text-xs text-risk">{errors.primary_color}</p>}
                 </div>
 
                 {/* Secondary & Accent Colors */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2.5">
-                    <Label className="text-sm font-semibold text-gray-900">Secondary Color</Label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="secondary-color-text">Secondary colour</Label>
                     <div className="flex items-center gap-2">
                       <input
                         type="color"
-                        aria-label="Pick secondary color"
+                        aria-label="Pick secondary colour"
                         value={formData.secondary_color}
                         onChange={(e) => set("secondary_color", e.target.value)}
-                        className="h-10 w-12 rounded-lg border border-gray-200 cursor-pointer p-1 bg-white flex-shrink-0"
+                        className={COLOR_SWATCH}
                       />
                       <Input
+                        id="secondary-color-text"
                         value={formData.secondary_color}
                         maxLength={7}
                         onChange={(e) => set("secondary_color", e.target.value)}
-                        className="font-mono text-sm border-gray-200 rounded-lg"
+                        className="font-mono"
                       />
                     </div>
                   </div>
-                  <div className="space-y-2.5">
-                    <Label className="text-sm font-semibold text-gray-900">Accent Color</Label>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="accent-color-text">Accent colour</Label>
                     <div className="flex items-center gap-2">
                       <input
                         type="color"
-                        aria-label="Pick accent color"
+                        aria-label="Pick accent colour"
                         value={formData.accent_color}
                         onChange={(e) => set("accent_color", e.target.value)}
-                        className="h-10 w-12 rounded-lg border border-gray-200 cursor-pointer p-1 bg-white flex-shrink-0"
+                        className={COLOR_SWATCH}
                       />
                       <Input
+                        id="accent-color-text"
                         value={formData.accent_color}
                         maxLength={7}
                         onChange={(e) => set("accent_color", e.target.value)}
-                        className="font-mono text-sm border-gray-200 rounded-lg"
+                        className="font-mono"
                       />
                     </div>
                   </div>
                 </div>
 
                 {/* Color Preview Strip */}
-                <div className="flex gap-2 rounded-lg overflow-hidden border border-gray-200 h-8">
+                <div className="flex gap-2 rounded-sm overflow-hidden border border-line h-8">
                   <div className="flex-1" style={{ backgroundColor: formData.primary_color }} title="Primary" />
                   <div className="flex-1" style={{ backgroundColor: formData.secondary_color }} title="Secondary" />
                   <div className="flex-1" style={{ backgroundColor: formData.accent_color }} title="Accent" />
                 </div>
-                <div className="space-y-2.5">
-                  <Label className="text-sm font-semibold text-gray-900">
-                    Logo <span className="text-gray-500 font-normal">(Optional)</span>
+                <div className="space-y-1.5">
+                  <Label>
+                    Logo <span className="text-text-muted font-normal">(optional)</span>
                   </Label>
                   <input
                     ref={fileInputRef}
@@ -352,15 +344,15 @@ export default function CreateTenantModal({ isOpen, onClose, onSuccess }: Create
                   />
                   <div 
                     onClick={() => fileInputRef.current?.click()}
-                    className="border-2 border-dashed border-gray-200 rounded-lg p-4 text-center cursor-pointer hover:border-gray-300 hover:bg-gray-50/50 transition-all"
+                    className="border border-dashed border-line-strong rounded-md bg-field p-4 text-center cursor-pointer hover:bg-field-hover transition-colors"
                   >
                     {logoPreview ? (
                       <div className="space-y-2">
                         <img src={logoPreview} alt="Logo preview" className="h-16 w-auto mx-auto object-contain" />
-                        <p className="text-xs text-gray-600">{logoFile?.name}</p>
-                        <Button 
+                        <p className="text-xs text-text-secondary">{logoFile?.name}</p>
+                        <Button
                           type="button"
-                          variant="outline" 
+                          variant="secondary"
                           size="sm"
                           onClick={(e) => {
                             e.stopPropagation();
@@ -368,17 +360,14 @@ export default function CreateTenantModal({ isOpen, onClose, onSuccess }: Create
                           }}
                           className="w-full"
                         >
-                          Change Logo
+                          Change logo
                         </Button>
                       </div>
                     ) : (
-                      <div className="space-y-2">
-                        <Upload className="h-6 w-6 text-gray-400 mx-auto" />
-                        <div>
-                          <p className="text-sm font-medium text-gray-700">Click to upload</p>
-                          <p className="text-xs text-gray-500">or drag and drop</p>
-                        </div>
-                      </div>
+                      <button type="button" className="w-full space-y-2">
+                        <Upload size={24} className="text-text-muted mx-auto" />
+                        <span className="block text-sm font-medium text-text-primary">Upload logo</span>
+                      </button>
                     )}
                   </div>
                 </div>
@@ -389,124 +378,113 @@ export default function CreateTenantModal({ isOpen, onClose, onSuccess }: Create
             {step === 2 && (
               <>
                 {/* Org summary card */}
-                <div className="rounded-lg border border-gray-200 bg-gray-50/60 p-4 mb-2">
-                  <p className="text-xs font-semibold text-gray-700 mb-3">Provisioning for</p>
+                <div className="rounded-md bg-field p-4">
+                  <p className="text-xs font-semibold text-text-muted mb-3">Creating</p>
                   <div className="flex items-center gap-3">
                     {logoPreview ? (
-                      <div className="h-10 w-10 rounded-lg flex items-center justify-center flex-shrink-0 shadow-sm bg-white border border-gray-200">
-                        <img src={logoPreview} alt="Org logo" className="h-8 w-8 object-contain" />
+                      <div className="h-10 w-10 rounded-sm flex items-center justify-center flex-shrink-0 bg-surface-1 border border-line">
+                        <img src={logoPreview} alt="Organisation logo" className="h-8 w-8 object-contain" />
                       </div>
                     ) : (
                       <div
-                        className="h-10 w-10 rounded-lg flex items-center justify-center flex-shrink-0 shadow-sm"
+                        className="h-10 w-10 rounded-sm flex items-center justify-center flex-shrink-0 text-white"
                         style={{ backgroundColor: validColor ? formData.primary_color : "#0A7A67" }}
                       >
-                        <Building2 className="h-5 w-5 text-white" />
+                        <Building2 size={20} />
                       </div>
                     )}
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm font-semibold truncate text-gray-900">{formData.name}</p>
+                      <p className="text-sm font-semibold truncate text-text-primary">{formData.name}</p>
                     </div>
-                    <Badge variant="secondary" className="flex-shrink-0 text-xs capitalize bg-gray-200 text-gray-700">
-                      {selectedType?.label}
-                    </Badge>
+                    <StatusBadge tone="neutral" label={selectedType?.label} className="flex-shrink-0" />
                   </div>
                 </div>
 
                 {/* Admin email */}
-                <div className="space-y-2.5 pt-2">
-                  <Label htmlFor="admin-email" className="text-sm font-semibold text-gray-900">
-                    Admin Email<span className="text-red-500 ml-1">*</span>
-                  </Label>
+                <div className="space-y-1.5">
+                  <Label htmlFor="admin-email">Admin email</Label>
                   <Input
                     id="admin-email"
                     type="email"
-                    placeholder="admin@organization.com"
+                    placeholder="name@company.co.zm"
                     value={formData.admin_email}
                     onChange={(e) => { set("admin_email", e.target.value); }}
-                    className={`border-gray-200 rounded-lg ${errors.admin_email ? "border-red-400 focus-visible:ring-red-400" : "focus-visible:ring-ch-primary"}`}
+                    aria-invalid={!!errors.admin_email}
                     autoFocus
                   />
-                  {errors.admin_email && <p className="text-xs text-red-500 font-medium">{errors.admin_email}</p>}
+                  {errors.admin_email && <p className="text-xs text-risk">{errors.admin_email}</p>}
                 </div>
 
                 {/* Password */}
-                <div className="space-y-2.5">
-                  <Label htmlFor="admin-password" className="text-sm font-semibold text-gray-900">
-                    Password<span className="text-red-500 ml-1">*</span>
-                  </Label>
+                <div className="space-y-1.5">
+                  <Label htmlFor="admin-password">Password</Label>
                   <div className="relative">
                     <Input
                       id="admin-password"
                       type={showPassword ? "text" : "password"}
-                      placeholder="Min. 8 characters"
                       value={formData.admin_password}
                       onChange={(e) => set("admin_password", e.target.value)}
-                      className={`pr-10 border-gray-200 rounded-lg ${errors.admin_password ? "border-red-400 focus-visible:ring-red-400" : "focus-visible:ring-ch-primary"}`}
+                      aria-invalid={!!errors.admin_password}
+                      className="pr-10"
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword((v) => !v)}
                       tabIndex={-1}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary transition-colors"
                       aria-label={showPassword ? "Hide password" : "Show password"}
                     >
-                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                     </button>
                   </div>
-                  {errors.admin_password && <p className="text-xs text-red-500 font-medium">{errors.admin_password}</p>}
+                  {errors.admin_password && <p className="text-xs text-risk">{errors.admin_password}</p>}
+                  {!pwdStrength && !errors.admin_password && (
+                    <p className="text-xs text-text-muted">At least 8 characters.</p>
+                  )}
                   {pwdStrength && !errors.admin_password && (
                     <div className="space-y-1.5 pt-0.5">
-                      <div className="h-1 rounded-full bg-gray-200 overflow-hidden">
+                      <div className="h-1.5 rounded-pill bg-surface-2 overflow-hidden">
                         <div
-                          className={`h-full rounded-full transition-all duration-300 ${pwdStrength.color}`}
+                          className={`h-full rounded-pill transition-all duration-300 ${pwdStrength.color}`}
                           style={{ width: `${pwdStrength.score}%` }}
                         />
                       </div>
-                      <p className="text-xs text-gray-600">
-                        Strength: <span className="font-medium">{pwdStrength.label}</span>
+                      <p className="text-xs text-text-secondary">
+                        Strength: <span className="font-semibold">{pwdStrength.label}</span>
                       </p>
                     </div>
                   )}
                 </div>
 
                 {/* Confirm password */}
-                <div className="space-y-2.5">
-                  <Label htmlFor="confirm-password" className="text-sm font-semibold text-gray-900">
-                    Confirm Password<span className="text-red-500 ml-1">*</span>
-                  </Label>
+                <div className="space-y-1.5">
+                  <Label htmlFor="confirm-password">Confirm password</Label>
                   <div className="relative">
                     <Input
                       id="confirm-password"
                       type={showConfirm ? "text" : "password"}
-                      placeholder="Repeat password"
                       value={confirmPassword}
                       onChange={(e) => {
                         setConfirmPassword(e.target.value);
                         setErrors((prev) => ({ ...prev, confirm_password: undefined }));
                       }}
-                      className={`pr-10 border-gray-200 rounded-lg ${
-                        passwordsMatch
-                          ? "border-positive focus-visible:ring-positive"
-                          : errors.confirm_password
-                          ? "border-red-400 focus-visible:ring-red-400"
-                          : "focus-visible:ring-ch-primary"
-                      }`}
+                      aria-invalid={!!errors.confirm_password}
+                      className="pr-10"
                     />
                     <button
                       type="button"
                       onClick={() => setShowConfirm((v) => !v)}
                       tabIndex={-1}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary transition-colors"
                       aria-label={showConfirm ? "Hide password" : "Show password"}
                     >
-                      {showConfirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      {showConfirm ? <EyeOff size={16} /> : <Eye size={16} />}
                     </button>
                   </div>
-                  {errors.confirm_password && <p className="text-xs text-red-500 font-medium">{errors.confirm_password}</p>}
+                  {errors.confirm_password && <p className="text-xs text-risk">{errors.confirm_password}</p>}
                   {passwordsMatch && !errors.confirm_password && (
                     <p className="text-xs text-positive flex items-center gap-1 font-medium">
-                      <Check className="h-3 w-3" /> Passwords match
+                      <Check size={14} /> Passwords match
                     </p>
                   )}
                 </div>
@@ -516,43 +494,40 @@ export default function CreateTenantModal({ isOpen, onClose, onSuccess }: Create
         </form>
 
         {/* ── Footer ── */}
-        <div className="px-6 py-4 border-t border-gray-200 bg-white flex items-center justify-between gap-3 flex-shrink-0">
+        <div className="px-6 py-4 border-t border-line flex items-center justify-between gap-3 flex-shrink-0">
           {step === 1 ? (
             <>
-              <Button type="button" variant="outline" onClick={handleClose} className="text-gray-700 border-gray-200">
+              <Button type="button" variant="secondary" onClick={handleClose}>
                 Cancel
               </Button>
               <Button
                 type="submit"
                 form="create-tenant-form"
-                className="bg-ch-primary text-white hover:bg-ch-primary/90"
               >
-                Next <ChevronRight className="h-4 w-4 ml-1" />
+                Continue <ChevronRight />
               </Button>
             </>
           ) : (
             <>
               <Button
                 type="button"
-                variant="outline"
+                variant="secondary"
                 onClick={() => { setErrors({}); setStep(1); }}
-                className="text-gray-700 border-gray-200"
               >
-                <ChevronLeft className="h-4 w-4 mr-1" /> Back
+                <ChevronLeft /> Back
               </Button>
               <Button
                 type="submit"
                 form="create-tenant-form"
-                className="bg-ch-primary text-white hover:bg-ch-primary/90 min-w-[140px]"
                 disabled={loading}
               >
                 {loading ? (
-                  <span className="flex items-center gap-2">
-                    <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                    Provisioning...
-                  </span>
+                  <>
+                    <Loader2 className="animate-spin" />
+                    Creating
+                  </>
                 ) : (
-                  "Provision Tenant"
+                  "Create tenant"
                 )}
               </Button>
             </>

@@ -18,7 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Loader2, PenLine, ArrowLeft, ArrowRight } from 'lucide-react';
+import { Loader2, PenLine, ArrowLeft, ArrowRight } from '@/components/icons';
 import { toast } from 'sonner';
 import { fetchData, fetchFileBuffer } from '@/lib/api/crud';
 import { requestSignature } from '@/lib/api/signatures';
@@ -88,7 +88,7 @@ export default function RequestSignatureModal({
   };
 
   const handleNextStep = () => {
-    if (!signerId) { toast.error('Please select a signer'); return; }
+    if (!signerId) { toast.error('Choose a signer first.'); return; }
     setStep(2);
     if (!pdfUrl) {
       setLoadingPdf(true);
@@ -108,8 +108,8 @@ export default function RequestSignatureModal({
   };
 
   const handleSubmit = async () => {
-    if (!field) { toast.error('Please place the signature field on the document'); return; }
-    if (!signerId) { toast.error('Please select a signer'); return; }
+    if (!field) { toast.error('Place the signature field on the document first.'); return; }
+    if (!signerId) { toast.error('Choose a signer first.'); return; }
     
     // Verify tenant context is still set
     const { useTenantStore } = await import('@/lib/store/tenantStore');
@@ -145,13 +145,10 @@ export default function RequestSignatureModal({
 
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v) handleClose(); }}>
-      <DialogContent className={`bg-white ${step === 2 ? 'max-w-3xl' : 'max-w-md'} max-h-[90vh] flex flex-col overflow-hidden`}>
+      <DialogContent className={`${step === 2 ? 'max-w-3xl' : 'max-w-[480px]'} flex max-h-[90vh] flex-col overflow-hidden`}>
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <PenLine className="h-5 w-5 text-primary" />
-            Request Signature
-            <span className="ml-auto text-xs font-normal text-gray-400">Step {step} of 2</span>
-          </DialogTitle>
+          <DialogTitle>Send document for signature</DialogTitle>
+          <p className="text-xs text-text-muted">Step <span className="font-mono">{step}</span> of <span className="font-mono">2</span></p>
           <DialogDescription>
             {step === 1
               ? <span>Choose who should sign <strong>{documentTitle}</strong>.</span>
@@ -162,16 +159,16 @@ export default function RequestSignatureModal({
         {step === 1 && (
           <div className="space-y-4 py-2 flex-1 overflow-y-auto">
             <div className="space-y-2">
-              <Label>Signer <span className="text-red-500">*</span></Label>
+              <Label>Signer (required)</Label>
               {loadingUsers ? (
-                <div className="flex items-center gap-2 text-sm text-gray-500 h-10">
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Loading users...
+                <div role="status" className="flex h-10 items-center gap-2 text-sm text-text-muted">
+                  <Loader2 size={16} className="animate-spin" />
+                  Loading people
                 </div>
               ) : (
                 <Select value={signerId} onValueChange={setSignerId}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a user to sign" />
+                  <SelectTrigger aria-label="Signer">
+                    <SelectValue placeholder="Choose who signs" />
                   </SelectTrigger>
                   <SelectContent>
                     {users.map((u) => (
@@ -188,7 +185,7 @@ export default function RequestSignatureModal({
               <Label>Message (optional)</Label>
               <Textarea
                 rows={2}
-                placeholder="Add a note for the signer..."
+                placeholder="Please sign before Friday"
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
               />
@@ -196,7 +193,7 @@ export default function RequestSignatureModal({
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Sign Order</Label>
+                <Label>Signing order</Label>
                 <Input
                   type="number"
                   min={1}
@@ -204,10 +201,10 @@ export default function RequestSignatureModal({
                   onChange={(e) => setSignOrder(e.target.value)}
                   placeholder="1"
                 />
-                <p className="text-xs text-gray-400">For sequential multi-signer flows</p>
+                <p className="text-xs text-text-muted">Used when several people sign in turn</p>
               </div>
               <div className="space-y-2">
-                <Label>Expires In (days)</Label>
+                <Label>Expires in (days)</Label>
                 <Input
                   type="number"
                   min={1}
@@ -223,9 +220,9 @@ export default function RequestSignatureModal({
         {step === 2 && (
           <div className="py-2 space-y-3 flex-1 min-h-0 overflow-y-auto">
             {loadingPdf ? (
-              <div className="flex items-center justify-center h-48 gap-2 text-gray-400">
-                <Loader2 className="h-5 w-5 animate-spin" />
-                <span className="text-sm">Loading document...</span>
+              <div role="status" className="flex h-48 items-center justify-center gap-2 text-text-muted">
+                <Loader2 size={20} className="animate-spin" />
+                <span className="text-sm">Loading document</span>
               </div>
             ) : pdfUrl ? (
               <PDFFieldPositioner
@@ -238,8 +235,8 @@ export default function RequestSignatureModal({
                   : 'Signature field'}
               />
             ) : (
-              <div className="flex items-center justify-center h-48 text-red-500 text-sm">
-                Could not load document preview.
+              <div role="alert" className="flex h-48 items-center justify-center text-sm text-risk">
+                Could not load the document preview. Go back and try again.
               </div>
             )}
           </div>
@@ -248,33 +245,31 @@ export default function RequestSignatureModal({
         <DialogFooter>
           {step === 1 ? (
             <>
-              <Button variant="outline" onClick={handleClose} disabled={isSubmitting}>
+              <Button variant="secondary" onClick={handleClose} disabled={isSubmitting}>
                 Cancel
               </Button>
               <Button
                 onClick={handleNextStep}
                 disabled={!signerId}
-                className="bg-primary  text-white"
               >
-                Next: Place Field
-                <ArrowRight className="ml-2 h-4 w-4" />
+                Place signature field
+                <ArrowRight />
               </Button>
             </>
           ) : (
             <>
-              <Button variant="outline" onClick={() => setStep(1)} disabled={isSubmitting}>
-                <ArrowLeft className="mr-2 h-4 w-4" />
+              <Button variant="secondary" onClick={() => setStep(1)} disabled={isSubmitting}>
+                <ArrowLeft />
                 Back
               </Button>
               <Button
                 onClick={handleSubmit}
                 disabled={isSubmitting || !field}
-                className="bg-primary  text-white"
               >
                 {isSubmitting ? (
-                  <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Sending...</>
+                  <><Loader2 className="animate-spin" />Sending</>
                 ) : (
-                  <><PenLine className="mr-2 h-4 w-4" />Send Request</>
+                  <><PenLine />Send for signature</>
                 )}
               </Button>
             </>

@@ -18,7 +18,10 @@ import {
   Settings,
   HelpCircle,
   Upload,
-} from 'lucide-react';
+  X,
+} from '@/components/icons';
+import { Button } from '@/components/ui/button';
+import { SectionCard } from '@/components/shared/SectionCard';
 
 interface ApprovalItem {
   id: string;
@@ -233,14 +236,14 @@ export function Dashboard({ departments = [], categories = [] }: DashboardProps)
   const shortcuts: Shortcut[] = [
     {
       id: 'documents',
-      label: 'All Documents',
+      label: 'All documents',
       icon: <FileText className="h-5 w-5" />,
       href: '/admin/documents',
       description: 'Browse all documents',
     },
     {
       id: 'search',
-      label: 'Advanced Search',
+      label: 'Advanced search',
       icon: <Search className="h-5 w-5" />,
       href: '/admin/documents?search=true',
       description: 'Advanced document search',
@@ -268,7 +271,7 @@ export function Dashboard({ departments = [], categories = [] }: DashboardProps)
     },
     {
       id: 'audit',
-      label: 'Audit Trail',
+      label: 'Audit trail',
       icon: <Lock className="h-5 w-5" />,
       href: '/admin/audit-trail',
       description: 'View audit logs',
@@ -285,82 +288,74 @@ export function Dashboard({ departments = [], categories = [] }: DashboardProps)
       label: 'Help',
       icon: <HelpCircle className="h-5 w-5" />,
       href: '/admin/help',
-      description: 'Help & documentation',
+      description: 'Help and documentation',
     },
   ];
 
   return (
-    <div className="min-h-screen bg-surface-0">
+    <div className="mx-auto flex w-full max-w-[1440px] flex-col gap-5">
       <DashboardHeader
         onUploadClick={() => setUploadModalOpen(true)}
         recentSearches={recentSearches}
         onSearch={handleSearch}
       />
 
-      <div className="px-6 sm:px-8 lg:px-10 py-10">
-        <div className="max-w-7xl mx-auto space-y-10">
-          {/* Inbox Section */}
-          <div className="animate-fade-in-up">
-            <InboxSection
-                approvals={approvals}
-                sharedDocuments={sharedDocuments}
-                isLoading={isLoading}
-                onApprove={(id) => console.log('Approve:', id)}
-                onReview={(id) => navigate(`/admin/approvals/${id}`)}
-                onDocumentClick={(id) => navigate(`/admin/documents/${id}`)}
-                onViewAll={(type) => {
-                  if (type === 'approvals') navigate('/admin/approvals');
-                  else navigate('/admin/documents?filter=shared');
-                }}
-              />
-          </div>
+      {/* Inbox */}
+      <InboxSection
+        approvals={approvals}
+        sharedDocuments={sharedDocuments}
+        isLoading={isLoading}
+        onApprove={(id) => console.log('Approve:', id)}
+        onReview={(id) => navigate(`/admin/approvals/${id}`)}
+        onDocumentClick={(id) => navigate(`/admin/documents/${id}`)}
+        onViewAll={(type) => {
+          if (type === 'approvals') navigate('/admin/approvals');
+          else navigate('/admin/documents?filter=shared');
+        }}
+      />
 
-          {/* Recent Activity */}
-          <div className="animate-fade-in-up" style={{ animationDelay: '100ms' }}>
-            <RecentActivityList
-              documents={recentDocuments}
-              isLoading={isLoading}
-              onDocumentClick={(id) => navigate(`/admin/documents/${id}`)}
-              onViewAll={() => navigate('/admin/documents?sort=recent')}
-            />
-          </div>
+      {/* Recent activity */}
+      <RecentActivityList
+        documents={recentDocuments}
+        isLoading={isLoading}
+        onDocumentClick={(id) => navigate(`/admin/documents/${id}`)}
+        onViewAll={() => navigate('/admin/documents?sort=recent')}
+      />
 
-          {/* Quick Shortcuts */}
-          <div className="animate-fade-in-up" style={{ animationDelay: '200ms' }}>
-            <div className="mb-6">
-              <h2 className="text-lg font-semibold text-slate-900 tracking-tight">Quick Shortcuts</h2>
-              <p className="text-sm text-slate-600 mt-1">Access key features instantly</p>
-            </div>
-            <QuickShortcutsGrid shortcuts={shortcuts} userRole={user?.role} />
-          </div>
-        </div>
-      </div>
+      {/* Shortcuts */}
+      <SectionCard title="Shortcuts">
+        <QuickShortcutsGrid shortcuts={shortcuts} userRole={user?.role} />
+      </SectionCard>
 
-      {/* Mobile Floating Action Button */}
-      <button
+      {/* Mobile floating action button */}
+      <Button
+        variant="secondary"
+        size="icon"
         onClick={() => setUploadModalOpen(true)}
-        className="fixed bottom-6 right-6 w-14 h-14 bg-primary hover:bg-primary/90 text-primary-foreground rounded-full shadow-premium-lg flex items-center justify-center z-40 lg:hidden transition-all hover:scale-110 active:scale-95"
+        className="fixed bottom-6 right-6 z-40 h-14 w-14 rounded-pill shadow-raised lg:hidden"
         aria-label="Upload a new document"
         title="Upload document"
       >
-        <Upload className="h-6 w-6" />
-      </button>
+        <Upload size={24} />
+      </Button>
 
-      {/* Upload Modal for Mobile */}
+      {/* Upload sheet for mobile */}
       {uploadModalOpen && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 lg:hidden flex items-end animate-fade-in-up">
-          <div className="w-full bg-white rounded-t-2xl p-6 max-h-[90vh] overflow-y-auto shadow-premium-xl">
-            <div className="flex justify-between items-center mb-6">
+        <div className="fixed inset-0 z-50 flex items-end bg-[rgba(4,12,20,.66)] lg:hidden">
+          <div className="max-h-[90vh] w-full overflow-y-auto rounded-t-lg bg-surface-1 p-6 shadow-overlay">
+            <div className="mb-6 flex items-center justify-between gap-3">
               <div>
-                <h2 className="text-xl font-semibold text-slate-900">Upload Document</h2>
-                <p className="text-sm text-slate-600 mt-1">Add new documents to your workspace</p>
+                <h2 className="text-xl font-semibold text-text-primary">Upload document</h2>
+                <p className="mt-1 text-sm text-text-secondary">Add a document to your workspace.</p>
               </div>
-              <button
+              <Button
+                variant="ghost"
+                size="icon"
                 onClick={() => setUploadModalOpen(false)}
-                className="text-slate-500 hover:text-slate-900 transition-colors p-2 hover:bg-slate-100 rounded-lg"
+                aria-label="Close upload"
               >
-                ✕
-              </button>
+                <X size={18} />
+              </Button>
             </div>
             <QuickUploadWidget
               onUpload={handleUpload}

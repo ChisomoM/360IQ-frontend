@@ -97,7 +97,7 @@ export const StickyScroll = ({
                         opacity: activeCard === index ? 1 : 0.3,
                       }}
                       transition={{ duration: 0.5 }}
-                      className="text-2xl font-bold text-gray-900"
+                      className="text-2xl font-semibold text-text-primary"
                     >
                       {item.title}
                     </motion.h2>
@@ -109,7 +109,7 @@ export const StickyScroll = ({
                         opacity: activeCard === index ? 1 : 0.3,
                       }}
                       transition={{ duration: 0.5 }}
-                      className="text-lg mt-10 max-w-sm text-gray-600"
+                      className="text-lg mt-10 max-w-sm text-text-secondary"
                     >
                       {item.description}
                     </motion.p>
@@ -130,7 +130,7 @@ export const StickyScroll = ({
                 transition={{ duration: 0.5, ease: "easeInOut" }}
                 style={{ background: backgroundGradient }}
                 className={cn(
-                  "h-[420px]  w-full overflow-hidden rounded-2xl shadow-2xl",
+                  "h-[420px]  w-full overflow-hidden rounded-lg border border-line shadow-card",
                   contentClassName,
                 )}
               >

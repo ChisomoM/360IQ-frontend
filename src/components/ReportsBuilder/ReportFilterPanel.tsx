@@ -1,15 +1,16 @@
 import React, { useMemo, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
 } from '@/components/ui/select';
-import { AlertCircle, Eye, RotateCcw } from 'lucide-react';
+import { AlertTriangle, CheckCircle, Eye, RotateCcw } from '@/components/icons';
+import { SectionCard } from '@/components/shared/SectionCard';
 import type { User } from '@/types/auth';
 
 interface FilterConfig {
@@ -111,23 +112,20 @@ export const ReportFilterPanel: React.FC<ReportFilterPanelProps> = ({
   const showLargeDatasetWarning = documentCount && documentCount > 50000;
 
   return (
-    <Card className="shadow-md border-gray-200">
-      <CardHeader>
-        <CardTitle>Configure Report Filters</CardTitle>
-        <CardDescription>
-          Apply filters to refine your report data. Your role automatically pre-fills relevant options.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-6">
+    <SectionCard title="Set report filters">
+      <div className="space-y-6">
+        <p className="text-sm text-text-secondary">
+          Filters narrow the report data. Your role fills in the relevant options.
+        </p>
+
         {/* Date Range Section */}
         <div>
-          <h4 className="text-sm font-semibold text-gray-900 mb-4">Date & Period</h4>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Start Date *
-              </label>
+          <h3 className="text-sm font-semibold text-text-primary mb-3">Date and period</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="report-start-date">Start date (required)</Label>
               <Input
+                id="report-start-date"
                 type="date"
                 value={filters.startDate}
                 onChange={(e) =>
@@ -136,11 +134,10 @@ export const ReportFilterPanel: React.FC<ReportFilterPanelProps> = ({
                 className="w-full"
               />
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                End Date *
-              </label>
+            <div className="space-y-1.5">
+              <Label htmlFor="report-end-date">End date (required)</Label>
               <Input
+                id="report-end-date"
                 type="date"
                 value={filters.endDate}
                 onChange={(e) =>
@@ -154,13 +151,11 @@ export const ReportFilterPanel: React.FC<ReportFilterPanelProps> = ({
 
         {/* Content Filters Section */}
         <div>
-          <h4 className="text-sm font-semibold text-gray-900 mb-4">Content Filters</h4>
+          <h3 className="text-sm font-semibold text-text-primary mb-3">Content filters</h3>
           <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Department
-              </label>
-              <Select 
+            <div className="space-y-1.5">
+              <Label htmlFor="report-department">Department</Label>
+              <Select
                 value={filters.department} 
                 onValueChange={(value) => {
                   onFilterChange({
@@ -170,36 +165,34 @@ export const ReportFilterPanel: React.FC<ReportFilterPanelProps> = ({
                   });
                 }}
               >
-                <SelectTrigger>
+                <SelectTrigger id="report-department">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Departments</SelectItem>
+                  <SelectItem value="all">All departments</SelectItem>
                   <SelectItem value="finance">Finance</SelectItem>
                   <SelectItem value="registry">Registry</SelectItem>
-                  <SelectItem value="hr">Human Resources</SelectItem>
+                  <SelectItem value="hr">Human resources</SelectItem>
                 </SelectContent>
               </Select>
-              <p className="text-xs text-gray-500 mt-1">
-                💡 Pre-filled based on your role
+              <p className="text-xs text-text-muted">
+                Filled in from your role
               </p>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Document Type
-              </label>
+            <div className="space-y-1.5">
+              <Label htmlFor="report-document-type">Document type</Label>
               <Select 
                 value={filters.documentType} 
                 onValueChange={(value) =>
                   onFilterChange({ ...filters, documentType: value })
                 }
               >
-                <SelectTrigger>
+                <SelectTrigger id="report-document-type">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Types</SelectItem>
+                  <SelectItem value="all">All types</SelectItem>
                   {availableDocumentTypes.map((type) => (
                     <SelectItem key={type} value={type.toLowerCase()}>
                       {type}
@@ -209,21 +202,19 @@ export const ReportFilterPanel: React.FC<ReportFilterPanelProps> = ({
               </Select>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Status
-              </label>
-              <Select 
+            <div className="space-y-1.5">
+              <Label htmlFor="report-status">Status</Label>
+              <Select
                 value={filters.status} 
                 onValueChange={(value) =>
                   onFilterChange({ ...filters, status: value })
                 }
               >
-                <SelectTrigger>
+                <SelectTrigger id="report-status">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Statuses</SelectItem>
+                  <SelectItem value="all">All statuses</SelectItem>
                   <SelectItem value="pending">Pending</SelectItem>
                   <SelectItem value="processing">Processing</SelectItem>
                   <SelectItem value="approved">Approved</SelectItem>
@@ -236,49 +227,48 @@ export const ReportFilterPanel: React.FC<ReportFilterPanelProps> = ({
 
         {/* Large Dataset Warning */}
         {showLargeDatasetWarning && (
-          <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg flex gap-3">
-            <AlertCircle className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
-            <div className="text-sm text-amber-700">
-              <p className="font-medium">Large dataset detected</p>
+          <div className="p-3 bg-caution-tint rounded-md flex gap-3 text-caution">
+            <AlertTriangle size={18} className="flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="text-sm font-semibold">Large result set</p>
               <p className="text-xs mt-1">
-                Your filters match {documentCount?.toLocaleString()} documents. Consider narrowing the date range or department filter for better performance.
+                Your filters match {documentCount?.toLocaleString()} documents. Narrow the date range or department to make the report faster.
               </p>
             </div>
           </div>
         )}
 
         {/* Actions */}
-        <div className="pt-4 border-t border-gray-200 flex gap-2">
-          <Button 
-            variant="outline" 
+        <div className="pt-4 border-t border-line flex flex-wrap gap-2">
+          <Button
+            variant="ghost"
             size="sm"
             onClick={handleReset}
-            className="gap-2"
           >
-            <RotateCcw className="h-4 w-4" />
-            Reset to Defaults
+            <RotateCcw size={16} />
+            Reset filters
           </Button>
           {onPreview && (
-            <Button 
-              variant="outline" 
+            <Button
+              variant="secondary"
               size="sm"
               onClick={onPreview}
               disabled={previewLoading}
-              className="gap-2"
             >
-              <Eye className="h-4 w-4" />
-              {previewLoading ? 'Loading...' : 'Preview Data'}
+              <Eye size={16} />
+              {previewLoading ? 'Loading' : 'Preview data'}
             </Button>
           )}
         </div>
 
         {/* Preview Info */}
         {documentCount !== undefined && !showLargeDatasetWarning && (
-          <div className="p-3 bg-blue-50 rounded-lg text-sm text-blue-700">
-            <p className="font-medium">✓ Matches {documentCount?.toLocaleString()} documents</p>
-          </div>
+          <p role="status" className="flex items-center gap-2 p-3 bg-positive-tint rounded-md text-sm text-positive">
+            <CheckCircle size={16} />
+            Matches {documentCount?.toLocaleString()} documents
+          </p>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </SectionCard>
   );
 };

@@ -1,9 +1,11 @@
 import { useAuth } from "@/lib/context/useAuth";
 import { Label } from "@radix-ui/react-label";
-import { Eye, EyeClosed, Loader2 } from "lucide-react";
+import { Loader2 } from "@/components/icons";
 import { useState } from "react";
+import { cn } from "@/lib/utils";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
+import { AUTH_FIELD, PasswordInput } from "./PasswordInput";
 // import { ForgotPasswordModal } from "./forgotPasswordModal";
 
 interface LoginFormProps {
@@ -13,7 +15,6 @@ interface LoginFormProps {
 export const LoginForm: React.FC<LoginFormProps> = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [see, setSee] = useState(false);
   // const [showForgotPassword, setShowForgotPassword] = useState(false);
 
   const { login, isLoading } = useAuth();
@@ -46,80 +47,55 @@ export const LoginForm: React.FC<LoginFormProps> = () => {
     <div className="w-full">
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="space-y-1.5">
-          <Label
-            htmlFor="email"
-            className="text-xs sm:text-sm font-medium text-gray-700"
-          >
-            Email Address
+          <Label htmlFor="email" className="block text-[13px] font-medium text-text-secondary">
+            Email address
           </Label>
           <Input
-            placeholder="admin@example.com"
+            placeholder="name@company.com"
             id="email"
             type="email"
+            autoComplete="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
-            className="w-full h-10 text-sm"
+            className={cn("w-full", AUTH_FIELD)}
             disabled={isLoading}
           />
         </div>
 
         <div className="space-y-1.5">
-          <Label
-            htmlFor="password"
-            className="text-xs sm:text-sm font-medium text-gray-700"
-          >
+          <Label htmlFor="password" className="block text-[13px] font-medium text-text-secondary">
             Password
           </Label>
-          <div className="relative">
-            <Input
-              placeholder="Enter your password"
-              id="password"
-              type={see ? "text" : "password"}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              className="w-full h-10 pr-10 text-sm"
-              disabled={isLoading}
-            />
-            <Button
-              className="absolute right-0 top-0 h-10 px-3 hover:bg-transparent"
-              variant="ghost"
-              type="button"
-              onClick={() => setSee(!see)}
-              tabIndex={-1}
-            >
-              {see ? (
-                <Eye className="h-4 w-4 text-gray-500" />
-              ) : (
-                <EyeClosed className="h-4 w-4 text-gray-500" />
-              )}
-            </Button>
-          </div>
+          <PasswordInput
+            placeholder="Enter your password"
+            id="password"
+            autoComplete="current-password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            disabled={isLoading}
+          />
         </div>
 
         <div className="flex justify-end">
           <button
             type="button"
             // onClick={() => setShowForgotPassword(true)}
-            className="text-xs sm:text-sm text-signal-text hover:text-signal-hover font-medium transition-colors duration-150 hover:underline"
+            className="text-[13px] font-medium text-signal-text transition-colors duration-150 hover:underline"
           >
             Forgot password?
           </button>
         </div>
 
-        <Button
-          type="submit"
-          className="w-full h-10 text-sm"
-          disabled={isLoading}
-        >
+        <Button type="submit" size="lg" className="w-full" disabled={isLoading}>
           {isLoading ? (
             <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Signing in...
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Signing in
             </>
           ) : (
-            "Sign In"
+            "Sign in"
           )}
         </Button>
       </form>

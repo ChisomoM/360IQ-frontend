@@ -1,25 +1,22 @@
 import React from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { 
-  TrendingUp, 
-  DollarSign, 
-  Users, 
-  Lock, 
+import {
+  TrendingUp,
+  DollarSign,
+  Users,
+  Lock,
   FileText,
-  Zap 
-} from 'lucide-react';
+  CheckCircle,
+} from '@/components/icons';
 import { hasPermission, PERMISSIONS } from '@/lib/permissions';
 import type { User } from '@/types/auth';
+import { cn } from '@/lib/utils';
 
 interface ReportTypeConfig {
   id: string;
   name: string;
   description: string;
   permission: string;
-  icon: React.ComponentType<{ className?: string }>;
-  color: string;
+  icon: React.ComponentType<{ className?: string; size?: number }>;
   badges: string[];
   preview: {
     metric1: string;
@@ -41,18 +38,17 @@ interface ReportDiscoveryCardsProps {
 const reportTypes: ReportTypeConfig[] = [
   {
     id: 'lifecycle',
-    name: 'Document Lifecycle',
-    description: 'Track document journey from submission to completion',
+    name: 'Document lifecycle',
+    description: 'Track each document from submission to completion',
     permission: 'analytics.read',
     icon: TrendingUp,
-    color: 'blue',
-    badges: ['All Teams', 'Workflow'],
+    badges: ['All teams', 'Workflow'],
     preview: {
-      metric1: 'Total Documents',
+      metric1: 'Total documents',
       metric1Value: '2,847',
-      metric2: 'Avg Processing Time',
+      metric2: 'Average processing time',
       metric2Value: '4.2 days',
-      metric3: 'Completion Rate',
+      metric3: 'Completion rate',
       metric3Value: '89%',
     },
     useCases: [
@@ -63,18 +59,17 @@ const reportTypes: ReportTypeConfig[] = [
   },
   {
     id: 'financial',
-    name: 'Financial / Invoices',
-    description: 'Invoice volume, values, and approval rates',
+    name: 'Financial and invoices',
+    description: 'Invoice volume, values and approval rates',
     permission: 'payments.read',
     icon: DollarSign,
-    color: 'green',
     badges: ['Finance'],
     preview: {
-      metric1: 'Total Value',
+      metric1: 'Total value',
       metric1Value: '$847K',
-      metric2: 'Transaction Count',
+      metric2: 'Transaction count',
       metric2Value: '365',
-      metric3: 'Approval Rate',
+      metric3: 'Approval rate',
       metric3Value: '94%',
     },
     useCases: [
@@ -85,18 +80,17 @@ const reportTypes: ReportTypeConfig[] = [
   },
   {
     id: 'user_activity',
-    name: 'User Activity',
-    description: 'User interactions and document processing metrics',
+    name: 'Team activity',
+    description: 'Team interactions and document processing metrics',
     permission: 'analytics.read',
     icon: Users,
-    color: 'purple',
-    badges: ['All Teams', 'Productivity'],
+    badges: ['All teams', 'Productivity'],
     preview: {
-      metric1: 'Active Users',
+      metric1: 'Active people',
       metric1Value: '48',
-      metric2: 'Documents Processed',
+      metric2: 'Documents processed',
       metric2Value: '1,234',
-      metric3: 'Avg Actions/User',
+      metric3: 'Actions per person',
       metric3Value: '25.7',
     },
     useCases: [
@@ -107,18 +101,17 @@ const reportTypes: ReportTypeConfig[] = [
   },
   {
     id: 'audit_trail',
-    name: 'Audit Trail',
-    description: 'Comprehensive audit logs for compliance',
+    name: 'Audit trail',
+    description: 'Full audit logs for compliance',
     permission: 'audit.read',
     icon: Lock,
-    color: 'red',
     badges: ['Compliance', 'Auditors'],
     preview: {
-      metric1: 'Audit Events',
+      metric1: 'Audit events',
       metric1Value: '847',
-      metric2: 'Users Tracked',
+      metric2: 'People tracked',
       metric2Value: '28',
-      metric3: 'Modified Records',
+      metric3: 'Modified records',
       metric3Value: '324',
     },
     useCases: [
@@ -129,46 +122,26 @@ const reportTypes: ReportTypeConfig[] = [
   },
   {
     id: 'custom',
-    name: 'Custom Report',
-    description: 'Build your own report with selected metrics',
+    name: 'Custom report',
+    description: 'Build your own report with the metrics you choose',
     permission: 'analytics.read',
     icon: FileText,
-    color: 'gray',
-    badges: ['Advanced', 'Power Users'],
+    badges: ['Advanced'],
     preview: {
-      metric1: 'Custom Metrics',
+      metric1: 'Custom metrics',
       metric1Value: 'Unlimited',
-      metric2: 'Data Sources',
-      metric2Value: 'All Depts',
+      metric2: 'Data sources',
+      metric2Value: 'All departments',
       metric3: 'Flexibility',
       metric3Value: 'Maximum',
     },
     useCases: [
-      'Ad-hoc analysis',
+      'Ad hoc analysis',
       'Cross-department insights',
       'Custom KPI dashboards',
     ],
   },
 ];
-
-const colorMap: Record<string, string> = {
-  blue: 'bg-blue-50 border-blue-200 hover:border-blue-300',
-  green: 'bg-green-50 border-green-200 hover:border-green-300',
-  purple: 'bg-signal-tint border-line hover:border-line-strong',
-  red: 'bg-red-50 border-red-200 hover:border-red-300',
-  gray: 'bg-gray-50 border-gray-200 hover:border-gray-300',
-};
-
-const badgeColorMap: Record<string, string> = {
-  'All Teams': 'bg-blue-100 text-blue-700',
-  'Finance': 'bg-green-100 text-green-700',
-  'Compliance': 'bg-red-100 text-red-700',
-  'Auditors': 'bg-red-100 text-red-700',
-  'Advanced': 'bg-signal-tint text-signal-text',
-  'Power Users': 'bg-signal-tint text-signal-text',
-  'Workflow': 'bg-blue-100 text-blue-700',
-  'Productivity': 'bg-yellow-100 text-yellow-700',
-};
 
 export const ReportDiscoveryCards: React.FC<ReportDiscoveryCardsProps> = ({
   selectedType,
@@ -194,9 +167,9 @@ export const ReportDiscoveryCards: React.FC<ReportDiscoveryCardsProps> = ({
   return (
     <div className="space-y-4">
       <div>
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Select Report Type</h3>
-        <p className="text-sm text-gray-600 mb-6">
-          Choose a pre-built report template or create a custom one. Datapoints show typical content for each report type.
+        <h2 className="text-base font-semibold text-text-primary">Select a report type</h2>
+        <p className="mt-1 text-sm text-text-secondary">
+          Choose a ready-made report or build your own. The figures show sample content for each type.
         </p>
       </div>
 
@@ -204,100 +177,69 @@ export const ReportDiscoveryCards: React.FC<ReportDiscoveryCardsProps> = ({
         {availableReports.map((report) => {
           const Icon = report.icon;
           const isSelected = selectedType === report.id;
-          
+
           return (
-            <button
+            <article
               key={report.id}
-              onClick={() => onSelect(report.id)}
-              className={`text-left transition-all border-2 rounded-lg p-4 ${
-                isSelected
-                  ? `${colorMap[report.color]} border-primary bg-primary/5`
-                  : `${colorMap[report.color]}`
-              }`}
+              className={cn(
+                'min-w-0 rounded-lg border bg-surface-1 shadow-card transition-shadow hover:shadow-card-hover',
+                isSelected ? 'border-signal ring-1 ring-signal' : 'border-line',
+              )}
             >
-              <div className="flex items-start gap-4">
-                {/* Icon */}
-                <div
-                  className={`p-3 rounded-lg flex-shrink-0 ${
-                    report.color === 'blue' ? 'bg-blue-100' :
-                    report.color === 'green' ? 'bg-green-100' :
-                    report.color === 'purple' ? 'bg-signal-tint' :
-                    report.color === 'red' ? 'bg-red-100' :
-                    'bg-gray-100'
-                  }`}
-                >
-                  <Icon className={`h-6 w-6 ${
-                    report.color === 'blue' ? 'text-blue-600' :
-                    report.color === 'green' ? 'text-green-600' :
-                    report.color === 'purple' ? 'text-signal-text' :
-                    report.color === 'red' ? 'text-red-600' :
-                    'text-gray-600'
-                  }`} />
-                </div>
+              <button
+                type="button"
+                onClick={() => onSelect(report.id)}
+                aria-pressed={isSelected}
+                className="flex w-full items-start gap-4 rounded-lg p-4 text-left"
+              >
+                <span className="grid h-12 w-12 flex-shrink-0 place-items-center rounded-sm bg-field text-text-secondary">
+                  <Icon size={24} />
+                </span>
 
-                {/* Content */}
-                <div className="flex-1 min-w-0">
-                  {/* Header */}
-                  <div className="flex items-start justify-between gap-2 mb-2">
-                    <div>
-                      <h4 className="font-semibold text-gray-900">{report.name}</h4>
-                      <p className="text-sm text-gray-600 mt-1">{report.description}</p>
-                    </div>
-                    {isSelected && (
-                      <div className="w-5 h-5 rounded-full bg-primary flex items-center justify-center flex-shrink-0 mt-1">
-                        <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                        </svg>
-                      </div>
-                    )}
-                  </div>
+                <span className="min-w-0 flex-1">
+                  <span className="mb-2 flex items-start justify-between gap-2">
+                    <span className="block">
+                      <span className="block text-base font-semibold text-text-primary">{report.name}</span>
+                      <span className="mt-1 block text-sm text-text-secondary">{report.description}</span>
+                    </span>
+                    {isSelected && <CheckCircle size={20} className="mt-1 flex-shrink-0 text-signal-text" />}
+                  </span>
 
-                  {/* Badges */}
-                  <div className="flex flex-wrap gap-2 mb-3">
+                  <span className="mb-3 flex flex-wrap gap-2">
                     {report.badges.map((badge) => (
-                      <Badge 
-                        key={badge} 
-                        variant="secondary"
-                        className={`text-xs ${badgeColorMap[badge] || 'bg-gray-100 text-gray-700'}`}
-                      >
+                      <span key={badge} className="rounded-pill bg-field px-2.5 py-0.5 text-xs text-text-secondary">
                         {badge}
-                      </Badge>
+                      </span>
                     ))}
-                  </div>
+                  </span>
 
-                  {/* Preview Metrics */}
-                  <div className="grid grid-cols-3 gap-3 bg-white/50 rounded p-3">
-                    <div>
-                      <p className="text-xs text-gray-600">{report.preview.metric1}</p>
-                      <p className="text-sm font-semibold text-gray-900">{report.preview.metric1Value}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-600">{report.preview.metric2}</p>
-                      <p className="text-sm font-semibold text-gray-900">{report.preview.metric2Value}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-600">{report.preview.metric3}</p>
-                      <p className="text-sm font-semibold text-gray-900">{report.preview.metric3Value}</p>
-                    </div>
-                  </div>
+                  <span className="grid grid-cols-1 gap-3 rounded-sm bg-field p-3 sm:grid-cols-3">
+                    {[
+                      [report.preview.metric1, report.preview.metric1Value],
+                      [report.preview.metric2, report.preview.metric2Value],
+                      [report.preview.metric3, report.preview.metric3Value],
+                    ].map(([label, value]) => (
+                      <span key={label} className="block">
+                        <span className="block text-xs text-text-muted">{label}</span>
+                        <span className="block text-sm font-semibold text-text-primary">{value}</span>
+                      </span>
+                    ))}
+                  </span>
+                </span>
+              </button>
 
-                  {/* Use Cases */}
-                  <details className="mt-3 group">
-                    <summary className="text-xs font-medium text-primary cursor-pointer hover:underline">
-                      Common use cases →
-                    </summary>
-                    <ul className="mt-2 ml-3 space-y-1 text-xs text-gray-600">
-                      {report.useCases.map((useCase, idx) => (
-                        <li key={idx} className="flex items-start gap-2">
-                          <span className="text-primary mt-0.5">•</span>
-                          <span>{useCase}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </details>
-                </div>
-              </div>
-            </button>
+              {/* Use cases */}
+              <details className="px-4 pb-4">
+                <summary className="cursor-pointer text-xs font-medium text-signal-text hover:underline">
+                  Common use cases
+                </summary>
+                <ul className="mt-2 list-disc space-y-1 pl-5 text-xs text-text-secondary">
+                  {report.useCases.map((useCase, idx) => (
+                    <li key={idx}>{useCase}</li>
+                  ))}
+                </ul>
+              </details>
+            </article>
           );
         })}
       </div>

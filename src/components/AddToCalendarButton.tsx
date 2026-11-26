@@ -17,9 +17,10 @@ import {
   AlertCircle,
   CheckCircle2,
   LogIn,
-} from 'lucide-react';
+} from '@/components/icons';
 import { toast } from 'sonner';
 import type { Document } from '@/types/dms';
+import { formatDate } from '@/lib/format';
 
 interface AddToCalendarProps {
   document: Document | null;
@@ -27,7 +28,7 @@ interface AddToCalendarProps {
 }
 
 export function AddToCalendarButton({ document, onSuccess }: AddToCalendarProps) {
-  const { tokens, user } = useAuth();
+  const { tokens } = useAuth();
   const token = tokens?.token || '';
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -122,7 +123,7 @@ export function AddToCalendarButton({ document, onSuccess }: AddToCalendarProps)
       }
 
       setSuccess(true);
-      toast.success('Event added to Google Calendar!');
+      toast.success('Event added to Google Calendar');
       setTimeout(() => {
         setIsDialogOpen(false);
         onSuccess?.();
@@ -145,171 +146,141 @@ export function AddToCalendarButton({ document, onSuccess }: AddToCalendarProps)
       <Button
         onClick={handleOpenDialog}
         disabled={checkingStatus}
-        variant="outline"
-        className="w-full justify-start gap-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+        variant="secondary"
+        className="w-full justify-start"
       >
         {checkingStatus ? (
           <>
-            <Loader2 className="h-4 w-4 animate-spin" />
-            Checking...
+            <Loader2 className="animate-spin" />
+            Checking
           </>
         ) : (
           <>
-            <CalendarDays className="h-4 w-4" />
-            Add to Calendar
+            <CalendarDays />
+            Add to calendar
           </>
         )}
       </Button>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="sm:max-w-md bg-white">
-          <DialogHeader className="border-b pb-4">
-            <DialogTitle className="flex items-center gap-2 text-lg">
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <CalendarDays className="h-5 w-5 text-blue-600" />
-              </div>
-              Add to Google Calendar
-            </DialogTitle>
-            <DialogDescription className="text-gray-600 mt-1">
-              Create a calendar event for this document
+        <DialogContent className="max-w-[480px]">
+          <DialogHeader>
+            <DialogTitle>Add to Google Calendar</DialogTitle>
+            <DialogDescription>
+              Create a calendar event for this document.
             </DialogDescription>
           </DialogHeader>
 
           {success ? (
-            <div className="py-12 text-center space-y-3">
-              <div className="flex justify-center">
-                <div className="p-3 bg-green-100 rounded-full">
-                  <CheckCircle2 className="h-8 w-8 text-green-600" />
-                </div>
+            <div role="status" className="space-y-3 py-8 text-center">
+              <div className="mx-auto grid h-12 w-12 place-items-center rounded-lg bg-positive-tint text-positive">
+                <CheckCircle2 size={24} />
               </div>
               <div>
-                <p className="font-semibold text-gray-900 text-lg">
-                  Event created successfully!
+                <p className="text-base font-semibold text-text-primary">
+                  Event added
                 </p>
-                <p className="text-sm text-gray-600 mt-1">
-                  Your event has been added to Google Calendar for {new Date(eventDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                <p className="mt-1 text-sm text-text-secondary">
+                  It is in your Google Calendar on <span className="font-mono">{formatDate(eventDate)}</span>.
                 </p>
               </div>
             </div>
           ) : !calendarConnected ? (
-            <div className="py-4 space-y-5">
-              <div className="p-5 bg-positive-tint border border-line rounded-lg">
-                <div className="flex gap-3">
-                  <div className="flex-shrink-0 mt-0.5">
-                    <AlertCircle className="h-5 w-5 text-blue-600" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="font-semibold text-gray-900">
-                      Connect your Google Calendar
-                    </p>
-                    <p className="text-sm text-gray-700 mt-2">
-                      Sign in to add <strong>"{document.title}"</strong> to your calendar.
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="space-y-3 bg-gray-50 p-4 rounded-lg border border-gray-200">
-                <p className="text-sm font-semibold text-gray-900">Event Preview:</p>
-                <div className="space-y-2 text-sm">
-                  <div className="flex items-start gap-3">
-                    <span className="font-medium text-gray-600 min-w-fit">Date:</span>
-                    <span className="text-gray-900 font-semibold">
-                      {new Date(eventDate).toLocaleDateString('en-US', {
-                        weekday: 'long',
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric'
-                      })}
-                    </span>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <span className="font-medium text-gray-600 min-w-fit">Event:</span>
-                    <span className="text-gray-700">{document.title}</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
-                <p className="text-xs text-amber-800">
-                  💡 After signing in, you'll be able to select a specific time for this event.
+            <div className="space-y-4">
+              <div className="rounded-md bg-field p-4">
+                <p className="text-sm font-semibold text-text-primary">
+                  Connect your Google Calendar
+                </p>
+                <p className="mt-1 text-sm text-text-secondary">
+                  Sign in to add <strong>"{document.title}"</strong> to your calendar.
                 </p>
               </div>
 
-              <Button
-                onClick={handleConnectGoogle}
-                disabled={isLoading}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white gap-2 py-2.5"
-              >
-                <LogIn className="h-4 w-4" />
-                Sign in with Google
-              </Button>
+              <dl className="space-y-2 rounded-md border border-line p-4 text-sm">
+                <div className="flex items-start gap-3">
+                  <dt className="min-w-fit text-text-muted">Date</dt>
+                  <dd className="font-mono text-text-primary">{formatDate(eventDate)}</dd>
+                </div>
+                <div className="flex items-start gap-3">
+                  <dt className="min-w-fit text-text-muted">Event</dt>
+                  <dd className="text-text-primary">{document.title}</dd>
+                </div>
+              </dl>
+
+              <p className="text-xs text-text-muted">
+                After you sign in, you can choose a time for this event.
+              </p>
+
+              {error && (
+                <p role="alert" className="text-xs text-risk">{error}</p>
+              )}
+
+              <DialogFooter>
+                <Button
+                  onClick={handleConnectGoogle}
+                  disabled={isLoading}
+                >
+                  <LogIn />
+                  Sign in with Google
+                </Button>
+              </DialogFooter>
             </div>
           ) : (
-            <div className="space-y-5 py-2">
+            <div className="space-y-4">
               {error && (
-                <div className="p-4 bg-red-50 border border-red-200 rounded-lg flex gap-3">
-                  <AlertCircle className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
-                  <p className="text-sm text-red-800">{error}</p>
+                <div role="alert" className="flex gap-2 rounded-md bg-risk-tint p-3 text-risk">
+                  <AlertCircle size={18} className="mt-0.5 shrink-0" />
+                  <p className="text-sm">{error}</p>
                 </div>
               )}
 
-              <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 space-y-3">
-                <p className="text-sm font-semibold text-gray-900">Event Details</p>
-                
-                <div className="space-y-3">
-                  <div className="flex items-start gap-3">
-                    <span className="font-medium text-gray-600 text-sm min-w-fit">Title:</span>
-                    <span className="text-gray-800 font-medium break-words flex-1">{document.title}</span>
-                  </div>
-                  
-                  <div className="flex items-start gap-3">
-                    <label htmlFor="event-date" className="font-medium text-gray-600 text-sm min-w-fit">Date:</label>
-                    <Input
-                      id="event-date"
-                      type="date"
-                      value={eventDate}
-                      onChange={(e) => setEventDate(e.target.value)}
-                      disabled={isLoading}
-                      className="border-gray-300 text-sm flex-1"
-                    />
-                  </div>
-
-                  {document.description && (
-                    <div className="flex items-start gap-3">
-                      <span className="font-medium text-gray-600 text-sm min-w-fit">Notes:</span>
-                      <p className="text-sm text-gray-700 break-words flex-1">
-                        {document.description.substring(0, 80)}
-                        {document.description.length > 80 ? '...' : ''}
-                      </p>
-                    </div>
-                  )}
-                </div>
+              <div>
+                <p className="text-xs text-text-muted">Title</p>
+                <p className="break-words text-sm font-medium text-text-primary">{document.title}</p>
               </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="event-date">Date</Label>
+                <Input
+                  id="event-date"
+                  type="date"
+                  value={eventDate}
+                  onChange={(e) => setEventDate(e.target.value)}
+                  disabled={isLoading}
+                />
+              </div>
+
+              {document.description && (
+                <div>
+                  <p className="text-xs text-text-muted">Notes</p>
+                  <p className="break-words text-sm text-text-secondary">
+                    {document.description.substring(0, 80)}
+                    {document.description.length > 80 ? '…' : ''}
+                  </p>
+                </div>
+              )}
 
               <DialogFooter className="gap-2">
                 <Button
-                  variant="outline"
+                  variant="secondary"
                   onClick={() => setIsDialogOpen(false)}
                   disabled={isLoading}
-                  className="flex-1"
                 >
                   Cancel
                 </Button>
                 <Button
                   onClick={handleAddToCalendar}
                   disabled={isLoading}
-                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
                 >
                   {isLoading ? (
                     <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Creating...
+                      <Loader2 className="animate-spin" />
+                      Adding
                     </>
                   ) : (
                     <>
-                      <CalendarDays className="h-4 w-4 mr-2" />
-                      Add Event
+                      <CalendarDays />
+                      Add event
                     </>
                   )}
                 </Button>

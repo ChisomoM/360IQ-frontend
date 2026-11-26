@@ -1,16 +1,23 @@
-import { LogOut, User, Settings, X, Sun, Moon } from 'lucide-react';
+import { LogOut, User, Settings, Sun, Moon } from '@/components/icons';
 import { useTheme } from '@/lib/theme';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/lib/context/useAuth';
-import { cn } from '@/lib/utils';
 
 interface AccountMenuProps {
-  isOpen: boolean;
-  onClose: () => void;
   onLogout: () => void;
 }
 
-export function AccountMenu({ isOpen, onClose, onLogout }: AccountMenuProps) {
+const ITEM = 'h-[2.857rem] cursor-pointer gap-3 rounded-inner px-3 text-sm text-text-secondary focus:bg-surface-2 focus:text-text-primary';
+
+/** Avatar button in the top bar that opens the account menu. */
+export function AccountMenu({ onLogout }: AccountMenuProps) {
   const { user } = useAuth();
   const [theme, setTheme] = useTheme();
 
@@ -24,10 +31,6 @@ export function AccountMenu({ isOpen, onClose, onLogout }: AccountMenuProps) {
     return 'User';
   };
 
-  const getUserEmail = () => {
-    return user?.email || 'user@example.com';
-  };
-
   const getInitials = () => {
     const name = getUserDisplayName();
     return name
@@ -38,101 +41,57 @@ export function AccountMenu({ isOpen, onClose, onLogout }: AccountMenuProps) {
       .slice(0, 2);
   };
 
-  const handleLogout = () => {
-    onClose();
-    onLogout();
-  };
+  const avatar = (
+    <Avatar className="h-[36px] w-[36px]">
+      <AvatarImage src="" alt="" />
+      <AvatarFallback className="bg-signal text-sm font-semibold text-on-signal">
+        {getInitials()}
+      </AvatarFallback>
+    </Avatar>
+  );
 
   return (
-    <>
-      {/* Backdrop */}
-      {isOpen && (
-        <div
-          className="fixed inset-0 z-40"
-          onClick={onClose}
-          aria-hidden="true"
-        />
-      )}
-
-      {/* Menu Panel */}
-      <div
-        className={cn(
-          'fixed top-20 right-[100px] w-72 bg-white rounded-2xl shadow-xl border border-gray-100 z-50',
-          'transition-all duration-300 ease-out',
-          isOpen
-            ? 'opacity-100 scale-100 pointer-events-auto'
-            : 'opacity-0 scale-95 pointer-events-none'
-        )}
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button type="button" aria-label="Account menu" title="Account menu" className="flex shrink-0 rounded-full">
+          {avatar}
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent
+        align="end"
+        sideOffset={8}
+        className="w-[280px] rounded-md border border-line bg-surface-1 p-2 text-text-primary shadow-raised"
       >
-        {/* Header with Close Button */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-          <h3 className="font-semibold text-gray-900">Account</h3>
-          <button
-            onClick={onClose}
-            aria-label="Close account menu"
-            className="text-gray-400 hover:text-gray-600 p-1 rounded-lg hover:bg-gray-50 transition-colors"
-          >
-            <X className="h-4 w-4" />
-          </button>
-        </div>
-
-        {/* User Info */}
-        <div className="px-5 py-4 border-b border-gray-100 flex items-center gap-3">
-          <Avatar className="h-12 w-12 ring-2 ring-[#1e3c21]/10 flex-shrink-0">
-            <AvatarImage src="" alt={getUserDisplayName()} />
-            <AvatarFallback className="bg-gradient-to-br from-[#1e3c21] to-[#2a5230] text-white font-semibold">
-              {getInitials()}
-            </AvatarFallback>
-          </Avatar>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-gray-900 truncate">
-              {getUserDisplayName()}
-            </p>
-            <p className="text-xs text-gray-500 truncate">{getUserEmail()}</p>
+        <div className="flex items-center gap-3 px-3 py-2">
+          {avatar}
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-sm font-semibold text-text-primary">{getUserDisplayName()}</p>
+            {user?.email && <p className="truncate text-xs text-text-muted">{user.email}</p>}
           </div>
         </div>
 
-        {/* Menu Items */}
-        <div className="py-2">
-          <button
-            onClick={onClose}
-            className="w-full flex items-center gap-3 px-5 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-          >
-            <User className="h-4 w-4 text-gray-400" />
-            <span>View Profile</span>
-          </button>
+        <DropdownMenuSeparator className="bg-line" />
 
-          <button
-            onClick={onClose}
-            className="w-full flex items-center gap-3 px-5 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-          >
-            <Settings className="h-4 w-4 text-gray-400" />
-            <span>Account Settings</span>
-          </button>
+        <DropdownMenuItem className={ITEM}>
+          <User size={18} />
+          View profile
+        </DropdownMenuItem>
+        <DropdownMenuItem className={ITEM}>
+          <Settings size={18} />
+          Account settings
+        </DropdownMenuItem>
+        <DropdownMenuItem className={ITEM} onSelect={() => setTheme(theme === 'ink' ? 'paper' : 'ink')}>
+          {theme === 'ink' ? <Sun size={18} /> : <Moon size={18} />}
+          {theme === 'ink' ? 'Switch to paper (light)' : 'Switch to ink (dark)'}
+        </DropdownMenuItem>
 
-          <button
-            onClick={() => setTheme(theme === 'ink' ? 'paper' : 'ink')}
-            className="w-full flex items-center gap-3 px-5 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-          >
-            {theme === 'ink' ? (
-              <Sun className="h-4 w-4 text-gray-400" />
-            ) : (
-              <Moon className="h-4 w-4 text-gray-400" />
-            )}
-            <span>{theme === 'ink' ? 'Switch to Paper (light)' : 'Switch to Ink (dark)'}</span>
-          </button>
+        <DropdownMenuSeparator className="bg-line" />
 
-          <div className="my-1 border-t border-gray-100" />
-
-          <button
-            onClick={handleLogout}
-            className="w-full flex items-center gap-3 px-5 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors"
-          >
-            <LogOut className="h-4 w-4" />
-            <span>Log Out</span>
-          </button>
-        </div>
-      </div>
-    </>
+        <DropdownMenuItem className={`${ITEM} text-risk focus:bg-risk-tint focus:text-risk`} onSelect={onLogout}>
+          <LogOut size={18} />
+          Log out
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }

@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion'
 import { Button } from '@/components/ui/button';
-import { Pencil, Trash, Key, MoreVertical, User } from 'lucide-react';
+import { Pencil, Trash, Key, MoreVertical, User } from '@/components/icons';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -8,8 +8,8 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { StatusBadge } from '@/components/shared/StatusBadge';
 
 interface User {
     id: string;
@@ -35,19 +35,10 @@ interface UserCardProps {
     canManagePermissions?: boolean;
 }
 
-// Role-to-color mapping for avatar rings and badges
-const roleColorMap: Record<string, { ring: string; bg: string; badgeBg: string; badgeText: string; badgeDot: string }> = {
-    super_admin: { ring: 'from-ch-primary-500 to-ch-primary-600', bg: 'bg-ch-primary-50', badgeBg: 'bg-ch-primary/[0.12]', badgeText: 'text-ch-primary-700', badgeDot: 'bg-ch-primary-600' },
-    admin: { ring: 'from-ch-secondary-500 to-ch-secondary-600', bg: 'bg-ch-secondary-50', badgeBg: 'bg-ch-secondary/[0.12]', badgeText: 'text-ch-secondary-700', badgeDot: 'bg-ch-secondary-600' },
-    user: { ring: 'from-gray-400 to-gray-500', bg: 'bg-gray-50', badgeBg: 'bg-gray-600/[0.12]', badgeText: 'text-gray-700', badgeDot: 'bg-gray-600' },
-};
-
-// Helper function to format slug to readable text
+// Helper function to format slug to readable text (sentence case)
 const formatRoleSlug = (slug: string): string => {
-    return slug
-        .split('_')
-        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-        .join(' ');
+    const words = slug.split('_').join(' ');
+    return words.charAt(0).toUpperCase() + words.slice(1);
 };
 
 export function UserCard({
@@ -59,16 +50,15 @@ export function UserCard({
     canDelete = true,
     canManagePermissions = true,
 }: UserCardProps) {
-    const displayName = user.name || `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'Unknown User';
+    const displayName = user.name || `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'Unknown user';
 
-    const roleSlug = typeof user.role === 'object' 
+    const roleSlug = typeof user.role === 'object'
         ? user.role?.slug?.toLowerCase() || 'user'
         : typeof user.role === 'string'
           ? user.role.toLowerCase().replace(/\s+/g, '_')
           : 'user';
-    
+
     const roleDisplay = formatRoleSlug(roleSlug);
-    const roleColors = roleColorMap[roleSlug] || roleColorMap.user;
 
     const departmentsDisplay =
         typeof user.departments === 'string'
@@ -86,31 +76,28 @@ export function UserCard({
                 ease: [0.16, 1, 0.3, 1],
             }}
             whileHover={{ y: -2, transition: { duration: 0.2 } }}
-            className={`group relative bg-surface-1 rounded-lg border border-line overflow-hidden transition-colors duration-150`}
+            className="group relative min-w-0 bg-surface-1 rounded-lg border border-line shadow-card hover:shadow-card-hover transition-shadow"
         >
             {/* Card Content */}
             <div className="p-4">
                 {/* Header: Avatar + Name + Title + Actions */}
                 <div className="flex gap-3 mb-3">
-                    {/* Avatar with colored ring */}
-                    <div className={`relative flex-shrink-0 ${roleSlug === 'user' ? 'bg-line-strong' : 'bg-signal'} p-0.5 rounded-full`}>
-                        <Avatar className="h-12 w-12 bg-white border-2 border-white flex items-center justify-center">
-                            <AvatarFallback className="bg-white text-gray-600 font-semibold text-sm">
-                                <User className="h-6 w-6 text-gray-600" />
-                            </AvatarFallback>
-                        </Avatar>
-                    </div>
+                    <Avatar className="h-10 w-10 shrink-0">
+                        <AvatarFallback className="bg-field text-text-secondary">
+                            <User size={20} />
+                        </AvatarFallback>
+                    </Avatar>
 
                     {/* Name, Email, Title */}
                     <div className="flex-1 min-w-0">
-                        <h3 className="font-sans font-semibold text-sm text-gray-900 truncate">
+                        <h3 className="font-semibold text-sm text-text-primary truncate">
                             {displayName}
                         </h3>
-                        <p className="font-sans text-xs text-gray-500 truncate mt-0.5">
+                        <p className="text-xs text-text-muted truncate mt-0.5">
                             {user.email}
                         </p>
                         {user.title && (
-                            <p className="font-sans text-xs text-gray-600 truncate mt-1">
+                            <p className="text-xs text-text-secondary truncate mt-1">
                                 {user.title}
                             </p>
                         )}
@@ -121,12 +108,13 @@ export function UserCard({
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <Button
-                                    className="h-8 w-8 p-0 text-gray-500 hover:bg-gray-200/50 transition-colors"
+                                    size="icon"
+                                    className="h-8 w-8 shrink-0"
                                     title="More actions"
-                                    aria-label="More actions menu"
+                                    aria-label="More actions"
                                     variant="ghost"
                                 >
-                                    <MoreVertical className="h-4 w-4" />
+                                    <MoreVertical />
                                 </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" className="w-48">
@@ -134,10 +122,10 @@ export function UserCard({
                                     <>
                                         <DropdownMenuItem
                                             onClick={() => onEdit(user)}
-                                            className="cursor-pointer font-sans"
+                                            className="cursor-pointer"
                                         >
-                                            <Pencil className="h-4 w-4 mr-2 text-primary" />
-                                            Edit Profile
+                                            <Pencil size={16} className="mr-2 text-text-muted" />
+                                            Edit profile
                                         </DropdownMenuItem>
                                     </>
                                 )}
@@ -145,10 +133,10 @@ export function UserCard({
                                     <>
                                         <DropdownMenuItem
                                             onClick={() => onManagePermissions(user)}
-                                            className="cursor-pointer font-sans"
+                                            className="cursor-pointer"
                                         >
-                                            <Key className="h-4 w-4 mr-2 text-primary" />
-                                            Manage Permissions
+                                            <Key size={16} className="mr-2 text-text-muted" />
+                                            Manage permissions
                                         </DropdownMenuItem>
                                         <DropdownMenuSeparator />
                                     </>
@@ -156,10 +144,10 @@ export function UserCard({
                                 {canDelete && (
                                     <DropdownMenuItem
                                         onClick={() => onDelete(user)}
-                                        className="cursor-pointer text-destructive focus:text-destructive focus:bg-destructive/5 font-sans"
+                                        className="cursor-pointer text-risk focus:text-risk focus:bg-risk-tint"
                                     >
-                                        <Trash className="h-4 w-4 mr-2" />
-                                        Delete User
+                                        <Trash size={16} className="mr-2" />
+                                        Delete user
                                     </DropdownMenuItem>
                                 )}
                             </DropdownMenuContent>
@@ -169,15 +157,11 @@ export function UserCard({
 
                 {/* Role & Department Badges */}
                 <div className="flex items-center gap-2 flex-wrap">
-                    <Badge className={`text-xs font-medium ${roleColors.badgeBg} ${roleColors.badgeText} rounded-full flex items-center gap-1.5 px-3 py-1`}>
-                        <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${roleColors.badgeDot}`} />
-                        {roleDisplay}
-                    </Badge>
-                    {departmentsDisplay !== 'N/A' && (
-                        <Badge className="text-xs bg-primary/[0.45] text-primary-700 font-medium line-clamp-1 rounded-full flex items-center gap-1.5 px-3 py-1">
-                            <span className="w-1.5 h-1.5 rounded-full flex-shrink-0 bg-ch-secondary-600" />
-                            {departmentsDisplay}
-                        </Badge>
+                    <StatusBadge tone="neutral" label={roleDisplay} />
+                    {departmentsDisplay !== 'N/A' && departmentsDisplay && (
+                        <span className="inline-flex max-w-full items-center h-[1.572rem] px-2.5 rounded-pill bg-field text-xs font-medium text-text-secondary">
+                            <span className="truncate">{departmentsDisplay}</span>
+                        </span>
                     )}
                 </div>
             </div>

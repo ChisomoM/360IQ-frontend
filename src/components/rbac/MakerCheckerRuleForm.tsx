@@ -3,7 +3,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Loader2 } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Loader2 } from '@/components/icons';
 import { toast } from 'sonner';
 import { post, update, list } from '@/lib/api/crud';
 
@@ -34,7 +36,7 @@ interface MakerCheckerRuleFormProps {
 }
 
 const APPROVER_OPTIONS = [
-    { value: 'super_admin', label: 'Super Admin' },
+    { value: 'super_admin', label: 'Super admin' },
     { value: 'admin', label: 'Admin' },
 ];
 
@@ -94,10 +96,10 @@ export function MakerCheckerRuleForm({
 
     const validate = () => {
         const newErrors: Record<string, string> = {};
-        if (!name || name.length < 3) newErrors.name = 'Name must be at least 3 characters';
-        if (!actionCode) newErrors.actionCode = 'Action code is required';
+        if (!name || name.length < 3) newErrors.name = 'Enter a name of at least 3 characters.';
+        if (!actionCode) newErrors.actionCode = 'Choose an action code.';
         if (requiredApprovals < 1 || requiredApprovals > 5)
-            newErrors.requiredApprovals = 'Required approvals must be between 1 and 5';
+            newErrors.requiredApprovals = 'Enter a number from 1 to 5.';
         return newErrors;
     };
 
@@ -122,7 +124,7 @@ export function MakerCheckerRuleForm({
             } else {
                 await post('MAKER_CHECKER_RULES', payload);
             }
-            toast.success(`Rule ${isEditing ? 'updated' : 'created'} successfully`);
+            toast.success(`Rule ${isEditing ? 'updated' : 'created'}`);
             onSubmit(payload);
             onClose();
         } catch (err) {
@@ -136,54 +138,54 @@ export function MakerCheckerRuleForm({
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="sm:max-w-md bg-white">
+            <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
-                    <DialogTitle>{isEditing ? 'Edit Rule' : 'New Rule'}</DialogTitle>
+                    <DialogTitle>{isEditing ? 'Edit rule' : 'Create rule'}</DialogTitle>
                 </DialogHeader>
                 <form onSubmit={handleSubmit} className="space-y-4">
-                    <div>
+                    <div className="space-y-1.5">
                         <Label htmlFor="rule-name">Name</Label>
                         <Input
                             id="rule-name"
                             value={name}
                             onChange={(e) => setName(e.target.value)}
-                            placeholder="e.g. User deletion requires 2 approvals"
+                            placeholder="User deletion needs 2 approvals"
                             disabled={isSubmitting}
                         />
-                        {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name}</p>}
+                        {errors.name && <p className="text-risk text-xs">{errors.name}</p>}
                     </div>
 
-                    <div>
-                        <Label htmlFor="action-code">Action Code</Label>
-                        <select
-                            id="action-code"
-                            title="Action code"
+                    <div className="space-y-1.5">
+                        <Label htmlFor="action-code">Action code</Label>
+                        <Select
                             value={actionCode}
-                            onChange={(e) => setActionCode(e.target.value)}
+                            // Radix emits '' while options are still loading; keep the chosen code.
+                            onValueChange={(value) => value && setActionCode(value)}
                             disabled={isSubmitting || isLoadingCodes}
-                            className="w-full h-10 border border-gray-300 rounded-md px-3 text-sm"
                         >
-                            <option value="">
-                                {isLoadingCodes ? 'Loading action codes...' : 'Select an action...'}
-                            </option>
-                            {actionCodes.map((ac) => (
-                                <option key={ac.value} value={ac.value}>
-                                    {ac.label} ({ac.resource})
-                                </option>
-                            ))}
-                        </select>
+                            <SelectTrigger id="action-code">
+                                <SelectValue placeholder={isLoadingCodes ? 'Loading action codes' : 'Choose an action'} />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {actionCodes.map((ac) => (
+                                    <SelectItem key={ac.value} value={ac.value}>
+                                        {ac.label} ({ac.resource})
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
                         {errors.actionCode && (
-                            <p className="text-red-500 text-xs mt-1">{errors.actionCode}</p>
+                            <p className="text-risk text-xs">{errors.actionCode}</p>
                         )}
                         {selectedActionCode && (
-                            <p className="text-gray-500 text-xs mt-2 italic">
+                            <p className="text-text-muted text-xs">
                                 {selectedActionCode.description}
                             </p>
                         )}
                     </div>
 
-                    <div>
-                        <Label htmlFor="required-approvals">Required Approvals (1-5)</Label>
+                    <div className="space-y-1.5">
+                        <Label htmlFor="required-approvals">Required approvals (1 to 5)</Label>
                         <Input
                             id="required-approvals"
                             type="number"
@@ -194,48 +196,47 @@ export function MakerCheckerRuleForm({
                             disabled={isSubmitting}
                         />
                         {errors.requiredApprovals && (
-                            <p className="text-red-500 text-xs mt-1">{errors.requiredApprovals}</p>
+                            <p className="text-risk text-xs">{errors.requiredApprovals}</p>
                         )}
                     </div>
 
-                    <div>
-                        <Label htmlFor="approver-slug">Approver Role</Label>
-                        <select
-                            id="approver-slug"
-                            title="Approver role"
+                    <div className="space-y-1.5">
+                        <Label htmlFor="approver-slug">Approver role</Label>
+                        <Select
                             value={approverSlug}
-                            onChange={(e) => setApproverSlug(e.target.value)}
+                            onValueChange={(value) => value && setApproverSlug(value)}
                             disabled={isSubmitting}
-                            className="w-full h-10 border border-gray-300 rounded-md px-3 text-sm"
                         >
-                            {APPROVER_OPTIONS.map((a) => (
-                                <option key={a.value} value={a.value}>
-                                    {a.label}
-                                </option>
-                            ))}
-                        </select>
+                            <SelectTrigger id="approver-slug">
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {APPROVER_OPTIONS.map((a) => (
+                                    <SelectItem key={a.value} value={a.value}>
+                                        {a.label}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
                     </div>
 
-                    <div className="flex items-center gap-2">
-                        <input
+                    <div className="flex items-center gap-3">
+                        <Switch
                             id="is-active"
-                            type="checkbox"
-                            title="Toggle active status"
                             checked={isActive}
-                            onChange={(e) => setIsActive(e.target.checked)}
+                            onCheckedChange={setIsActive}
                             disabled={isSubmitting}
-                            className="h-4 w-4"
                         />
                         <Label htmlFor="is-active">Active</Label>
                     </div>
 
-                    <div className="flex gap-2 justify-end">
-                        <Button type="button" variant="outline" onClick={onClose} disabled={isSubmitting}>
+                    <div className="flex gap-3 justify-end pt-2">
+                        <Button type="button" variant="secondary" onClick={onClose} disabled={isSubmitting}>
                             Cancel
                         </Button>
                         <Button type="submit" disabled={isSubmitting || isLoadingCodes}>
-                            {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                            {isEditing ? 'Update Rule' : 'Create Rule'}
+                            {isSubmitting && <Loader2 className="animate-spin" />}
+                            {isEditing ? 'Save rule' : 'Create rule'}
                         </Button>
                     </div>
                 </form>

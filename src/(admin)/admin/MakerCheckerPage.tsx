@@ -1,8 +1,14 @@
 import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Loader2, Plus, ToggleLeft, Trash2, Edit2, ClipboardList } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { Button, buttonVariants } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { PageHeader } from '@/components/shared/PageHeader';
+import { SectionCard } from '@/components/shared/SectionCard';
+import { StatusBadge } from '@/components/shared/StatusBadge';
+import { EmptyState } from '@/components/shared/EmptyState';
+import { TableSkeleton } from '@/components/shared/TableSkeleton';
+import { Loader2, Plus, Trash2, Edit2, ClipboardList } from '@/components/icons';
 import { toast } from 'sonner';
 import { PageTransition } from '@/components/PageTransition';
 import { list, remove, update, post } from '@/lib/api/crud';
@@ -133,196 +139,112 @@ export default function MakerCheckerPage() {
 
     return (
         <PageTransition>
-            <div className="w-full space-y-6">
-                <div>
-                    <h1 className="font-display font-bold text-display-sm text-gray-900">Maker-Checker</h1>
-                    <p className="font-sans text-text-md text-gray-500 mt-1">
-                        Configure approval rules and review pending requests
-                    </p>
-                </div>
+            <div className="w-full flex flex-col gap-5">
+                <PageHeader
+                    title="Maker-checker"
+                    description="Set approval rules and review pending requests."
+                    actions={activeTab === 'rules' && (
+                        <Button onClick={() => { setEditingRule(undefined); setIsRuleFormOpen(true); }}>
+                            <Plus />
+                            Create rule
+                        </Button>
+                    )}
+                />
 
-            {/* Tabs — Frosted Pill Surface Pattern */}
-            <motion.div
-                className="flex bg-slate-50/80 p-1 rounded-xl gap-0.5 w-fit"
-                initial={{ opacity: 0, y: -4 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-            >
-                {(['rules', 'requests'] as Tab[]).map((tab) => (
-                    <motion.button
-                        key={tab}
-                        onClick={() => setActiveTab(tab)}
-                        className="relative h-9 px-4 rounded-lg text-sm font-medium text-slate-600 hover:text-slate-900 outline-none capitalize transition-colors duration-150"
-                        whileHover={{ scale: 1.04 }}
-                        whileTap={{ scale: 0.94 }}
-                        transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-                    >
-                        {activeTab === tab && (
-                            <motion.span
-                                layoutId="tabActivePill"
-                                className="absolute inset-0 bg-white rounded-lg shadow-sm"
-                                transition={{ type: 'spring', stiffness: 400, damping: 28 }}
-                            />
-                        )}
-                        <span className="relative z-10">
-                            {tab === 'rules' ? 'Rules' : 'Pending Requests'}
-                        </span>
-                    </motion.button>
-                ))}
-            </motion.div>
+            <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as Tab)}>
+            <TabsList>
+                <TabsTrigger value="rules">Rules</TabsTrigger>
+                <TabsTrigger value="requests">Pending requests</TabsTrigger>
+            </TabsList>
 
             {/* Rules Tab */}
-            {activeTab === 'rules' && (
-                <div className="space-y-4">
-                    <motion.div
-                        className="flex justify-end"
-                        initial={{ opacity: 0, y: -4 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1], delay: 0.1 }}
-                    >
-                        <motion.div
-                            whileHover={{ scale: 1.02 }}
-                            whileTap={{ scale: 0.97 }}
-                            transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-                        >
-                            <Button
-                                onClick={() => { setEditingRule(undefined); setIsRuleFormOpen(true); }}
-                                className="bg-primary text-primary-foreground hover:bg-ch-primary-700 font-semibold"
-                            >
-                                <Plus className="h-4 w-4 mr-2" />
-                                New Rule
-                            </Button>
-                        </motion.div>
-                    </motion.div>
-
-                    <Card>
-                        <CardContent className="p-0 overflow-hidden rounded-xl border-0 shadow-lg">
+            <TabsContent value="rules">
+                    <SectionCard padded={false}>
+                        {isLoadingRules ? (
+                            <TableSkeleton rows={5} columns={7} />
+                        ) : rules.length === 0 ? (
+                            <EmptyState
+                                icon={<ClipboardList size={24} />}
+                                title="No rules yet"
+                                description="Rules require a second person to approve sensitive actions. Create the first one."
+                            />
+                        ) : (
                             <Table>
-                                <TableHeader className="bg-slate-900">
+                                <TableHeader>
                                     <TableRow>
-                                        <TableHead className="text-white font-semibold">Name</TableHead>
-                                        <TableHead className="text-white font-semibold">Action</TableHead>
-                                        <TableHead className="text-white font-semibold">Resource</TableHead>
-                                        <TableHead className="text-white font-semibold">Approvals</TableHead>
-                                        <TableHead className="text-white font-semibold">Approver</TableHead>
-                                        <TableHead className="text-white font-semibold">Status</TableHead>
-                                        <TableHead className="text-white font-semibold text-right">Actions</TableHead>
+                                        <TableHead scope="col">Name</TableHead>
+                                        <TableHead scope="col">Action</TableHead>
+                                        <TableHead scope="col">Resource</TableHead>
+                                        <TableHead scope="col" className="text-right">Approvals</TableHead>
+                                        <TableHead scope="col">Approver</TableHead>
+                                        <TableHead scope="col">Status</TableHead>
+                                        <TableHead scope="col" className="text-right">Actions</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {isLoadingRules ? (
-                                        <TableRow>
-                                            <TableCell colSpan={7} className="text-center py-20">
-                                                <Loader2 className="h-10 w-10 animate-spin mx-auto text-ch-primary" />
-                                                <p className="mt-4 text-gray-500 font-sans">Loading rules...</p>
+                                    {rules.map((rule) => (
+                                        <TableRow key={String(rule.id)}>
+                                            <TableCell className="font-semibold">{rule.name}</TableCell>
+                                            <TableCell className="font-mono text-xs text-text-secondary">{rule.action}</TableCell>
+                                            <TableCell className="text-text-secondary">{rule.resource}</TableCell>
+                                            <TableCell className="text-right font-mono text-xs text-text-secondary">{rule.requiredApprovals}</TableCell>
+                                            <TableCell className="text-text-secondary">{rule.approverSlug}</TableCell>
+                                            <TableCell>
+                                                <StatusBadge status={rule.isActive ? 'active' : 'inactive'} />
                                             </TableCell>
-                                        </TableRow>
-                                    ) : rules.length === 0 ? (
-                                        <TableRow>
-                                            <TableCell colSpan={7} className="text-center py-20 text-gray-500">
-                                                <ClipboardList className="h-12 w-12 mx-auto mb-4 opacity-20" />
-                                                <p className="font-sans">No rules yet. Create your first rule.</p>
-                                            </TableCell>
-                                        </TableRow>
-                                    ) : (
-                                        rules.map((rule, idx) => (
-                                            <motion.tr
-                                                key={String(rule.id)}
-                                                initial={{ opacity: 0, y: 4 }}
-                                                animate={{ opacity: 1, y: 0 }}
-                                                transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1], delay: idx * 0.05 }}
-                                                className="hover:bg-slate-50/60 transition-colors duration-150 cursor-pointer"
-                                                whileHover={{ x: 2 }}
-                                            >
-                                                <TableCell className="font-sans font-medium text-gray-900">{rule.name}</TableCell>
-                                                <TableCell>
-                                                    <span className="px-2 py-1 bg-gray-100 rounded text-xs font-mono text-gray-700">
-                                                        {rule.action}
-                                                    </span>
-                                                </TableCell>
-                                                <TableCell className="font-sans text-gray-700">{rule.resource}</TableCell>
-                                                <TableCell className="font-sans text-gray-700 font-medium">{rule.requiredApprovals}</TableCell>
-                                                <TableCell className="font-sans text-gray-700">{rule.approverSlug}</TableCell>
-                                                <TableCell>
-                                                    <motion.span
-                                                        initial={{ opacity: 0, scale: 0.9 }}
-                                                        animate={{ opacity: 1, scale: 1 }}
-                                                        transition={{ type: 'spring', stiffness: 500, damping: 25 }}
-                                                        className={`inline-block px-2 py-1 rounded-full text-xs font-semibold ${
-                                                            rule.isActive
-                                                                ? 'bg-positive-tint text-positive'
-                                                                : 'bg-gray-100 text-gray-500'
-                                                        }`}
+                                            <TableCell className="text-right">
+                                                <div className="flex items-center justify-end gap-1">
+                                                    <Switch
+                                                        checked={!!rule.isActive}
+                                                        onCheckedChange={() => handleToggleRule(rule)}
+                                                        title={rule.isActive ? 'Deactivate' : 'Activate'}
+                                                        aria-label={`${rule.isActive ? 'Deactivate' : 'Activate'} ${rule.name}`}
+                                                        className="mr-2"
+                                                    />
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        title="Edit rule"
+                                                        aria-label="Edit rule"
+                                                        onClick={() => { setEditingRule(rule); setIsRuleFormOpen(true); }}
+                                                        className="h-8 w-8"
                                                     >
-                                                        {rule.isActive ? 'Active' : 'Inactive'}
-                                                    </motion.span>
-                                                </TableCell>
-                                                <TableCell className="text-right">
-                                                    <div className="flex justify-end gap-1">
-                                                        <motion.div whileHover={{ scale: 1.15 }} whileTap={{ scale: 0.88 }} transition={{ type: 'spring', stiffness: 500, damping: 30 }}>
-                                                            <Button
-                                                                variant="ghost"
-                                                                size="sm"
-                                                                title={rule.isActive ? 'Deactivate' : 'Activate'}
-                                                                onClick={() => handleToggleRule(rule)}
-                                                                className="h-8 w-8 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 outline-none"
-                                                            >
-                                                                <ToggleLeft className="h-4 w-4" />
-                                                            </Button>
-                                                        </motion.div>
-                                                        <motion.div whileHover={{ scale: 1.15 }} whileTap={{ scale: 0.88 }} transition={{ type: 'spring', stiffness: 500, damping: 30 }}>
-                                                            <Button
-                                                                variant="ghost"
-                                                                size="sm"
-                                                                title="Edit rule"
-                                                                onClick={() => { setEditingRule(rule); setIsRuleFormOpen(true); }}
-                                                                className="h-8 w-8 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-slate-100 outline-none"
-                                                            >
-                                                                <Edit2 className="h-4 w-4" />
-                                                            </Button>
-                                                        </motion.div>
-                                                        <motion.div whileHover={{ scale: 1.15 }} whileTap={{ scale: 0.88 }} transition={{ type: 'spring', stiffness: 500, damping: 30 }}>
-                                                            <Button
-                                                                variant="ghost"
-                                                                size="sm"
-                                                                title="Delete rule"
-                                                                onClick={() => setDeleteTarget(rule)}
-                                                                className="h-8 w-8 rounded-lg text-slate-400 hover:text-red-600 hover:bg-slate-100 outline-none"
-                                                            >
-                                                                <Trash2 className="h-4 w-4" />
-                                                            </Button>
-                                                        </motion.div>
-                                                    </div>
-                                                </TableCell>
-                                            </motion.tr>
-                                        ))
-                                    )}
+                                                        <Edit2 />
+                                                    </Button>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        title="Delete rule"
+                                                        aria-label="Delete rule"
+                                                        onClick={() => setDeleteTarget(rule)}
+                                                        className="h-8 w-8 text-risk hover:text-risk hover:bg-risk-tint"
+                                                    >
+                                                        <Trash2 />
+                                                    </Button>
+                                                </div>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
                                 </TableBody>
                             </Table>
-                        </CardContent>
-                    </Card>
-                </div>
-            )}
+                        )}
+                    </SectionCard>
+            </TabsContent>
 
             {/* Pending Requests Tab */}
-            {activeTab === 'requests' && (
-                <div className="space-y-4">
+            <TabsContent value="requests">
                     {isLoadingRequests ? (
-                        <motion.div
-                            className="flex items-center justify-center py-20"
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            transition={{ duration: 0.3 }}
-                        >
-                            <Loader2 className="h-10 w-10 animate-spin text-ch-primary" />
-                        </motion.div>
+                        <SectionCard padded={false}>
+                            <TableSkeleton rows={4} columns={3} />
+                        </SectionCard>
                     ) : requests.length === 0 ? (
-                        <Card>
-                            <CardContent className="text-center py-20 text-gray-500">
-                                <ClipboardList className="h-12 w-12 mx-auto mb-4 opacity-20" />
-                                <p className="font-sans">No pending requests.</p>
-                            </CardContent>
-                        </Card>
+                        <SectionCard padded={false}>
+                            <EmptyState
+                                icon={<ClipboardList size={24} />}
+                                title="No pending requests"
+                                description="Requests that need approval appear here."
+                            />
+                        </SectionCard>
                     ) : (
                         <motion.div
                             className="grid grid-cols-1 md:grid-cols-2 gap-4"
@@ -363,8 +285,8 @@ export default function MakerCheckerPage() {
                             ))}
                         </motion.div>
                     )}
-                </div>
-            )}
+            </TabsContent>
+            </Tabs>
 
             <MakerCheckerRuleForm
                 isOpen={isRuleFormOpen}
@@ -377,31 +299,24 @@ export default function MakerCheckerPage() {
                 open={!!deleteTarget}
                 onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}
             >
-                <AlertDialogContent className="bg-white">
-                    <motion.div
-                        initial={{ opacity: 0, scale: 0.97, y: 8 }}
-                        animate={{ opacity: 1, scale: 1, y: 0 }}
-                        exit={{ opacity: 0, scale: 0.97, y: 8 }}
-                        transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-                    >
-                        <AlertDialogHeader>
-                            <AlertDialogTitle>Delete Rule?</AlertDialogTitle>
-                            <AlertDialogDescription>
-                                This will permanently delete this maker-checker rule. This action cannot be undone.
-                            </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
-                            <AlertDialogAction
-                                onClick={handleDeleteRule}
-                                disabled={isDeleting}
-                                className="bg-red-600 hover:bg-red-700 text-white"
-                            >
-                                {isDeleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                Delete
-                            </AlertDialogAction>
-                        </AlertDialogFooter>
-                    </motion.div>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Delete this rule?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            The maker-checker rule is deleted permanently. This cannot be undone.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={handleDeleteRule}
+                            disabled={isDeleting}
+                            className={buttonVariants({ variant: 'destructive' })}
+                        >
+                            {isDeleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                            Delete rule
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
         </div>

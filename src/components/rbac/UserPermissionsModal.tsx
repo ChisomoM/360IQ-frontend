@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { Loader2, ChevronLeft } from 'lucide-react';
-import { Dialog, DialogContent, DialogFooter } from '@/components/ui/dialog';
+import { ChevronLeft, AlertTriangle } from '@/components/icons';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Checkbox } from '@/components/ui/checkbox';
+import { TableSkeleton } from '@/components/shared/TableSkeleton';
 import { toast } from 'sonner';
 import { list, post, remove } from '@/lib/api/crud';
 import type { UserPermissionOverride, Permission } from '@/types/rbac';
@@ -99,23 +101,14 @@ export function UserPermissionsModal({ userId, userName = 'User', isOpen, onClos
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl bg-white p-0 overflow-hidden border-none shadow-2xl">
-        {/* Header */}
-        <div className="px-8 py-6 border-b border-gray-200">
-          <div className="flex items-center justify-between gap-4">
-            <div>
-              <h1 className="font-display font-bold text-display-sm text-gray-900">
-                Manage Permissions
-              </h1>
-              <p className="font-sans text-text-sm text-gray-600 mt-1">
-                Configure permission overrides for {userName}
-              </p>
-            </div>
-          </div>
-        </div>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Manage permissions</DialogTitle>
+          <DialogDescription>Permission overrides for {userName}.</DialogDescription>
+        </DialogHeader>
 
         {/* Content */}
-        <div className="p-8 overflow-y-auto max-h-[calc(90vh-200px)]">
+        <div>
           <AnimatePresence mode="wait">
             {isLoading ? (
               <motion.div
@@ -123,26 +116,27 @@ export function UserPermissionsModal({ userId, userName = 'User', isOpen, onClos
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="flex justify-center py-12"
               >
-                <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
+                <TableSkeleton rows={6} columns={2} />
               </motion.div>
             ) : error ? (
               <motion.div
                 key="error"
+                role="alert"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="bg-red-50 border border-red-200 rounded-lg p-4"
+                className="flex flex-col items-center gap-3 py-8 text-center"
               >
-                <p className="text-red-700 text-sm font-semibold mb-2">Error Loading Permissions</p>
-                <p className="text-red-600 text-text-sm mb-4">{error}</p>
+                <AlertTriangle size={24} className="text-risk" />
+                <p className="text-sm font-semibold text-text-primary">Could not load permissions</p>
+                <p className="max-w-[44ch] text-sm text-text-secondary">{error}</p>
                 <Button
-                  variant="outline"
+                  size="sm"
+                  variant="secondary"
                   onClick={handleRetry}
-                  className="h-10"
                 >
-                  Retry
+                  Try again
                 </Button>
               </motion.div>
             ) : (
@@ -154,15 +148,15 @@ export function UserPermissionsModal({ userId, userName = 'User', isOpen, onClos
                 transition={{ duration: 0.2 }}
                 className="space-y-6"
               >
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-sm text-blue-800">
-                  <p className="font-semibold">Permissions Override</p>
-                  <p className="text-xs mt-1 text-blue-700">
-                    Grant or deny specific permissions for {userName}. These overrides take precedence over role-based permissions.
+                <div className="rounded-md bg-field p-4 text-sm text-text-secondary">
+                  <p className="font-semibold text-text-primary">Overrides</p>
+                  <p className="text-xs mt-1">
+                    Grant or remove single permissions for {userName}. Changes save at once and take priority over role permissions.
                   </p>
                 </div>
 
                 {allPermissions.length === 0 ? (
-                  <p className="text-sm text-gray-600">No permissions available</p>
+                  <p className="text-sm text-text-muted">No permissions available.</p>
                 ) : (
                   <div className="space-y-6">
                     {Object.entries(
@@ -182,10 +176,10 @@ export function UserPermissionsModal({ userId, userName = 'User', isOpen, onClos
                         <div key={resource}>
                           <div className="flex items-center justify-between gap-3 mb-3">
                             <div className="flex items-center gap-3">
-                              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                              <p className="text-xs font-semibold text-text-muted uppercase tracking-[.04em]">
                                 {resource}
                               </p>
-                              <span className="text-xs text-gray-400">
+                              <span className="font-mono text-xs text-text-muted">
                                 {selectedCount} of {resourcePermsIds.length}
                               </span>
                             </div>
@@ -193,13 +187,12 @@ export function UserPermissionsModal({ userId, userName = 'User', isOpen, onClos
                               onClick={() => toggleAllInResource(resourcePermsIds)}
                               variant="ghost"
                               size="sm"
-                              className="h-6 px-2 text-xs font-medium text-blue-600 hover:bg-blue-50"
                               disabled={isSubmitting}
                             >
-                              {allSelectedInResource ? 'Deselect All' : 'Select All'}
+                              {allSelectedInResource ? 'Clear all' : 'Select all'}
                             </Button>
                           </div>
-                          <div className="grid grid-cols-2 gap-3 pl-2">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pl-2">
                             {perms.map((perm) => {
                               const permId = String(perm.id);
                               const isChecked = selectedPermissions.includes(permId);
@@ -208,19 +201,18 @@ export function UserPermissionsModal({ userId, userName = 'User', isOpen, onClos
                                   key={perm.id}
                                   className="flex items-start gap-2 text-sm cursor-pointer group"
                                 >
-                                  <input
-                                    type="checkbox"
+                                  <Checkbox
                                     checked={isChecked}
-                                    onChange={() => togglePermission(permId)}
+                                    onCheckedChange={() => togglePermission(permId)}
                                     disabled={isSubmitting}
-                                    className="h-4 w-4 mt-0.5 flex-shrink-0"
+                                    className="mt-0.5"
                                   />
                                   <div className="flex flex-col gap-0.5 min-w-0">
-                                    <span className="text-gray-700 font-medium leading-tight">
+                                    <span className="text-text-primary font-medium leading-tight">
                                       {perm.action}
                                     </span>
                                     {perm.description && (
-                                      <span className="text-gray-400 text-xs leading-tight">
+                                      <span className="text-text-muted text-xs leading-tight">
                                         {perm.description}
                                       </span>
                                     )}
@@ -232,9 +224,6 @@ export function UserPermissionsModal({ userId, userName = 'User', isOpen, onClos
                         </div>
                       );
                     })}
-                    <div className="bg-blue-50 border border-blue-200 rounded p-2 text-xs text-blue-700 mt-6">
-                      💡 Tip: Override permissions are automatically saved and take precedence over role-based permissions.
-                    </div>
                   </div>
                 )}
               </motion.div>
@@ -243,19 +232,17 @@ export function UserPermissionsModal({ userId, userName = 'User', isOpen, onClos
         </div>
 
         {/* Footer */}
-        <DialogFooter className="flex gap-3 border-t border-gray-200 bg-gray-50 px-8 py-4">
+        <DialogFooter className="gap-3 border-t border-line pt-4">
           <Button
-            variant="outline"
+            variant="secondary"
             onClick={onClose}
-            className="h-11"
           >
-            <ChevronLeft className="h-4 w-4 mr-2" />
+            <ChevronLeft />
             Close
           </Button>
           <Button
             onClick={onClose}
             disabled={isSubmitting}
-            className="h-11 bg-primary text-primary-foreground hover:bg-primary-dark"
           >
             Done
           </Button>

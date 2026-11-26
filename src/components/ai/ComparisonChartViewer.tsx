@@ -6,19 +6,20 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip, Legend,
   ResponsiveContainer,
 } from 'recharts';
-import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, BarChart2, LineChart as LineIcon, AreaChart as AreaIcon, X, AlertTriangle, RefreshCw } from 'lucide-react';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from '@/components/ui/table';
+import { SectionCard } from '@/components/shared/SectionCard';
+import { Loader2, BarChart2, LineChart as LineIcon, AreaChart as AreaIcon, X, AlertTriangle, RefreshCw } from '@/components/icons';
+import {
+  axisProps, gridProps, tooltipProps, legendProps, barCursor, lineCursor, seriesColor,
+  BAR_RADIUS, MAX_BAR_SIZE,
+} from '@/components/dashboard/chartTheme';
 import { post } from '@/lib/api/crud';
 import type { Document, ComparisonData } from '@/types/dms';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
-
-const CHART_COLORS = [
-  'var(--chart-1)', 'var(--chart-2)', 'var(--chart-3)', 'var(--chart-4)',
-  'var(--chart-1)', 'var(--chart-2)', 'var(--chart-3)', 'var(--chart-4)',
-];
 
 type ChartType = 'bar' | 'line' | 'area';
 
@@ -38,8 +39,18 @@ interface ComparisonChartViewerProps {
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 function fmt(v: number | null | undefined): string {
-  if (v == null) return '—';
+  if (v == null) return 'n/a';
   return v.toLocaleString(undefined, { maximumFractionDigits: 2 });
+}
+
+function SeriesDot({ index }: { index: number }) {
+  return (
+    <span
+      className="h-2.5 w-2.5 flex-shrink-0 rounded-pill"
+      style={{ backgroundColor: seriesColor(index) }}
+      aria-hidden="true"
+    />
+  );
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -61,32 +72,32 @@ export function ComparisonChartViewer({ docs, onClearAll }: ComparisonChartViewe
     try {
       const result = await post('DOCUMENT_COMPARE', { document_ids: docs.map((d) => d.id) });
       const comparison = result as ComparisonData;
-      
+
       console.log('ComparisonChartViewer: Comparison data loaded', {
         sharedColumnCount: comparison.shared_columns.length,
         columns: comparison.shared_columns.map(c => ({ name: c.name, kind: c.kind })),
         seriesCount: comparison.series.length,
         series: comparison.series.map(s => ({ title: s.title, rowCount: s.rows.length }))
       });
-      
+
       setData(comparison);
       // Auto-select sensible axis defaults
       const cats = comparison.shared_columns.filter((c) => c.kind === 'categorical');
       const nums = comparison.shared_columns.filter((c) => c.kind === 'numeric');
       const newXKey = cats[0]?.name ?? comparison.shared_columns[0]?.name ?? '';
       const newYKey = nums[0]?.name ?? comparison.shared_columns.find((c) => c.name !== (cats[0]?.name ?? ''))?.name ?? '';
-      
-      console.log('ComparisonChartViewer: Axes auto-selected', { 
-        xKey: newXKey, 
+
+      console.log('ComparisonChartViewer: Axes auto-selected', {
+        xKey: newXKey,
         yKey: newYKey,
         categoricalColumns: cats.map(c => c.name),
         numericColumns: nums.map(c => c.name)
       });
-      
+
       setXKey(newXKey);
       setYKey(newYKey);
     } catch (err: any) {
-      const message = err?.message || 'Comparison failed';
+      const message = err?.message || "Couldn't compare these documents";
       console.error('ComparisonChartViewer: Error loading comparison', { error: message, fullError: err });
       setError(message);
     } finally {
@@ -136,13 +147,12 @@ export function ComparisonChartViewer({ docs, onClearAll }: ComparisonChartViewe
     if (!data || !yKey) return [];
     const yIdx = data.shared_columns.findIndex((c) => c.name === yKey);
     if (yIdx === -1) return [];
-    return data.series.map((s, i) => {
+    return data.series.map((s) => {
       const vals = s.rows
         .map((r) => r[yIdx])
         .filter((v): v is number => typeof v === 'number');
       return {
         title: s.title,
-        color: CHART_COLORS[i % CHART_COLORS.length],
         count: vals.length,
         min: vals.length ? Math.min(...vals) : null,
         max: vals.length ? Math.max(...vals) : null,
@@ -155,22 +165,26 @@ export function ComparisonChartViewer({ docs, onClearAll }: ComparisonChartViewe
 
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center h-72 gap-3 text-gray-500">
-        <Loader2 className="h-8 w-8 animate-spin text-signal-text" />
-        <p className="text-sm">Aligning {docs.length} documents…</p>
-      </div>
+      <SectionCard>
+        <div role="status" className="flex flex-col items-center justify-center h-72 gap-3 text-text-secondary">
+          <Loader2 size={32} className="animate-spin text-signal-text" />
+          <p className="text-sm">Aligning {docs.length} documents…</p>
+        </div>
+      </SectionCard>
     );
   }
 
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center h-72 gap-4">
-        <AlertTriangle className="h-10 w-10 text-red-400" />
-        <p className="text-sm text-center max-w-xs text-red-600">{error}</p>
-        <Button variant="outline" size="sm" onClick={fetchComparison}>
-          <RefreshCw className="h-3 w-3 mr-1" /> Retry
-        </Button>
-      </div>
+      <SectionCard>
+        <div role="alert" className="flex flex-col items-center justify-center h-72 gap-4">
+          <AlertTriangle size={24} className="text-risk" />
+          <p className="text-sm text-center max-w-xs text-text-secondary">{error}</p>
+          <Button variant="secondary" size="sm" onClick={fetchComparison}>
+            <RefreshCw size={14} /> Try again
+          </Button>
+        </div>
+      </SectionCard>
     );
   }
 
@@ -178,7 +192,7 @@ export function ComparisonChartViewer({ docs, onClearAll }: ComparisonChartViewe
 
   const renderChart = () => {
     const canRender = data && xKey !== '' && yKey !== '' && mergedData.length > 0;
-    
+
     console.log('ComparisonChartViewer: renderChart conditions', {
       hasData: !!data,
       xKeySet: xKey !== '',
@@ -186,13 +200,13 @@ export function ComparisonChartViewer({ docs, onClearAll }: ComparisonChartViewe
       mergedDataLength: mergedData.length,
       conditions: { data: !!data, xKey, yKey, mergedDataLength: mergedData.length }
     });
-    
+
     if (!canRender) {
       console.log('ComparisonChartViewer: Showing fallback');
       return (
-        <div className="flex flex-col items-center justify-center h-64 text-gray-400 gap-2">
-          <BarChart2 className="h-12 w-12 opacity-20" />
-          <p className="text-sm">Select X and Y axes to render the comparison chart</p>
+        <div className="flex flex-col items-center justify-center h-64 text-text-muted gap-2">
+          <BarChart2 size={32} />
+          <p className="text-sm">Select X and Y axes to draw the comparison chart</p>
         </div>
       );
     }
@@ -203,11 +217,11 @@ export function ComparisonChartViewer({ docs, onClearAll }: ComparisonChartViewe
     };
     const sharedElements = (
       <>
-        <CartesianGrid strokeDasharray="3 3" stroke="var(--line)" />
-        <XAxis dataKey="__x" tick={{ fontSize: 11 }} interval="preserveStartEnd" />
-        <YAxis tick={{ fontSize: 11 }} tickFormatter={(v: number) => v.toLocaleString()} />
-        <Tooltip formatter={(v: number) => v.toLocaleString()} />
-        <Legend />
+        <CartesianGrid {...gridProps} />
+        <XAxis {...axisProps} dataKey="__x" interval="preserveStartEnd" />
+        <YAxis {...axisProps} tickFormatter={(v: number) => v.toLocaleString()} />
+        <Tooltip {...tooltipProps} cursor={chartType === 'bar' ? barCursor : lineCursor} formatter={(v: number) => v.toLocaleString()} />
+        <Legend {...legendProps} />
       </>
     );
 
@@ -217,7 +231,7 @@ export function ComparisonChartViewer({ docs, onClearAll }: ComparisonChartViewe
           <BarChart {...commonProps}>
             {sharedElements}
             {data.series.map((s, i) => (
-              <Bar key={s.document_id} dataKey={s.title} fill={CHART_COLORS[i % CHART_COLORS.length]} radius={[3, 3, 0, 0]} />
+              <Bar key={s.document_id} dataKey={s.title} fill={seriesColor(i)} radius={BAR_RADIUS} maxBarSize={MAX_BAR_SIZE} />
             ))}
           </BarChart>
         </ResponsiveContainer>
@@ -230,7 +244,7 @@ export function ComparisonChartViewer({ docs, onClearAll }: ComparisonChartViewe
           <LineChart {...commonProps}>
             {sharedElements}
             {data.series.map((s, i) => (
-              <Line key={s.document_id} type="monotone" dataKey={s.title} stroke={CHART_COLORS[i % CHART_COLORS.length]} strokeWidth={2} dot={mergedData.length <= 30} />
+              <Line key={s.document_id} type="monotone" dataKey={s.title} stroke={seriesColor(i)} strokeWidth={2} dot={false} />
             ))}
           </LineChart>
         </ResponsiveContainer>
@@ -241,17 +255,9 @@ export function ComparisonChartViewer({ docs, onClearAll }: ComparisonChartViewe
       return (
         <ResponsiveContainer width="100%" height={320}>
           <AreaChart {...commonProps}>
-            <defs>
-              {data.series.map((s, i) => (
-                <linearGradient key={s.document_id} id={`cgrad-${i}`} x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor={CHART_COLORS[i % CHART_COLORS.length]} stopOpacity={0.3} />
-                  <stop offset="95%" stopColor={CHART_COLORS[i % CHART_COLORS.length]} stopOpacity={0} />
-                </linearGradient>
-              ))}
-            </defs>
             {sharedElements}
             {data.series.map((s, i) => (
-              <Area key={s.document_id} type="monotone" dataKey={s.title} stroke={CHART_COLORS[i % CHART_COLORS.length]} fill={`url(#cgrad-${i})`} strokeWidth={2} />
+              <Area key={s.document_id} type="monotone" dataKey={s.title} stroke={seriesColor(i)} fill={seriesColor(i)} fillOpacity={0.12} strokeWidth={2} />
             ))}
           </AreaChart>
         </ResponsiveContainer>
@@ -266,57 +272,51 @@ export function ComparisonChartViewer({ docs, onClearAll }: ComparisonChartViewe
   return (
     <div className="flex flex-col gap-5 w-full">
 
-      {/* Header */}
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <h3 className="font-semibold text-gray-900">Comparing {docs.length} Documents</h3>
-          <div className="flex flex-wrap gap-1.5 mt-1.5">
+      {/* Controls */}
+      <SectionCard
+        title={`Comparing ${docs.length} documents`}
+        actions={
+          <Button variant="ghost" size="sm" onClick={onClearAll} className="flex-shrink-0">
+            <X size={14} /> Clear
+          </Button>
+        }
+      >
+        <div className="space-y-3">
+          <div className="flex flex-wrap gap-1.5">
             {docs.map((d, i) => (
               <span
                 key={d.id}
-                className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full font-medium text-white"
-                style={{ backgroundColor: CHART_COLORS[i % CHART_COLORS.length] }}
+                className="inline-flex items-center gap-1.5 rounded-pill bg-field px-2.5 py-0.5 text-xs text-text-primary"
               >
+                <SeriesDot index={i} />
                 {d.title.length > 24 ? d.title.slice(0, 24) + '…' : d.title}
               </span>
             ))}
           </div>
           {data && (
-            <p className="text-xs text-gray-400 mt-1">
-              {data.shared_columns.length} shared column{data.shared_columns.length !== 1 ? 's' : ''} · row-index aligned
+            <p className="text-xs text-text-muted">
+              {data.shared_columns.length} shared column{data.shared_columns.length !== 1 ? 's' : ''}, aligned by row number
             </p>
           )}
-        </div>
-        <Button variant="ghost" size="sm" onClick={onClearAll} className="text-gray-400 hover:text-gray-700 flex-shrink-0 gap-1">
-          <X className="h-3.5 w-3.5" /> Clear
-        </Button>
-      </div>
 
-      {/* Controls */}
-      <Card className="border border-gray-100 shadow-none bg-gray-50/60">
-        <CardContent className="p-4 space-y-3">
           {/* Row 1: chart type */}
-          <div className="flex items-center gap-1">
-            {CHART_TYPES.map(({ type, label, Icon }) => (
-              <Button
-                key={type}
-                variant={chartType === type ? 'default' : 'ghost'}
-                size="sm"
-                className={`h-7 px-2 gap-1 text-xs ${chartType === type ? 'bg-signal text-on-signal hover:bg-signal-hover' : 'text-text-muted'}`}
-                onClick={() => setChartType(type)}
-                title={label}
-              >
-                <Icon className="h-3.5 w-3.5" />
-                {label}
-              </Button>
-            ))}
-          </div>
+          <Tabs value={chartType} onValueChange={(v) => setChartType(v as ChartType)}>
+            <TabsList aria-label="Chart type">
+              {CHART_TYPES.map(({ type, label, Icon }) => (
+                <TabsTrigger key={type} value={type} className="gap-1.5">
+                  <Icon size={14} />
+                  {label}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </Tabs>
+
           {/* Row 2: axis selectors */}
           <div className="flex flex-wrap gap-3 items-center">
             <div className="flex items-center gap-2">
-              <span className="text-xs font-medium text-gray-500 whitespace-nowrap">X Axis</span>
+              <span className="text-xs font-medium text-text-secondary whitespace-nowrap">X axis</span>
               <Select value={xKey} onValueChange={setXKey}>
-                <SelectTrigger className="h-8 w-44 text-xs bg-white"><SelectValue /></SelectTrigger>
+                <SelectTrigger className="h-8 w-44 text-xs" aria-label="X axis column"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {allCols.filter((c) => !!c.name).map((c) => (
                     <SelectItem key={c.name} value={c.name}>{c.name}</SelectItem>
@@ -325,9 +325,9 @@ export function ComparisonChartViewer({ docs, onClearAll }: ComparisonChartViewe
               </Select>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-xs font-medium text-gray-500 whitespace-nowrap">Y Metric</span>
+              <span className="text-xs font-medium text-text-secondary whitespace-nowrap">Y measure</span>
               <Select value={yKey} onValueChange={setYKey}>
-                <SelectTrigger className="h-8 w-44 text-xs bg-white"><SelectValue /></SelectTrigger>
+                <SelectTrigger className="h-8 w-44 text-xs" aria-label="Y measure column"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {(numericCols.length > 0 ? numericCols : allCols).filter((c) => !!c.name).map((c) => (
                     <SelectItem key={c.name} value={c.name}>{c.name}</SelectItem>
@@ -336,47 +336,47 @@ export function ComparisonChartViewer({ docs, onClearAll }: ComparisonChartViewe
               </Select>
             </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </SectionCard>
 
       {/* Chart */}
-      <Card className="border border-gray-100 shadow-none w-full overflow-visible">
-        <CardContent className="p-4 w-full min-h-96 overflow-visible">
-          {renderChart()}
-        </CardContent>
-      </Card>
+      <SectionCard eyebrow={yKey || undefined} className="w-full" bodyClassName="min-h-96">
+        {renderChart()}
+      </SectionCard>
 
       {/* Per-series summary stats */}
       {seriesStats.length > 0 && yKey && (
-        <div className="overflow-x-auto rounded-lg border border-gray-100">
-          <table className="w-full text-xs">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-3 py-2 text-left font-semibold text-gray-600 border-b border-gray-100">Document</th>
-                <th className="px-3 py-2 text-right font-semibold text-gray-600 border-b border-gray-100">Rows</th>
-                <th className="px-3 py-2 text-right font-semibold text-gray-600 border-b border-gray-100">Min</th>
-                <th className="px-3 py-2 text-right font-semibold text-gray-600 border-b border-gray-100">Max</th>
-                <th className="px-3 py-2 text-right font-semibold text-gray-600 border-b border-gray-100">Average</th>
-              </tr>
-            </thead>
-            <tbody>
-              {seriesStats.map((s, i) => (
-                <tr key={i} className="even:bg-gray-50/50">
-                  <td className="px-3 py-2 border-b border-gray-50">
-                    <span className="inline-flex items-center gap-1.5">
-                      <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: s.color }} />
-                      {s.title}
-                    </span>
-                  </td>
-                  <td className="px-3 py-2 text-right tabular-nums text-gray-700 border-b border-gray-50">{s.count}</td>
-                  <td className="px-3 py-2 text-right tabular-nums text-gray-700 border-b border-gray-50">{fmt(s.min)}</td>
-                  <td className="px-3 py-2 text-right tabular-nums text-gray-700 border-b border-gray-50">{fmt(s.max)}</td>
-                  <td className="px-3 py-2 text-right tabular-nums text-gray-700 border-b border-gray-50">{fmt(s.avg)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <SectionCard title={`${yKey} by document`} padded={false}>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Document</TableHead>
+                  <TableHead className="text-right">Rows</TableHead>
+                  <TableHead className="text-right">Min</TableHead>
+                  <TableHead className="text-right">Max</TableHead>
+                  <TableHead className="text-right">Average</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {seriesStats.map((s, i) => (
+                  <TableRow key={i}>
+                    <TableCell className="font-semibold">
+                      <span className="inline-flex items-center gap-1.5">
+                        <SeriesDot index={i} />
+                        {s.title}
+                      </span>
+                    </TableCell>
+                    <TableCell className="text-right font-mono text-xs text-text-secondary">{s.count}</TableCell>
+                    <TableCell className="text-right font-mono text-xs text-text-secondary">{fmt(s.min)}</TableCell>
+                    <TableCell className="text-right font-mono text-xs text-text-secondary">{fmt(s.max)}</TableCell>
+                    <TableCell className="text-right font-mono text-xs text-text-secondary">{fmt(s.avg)}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </SectionCard>
       )}
 
     </div>

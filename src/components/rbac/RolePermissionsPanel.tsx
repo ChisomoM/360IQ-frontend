@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { Loader2, Lock } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Loader2, Lock, AlertTriangle } from '@/components/icons';
 import { toast } from 'sonner';
 import { update, remove } from '@/lib/api/crud';
 import type { Role, Permission } from '@/types/rbac';
@@ -104,27 +105,27 @@ export function RolePermissionsPanel({
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] bg-white flex flex-col overflow-y-auto">
+      <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col overflow-y-auto">
         <DialogHeader className="flex-shrink-0">
-          <DialogTitle>Edit Role Permissions</DialogTitle>
-          <p className="text-sm text-gray-500 mt-1">{role.name}</p>
+          <DialogTitle>Edit role permissions</DialogTitle>
+          <DialogDescription>{role.name}</DialogDescription>
         </DialogHeader>
 
         {(isSystemRole || Object.entries(grouped).some(([r]) => isResourceLocked(r))) && (
-          <div className="flex-shrink-0 bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-800 flex items-start gap-2">
-            <Lock className="h-4 w-4 mt-0.5 flex-shrink-0" />
+          <div className="flex-shrink-0 bg-field rounded-md p-3 text-sm text-text-secondary flex items-start gap-2">
+            <Lock size={16} className="mt-0.5 flex-shrink-0" />
             <span>
-              {isSystemRole && "Core permissions for this role cannot be modified. "}
-              {Object.entries(grouped).some(([r]) => isResourceLocked(r)) && "System-level permissions are locked and cannot be toggled."}
+              {isSystemRole && "Core permissions for this role cannot be changed. "}
+              {Object.entries(grouped).some(([r]) => isResourceLocked(r)) && "System permissions are locked."}
             </span>
           </div>
         )}
 
-        <div className="space-y-4 pr-4">
+        <div className="space-y-4">
           {Object.entries(unlockedGrouped).map(([resource, perms]) => (
             <div key={resource}>
               <div className="flex items-center gap-2 mb-2">
-                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                <p className="text-xs font-semibold text-text-muted uppercase tracking-[.04em]">
                   {resource}
                 </p>
               </div>
@@ -136,21 +137,19 @@ export function RolePermissionsPanel({
                   return (
                     <label
                       key={id}
-                      className={`flex items-center gap-2 text-sm ${isLocked ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                      className={`flex items-center gap-2 text-sm text-text-primary ${isLocked ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
                     >
-                      <input
-                        type="checkbox"
+                      <Checkbox
                         title={`${perm.resource}.${perm.action}`}
                         checked={isChecked}
-                        onChange={() => toggle(id, resource)}
+                        onCheckedChange={() => toggle(id, resource)}
                         disabled={isLocked}
-                        className="h-4 w-4"
                       />
                       <span>{perm.action}</span>
                       {perm.description && (
-                        <span className="text-gray-400 text-xs">— {perm.description}</span>
+                        <span className="text-text-muted text-xs">{perm.description}</span>
                       )}
-                      {isLocked && <Lock className="h-3 w-3 text-gray-400 ml-auto" />}
+                      {isLocked && <Lock size={14} className="text-text-muted ml-auto" />}
                     </label>
                   );
                 })}
@@ -160,18 +159,20 @@ export function RolePermissionsPanel({
           {Object.keys(lockedGrouped).length > 0 && (
             <Accordion type="single" collapsible className="w-full">
               <AccordionItem value="locked-permissions">
-                <AccordionTrigger className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                  Locked Permissions
+                <AccordionTrigger className="text-xs font-semibold text-text-muted uppercase tracking-[.04em]">
+                  Locked permissions
                 </AccordionTrigger>
                 <AccordionContent>
                   <div className="space-y-4">
                     {Object.entries(lockedGrouped).map(([resource, perms]) => (
                       <div key={resource}>
                         <div className="flex items-center gap-2 mb-2">
-                          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                          <p className="text-xs font-semibold text-text-muted uppercase tracking-[.04em]">
                             {resource}
                           </p>
-                          <Lock className="h-3 w-3 text-gray-400" title="This resource is locked and cannot be modified" />
+                          <span title="This resource is locked and cannot be changed" className="text-text-muted">
+                            <Lock size={14} />
+                          </span>
                         </div>
                         <div className="space-y-2 pl-4">
                           {perms.map((perm) => {
@@ -180,20 +181,18 @@ export function RolePermissionsPanel({
                             return (
                               <label
                                 key={id}
-                                className="flex items-center gap-2 text-sm opacity-50 cursor-not-allowed"
+                                className="flex items-center gap-2 text-sm text-text-secondary cursor-not-allowed"
                               >
-                                <input
-                                  type="checkbox"
+                                <Checkbox
                                   title={`${perm.resource}.${perm.action}`}
                                   checked={isChecked}
                                   disabled={true}
-                                  className="h-4 w-4"
                                 />
                                 <span>{perm.action}</span>
                                 {perm.description && (
-                                  <span className="text-gray-400 text-xs">— {perm.description}</span>
+                                  <span className="text-text-muted text-xs">{perm.description}</span>
                                 )}
-                                <Lock className="h-3 w-3 text-gray-400 ml-auto" />
+                                <Lock size={14} className="text-text-muted ml-auto" />
                               </label>
                             );
                           })}
@@ -206,24 +205,23 @@ export function RolePermissionsPanel({
             </Accordion>
           )}
           {showConfirm && (
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-sm text-yellow-800">
-              Are you sure you want to change permissions for {role.name}?
+            <div role="alert" className="flex items-start gap-2 bg-caution-tint rounded-md p-3 text-sm text-caution">
+              <AlertTriangle size={16} className="mt-0.5 shrink-0" />
+              Change permissions for {role.name}? Select Confirm changes to apply them.
             </div>
           )}
         </div>
 
-
-
-        <DialogFooter className="flex-shrink-0 flex gap-2 justify-end">
-          <Button variant="outline" onClick={handleCancel} disabled={isSaving}>
+        <DialogFooter className="flex-shrink-0 flex gap-3 justify-end">
+          <Button variant="secondary" onClick={handleCancel} disabled={isSaving}>
             Cancel
           </Button>
           <Button
             onClick={handleSave}
             disabled={isSaving || !hasChanges}
           >
-            {isSaving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-            {showConfirm ? 'Confirm' : 'Save'}
+            {isSaving && <Loader2 className="animate-spin" />}
+            {showConfirm ? 'Confirm changes' : 'Save permissions'}
           </Button>
         </DialogFooter>
       </DialogContent>

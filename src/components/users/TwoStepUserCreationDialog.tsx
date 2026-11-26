@@ -16,9 +16,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
+import { TableSkeleton } from '@/components/shared/TableSkeleton';
 import { PermissionAssignmentStep } from '@/components/users/PermissionAssignmentStep';
-import { Loader2, ChevronRight, ChevronLeft } from 'lucide-react';
+import { Loader2, ChevronRight, ChevronLeft } from '@/components/icons';
 import { toast } from 'sonner';
 import { fetchData, list } from '@/lib/api/crud';
 import type { UserRole } from '@/lib/constants';
@@ -74,27 +74,27 @@ export function TwoStepUserCreationDialog({
 
   const validateStep1 = (): boolean => {
     if (!formData.firstName.trim()) {
-      toast.error('First name is required');
+      toast.error('Enter a first name.');
       return false;
     }
     if (!formData.lastName.trim()) {
-      toast.error('Last name is required');
+      toast.error('Enter a last name.');
       return false;
     }
     if (!formData.email.trim()) {
-      toast.error('Email is required');
+      toast.error('Enter an email address.');
       return false;
     }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      toast.error('Please enter a valid email address');
+      toast.error('Enter a full email address, like name@company.co.zm.');
       return false;
     }
     if (!formData.password || formData.password.length < 8) {
-      toast.error('Password must be at least 8 characters long');
+      toast.error('Use at least 8 characters for the password.');
       return false;
     }
     if (!formData.role) {
-      toast.error('Role is required');
+      toast.error('Choose a role.');
       return false;
     }
     return true;
@@ -132,7 +132,7 @@ export function TwoStepUserCreationDialog({
       //   permission_ids: selectedPermissions,
       // });
 
-      toast.success('User created successfully');
+      toast.success('User created');
       handleClose();
       onUserCreated?.();
     } catch (error: any) {
@@ -173,29 +173,20 @@ export function TwoStepUserCreationDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="max-w-3xl bg-white max-h-[90vh] overflow-y-auto rounded-xl shadow-lg">
-        <DialogHeader className="border-b border-gray-100 pb-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <DialogTitle className="text-2xl font-semibold text-text-primary">
-                Create New User
-              </DialogTitle>
-              <DialogDescription className="mt-2 text-sm text-gray-500 font-medium">
-                {step === 1 ? 'Step 1: User Details' : 'Step 2: Permission Assignment'}
-              </DialogDescription>
-            </div>
-            <div className="flex items-center gap-1.5 px-3 py-1.5 bg-signal-tint rounded-md border border-line">
-              <span className="text-sm font-semibold text-signal-text">{step}</span>
-              <span className="text-sm text-signal-text">/2</span>
-            </div>
-          </div>
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <p className="text-xs text-text-muted">Step <span className="font-mono">{step}</span> of <span className="font-mono">2</span></p>
+          <DialogTitle>Create user</DialogTitle>
+          <DialogDescription>
+            {step === 1 ? 'Add the user details.' : 'Choose permissions for this user.'}
+          </DialogDescription>
         </DialogHeader>
 
         {/* Progress Bar */}
-        <div className="flex gap-3 my-6">
-          <div className="flex-1 h-1.5 bg-signal rounded-full transition-all duration-300" />
+        <div className="flex gap-2" aria-hidden="true">
+          <div className="flex-1 h-1.5 bg-signal rounded-pill transition-all duration-300" />
           <div
-            className={`flex-1 h-1.5 rounded-full transition-all duration-300 ${
+            className={`flex-1 h-1.5 rounded-pill transition-all duration-300 ${
               step >= 2
                 ? 'bg-signal'
                 : 'bg-surface-2'
@@ -205,59 +196,48 @@ export function TwoStepUserCreationDialog({
 
         {/* Step 1: User Details */}
         {step === 1 && (
-          <div className="grid gap-5 py-8">
-            <div className="grid grid-cols-2 gap-5">
-              <div className="space-y-2">
-                <Label htmlFor="firstName" className="text-sm font-semibold text-gray-700">
-                  First Name <span className="text-red-500">*</span>
-                </Label>
+          <div className="grid gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <Label htmlFor="firstName">First name</Label>
                 <Input
                   id="firstName"
                   value={formData.firstName}
                   onChange={(e) =>
                     setFormData({ ...formData, firstName: e.target.value })
                   }
-                  placeholder="John"
+                  placeholder="Natasha"
                   disabled={isSubmitting}
-                  className="border-gray-200 rounded-lg focus:border-blue-400 focus:ring-blue-50"
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="lastName" className="text-sm font-semibold text-gray-700">
-                  Last Name <span className="text-red-500">*</span>
-                </Label>
+              <div className="space-y-1.5">
+                <Label htmlFor="lastName">Last name</Label>
                 <Input
                   id="lastName"
                   value={formData.lastName}
                   onChange={(e) =>
                     setFormData({ ...formData, lastName: e.target.value })
                   }
-                  placeholder="Doe"
+                  placeholder="Lungu"
                   disabled={isSubmitting}
-                  className="border-gray-200 rounded-lg focus:border-blue-400 focus:ring-blue-50"
                 />
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="email" className="text-sm font-semibold text-gray-700">
-                Email Address <span className="text-red-500">*</span>
-              </Label>
+            <div className="space-y-1.5">
+              <Label htmlFor="email">Email address</Label>
               <Input
                 id="email"
                 type="email"
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                placeholder="john.doe@360iq.com"
+                placeholder="name@company.co.zm"
                 disabled={isSubmitting}
-                className="border-gray-200 rounded-lg focus:border-blue-400 focus:ring-blue-50"
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="password" className="text-sm font-semibold text-gray-700">
-                Password <span className="text-red-500">*</span>
-              </Label>
+            <div className="space-y-1.5">
+              <Label htmlFor="password">Password</Label>
               <Input
                 id="password"
                 type="password"
@@ -265,17 +245,13 @@ export function TwoStepUserCreationDialog({
                 onChange={(e) =>
                   setFormData({ ...formData, password: e.target.value })
                 }
-                placeholder="••••••••"
                 disabled={isSubmitting}
-                className="border-gray-200 rounded-lg focus:border-blue-400 focus:ring-blue-50"
               />
-              <p className="text-xs text-gray-500 mt-2">Minimum 8 characters required</p>
+              <p className="text-xs text-text-muted">At least 8 characters.</p>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="role" className="text-sm font-semibold text-gray-700">
-                Role <span className="text-red-500">*</span>
-              </Label>
+            <div className="space-y-1.5">
+              <Label htmlFor="role">Role</Label>
               <Select
                 value={formData.role}
                 onValueChange={(val) =>
@@ -283,25 +259,25 @@ export function TwoStepUserCreationDialog({
                 }
                 disabled={isSubmitting}
               >
-                <SelectTrigger id="role" className="border-gray-200 rounded-lg">
-                  <SelectValue placeholder="Select a role" />
+                <SelectTrigger id="role">
+                  <SelectValue placeholder="Choose a role" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="super_admin">
-                    System Administrator
+                    System administrator
                   </SelectItem>
                   <SelectItem value="admin">Administrator</SelectItem>
                   <SelectItem value="records_authority">
-                    Records Authority
+                    Records authority
                   </SelectItem>
-                  <SelectItem value="dept_head">Department Head</SelectItem>
-                  <SelectItem value="staff_member">Staff Member</SelectItem>
-                  <SelectItem value="finance_officer">Finance Officer</SelectItem>
-                  <SelectItem value="hr_officer">HR Officer</SelectItem>
+                  <SelectItem value="dept_head">Department head</SelectItem>
+                  <SelectItem value="staff_member">Staff member</SelectItem>
+                  <SelectItem value="finance_officer">Finance officer</SelectItem>
+                  <SelectItem value="hr_officer">HR officer</SelectItem>
                   <SelectItem value="auditor">Auditor</SelectItem>
                 </SelectContent>
               </Select>
-              <p className="text-xs text-gray-500 mt-2">
+              <p className="text-xs text-text-muted">
                 {getRoleDescription(formData.role)}
               </p>
             </div>
@@ -310,14 +286,9 @@ export function TwoStepUserCreationDialog({
 
         {/* Step 2: Permission Assignment */}
         {step === 2 && (
-          <div className="py-8">
+          <div>
             {isLoadingPermissions ? (
-              <div className="flex flex-col items-center justify-center py-16 space-y-4">
-                <div className="relative w-12 h-12">
-                  <div className="absolute inset-0 bg-signal rounded-full animate-spin" style={{maskImage: 'conic-gradient(transparent 70%, black)'}} />
-                </div>
-                <p className="text-gray-600 font-medium">Loading permissions...</p>
-              </div>
+              <TableSkeleton rows={5} columns={2} />
             ) : (
               <PermissionAssignmentStep
                 allPermissions={allPermissions}
@@ -329,24 +300,22 @@ export function TwoStepUserCreationDialog({
         )}
 
         {/* Footer Actions */}
-        <div className="flex gap-3 justify-end mt-8 pt-6 border-t border-gray-100">
+        <div className="flex flex-wrap gap-3 justify-end pt-4 border-t border-line">
           <Button
-            variant="outline"
+            variant="ghost"
             onClick={handleClose}
             disabled={isSubmitting}
-            className="border-gray-300 text-gray-700 hover:bg-gray-50 rounded-lg"
           >
             Cancel
           </Button>
 
           {step === 2 && (
             <Button
-              variant="outline"
+              variant="secondary"
               onClick={handlePreviousStep}
               disabled={isSubmitting}
-              className="border-gray-300 text-gray-700 hover:bg-gray-50 rounded-lg"
             >
-              <ChevronLeft className="h-4 w-4 mr-2" />
+              <ChevronLeft />
               Back
             </Button>
           )}
@@ -356,8 +325,8 @@ export function TwoStepUserCreationDialog({
               onClick={handleNextStep}
               disabled={isSubmitting}
             >
-              Next
-              <ChevronRight className="h-4 w-4 ml-2" />
+              Continue
+              <ChevronRight />
             </Button>
           ) : (
             <Button
@@ -365,9 +334,9 @@ export function TwoStepUserCreationDialog({
               disabled={isSubmitting}
             >
               {isSubmitting && (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                <Loader2 className="animate-spin" />
               )}
-              Create User
+              Create user
             </Button>
           )}
         </div>

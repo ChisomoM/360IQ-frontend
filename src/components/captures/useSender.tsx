@@ -1,5 +1,5 @@
 import { useCallback, useRef, useState } from "react";
-import { Loader2, RefreshCw, Trash2 } from "lucide-react";
+import { Loader2, RefreshCw, Trash2 } from "@/components/icons";
 import { Button } from "@/components/ui/button";
 import { isNetworkError, submitFile, submitNote } from "@/lib/api/captures";
 import { deletePending, ownsPending, savePending, withKeyFor, type PendingCapture } from "@/lib/capture/pending";
@@ -92,7 +92,7 @@ export function SendStatus({ sender }: { sender: ReturnType<typeof useSender> })
   if (sender.busy) {
     return (
       <p className="flex items-center gap-2 text-sm text-text-secondary" role="status">
-        <Loader2 className="h-4 w-4 animate-spin" /> Sending and reading. This can take up to a minute.
+        <Loader2 size={16} className="animate-spin" /> Sending and reading. This can take up to a minute.
       </p>
     );
   }
@@ -101,11 +101,11 @@ export function SendStatus({ sender }: { sender: ReturnType<typeof useSender> })
     <div className="space-y-2">
       <ErrorBanner>{sender.error}</ErrorBanner>
       <div className="flex flex-wrap gap-2">
-        <Button type="button" onClick={() => void sender.retry()}>
-          <RefreshCw className="h-4 w-4" /> Send again
+        <Button type="button" variant="secondary" onClick={() => void sender.retry()}>
+          <RefreshCw /> Send again
         </Button>
-        <Button type="button" variant="outline" onClick={() => void sender.discard()}>
-          <Trash2 className="h-4 w-4" /> Discard
+        <Button type="button" variant="ghost" onClick={() => void sender.discard()}>
+          <Trash2 /> Discard
         </Button>
       </div>
     </div>

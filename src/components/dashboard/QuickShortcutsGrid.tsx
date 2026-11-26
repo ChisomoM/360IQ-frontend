@@ -1,5 +1,4 @@
 import { useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
 import type { ReactNode } from 'react';
 
 export interface Shortcut {
@@ -32,28 +31,22 @@ export function QuickShortcutsGrid({
   }
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 lg:gap-5">
-      {filteredShortcuts.map((shortcut, idx) => (
+    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+      {filteredShortcuts.map((shortcut) => (
         <button
+          type="button"
           key={shortcut.id}
           onClick={() => navigate(shortcut.href)}
-          aria-label={shortcut.description || shortcut.label}
-          className="group relative h-auto flex flex-col items-center justify-center gap-3 py-6 lg:py-8 px-3 lg:px-4 rounded-lg bg-surface-1 border border-line transition-colors duration-150 hover:border-line-strong hover:bg-surface-2"
-          style={{ animationDelay: `${idx * 50}ms` }}
+          className="flex min-w-0 flex-col items-start gap-2 rounded-lg border border-line bg-surface-1 p-4 text-left shadow-card transition-shadow hover:shadow-card-hover"
         >
-          {/* Icon wrapper */}
-          <div className="relative text-3xl lg:text-4xl text-primary group-hover:scale-125 transition-transform duration-300">
+          <span className="grid h-10 w-10 place-items-center rounded-sm bg-field text-text-secondary" aria-hidden="true">
             {shortcut.icon}
-          </div>
-          
-          {/* Label */}
-          <span className="relative text-xs lg:text-sm font-semibold text-slate-900 line-clamp-2 text-center group-hover:text-primary transition-colors">
+          </span>
+          <span className="text-sm font-semibold text-text-primary">
             {shortcut.label}
           </span>
-          
-          {/* Description (optional, on hover) */}
           {shortcut.description && (
-            <span className="relative text-xs text-slate-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300 text-center line-clamp-1">
+            <span className="text-xs text-text-muted">
               {shortcut.description}
             </span>
           )}

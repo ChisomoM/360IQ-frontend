@@ -1,7 +1,7 @@
 import { useRef, forwardRef, useImperativeHandle } from 'react';
 import SignatureCanvas from 'react-signature-canvas';
 import { Button } from '@/components/ui/button';
-import { Eraser } from 'lucide-react';
+import { Eraser } from '@/components/icons';
 
 export interface SignaturePadHandle {
   clear: () => void;
@@ -121,7 +121,8 @@ const SignaturePad = forwardRef<SignaturePadHandle, SignaturePadProps>(
 
     return (
       <div className="space-y-2">
-        <div className="border-2 border-dashed border-gray-300 rounded-lg bg-white overflow-hidden cursor-crosshair">
+        {/* The pad stays white in both themes so the black signature ink is visible */}
+        <div data-theme="paper" className="cursor-crosshair overflow-hidden rounded-md border-2 border-dashed border-line-strong bg-surface-1">
           <SignatureCanvas
             ref={canvasRef}
             penColor="#000000"
@@ -134,19 +135,19 @@ const SignaturePad = forwardRef<SignaturePadHandle, SignaturePadProps>(
               height,
               className: 'block w-full',
               style: { touchAction: 'none' },
+              'aria-label': 'Signature pad',
             }}
           />
         </div>
         <div className="flex items-center justify-between">
-          <p className="text-xs text-gray-400">Draw your signature above</p>
+          <p className="text-xs text-text-muted">Draw your signature above</p>
           <Button
             type="button"
             variant="ghost"
             size="sm"
             onClick={() => canvasRef.current?.clear()}
-            className="text-gray-500 h-7 px-2"
           >
-            <Eraser className="h-3.5 w-3.5 mr-1" />
+            <Eraser />
             Clear
           </Button>
         </div>

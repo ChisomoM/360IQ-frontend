@@ -1,9 +1,11 @@
 import { useAuth } from "@/lib/context/useAuth";
 import { Label } from "@radix-ui/react-label";
-import { Eye, EyeClosed, Loader2 } from "lucide-react";
+import { Loader2 } from "@/components/icons";
 import { useState } from "react";
+import { cn } from "@/lib/utils";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
+import { AUTH_FIELD, PasswordInput } from "./PasswordInput";
 
 interface ControlHubLoginFormProps {
   onSignUpClick: () => void;
@@ -12,7 +14,6 @@ interface ControlHubLoginFormProps {
 export const ControlHubLoginForm: React.FC<ControlHubLoginFormProps> = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [see, setSee] = useState(false);
 
   const { controlHubLogin, isLoading } = useAuth();
 
@@ -35,62 +36,43 @@ export const ControlHubLoginForm: React.FC<ControlHubLoginFormProps> = () => {
     <div className="w-full">
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="space-y-1.5">
-          <Label
-            htmlFor="email"
-            className="text-sm font-medium text-gray-700"
-          >
-            Email Address
+          <Label htmlFor="email" className="block text-[13px] font-medium text-text-secondary">
+            Email address
           </Label>
           <Input
             id="email"
             type="email"
-            placeholder="admin@360iq.com"
+            autoComplete="email"
+            placeholder="name@company.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="h-11"
+            className={cn("w-full", AUTH_FIELD)}
             required
           />
         </div>
 
         <div className="space-y-1.5">
-          <Label
-            htmlFor="password"
-            className="text-sm font-medium text-gray-700"
-          >
+          <Label htmlFor="password" className="block text-[13px] font-medium text-text-secondary">
             Password
           </Label>
-          <div className="relative">
-            <Input
-              id="password"
-              type={see ? "text" : "password"}
-              placeholder="Enter your password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="h-11 pr-10"
-              required
-            />
-            <button
-              type="button"
-              onClick={() => setSee(!see)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
-            >
-              {see ? <EyeClosed size={18} /> : <Eye size={18} />}
-            </button>
-          </div>
+          <PasswordInput
+            id="password"
+            autoComplete="current-password"
+            placeholder="Enter your password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
         </div>
 
-        <Button
-          type="submit"
-          className="w-full h-11"
-          disabled={isLoading}
-        >
+        <Button type="submit" size="lg" className="w-full" disabled={isLoading}>
           {isLoading ? (
             <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Signing in...
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Signing in
             </>
           ) : (
-            "Sign In to ControlHub"
+            "Sign in to ControlHub"
           )}
         </Button>
       </form>

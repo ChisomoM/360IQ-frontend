@@ -11,8 +11,13 @@ import {
 } from '@/lib/api/dashboard';
 import { fetchData } from '@/lib/api/crud';
 import { useMockDashboard } from '@/lib/store/mockDashboardStore';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import { PageHeader } from '@/components/shared/PageHeader';
+import { SectionCard } from '@/components/shared/SectionCard';
+import { SectionBody } from '@/components/shared/SectionBody';
+import { TableSkeleton } from '@/components/shared/TableSkeleton';
+import { EmptyState } from '@/components/shared/EmptyState';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
   Select,
@@ -30,8 +35,8 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
-import { AlertCircle, Loader2, Save, Plus } from 'lucide-react';
+import { StatusBadge } from '@/components/shared/StatusBadge';
+import { LayoutDashboard, Save, Plus } from '@/components/icons';
 import { useToast } from '@/hooks/use-toast';
 import { CreateCardModal } from '@/components/dashboard/CreateCardModal';
 
@@ -107,10 +112,10 @@ export default function DashboardConfigurationPage() {
           setSelectedDepartment(deptList[0].id);
         }
       } catch (err) {
-        const message = err instanceof Error ? err.message : 'Failed to load configuration';
+        const message = err instanceof Error ? err.message : "Couldn't load the configuration";
         setError(message);
         toast({
-          title: 'Error',
+          title: "Couldn't load the configuration",
           description: message,
           variant: 'destructive',
         });
@@ -214,13 +219,13 @@ export default function DashboardConfigurationPage() {
       }
 
       toast({
-        title: 'Success',
-        description: 'Dashboard configuration saved successfully',
+        title: 'Configuration saved',
+        description: 'Dashboards use the new card settings.',
       });
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to save configuration';
+      const message = err instanceof Error ? err.message : 'Try saving again.';
       toast({
-        title: 'Error',
+        title: "Couldn't save the configuration",
         description: message,
         variant: 'destructive',
       });
@@ -250,63 +255,55 @@ export default function DashboardConfigurationPage() {
         setCardConfigs(defaultConfigs);
       }
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to refresh cards';
+      const message = err instanceof Error ? err.message : 'Reload the page to see the new card.';
       toast({
-        title: 'Error',
+        title: "Couldn't refresh the cards",
         description: message,
         variant: 'destructive',
       });
     }
   };
 
-  if (loading) {
+  if (loading || error) {
     return (
-      <div className="p-8 space-y-6 bg-surface-0 min-h-screen">
-        <div className="flex items-center justify-center py-16">
-          <Loader2 className="w-8 h-8 animate-spin text-primary" />
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="p-8 space-y-6 bg-surface-0 min-h-screen">
-        <div className="flex flex-col items-center justify-center py-16 bg-white rounded-2xl border border-red-200/50 shadow-premium-md">
-          <AlertCircle className="w-12 h-12 text-red-500 mb-4" />
-          <h3 className="text-lg font-semibold text-red-900">Error</h3>
-          <p className="text-red-700 text-sm mt-2 max-w-md text-center">{error}</p>
-        </div>
+      <div className="mx-auto flex w-full max-w-[1440px] flex-col gap-5">
+        <PageHeader title="Dashboard configuration" />
+        <SectionCard padded={false}>
+          <SectionBody loading={loading} error={error} skeleton={<TableSkeleton columns={5} />}>
+            {null}
+          </SectionBody>
+        </SectionCard>
       </div>
     );
   }
 
   return (
-    <div className="p-8 space-y-8 bg-surface-0 min-h-screen">
+    <div className="mx-auto flex w-full max-w-[1440px] flex-col gap-5">
       {/* Header */}
-      <div className="animate-fade-in-up">
-        <div className="mb-2">
-          <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Dashboard Configuration</h1>
-        </div>
-        <p className="text-base text-slate-600 max-w-2xl">
-          Customize which cards appear on dashboards for different departments and roles. Control visibility, ordering, and required permissions.
-        </p>
-      </div>
+      <PageHeader
+        title="Dashboard configuration"
+        description="Choose which cards appear on each department's and role's dashboard, their order and the permission they need."
+        actions={
+          <>
+            <Button variant="secondary" onClick={() => setShowCreateModal(true)}>
+              <Plus size={16} />
+              Create card
+            </Button>
+            <Button onClick={handleSaveConfiguration} disabled={saving}>
+              <Save size={16} />
+              {saving ? 'Saving' : 'Save configuration'}
+            </Button>
+          </>
+        }
+      />
 
       {/* Filters */}
-      <Card className="border-slate-200/50 shadow-premium-sm animate-fade-in-up" style={{ animationDelay: '100ms' }}>
-        <CardHeader>
-          <CardTitle className="text-lg text-slate-900">Scope Selection</CardTitle>
-          <CardDescription className="text-slate-600">Choose a department and optional role to configure</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className="text-sm font-semibold text-slate-900 mb-3 block uppercase tracking-wider">
-                Department
-              </label>
+      <SectionCard title="Scope">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="config-department">Department</Label>
               <Select value={selectedDepartment} onValueChange={setSelectedDepartment}>
-                <SelectTrigger className="bg-slate-50/50 border-slate-200/50 text-slate-900">
+                <SelectTrigger id="config-department">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -318,16 +315,14 @@ export default function DashboardConfigurationPage() {
                 </SelectContent>
               </Select>
             </div>
-            <div>
-              <label className="text-sm font-semibold text-slate-900 mb-3 block uppercase tracking-wider">
-                Role <span className="text-slate-400 font-normal">(Optional)</span>
-              </label>
+            <div className="space-y-1.5">
+              <Label htmlFor="config-role">Role (optional)</Label>
               <Select value={selectedRole || 'all'} onValueChange={(val) => setSelectedRole(val === 'all' ? '' : val)}>
-                <SelectTrigger className="bg-slate-50/50 border-slate-200/50 text-slate-900">
+                <SelectTrigger id="config-role">
                   <SelectValue placeholder="All roles" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Roles</SelectItem>
+                  <SelectItem value="all">All roles</SelectItem>
                   {roles.map((role) => (
                     <SelectItem key={role.id} value={role.id}>
                       {role.name}
@@ -337,89 +332,57 @@ export default function DashboardConfigurationPage() {
               </Select>
             </div>
           </div>
-        </CardContent>
-      </Card>
+      </SectionCard>
 
       {/* Configuration Table */}
-      <Card className="border-slate-200/50 shadow-premium-sm animate-fade-in-up" style={{ animationDelay: '200ms' }}>
-        <CardHeader className="border-b border-slate-200/50 pb-6">
-          <div className="flex items-center justify-between flex-wrap gap-4">
-            <div>
-              <CardTitle className="text-lg text-slate-900">Card Configuration</CardTitle>
-              <CardDescription className="text-slate-600 mt-1">
-                Manage visibility and order for {selectedDepartment ? 'the selected department' : 'all departments'}
-              </CardDescription>
-            </div>
-            <div className="flex gap-3 flex-wrap">
-              <Button
-                variant="outline"
-                onClick={() => setShowCreateModal(true)}
-                className="gap-2 border-slate-200/50 text-primary hover:bg-primary/5"
-              >
-                <Plus className="w-4 h-4" />
-                Create Card
-              </Button>
-              <Button
-                onClick={handleSaveConfiguration}
-                disabled={saving}
-                className="gap-2 shadow-premium-md hover:shadow-premium-lg transition-all"
-              >
-                <Save className="w-4 h-4" />
-                {saving ? 'Saving...' : 'Save Configuration'}
-              </Button>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent className="pt-6">
+      <SectionCard
+        eyebrow={selectedDepartment ? 'Selected department' : 'All departments'}
+        title="Cards"
+        padded={false}
+      >
           {cardConfigs.length > 0 ? (
-            <div className="rounded-xl border border-slate-200/50 overflow-hidden">
+            <div className="overflow-x-auto">
               <Table>
-                <TableHeader className="bg-surface-2 border-b border-slate-200/50">
-                  <TableRow className="hover:bg-transparent">
-                    <TableHead className="font-semibold text-slate-900 text-xs uppercase tracking-wider">Card Name</TableHead>
-                    <TableHead className="font-semibold text-slate-900 text-xs uppercase tracking-wider">Type</TableHead>
-                    <TableHead className="font-semibold text-slate-900 text-xs uppercase tracking-wider w-24 text-center">
-                      Visible
-                    </TableHead>
-                    <TableHead className="font-semibold text-slate-900 text-xs uppercase tracking-wider w-20">Order</TableHead>
-                    <TableHead className="font-semibold text-slate-900 text-xs uppercase tracking-wider">Permission</TableHead>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Card name</TableHead>
+                    <TableHead>Type</TableHead>
+                    <TableHead className="w-24 text-center">Visible</TableHead>
+                    <TableHead className="w-24">Order</TableHead>
+                    <TableHead>Permission</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {cardConfigs.map((config, idx) => (
-                    <TableRow 
-                      key={config.cardId} 
-                      className={`hover:bg-primary/5 transition-colors ${idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/30'} border-b border-slate-100/50`}
-                    >
+                  {cardConfigs.map((config) => (
+                    <TableRow key={config.cardId}>
                       <TableCell>
                         <div>
-                          <p className="font-medium text-slate-900">{config.title}</p>
-                          <p className="text-xs text-slate-500 mt-1">{config.cardId}</p>
+                          <p className="font-semibold text-text-primary">{config.title}</p>
+                          <p className="mt-1 font-mono text-xs text-text-muted">{config.cardId}</p>
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">
-                          {config.cardId.split('_')[0]}
-                        </Badge>
+                        <StatusBadge tone="neutral" label={config.cardId.split('_')[0]} />
                       </TableCell>
                       <TableCell className="text-center">
                         <Checkbox
+                          aria-label={`Show ${config.title}`}
                           checked={config.visible}
                           onCheckedChange={(checked) =>
                             handleCardVisibilityChange(config.cardId, checked as boolean)
                           }
-                          className="border-slate-300"
                         />
                       </TableCell>
                       <TableCell>
                         <Input
                           type="number"
                           min="0"
+                          aria-label={`Order of ${config.title}`}
                           value={config.orderIndex}
                           onChange={(e) =>
                             handleOrderChange(config.cardId, parseInt(e.target.value) || 0)
                           }
-                          className="w-16 bg-slate-50/50 border-slate-200/50 text-slate-900"
+                          className="w-20 font-mono"
                         />
                       </TableCell>
                       <TableCell>
@@ -429,15 +392,15 @@ export default function DashboardConfigurationPage() {
                             handlePermissionChange(config.cardId, val)
                           }
                         >
-                          <SelectTrigger className="text-xs bg-slate-50/50 border-slate-200/50 w-auto">
+                          <SelectTrigger className="w-44" aria-label={`Permission for ${config.title}`}>
                             <SelectValue placeholder="None" />
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="none">None</SelectItem>
-                            <SelectItem value="view_analytics">View Analytics</SelectItem>
-                            <SelectItem value="view_escalations">View Escalations</SelectItem>
+                            <SelectItem value="view_analytics">View analytics</SelectItem>
+                            <SelectItem value="view_escalations">View escalations</SelectItem>
                             <SelectItem value="configure_dashboard_cards">
-                              Configure Cards
+                              Configure cards
                             </SelectItem>
                           </SelectContent>
                         </Select>
@@ -448,14 +411,13 @@ export default function DashboardConfigurationPage() {
               </Table>
             </div>
           ) : (
-            <div className="flex flex-col items-center justify-center py-16 text-center rounded-xl bg-slate-50/30 border border-slate-200/30">
-              <AlertCircle className="w-12 h-12 text-slate-400 mb-4" />
-              <p className="text-slate-600 font-medium">No cards available</p>
-              <p className="text-slate-500 text-sm mt-1">Create a new card to get started</p>
-            </div>
+            <EmptyState
+              icon={<LayoutDashboard size={24} />}
+              title="No cards yet"
+              description="Create a card to choose where it appears."
+            />
           )}
-        </CardContent>
-      </Card>
+      </SectionCard>
 
       {/* Create Card Modal */}
       <CreateCardModal

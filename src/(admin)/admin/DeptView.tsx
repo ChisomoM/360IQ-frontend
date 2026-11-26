@@ -1,11 +1,17 @@
-import React from 'react';
-import { motion } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
 import {
   AreaChart, Area, BarChart, Bar, XAxis, YAxis,
   CartesianGrid, Tooltip, LabelList, ResponsiveContainer,
 } from 'recharts';
-import { AlertTriangle, XCircle } from 'lucide-react';
+import { AlertTriangle } from '@/components/icons';
 import { AIInsightsPill } from '@/components/AIInsightsPill';
+import { SectionCard } from '@/components/shared/SectionCard';
+import { StatusBadge } from '@/components/shared/StatusBadge';
+import {
+  axisProps, gridProps, tooltipProps, barCursor, lineCursor, valueLabelStyle,
+  BAR_RADIUS, MAX_BAR_SIZE,
+} from '@/components/dashboard/chartTheme';
+import { cn } from '@/lib/utils';
 import {
   DEPT_STAGES, DEPT_TEAM, DEPT_OVERDUE_DOCS,
   DEPT_VOL_30D, DEPT_WEEKLY, DEPT_REJECTIONS,
@@ -13,23 +19,6 @@ import {
 
 // ── Local constants ───────────────────────────────────────────────────────────
 const EASE_CUSTOM: [number, number, number, number] = [0.16, 1, 0.3, 1];
-const STAGGER = { hidden: {}, visible: { transition: { staggerChildren: 0.08 } } };
-const FADE_UP = {
-  hidden:  { opacity: 0, y: 12 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease: EASE_CUSTOM } },
-};
-const LIST_ITEM_REVEAL = {
-  hidden:  { opacity: 0, x: -16 },
-  visible: { opacity: 1, x: 0, transition: { duration: 0.35, ease: EASE_CUSTOM } },
-};
-const SPRING_ROW = { type: 'spring', stiffness: 400, damping: 30 } as const;
-const CARD: React.CSSProperties = {
-  backgroundColor: 'color-mix(in srgb, var(--tenant-primary) 6%, white)',
-  borderRadius: '1rem',
-  border: '1px solid rgb(241 245 249)',
-  boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)',
-  padding: '1.25rem',
-};
 
 // Compute drops (% reduction from previous stage)
 const drops = DEPT_STAGES.map((s, j) =>
@@ -37,552 +26,216 @@ const drops = DEPT_STAGES.map((s, j) =>
 );
 const BOTTLENECK_IDX = drops.indexOf(Math.max(...drops.slice(1)));
 
-// ── Card 1 — Document Stage Funnel (left-aligned animated bars) ───────────────
-function StageFunnelCard({ primary }: { primary: string }) {
+/** A horizontal meter that fills once on first view. */
+function Meter({ pct, color, label }: { pct: number; color: string; label: string }) {
+  const reduce = useReducedMotion();
+  return (
+    <div
+      role="meter" aria-label={label} aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100}
+      className="h-2 flex-1 overflow-hidden rounded-pill bg-surface-2"
+    >
+      <motion.div
+        className="h-full rounded-pill"
+        initial={reduce ? false : { width: 0 }}
+        animate={{ width: `${pct}%` }}
+        transition={{ duration: 0.4, ease: EASE_CUSTOM }}
+        style={{ backgroundColor: color }}
+      />
+    </div>
+  );
+}
+
+// ── Card 1: Document stage funnel ────────────────────────────────────────────
+function StageFunnelCard() {
   const maxCount = DEPT_STAGES[0].count;
   return (
-    <div style={CARD}>
-      <h3 className="font-display font-bold text-lg text-gray-800 mb-5">Document Stage Funnel</h3>
+    <SectionCard eyebrow="Documents, change from previous stage" title="Document stage funnel">
       <div className="flex flex-col gap-3">
         {DEPT_STAGES.map((stage, i) => {
-          const pct    = (stage.count / maxCount) * 100;
-          const drop   = drops[i];
+          const pct    = Math.round((stage.count / maxCount) * 100);
           const isBN   = i === BOTTLENECK_IDX && i > 0;
-          const fill   = isBN ? 'rgb(245 158 11)' : primary;
-          const fillOp = 1 - i * 0.13;
           return (
-            <div key={i} className="flex items-center gap-3">
-              <span className="font-sans text-xs font-medium text-slate-500 w-36 flex-shrink-0 leading-tight">
-                {stage.stage}
+            <div key={stage.stage} className="flex items-center gap-3">
+              <span className="w-36 flex-shrink-0 text-xs leading-tight text-text-secondary">{stage.stage}</span>
+              <Meter pct={pct} color={isBN ? 'var(--caution)' : 'var(--chart-1)'} label={`${stage.stage}: ${stage.count} documents`} />
+              <span className="w-8 flex-shrink-0 text-right font-mono text-xs text-text-primary">{stage.count}</span>
+              <span className={cn('w-12 flex-shrink-0 text-right font-mono text-xs', isBN ? 'text-caution' : 'text-text-muted')}>
+                {i > 0 ? `-${drops[i]}%` : ''}
               </span>
-              <div className="flex-1 h-8 bg-slate-50 rounded-lg overflow-hidden relative">
-                <motion.div
-                  className="absolute inset-y-0 left-0 rounded-lg flex items-center pl-2.5"
-                  initial={{ width: 0 }}
-                  animate={{ width: `${pct}%` }}
-                  transition={{ duration: 0.7, delay: i * 0.1, ease: EASE_CUSTOM }}
-                  style={{ backgroundColor: fill, opacity: fillOp }}
-                >
-                  <span className="font-sans text-xs font-bold text-white leading-none">
-                    {stage.count}
-                  </span>
-                </motion.div>
-              </div>
-              {i > 0 ? (
-                <span className={`font-sans text-xs font-bold w-10 text-right flex-shrink-0 ${isBN ? 'text-amber-600' : 'text-slate-400'}`}>
-                  −{drop}%
-                </span>
-              ) : (
-                <span className="w-10 flex-shrink-0" />
-              )}
             </div>
           );
         })}
       </div>
       {BOTTLENECK_IDX > 0 && (
-        <p className="font-sans text-xs font-semibold text-amber-600 flex items-center gap-1.5 mt-4">
-          <AlertTriangle size={12} />
-          Bottleneck at: <strong>{DEPT_STAGES[BOTTLENECK_IDX].stage}</strong>
+        <p className="mt-4 flex items-center gap-1.5 text-xs text-caution">
+          <AlertTriangle size={14} />
+          Bottleneck at <strong>{DEPT_STAGES[BOTTLENECK_IDX].stage}</strong>
         </p>
       )}
-    </div>
+    </SectionCard>
   );
 }
 
-// ── Card 2 — Urgent & Overdue in My Department ────────────────────────────────
+// ── Card 2: Urgent and overdue in my department ──────────────────────────────
 function UrgentOverdueDeptCard() {
   const total = DEPT_OVERDUE_DOCS.length;
   const totalDocs = 48;
   const pct = ((total / totalDocs) * 100).toFixed(1);
   return (
-    <div style={CARD}>
-      <h3 className="font-display font-bold text-lg text-gray-800 mb-3">
-        Urgent &amp; Overdue — Finance
-      </h3>
-      <div className="flex items-baseline gap-2 mb-1">
-        <span className="font-display text-6xl font-black text-red-500 leading-none">{total}</span>
-        <div>
-          <p className="font-display text-lg font-bold text-slate-400 leading-tight">Overdue</p>
-          <p className="font-sans text-xs text-slate-400">{pct}% of {totalDocs} active docs</p>
-        </div>
+    <SectionCard eyebrow="Finance" title="Urgent and overdue">
+      <p className="flex items-baseline gap-2">
+        <span className="text-[2rem] font-semibold leading-none text-risk">{total}</span>
+        <span className="text-xs text-text-muted">overdue, {pct}% of {totalDocs} active documents</span>
+      </p>
+      <div className="mb-3 mt-3 flex">
+        <Meter pct={Number(pct)} color="var(--chart-risk)" label="Share of active documents overdue" />
       </div>
-      <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden mb-5 mt-3">
-        <div className="h-full rounded-full bg-red-400" style={{ width: `${pct}%` }} />
-      </div>
-      <motion.div
-        className="divide-y divide-slate-50"
-        variants={STAGGER} initial="hidden" animate="visible"
-      >
-        {DEPT_OVERDUE_DOCS.map((item, i) => (
-          <motion.div
-            key={i} className="flex items-center gap-3 py-3"
-            variants={LIST_ITEM_REVEAL}
-            whileHover={{ x: 2 }} transition={SPRING_ROW}
-          >
-            <div className="flex-1 min-w-0">
-              <p className="font-sans text-sm font-bold text-slate-800 truncate">{item.doc}</p>
-              <p className="font-sans text-xs text-slate-400 mt-0.5">{item.assignee}</p>
+      <ul className="divide-y divide-line">
+        {DEPT_OVERDUE_DOCS.map((item) => (
+          <li key={item.doc} className="flex items-center gap-3 py-3">
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-semibold text-text-primary">{item.doc}</p>
+              <p className="mt-0.5 text-xs text-text-muted">{item.assignee}</p>
             </div>
-            <span className="font-sans text-xs font-black text-red-500 flex-shrink-0">
-              {item.daysOverdue}d overdue
-            </span>
-          </motion.div>
+            <StatusBadge tone="risk" label={`${item.daysOverdue}d overdue`} />
+          </li>
         ))}
-      </motion.div>
-    </div>
+      </ul>
+    </SectionCard>
   );
 }
 
-// ── Card 3 — Department Submissions This Month ────────────────────────────────
-function DeptSubmissionsCard({
-  primary,
-  onAIInsights,
-}: { primary: string; onAIInsights?: () => void }) {
+// ── Card 3: Department submissions this month ────────────────────────────────
+function DeptSubmissionsCard({ onAIInsights }: { onAIInsights?: () => void }) {
   const total = DEPT_WEEKLY.reduce((s, w) => s + w.v, 0);
   return (
-    <div style={CARD}>
-      <div className="flex items-center justify-between mb-1">
-        <h3 className="font-display font-bold text-lg text-gray-800">Finance Submissions — April</h3>
-        {onAIInsights && <AIInsightsPill primary={primary} onClick={onAIInsights} />}
-      </div>
-      <p className="font-sans text-xs text-slate-400 mb-4">{total} documents submitted this month</p>
-      <ResponsiveContainer width="100%" height={110}>
-        <BarChart data={DEPT_WEEKLY} barSize={26} margin={{ top: 0, right: 8, bottom: 0, left: 0 }}>
-          <XAxis
-            dataKey="week"
-            tick={{ fontSize: 11, fill: 'rgb(100 116 139)', fontWeight: 600 }}
-            axisLine={false} tickLine={false}
-          />
+    <SectionCard
+      eyebrow="Documents per week"
+      title="Finance submissions in April"
+      actions={onAIInsights && <AIInsightsPill onClick={onAIInsights} />}
+    >
+      <p className="mb-3 text-xs text-text-muted">{total} documents submitted this month</p>
+      <ResponsiveContainer width="100%" height={130}>
+        <BarChart data={DEPT_WEEKLY} margin={{ top: 18, right: 8, bottom: 0, left: 8 }}>
+          <XAxis {...axisProps} dataKey="week" />
           <YAxis hide />
-          <Tooltip
-            contentStyle={{ fontSize: 11, borderRadius: 10, border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.08)' }}
-          />
-          <Bar dataKey="v" fill={primary} fillOpacity={0.85} radius={[5, 5, 0, 0]}>
-            <LabelList
-              dataKey="v" position="top"
-              style={{ fontSize: 11, fill: 'rgb(100 116 139)', fontWeight: 700 }}
-            />
+          <Tooltip {...tooltipProps} cursor={barCursor} formatter={(v: number) => [v, 'Documents']} />
+          <Bar dataKey="v" fill="var(--chart-1)" radius={BAR_RADIUS} maxBarSize={MAX_BAR_SIZE}>
+            <LabelList dataKey="v" position="top" style={valueLabelStyle} />
           </Bar>
         </BarChart>
       </ResponsiveContainer>
-    </div>
+    </SectionCard>
   );
 }
 
-// ── Card 4 — Department Activity Trend (area + 3 inline stats) ────────────────
-function DeptActivityCard({ primary }: { primary: string }) {
+// ── Card 4: Department activity trend (area + 3 inline stats) ────────────────
+function DeptActivityCard() {
   return (
-    <div style={CARD}>
-      <h3 className="font-display font-bold text-lg text-gray-800 mb-4">Dept Activity — 30 Days</h3>
-      <ResponsiveContainer width="100%" height={140}>
+    <SectionCard eyebrow="Documents per day, last 30 days" title="Department activity">
+      <ResponsiveContainer width="100%" height={150}>
         <AreaChart data={DEPT_VOL_30D} margin={{ top: 4, right: 4, bottom: 0, left: -22 }}>
-          <defs>
-            <linearGradient id="deptGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%"  stopColor={primary} stopOpacity={0.15} />
-              <stop offset="95%" stopColor={primary} stopOpacity={0}    />
-            </linearGradient>
-          </defs>
-          <CartesianGrid strokeDasharray="6 6" stroke="rgba(148,163,184,0.1)" vertical={false} />
-          <XAxis
-            dataKey="d"
-            tick={{ fontSize: 9, fill: 'rgb(148 163 184)' }}
-            axisLine={false} tickLine={false} interval={6}
-          />
-          <YAxis tick={{ fontSize: 9, fill: 'rgb(148 163 184)' }} axisLine={false} tickLine={false} width={28} />
-          <Tooltip
-            contentStyle={{ fontSize: 11, borderRadius: 12, border: 'none', boxShadow: '0 8px 24px rgba(0,0,0,0.08)' }}
-          />
+          <CartesianGrid {...gridProps} />
+          <XAxis {...axisProps} dataKey="d" interval={6} />
+          <YAxis {...axisProps} width={44} />
+          <Tooltip {...tooltipProps} cursor={lineCursor} formatter={(v: number) => [v, 'Documents']} labelFormatter={(d) => `Day ${d}`} />
           <Area
             type="monotone" dataKey="v"
-            stroke={primary} strokeWidth={2.5}
-            fill="url(#deptGrad)" dot={false}
-            activeDot={{ r: 5, fill: primary, strokeWidth: 3, stroke: '#fff' }}
+            stroke="var(--chart-1)" strokeWidth={2}
+            fill="var(--chart-1)" fillOpacity={0.12} dot={false}
+            activeDot={{ r: 4, fill: 'var(--chart-1)', stroke: 'var(--surface-1)', strokeWidth: 2 }}
           />
         </AreaChart>
       </ResponsiveContainer>
-      <div className="grid grid-cols-3 gap-2 mt-5 pt-4 border-t border-slate-100">
+      <dl className="mt-4 grid grid-cols-3 gap-2 border-t border-line pt-4">
         {[
-          { label: 'Submitted',      val: '28'   },
-          { label: 'Avg Processing', val: '4.4d' },
-          { label: 'On-time Rate',   val: '81%'  },
-        ].map((s, i) => (
-          <div key={i}>
-            <p className="font-display text-xl font-black text-slate-800">{s.val}</p>
-            <p className="font-sans text-[10px] text-slate-400 mt-0.5 leading-tight">{s.label}</p>
+          { label: 'Submitted',          val: '28'   },
+          { label: 'Average processing', val: '4.4d' },
+          { label: 'On-time rate',       val: '81%'  },
+        ].map((s) => (
+          <div key={s.label} className="flex flex-col-reverse">
+            <dt className="text-xs text-text-muted">{s.label}</dt>
+            <dd className="text-xl font-semibold text-text-primary">{s.val}</dd>
           </div>
         ))}
-      </div>
-    </div>
+      </dl>
+    </SectionCard>
   );
 }
 
-// ── Card 5 — Team Completion Rate ─────────────────────────────────────────────
-function TeamCompletionCard({ primary }: { primary: string }) {
+// ── Card 5: Team completion rate ─────────────────────────────────────────────
+function TeamCompletionCard() {
   return (
-    <div style={CARD}>
-      <h3 className="font-display font-bold text-lg text-gray-800 mb-5">Team Completion Rate</h3>
-      <motion.div
-        className="flex flex-col gap-3"
-        variants={STAGGER} initial="hidden" animate="visible"
-      >
-        {DEPT_TEAM.map((member, i) => (
-          <motion.div
-            key={i} className="flex items-center gap-3"
-            variants={LIST_ITEM_REVEAL}
-            whileHover={{ x: 2 }} transition={SPRING_ROW}
-          >
-            <span className="font-sans text-xs font-semibold text-slate-600 w-20 flex-shrink-0 truncate">
-              {member.name}
-            </span>
-            <div className="flex-1 h-3 rounded-full overflow-hidden bg-slate-100">
-              <motion.div
-                initial={{ width: 0 }}
-                animate={{ width: `${member.pct}%` }}
-                transition={{ duration: 0.9, delay: i * 0.08, ease: EASE_CUSTOM }}
-                className="h-full rounded-full"
-                style={{ backgroundColor: member.pct < 60 ? 'rgb(239 68 68)' : primary }}
-              />
+    <SectionCard title="Team completion rate">
+      <div className="flex flex-col gap-3">
+        {DEPT_TEAM.map((member) => {
+          const behind = member.pct < 60;
+          return (
+            <div key={member.name} className="flex items-center gap-3">
+              <span className="w-24 flex-shrink-0 truncate text-xs text-text-secondary">{member.name}</span>
+              <Meter pct={member.pct} color={behind ? 'var(--chart-risk)' : 'var(--chart-1)'} label={`${member.name} completion rate`} />
+              <span className={cn('flex w-14 flex-shrink-0 items-center justify-end gap-1 font-mono text-xs', behind ? 'text-risk' : 'text-text-primary')}>
+                {behind && <AlertTriangle size={14} />}
+                {member.pct}%
+              </span>
             </div>
-            <span className={`font-sans text-xs font-bold w-9 text-right flex-shrink-0 ${member.pct < 60 ? 'text-red-500' : 'text-slate-700'}`}>
-              {member.pct}%
-            </span>
-          </motion.div>
-        ))}
-      </motion.div>
-      <p className="font-sans text-xs text-slate-400 mt-4 flex items-center gap-1.5">
-        <span className="w-2 h-2 rounded-full bg-red-400 inline-block flex-shrink-0" />
-        David B. is significantly behind — follow-up recommended
-      </p>
-    </div>
+          );
+        })}
+      </div>
+      <p className="mt-4 text-xs text-text-muted">David B. is well behind. Follow up recommended.</p>
+    </SectionCard>
   );
 }
 
-// ── Card 6 — Rejected & Returned in My Department ─────────────────────────────
+// ── Card 6: Rejected and returned in my department ───────────────────────────
 function RejectedInDeptCard() {
   return (
-    <div style={CARD}>
-      <div className="flex items-center gap-2 mb-3">
-        <XCircle size={15} className="text-red-500 flex-shrink-0" />
-        <h3 className="font-display font-bold text-lg text-gray-800">Rejected &amp; Returned</h3>
-      </div>
-      <div className="flex items-baseline gap-2 mb-4">
-        <span className="font-display text-4xl font-black text-red-500">{DEPT_REJECTIONS.length}</span>
-        <span className="font-sans text-xs text-slate-400 font-semibold">this month</span>
-      </div>
-      <motion.div
-        className="divide-y divide-slate-50"
-        variants={STAGGER} initial="hidden" animate="visible"
-      >
-        {DEPT_REJECTIONS.map((item, i) => (
-          <motion.div
-            key={i} className="flex items-center gap-3 py-3"
-            variants={LIST_ITEM_REVEAL}
-            whileHover={{ x: 2 }} transition={SPRING_ROW}
-          >
-            <div className="flex-1 min-w-0">
-              <p className="font-sans text-sm font-bold text-slate-800 truncate">{item.doc}</p>
-              <p className="font-sans text-xs text-slate-400 mt-0.5">{item.reason}</p>
+    <SectionCard title="Rejected and returned">
+      <p className="mb-3 flex items-baseline gap-2">
+        <span className="text-[2rem] font-semibold leading-none text-risk">{DEPT_REJECTIONS.length}</span>
+        <span className="text-xs text-text-muted">this month</span>
+      </p>
+      <ul className="divide-y divide-line">
+        {DEPT_REJECTIONS.map((item) => (
+          <li key={item.doc} className="flex items-center gap-3 py-3">
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-semibold text-text-primary">{item.doc}</p>
+              <p className="mt-0.5 text-xs text-text-muted">{item.reason}</p>
             </div>
-            <span className="font-mono text-xs text-slate-400 flex-shrink-0">{item.date}</span>
-          </motion.div>
+            <span className="flex-shrink-0 font-mono text-xs text-text-muted">{item.date}</span>
+          </li>
         ))}
-      </motion.div>
-    </div>
+      </ul>
+    </SectionCard>
   );
 }
 
-// ── Dept View layout ──────────────────────────────────────────────────────────
+// ── Dept view layout ─────────────────────────────────────────────────────────
 export default function DeptView({
-  primary,
-  secondary,
   onAIInsights,
 }: {
-  primary: string;
-  secondary: string;
   onAIInsights?: (title: string, context: string) => void;
 }) {
   const buildContext = (title: string, rows: object[]) =>
     `Dashboard card: "${title}". Data: ${JSON.stringify(rows)}`;
 
   return (
-    <motion.div
-      className="grid grid-cols-2 gap-4"
-      variants={STAGGER} initial="hidden" animate="visible"
-    >
-      <motion.div variants={FADE_UP} className="flex flex-col gap-4">
-        <StageFunnelCard primary={primary} />
+    <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-2">
+      <div className="flex min-w-0 flex-col gap-5">
+        <StageFunnelCard />
         <UrgentOverdueDeptCard />
         <DeptSubmissionsCard
-          primary={primary}
           onAIInsights={onAIInsights
-            ? () => onAIInsights('Finance Submissions — April', buildContext('Dept Submissions', DEPT_WEEKLY))
+            ? () => onAIInsights('Finance submissions in April', buildContext('Dept Submissions', DEPT_WEEKLY))
             : undefined
           }
         />
-      </motion.div>
-      <motion.div variants={FADE_UP} className="flex flex-col gap-4">
-        <DeptActivityCard primary={primary} />
-        <TeamCompletionCard primary={primary} />
+      </div>
+      <div className="flex min-w-0 flex-col gap-5">
+        <DeptActivityCard />
+        <TeamCompletionCard />
         <RejectedInDeptCard />
-      </motion.div>
-    </motion.div>
-  );
-}
-
-
-// // ── Local constants ───────────────────────────────────────────────────────────
-// const EASE_CUSTOM: [number, number, number, number] = [0.16, 1, 0.3, 1];
-// const STAGGER = { hidden: {}, visible: { transition: { staggerChildren: 0.08 } } };
-// const FADE_UP = {
-//   hidden:  { opacity: 0, y: 12 },
-//   visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease: EASE_CUSTOM } },
-// };
-// const LIST_ITEM_REVEAL = {
-//   hidden:  { opacity: 0, x: -16 },
-//   visible: { opacity: 1, x: 0, transition: { duration: 0.35, ease: EASE_CUSTOM } },
-// };
-// const SPRING_ROW = { type: 'spring', stiffness: 400, damping: 30 } as const;
-// const CARD: React.CSSProperties = {
-//   backgroundColor: 'var(--tenant-primary-light)',
-//   borderRadius: '1rem',
-//   boxShadow: '0 0.25rem 1.5rem rgba(100, 100, 160, 0.08)',
-//   padding: '1.25rem',
-// };
-
-// Compute bottleneck index: largest % drop between stages
-// const drops = DEPT_STAGES.map((s, j) =>
-//   j === 0 ? 0 : (DEPT_STAGES[j - 1].count - s.count) / DEPT_STAGES[j - 1].count
-// );
-// const BOTTLENECK_IDX = drops.indexOf(Math.max(...drops));
-
-// ── Card 1 — Document Stage Funnel (SVG) ──────────────────────────────────────
-// function StageFunnelCard({ primary }: { primary: string }) {
-//   const maxCount = DEPT_STAGES[0].count;
-//   const FUNNEL_W = 260;
-//   const STAGE_H = 38;
-//   const GAP = 5;
-//   const totalH = DEPT_STAGES.length * (STAGE_H + GAP) - GAP;
-
-//   return (
-//     <div style={CARD}>
-//       <h3 className="font-display font-bold text-lg text-gray-800 mb-5">Document Stage Funnel</h3>
-//       <div className="flex justify-center">
-//         <svg width={FUNNEL_W} height={totalH} viewBox={`0 0 ${FUNNEL_W} ${totalH}`}>
-//           {DEPT_STAGES.map((stage, i) => {
-//             const w = (stage.count / maxCount) * FUNNEL_W;
-//             const x = (FUNNEL_W - w) / 2;
-//             const y = i * (STAGE_H + GAP);
-//             const isBottleneck = i === BOTTLENECK_IDX;
-//             const fill = isBottleneck ? 'rgb(245 158 11)' : primary;
-//             const opacity = 1 - i * 0.14;
-//             return (
-//               <g key={i}>
-//                 <rect x={x} y={y} width={w} height={STAGE_H} rx="7" fill={fill} fillOpacity={opacity} />
-//                 <text
-//                   x={FUNNEL_W / 2} y={y + STAGE_H / 2 + 4.5}
-//                   textAnchor="middle" fontSize="11" fontWeight="700"
-//                   fill={isBottleneck ? '#fff' : 'rgba(255,255,255,0.92)'}
-//                   fontFamily="Plus Jakarta Sans, sans-serif"
-//                 >
-//                   {stage.stage} — {stage.count}
-//                 </text>
-//               </g>
-//             );
-//           })}
-//         </svg>
-//       </div>
-//       <p className={`font-sans text-xs font-semibold mt-4 flex items-center gap-1.5 ${
-//         BOTTLENECK_IDX > 0 ? 'text-amber-600' : 'text-emerald-600'
-//       }`}>
-//         {BOTTLENECK_IDX > 0 ? (
-//           <>
-//             <AlertTriangle size={12} />
-//             Bottleneck at: <strong>{DEPT_STAGES[BOTTLENECK_IDX].stage}</strong>
-//           </>
-//         ) : 'No bottleneck detected'}
-//       </p>
-//     </div>
-//   );
-// }
-
-// // ── Card 2 — Team Action Completion Rate ──────────────────────────────────────
-// function TeamCompletionCard({ primary }: { primary: string }) {
-//   return (
-//     <div style={CARD}>
-//       <h3 className="font-display font-bold text-lg text-gray-800 mb-5">Team Completion Rate</h3>
-//       <motion.div
-//         className="flex flex-col gap-3"
-//         variants={STAGGER} initial="hidden" animate="visible"
-//       >
-//         {DEPT_TEAM.map((member, i) => (
-//           <motion.div
-//             key={i} className="flex items-center gap-3"
-//             variants={LIST_ITEM_REVEAL}
-//             whileHover={{ x: 2 }} transition={SPRING_ROW}
-//           >
-//             <span className="font-sans text-xs font-semibold text-slate-600 w-20 flex-shrink-0 truncate">
-//               {member.name}
-//             </span>
-//             <div className="flex-1 h-3 rounded-full overflow-hidden" style={{ backgroundColor: 'rgba(148,163,184,0.15)' }}>
-//               <motion.div
-//                 initial={{ width: 0 }}
-//                 animate={{ width: `${member.pct}%` }}
-//                 transition={{ duration: 0.9, delay: i * 0.08, ease: EASE_CUSTOM }}
-//                 className="h-full rounded-full"
-//                 style={{ backgroundColor: member.pct < 60 ? 'rgb(239 68 68)' : primary }}
-//               />
-//             </div>
-//             <span className={`font-sans text-xs font-bold w-9 text-right flex-shrink-0 ${
-//               member.pct < 60 ? 'text-red-500' : 'text-slate-700'
-//             }`}>
-//               {member.pct}%
-//             </span>
-//           </motion.div>
-//         ))}
-//       </motion.div>
-//       <p className="font-sans text-xs text-slate-400 mt-4">
-//         <span className="inline-flex items-center gap-1.5">
-//           <span className="w-2 h-2 rounded-full bg-red-400 inline-block" />
-//           David B. is significantly behind — follow-up recommended
-//         </span>
-//       </p>
-//     </div>
-//   );
-// }
-
-// ── Card 3 — Overdue Documents in Dept (pure layout, no chart) ────────────────
-function OverdueDocsCard() {
-  const total = 48;
-  const overdue = DEPT_OVERDUE_DOCS.length;
-  const pct = (overdue / total) * 100;
-
-  return (
-    <div style={CARD}>
-      <h3 className="font-display font-bold text-lg text-gray-800 mb-3">Overdue in Department</h3>
-      <div className="flex items-baseline gap-2 mb-1">
-        <span className="font-display text-6xl font-black text-red-500 leading-none">{overdue}</span>
-        <span className="font-display text-xl font-bold text-slate-400">Overdue</span>
-      </div>
-      <p className="font-sans text-xs text-slate-400 mb-3">Out of {total} active documents ({pct.toFixed(1)}%)</p>
-      <div className="h-2 bg-white/60 rounded-full overflow-hidden mb-5">
-        <div className="h-full rounded-full bg-red-400" style={{ width: `${pct}%` }} />
-      </div>
-      <motion.div
-        className="divide-y divide-white/30"
-        variants={STAGGER} initial="hidden" animate="visible"
-      >
-        {DEPT_OVERDUE_DOCS.map((item, i) => (
-          <motion.div
-            key={i} className="flex items-center gap-3 py-3"
-            variants={LIST_ITEM_REVEAL}
-            whileHover={{ x: 2 }} transition={SPRING_ROW}
-          >
-            <div className="flex-1 min-w-0">
-              <p className="font-sans text-sm font-bold text-slate-800 truncate">{item.doc}</p>
-              <p className="font-sans text-xs text-slate-400 mt-0.5">{item.assignee}</p>
-            </div>
-            <span className="font-sans text-xs font-black text-red-500 flex-shrink-0">
-              {item.daysOverdue}d overdue
-            </span>
-          </motion.div>
-        ))}
-      </motion.div>
-    </div>
-  );
-}
-
-// ── Card 4 — Department Activity Trend ────────────────────────────────────────
-// function DeptActivityCard({ primary }: { primary: string }) {
-//   return (
-//     <div style={CARD}>
-//       <h3 className="font-display font-bold text-lg text-gray-800 mb-4">Dept Activity — 30 Days</h3>
-//       <ResponsiveContainer width="100%" height={140}>
-//         <AreaChart data={DEPT_VOL_30D} margin={{ top: 4, right: 4, bottom: 0, left: -22 }}>
-//           <defs>
-//             <linearGradient id="deptGrad" x1="0" y1="0" x2="0" y2="1">
-//               <stop offset="5%"  stopColor={primary} stopOpacity={0.18} />
-//               <stop offset="95%" stopColor={primary} stopOpacity={0}    />
-//             </linearGradient>
-//           </defs>
-//           <CartesianGrid strokeDasharray="6 6" stroke="rgba(148,163,184,0.15)" vertical={false} />
-//           <XAxis
-//             dataKey="d"
-//             tick={{ fontSize: 9, fill: 'rgb(148 163 184)' }}
-//             axisLine={false} tickLine={false} interval={6}
-//           />
-//           <YAxis tick={{ fontSize: 9, fill: 'rgb(148 163 184)' }} axisLine={false} tickLine={false} width={28} />
-//           <Tooltip contentStyle={{ fontSize: 11, borderRadius: 12, border: 'none', boxShadow: '0 8px 24px rgba(0,0,0,0.08)' }} />
-//           <Area
-//             type="monotone" dataKey="v"
-//             stroke={primary} strokeWidth={2.5}
-//             fill="url(#deptGrad)" dot={false}
-//             activeDot={{ r: 5, fill: primary, strokeWidth: 3, stroke: '#fff' }}
-//           />
-//         </AreaChart>
-//       </ResponsiveContainer>
-//       {/* 3 inline pulse stats */}
-//       <div className="grid grid-cols-3 gap-2 mt-5 pt-4 border-t border-white/30">
-//         {[
-//           { label: 'Submitted',       val: '28' },
-//           { label: 'Avg Processing',  val: '4.4d' },
-//           { label: 'On-time Rate',    val: '81%' },
-//         ].map((s, i) => (
-//           <div key={i}>
-//             <p className="font-display text-xl font-black text-slate-800">{s.val}</p>
-//             <p className="font-sans text-[10px] text-slate-400 mt-0.5 leading-tight">{s.label}</p>
-//           </div>
-//         ))}
-//       </div>
-//     </div>
-//   );
-// }
-
-// ── Approval Rate (Dept — 78%) ────────────────────────────────────────────────
-function ApprovalRateCard({ primary, secondary }: { primary: string; secondary: string }) {
-  return (
-    <div style={CARD}>
-      <h3 className="font-display font-bold text-lg text-gray-800 mb-4">Dept Approval Rate</h3>
-      <div className="flex items-baseline gap-3 mb-4">
-        <span className="font-display text-5xl font-black tracking-tighter" style={{ color: secondary }}>78%</span>
-        <span className="font-sans text-sm text-slate-400 font-bold uppercase tracking-widest">Approved</span>
-      </div>
-      <div className="h-2 rounded-full bg-white/60 overflow-hidden mb-6">
-        <motion.div
-          initial={{ width: 0 }} animate={{ width: '78%' }}
-          transition={{ duration: 1.2, ease: 'easeOut' }}
-          className="h-full rounded-full" style={{ backgroundColor: primary }}
-        />
-      </div>
-      <div className="flex gap-8">
-        <div>
-          <span className="font-display text-xl font-black text-red-500">17%</span>
-          <p className="font-sans text-xs text-slate-400 font-bold mt-1 uppercase tracking-wider">Rejected</p>
-        </div>
-        <div>
-          <span className="font-display text-xl font-black text-amber-500">5%</span>
-          <p className="font-sans text-xs text-slate-400 font-bold mt-1 uppercase tracking-wider">Returned</p>
-        </div>
       </div>
     </div>
   );
 }
-
-// ── Dept View layout ──────────────────────────────────────────────────────────
-// export default function DeptView({ primary, secondary }: { primary: string; secondary: string }) {
-//   return (
-//     <motion.div
-//       className="grid grid-cols-2 gap-4"
-//       variants={STAGGER} initial="hidden" animate="visible"
-//     >
-//       <motion.div variants={FADE_UP} className="flex flex-col gap-4">
-//         <StageFunnelCard primary={primary} />
-//         <OverdueDocsCard />
-//       </motion.div>
-//       <motion.div variants={FADE_UP} className="flex flex-col gap-4">
-//         <DeptActivityCard primary={primary} />
-//         <TeamCompletionCard primary={primary} />
-//         <ApprovalRateCard primary={primary} secondary={secondary} />
-//       </motion.div>
-//     </motion.div>
-//   );
-// }

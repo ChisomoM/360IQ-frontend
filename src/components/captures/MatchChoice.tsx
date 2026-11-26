@@ -2,8 +2,9 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { listCompanies, listPeople, mergeRecords } from "@/lib/api/profiles";
-import { AlertTriangle, ExternalLink } from "lucide-react";
+import { AlertTriangle, ExternalLink } from "@/components/icons";
 import { cn } from "@/lib/utils";
 import { Pill, reasonText } from "@/components/profiles/ui";
 import type { EntityChoice } from "@/types/capture";
@@ -90,13 +91,13 @@ export function MatchChoice({
   return (
     <fieldset
       className={cn(
-        "space-y-2 rounded-lg border p-3",
-        needsChoice || attention ? "border-caution bg-caution-tint" : "border-line bg-surface-1"
+        "min-w-0 space-y-2 rounded-md border p-3",
+        needsChoice || attention ? "border-caution" : "border-line"
       )}
     >
       <legend className="sr-only">Existing {noun} records</legend>
-      <div className="flex items-start gap-2 text-sm font-semibold text-text-primary">
-        <AlertTriangle className={cn("mt-0.5 h-4 w-4 shrink-0", needsChoice ? "text-caution" : "text-text-muted")} />
+      <div className={cn("flex items-start gap-2 rounded-sm text-sm font-semibold text-text-primary", (needsChoice || attention) && "bg-caution-tint p-2")}>
+        <AlertTriangle size={16} className={cn("mt-0.5 shrink-0", needsChoice ? "text-caution" : "text-text-muted")} />
         <span>{strong ? `This ${noun} is already in 360IQ.` : `This ${noun} may already be in 360IQ.`} Choose what to do.</span>
       </div>
       <ul className="space-y-2">
@@ -106,7 +107,7 @@ export function MatchChoice({
             <li key={c.id}>
               <label
                 className={cn(
-                  "flex min-h-12 cursor-pointer items-start gap-3 rounded-md border bg-surface-1 p-3 text-sm",
+                  "flex min-h-12 cursor-pointer items-start gap-3 rounded-md border bg-surface-1 p-3 text-sm transition-colors hover:bg-surface-2",
                   selected ? "border-signal ring-1 ring-signal" : "border-line"
                 )}
               >
@@ -125,7 +126,7 @@ export function MatchChoice({
                     ))}
                   </span>
                   <Link to={`${base}/${c.id}`} target="_blank" rel="noreferrer" className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-signal-text hover:underline">
-                    Open existing record <ExternalLink className="h-3 w-3" />
+                    Open existing record <ExternalLink size={14} />
                   </Link>
                 </span>
               </label>
@@ -146,8 +147,8 @@ export function MatchChoice({
       </ul>
 
       {canMerge && top.length === 2 && (
-        <div className="space-y-2 rounded-md border border-line bg-surface-0 p-3 text-sm">
-          <p className="font-medium text-text-primary">Are these two existing records the same {noun}?</p>
+        <div className="space-y-2 rounded-md bg-field p-3 text-sm">
+          <p className="font-semibold text-text-primary">Are these two existing records the same {noun}?</p>
           <div className="flex flex-wrap gap-3">
             {top.map((c) => (
               <label key={c.id} className="flex items-center gap-2">
@@ -156,18 +157,18 @@ export function MatchChoice({
               </label>
             ))}
           </div>
-          <Button type="button" variant="outline" size="sm" disabled={merging} onClick={() => void merge()}>
+          <Button type="button" variant="secondary" size="sm" disabled={merging} onClick={() => void merge()}>
             Merge these two records
           </Button>
         </div>
       )}
 
-      <div className="space-y-2 rounded-md border border-line bg-surface-0 p-3 text-sm">
-        <label className="font-medium text-text-primary" htmlFor={`${entity}-search`}>
+      <div className="space-y-2 pt-1 text-sm">
+        <label className="text-[13px] font-medium text-text-secondary" htmlFor={`${entity}-search`}>
           Not listed? Find another {noun}
         </label>
         <div className="flex gap-2">
-          <input
+          <Input
             id={`${entity}-search`}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
@@ -177,9 +178,9 @@ export function MatchChoice({
                 void search();
               }
             }}
-            className="min-h-10 flex-1 rounded-md border border-line bg-surface-1 px-2"
+            className="min-w-0 flex-1"
           />
-          <Button type="button" variant="outline" size="sm" disabled={searching} onClick={() => void search()}>
+          <Button type="button" variant="secondary" disabled={searching} onClick={() => void search()}>
             Search
           </Button>
         </div>
@@ -198,7 +199,7 @@ export function MatchChoice({
         )}
       </div>
 
-      <p className={cn("text-sm font-medium", target ? "text-text-primary" : "text-caution")} role="status">
+      <p className={cn("text-sm font-semibold", target ? "text-text-primary" : "text-caution")} role="status">
         {target ? `This capture will be saved to: ${target}.` : "Choose where this capture will be saved."}
       </p>
     </fieldset>

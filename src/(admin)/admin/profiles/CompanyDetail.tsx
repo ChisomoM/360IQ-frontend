@@ -1,12 +1,18 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
-import { ArrowLeft, Building2, FileText, Gem, GitMerge, Handshake, Link2, Loader2, MapPin, ScrollText, Trash2, Users, Edit2 } from "lucide-react";
+import { ArrowLeft, FileText, Gem, GitMerge, Handshake, Link2, MapPin, ScrollText, Trash2, Users, Edit2 } from "@/components/icons";
 import { PageTransition } from "@/components/PageTransition";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { EmptyState } from "@/components/shared/EmptyState";
+import { PageHeader } from "@/components/shared/PageHeader";
+import { SectionBody } from "@/components/shared/SectionBody";
+import { SectionCard } from "@/components/shared/SectionCard";
+import { TableSkeleton } from "@/components/shared/TableSkeleton";
 import { fetchData } from "@/lib/api/crud";
 import {
   confirmFieldValue,
@@ -19,10 +25,8 @@ import {
 } from "@/lib/api/profiles";
 import type { Company, CompanyLink, LinkedDocument } from "@/types/profile";
 import {
-  EmptyPanel,
   FieldRow,
   MaskedNotice,
-  Panel,
   Pill,
   STAGE_VARIANT,
   TabBar,
@@ -77,11 +81,10 @@ export function CompanyDetail() {
 
   if (loading || !company) {
     return (
-      <div className="w-full space-y-4">
-        <Skeleton className="h-8 w-40" />
-        <Skeleton className="h-16 w-full max-w-md" />
-        <Skeleton className="h-10 w-80 max-w-full" />
-        <Skeleton className="h-64 w-full" />
+      <div role="status" aria-busy="true" aria-label="Loading" className="flex w-full flex-col gap-5">
+        <div className="skeleton h-9 w-64 max-w-full rounded-md" />
+        <div className="skeleton h-10 w-80 max-w-full rounded-lg" />
+        <div className="skeleton h-64 w-full rounded-lg" />
       </div>
     );
   }
@@ -92,43 +95,39 @@ export function CompanyDetail() {
 
   return (
     <PageTransition>
-      <div className="w-full min-w-0 space-y-5">
-        <div className="flex items-center gap-2 text-sm">
-          <Button variant="ghost" size="sm" onClick={() => navigate("/admin/companies")} className="h-8 px-2 text-text-muted">
-            <ArrowLeft className="mr-1 h-4 w-4" /> Companies
-          </Button>
-          <span className="text-line-strong">/</span>
-          <span className="min-w-0 truncate font-medium text-text-primary">{company.name}</span>
-        </div>
-
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div className="flex min-w-0 items-center gap-3">
-            <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-surface-2 text-text-secondary">
-              <Building2 className="h-7 w-7" />
-            </span>
-            <div className="min-w-0">
-              <h1 className="break-words font-display text-display-xs font-bold text-text-primary">{company.name}</h1>
-              <p className="break-words text-sm text-text-secondary">
-                {[company.industry, company.size_band && `${company.size_band} people`, [company.district, company.province].filter(Boolean).join(", ")].filter(Boolean).join(" · ") ||
-                  "Industry, size and location not known yet"}
-              </p>
-              <div className="mt-1.5 flex flex-wrap gap-1.5">
-                <Pill variant={STAGE_VARIANT[company.relationship_stage] ?? "neutral"}>{labelOf(company.relationship_stage)}</Pill>
-                {company.domain && <Pill>{company.domain}</Pill>}
-              </div>
-            </div>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {canManage && (
-              <Button variant="outline" onClick={() => setEditing(true)}>
-                <Edit2 className="h-4 w-4" /> Edit
-              </Button>
-            )}
-            {can?.merge && (
-              <Button variant="outline" onClick={() => setMerging(true)}>
-                <GitMerge className="h-4 w-4" /> Merge duplicate
-              </Button>
-            )}
+      <div className="flex w-full min-w-0 flex-col gap-5">
+        <div className="space-y-3">
+          <PageHeader
+            crumb={
+              <Link to="/admin/companies" className="inline-flex items-center gap-1 font-medium text-signal-text hover:underline">
+                <ArrowLeft size={14} /> Companies
+              </Link>
+            }
+            title={<span className="break-words">{company.name}</span>}
+            description={
+              [company.industry, company.size_band && `${company.size_band} people`, [company.district, company.province].filter(Boolean).join(", ")].filter(Boolean).join(" · ") ||
+              "Industry, size and location not known yet"
+            }
+            actions={
+              (canManage || can?.merge) && (
+                <>
+                  {canManage && (
+                    <Button variant="secondary" onClick={() => setEditing(true)}>
+                      <Edit2 /> Edit
+                    </Button>
+                  )}
+                  {can?.merge && (
+                    <Button variant="ghost" onClick={() => setMerging(true)}>
+                      <GitMerge /> Merge duplicate
+                    </Button>
+                  )}
+                </>
+              )
+            }
+          />
+          <div className="flex flex-wrap items-center gap-1.5">
+            <Pill variant={STAGE_VARIANT[company.relationship_stage] ?? "neutral"}>{labelOf(company.relationship_stage)}</Pill>
+            {company.domain && <span className="break-all font-mono text-xs text-text-muted">{company.domain}</span>}
           </div>
         </div>
 
@@ -147,20 +146,24 @@ export function CompanyDetail() {
           ]}
           active={tab}
           onChange={setTab}
-        />
-
-        {tab === "overview" && <OverviewTab company={company} canManage={canManage} canMerge={Boolean(can?.merge)} reload={reload} onChanged={refresh} />}
-        {tab === "people" && <PeopleTab companyId={company.id} canManage={canManage} reload={reload} onAdd={() => setAddingPerson(true)} />}
-        {tab === "timeline" && <Timeline entity="company" id={company.id} canManage={canManage} kinds={meta?.interaction_kinds ?? ["NOTE"]} reloadKey={reload} />}
-        {tab === "signals" && <SignalsPanel entity="company" id={company.id} />}
-        {tab === "deals" && <PlaceholderTab kind="deals" companyId={company.id} />}
-        {tab === "contracts" && <PlaceholderTab kind="contracts" companyId={company.id} />}
-        {tab === "documents" && <DocumentsTab companyId={company.id} canRead={Boolean(can?.documents_read)} canManage={canManage} />}
-        {tab === "valueiq" && (
-          <EmptyPanel icon={<Gem className="h-10 w-10" />} title="ValueIQ is not connected yet">
-            When ValueIQ is switched on, the value of the relationship with {company.name} will be shown here. Nothing is estimated in the meantime.
-          </EmptyPanel>
-        )}
+        >
+          {tab === "overview" && <OverviewTab company={company} canManage={canManage} canMerge={Boolean(can?.merge)} reload={reload} onChanged={refresh} />}
+          {tab === "people" && <PeopleTab companyId={company.id} canManage={canManage} reload={reload} onAdd={() => setAddingPerson(true)} />}
+          {tab === "timeline" && <Timeline entity="company" id={company.id} canManage={canManage} kinds={meta?.interaction_kinds ?? ["NOTE"]} reloadKey={reload} />}
+          {tab === "signals" && <SignalsPanel entity="company" id={company.id} />}
+          {tab === "deals" && <PlaceholderTab kind="deals" companyId={company.id} />}
+          {tab === "contracts" && <PlaceholderTab kind="contracts" companyId={company.id} />}
+          {tab === "documents" && <DocumentsTab companyId={company.id} canRead={Boolean(can?.documents_read)} canManage={canManage} />}
+          {tab === "valueiq" && (
+            <SectionCard padded={false}>
+              <EmptyState
+                icon={<Gem size={24} />}
+                title="ValueIQ is not connected yet"
+                description={`When ValueIQ is switched on, the value of the relationship with ${company.name} will be shown here. Nothing is estimated in the meantime.`}
+              />
+            </SectionCard>
+          )}
+        </TabBar>
       </div>
 
       <CompanyFormDialog open={editing} onOpenChange={setEditing} company={company} meta={meta} onSaved={() => void refresh()} />
@@ -208,92 +211,94 @@ function OverviewTab({ company, canManage, canMerge, reload, onChanged }: { comp
   }, [company]);
 
   return (
-    <div className="space-y-4">
-      <Panel title="Not known yet">
-        {missing.length === 0 ? (
-          <p className="text-sm text-text-secondary">The basics are all filled in.</p>
-        ) : (
-          <div className="flex flex-wrap gap-1.5">
-            {missing.map((m) => (
-              <Pill key={m} variant="caution">
-                {m}
-              </Pill>
-            ))}
-          </div>
-        )}
-      </Panel>
-
-      <Panel title="About">
-        <div className="grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-2">
-          {row("Name", "name", company.name)}
-          {row("Legal name", "legal_name", company.legal_name)}
-          {row(
-            "Also known as",
-            "aliases",
-            company.aliases.join(", "),
-            company.aliases.length ? (
-              <span className="flex flex-wrap gap-1">
-                {company.aliases.map((a) => (
-                  <Pill key={a}>{a}</Pill>
-                ))}
-              </span>
-            ) : undefined
-          )}
-          {row("Domain", "domain", company.domain)}
-          {row("Website", "website", company.website)}
-          {row("Industry", "industry", company.industry)}
-          {row("Size", "size_band", company.size_band, company.size_band ? `${company.size_band} people` : undefined)}
-          {row("Relationship stage", "lifecycle_stage", company.relationship_stage, company.relationship_stage ? labelOf(company.relationship_stage) : undefined)}
-          {row(
-            "Part of",
-            "parent",
-            company.parent_name,
-            company.parent_id ? (
-              <Link className="text-signal-text hover:underline" to={`/admin/companies/${company.parent_id}`}>
-                {company.parent_name || "Parent company"}
-              </Link>
-            ) : undefined
-          )}
-          {row("Phone", "phone", company.phone)}
-          {row("Email", "email", company.email)}
-        </div>
-      </Panel>
-
-      <Panel title="Location and sites">
-        <div className="grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-2">
-          {row("Address", "address", company.address)}
-          {row("District", "district", company.district)}
-          {row("Province", "province", company.province)}
-          {row("Country", "country", company.country)}
-        </div>
-        {company.sites.length > 0 && (
-          <ul className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
-            {company.sites.map((s, i) => (
-              <li key={i} className="flex min-w-0 items-start gap-2 rounded-lg border border-line p-2.5 text-sm">
-                <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-text-muted" />
-                <span className="min-w-0 break-words">
-                  <span className="font-medium text-text-primary">{s.name || "Site"}</span>
-                  <span className="block text-text-secondary">{[s.address, s.district, s.province].filter(Boolean).join(", ")}</span>
+    <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-[1.35fr_1fr]">
+      <div className="grid min-w-0 gap-5">
+        <SectionCard title="About">
+          <div className="grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-2">
+            {row("Name", "name", company.name)}
+            {row("Legal name", "legal_name", company.legal_name)}
+            {row(
+              "Also known as",
+              "aliases",
+              company.aliases.join(", "),
+              company.aliases.length ? (
+                <span className="flex flex-wrap gap-1">
+                  {company.aliases.map((a) => (
+                    <Pill key={a}>{a}</Pill>
+                  ))}
                 </span>
-              </li>
-            ))}
-          </ul>
+              ) : undefined
+            )}
+            {row("Domain", "domain", company.domain)}
+            {row("Website", "website", company.website)}
+            {row("Industry", "industry", company.industry)}
+            {row("Size", "size_band", company.size_band, company.size_band ? `${company.size_band} people` : undefined)}
+            {row("Relationship stage", "lifecycle_stage", company.relationship_stage, company.relationship_stage ? labelOf(company.relationship_stage) : undefined)}
+            {row(
+              "Part of",
+              "parent",
+              company.parent_name,
+              company.parent_id ? (
+                <Link className="text-signal-text hover:underline" to={`/admin/companies/${company.parent_id}`}>
+                  {company.parent_name || "Parent company"}
+                </Link>
+              ) : undefined
+            )}
+            {row("Phone", "phone", company.phone)}
+            {row("Email", "email", company.email)}
+          </div>
+        </SectionCard>
+
+        <SectionCard title="Location and sites">
+          <div className="grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-2">
+            {row("Address", "address", company.address)}
+            {row("District", "district", company.district)}
+            {row("Province", "province", company.province)}
+            {row("Country", "country", company.country)}
+          </div>
+          {company.sites.length > 0 && (
+            <ul className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+              {company.sites.map((s, i) => (
+                <li key={i} className="flex min-w-0 items-start gap-2 rounded-md border border-line p-3 text-sm">
+                  <MapPin size={16} className="mt-0.5 shrink-0 text-text-muted" />
+                  <span className="min-w-0 break-words">
+                    <span className="font-semibold text-text-primary">{s.name || "Site"}</span>
+                    <span className="block text-text-secondary">{[s.address, s.district, s.province].filter(Boolean).join(", ")}</span>
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </SectionCard>
+      </div>
+
+      <div className="grid min-w-0 gap-5">
+        <SectionCard title="Not known yet">
+          {missing.length === 0 ? (
+            <p className="text-sm text-text-secondary">The basics are all filled in.</p>
+          ) : (
+            <div className="flex flex-wrap gap-1.5">
+              {missing.map((m) => (
+                <Pill key={m}>{m}</Pill>
+              ))}
+            </div>
+          )}
+        </SectionCard>
+
+        <SectionCard title="Background and reputation">
+          <div className="grid grid-cols-1 gap-4">
+            {row("Background", "background_notes", company.background_notes)}
+            {row("Reputation", "reputation_notes", company.reputation_notes)}
+            {row("Other notes", "notes", company.notes)}
+          </div>
+        </SectionCard>
+
+        {canMerge && (
+          <SectionCard title="Merge history">
+            <MergeHistory entity="COMPANY" id={company.id} canMerge reloadKey={reload} onChanged={onChanged} />
+          </SectionCard>
         )}
-      </Panel>
-
-      <Panel title="Background and reputation">
-        <div className="grid grid-cols-1 gap-x-6 gap-y-4">
-          {row("Background", "background_notes", company.background_notes)}
-          {row("Reputation", "reputation_notes", company.reputation_notes)}
-          {row("Other notes", "notes", company.notes)}
-        </div>
-      </Panel>
-
-      {canMerge && (
-        <Panel title="Merge history">
-          <MergeHistory entity="COMPANY" id={company.id} canMerge reloadKey={reload} onChanged={onChanged} />
-        </Panel>
-      )}
+      </div>
     </div>
   );
 }
@@ -318,46 +323,62 @@ function PeopleTab({ companyId, canManage, reload, onAdd }: { companyId: string;
   }, [companyId, former, reload]);
 
   return (
-    <div className="space-y-3">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <label className="flex items-center gap-2 text-sm text-text-secondary">
-          <input type="checkbox" checked={former} onChange={(e) => setFormer(e.target.checked)} className="h-4 w-4 accent-[var(--signal)]" />
-          Include former employees
-        </label>
-        {canManage && (
-          <Button variant="outline" size="sm" onClick={onAdd}>
-            <Users className="h-4 w-4" /> Add person here
-          </Button>
-        )}
-      </div>
-      {loading ? (
-        <div className="flex justify-center py-10">
-          <Loader2 className="h-5 w-5 animate-spin text-text-muted" />
-        </div>
-      ) : links.length === 0 ? (
-        <EmptyPanel icon={<Users className="h-10 w-10" />} title="No people recorded here">
-          People appear once someone is linked to this company.
-        </EmptyPanel>
-      ) : (
-        <ul className="space-y-2">
-          {links.map((l) => (
-            <li key={l.id}>
-              <Link to={`/admin/people/${l.person_id}`} className="flex min-w-0 flex-wrap items-center justify-between gap-2 rounded-xl border border-line bg-surface-1 p-3 hover:bg-surface-2">
-                <span className="min-w-0">
-                  <span className="block break-words font-medium text-text-primary">{l.person_name}</span>
-                  <span className="block break-words text-sm text-text-secondary">{l.title || "No title recorded"}</span>
-                  <span className="block text-xs text-text-muted">
-                    {l.start_date ? fmtDate(l.start_date) : "start date not known"} – {l.end_date ? fmtDate(l.end_date) : "present"}
-                  </span>
-                </span>
-                {!l.active && <Pill>Former</Pill>}
-                {l.active && l.is_primary && <Pill variant="signal">Main company</Pill>}
-              </Link>
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
+    <SectionCard
+      title="People"
+      padded={false}
+      actions={
+        <>
+          <label className="flex items-center gap-2 text-sm text-text-secondary">
+            <Checkbox checked={former} onCheckedChange={(v) => setFormer(v === true)} />
+            Include former employees
+          </label>
+          {canManage && (
+            <Button variant="secondary" size="sm" onClick={onAdd}>
+              <Users /> Add person here
+            </Button>
+          )}
+        </>
+      }
+    >
+      <SectionBody
+        loading={loading}
+        skeleton={<TableSkeleton rows={4} columns={3} />}
+        isEmpty={links.length === 0}
+        empty={<EmptyState icon={<Users size={24} />} title="No people recorded here" description="People appear once someone is linked to this company." />}
+      >
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Name</TableHead>
+              <TableHead className="hidden sm:table-cell">Title</TableHead>
+              <TableHead className="hidden md:table-cell">Period</TableHead>
+              <TableHead>Link</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {links.map((l) => (
+              <TableRow key={l.id}>
+                <TableCell>
+                  <Link to={`/admin/people/${l.person_id}`} className="flex min-h-10 min-w-0 flex-col justify-center">
+                    <span className="break-words font-semibold text-text-primary">{l.person_name}</span>
+                    <span className="break-words text-xs font-normal text-text-muted sm:hidden">{l.title || "No title recorded"}</span>
+                  </Link>
+                </TableCell>
+                <TableCell className="hidden break-words text-[13px] text-text-secondary sm:table-cell">{l.title || "No title recorded"}</TableCell>
+                <TableCell className="hidden font-mono text-xs text-text-secondary md:table-cell">
+                  {l.start_date ? fmtDate(l.start_date) : "start date not known"} to {l.end_date ? fmtDate(l.end_date) : "present"}
+                </TableCell>
+                <TableCell>
+                  {!l.active && <Pill>Former</Pill>}
+                  {l.active && l.is_primary && <Pill>Main company</Pill>}
+                  {l.active && !l.is_primary && <Pill variant="positive">Current</Pill>}
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </SectionBody>
+    </SectionCard>
   );
 }
 
@@ -375,11 +396,16 @@ function PlaceholderTab({ kind, companyId }: { kind: "deals" | "contracts"; comp
     };
   }, [kind, companyId]);
   const noun = kind === "deals" ? "Deals" : "Contracts";
-  if (!state) return <Loader2 className="h-5 w-5 animate-spin text-text-muted" />;
   return (
-    <EmptyPanel icon={kind === "deals" ? <Handshake className="h-10 w-10" /> : <ScrollText className="h-10 w-10" />} title={`No ${kind} to show`}>
-      {noun} are not tracked in 360IQ yet, so there is nothing to list for this company. They will appear here once they are.
-    </EmptyPanel>
+    <SectionCard padded={false}>
+      <SectionBody loading={!state}>
+        <EmptyState
+          icon={kind === "deals" ? <Handshake size={24} /> : <ScrollText size={24} />}
+          title={`No ${kind} to show`}
+          description={`${noun} are not tracked in 360IQ yet, so there is nothing to list for this company. They will appear here once they are.`}
+        />
+      </SectionBody>
+    </SectionCard>
   );
 }
 
@@ -418,9 +444,9 @@ function DocumentsTab({ companyId, canRead, canManage }: { companyId: string; ca
 
   if (!canRead) {
     return (
-      <EmptyPanel icon={<FileText className="h-10 w-10" />} title="Documents are hidden for your role">
-        You need access to documents to see the ones linked to this company.
-      </EmptyPanel>
+      <SectionCard padded={false}>
+        <EmptyState icon={<FileText size={24} />} title="Documents are hidden by your access level" description="You need access to documents to see the ones linked to this company." />
+      </SectionCard>
     );
   }
 
@@ -435,46 +461,61 @@ function DocumentsTab({ companyId, canRead, canManage }: { companyId: string; ca
   };
 
   return (
-    <div className="space-y-3">
-      {canManage && (
-        <div className="flex justify-end">
-          <Button variant="outline" size="sm" onClick={() => setLinking(true)}>
-            <Link2 className="h-4 w-4" /> Link a document
-          </Button>
-        </div>
-      )}
-      {loading ? (
-        <div className="flex justify-center py-10">
-          <Loader2 className="h-5 w-5 animate-spin text-text-muted" />
-        </div>
-      ) : docs.length === 0 ? (
-        <EmptyPanel icon={<FileText className="h-10 w-10" />} title="No documents linked">
-          Link existing documents to keep them with this company. You only see documents you already have access to.
-        </EmptyPanel>
-      ) : (
-        <ul className="space-y-2">
-          {docs.map((d) => (
-            <li key={d.id} className="flex min-w-0 items-center gap-3 rounded-xl border border-line bg-surface-1 p-3">
-              <button type="button" onClick={() => navigate(`/admin/documents/${d.id}`)} className="flex min-w-0 flex-1 items-center gap-3 text-left">
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-surface-2 text-text-secondary">
-                  <FileText className="h-4 w-4" />
-                </span>
-                <span className="min-w-0">
-                  <span className="block break-words text-sm font-medium text-text-primary">{d.title}</span>
-                  <span className="block text-xs text-text-muted">
-                    {labelOf(d.document_type)} · linked {fmtDate(d.linked_at)}
-                  </span>
-                </span>
-              </button>
-              {canManage && (
-                <Button variant="ghost" size="icon" aria-label={`Unlink ${d.title}`} onClick={() => void unlink(d)}>
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              )}
-            </li>
-          ))}
-        </ul>
-      )}
+    <>
+      <SectionCard
+        title="Documents"
+        padded={false}
+        actions={
+          canManage && (
+            <Button variant="secondary" size="sm" onClick={() => setLinking(true)}>
+              <Link2 /> Link a document
+            </Button>
+          )
+        }
+      >
+        <SectionBody
+          loading={loading}
+          skeleton={<TableSkeleton rows={4} columns={3} />}
+          isEmpty={docs.length === 0}
+          empty={<EmptyState icon={<FileText size={24} />} title="No documents linked" description="Link existing documents to keep them with this company. You only see documents you already have access to." />}
+        >
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Document</TableHead>
+                <TableHead className="hidden sm:table-cell">Type</TableHead>
+                <TableHead className="hidden md:table-cell">Linked</TableHead>
+                {canManage && (
+                  <TableHead className="w-16 text-right">
+                    <span className="sr-only">Actions</span>
+                  </TableHead>
+                )}
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {docs.map((d) => (
+                <TableRow key={d.id}>
+                  <TableCell>
+                    <button type="button" onClick={() => navigate(`/admin/documents/${d.id}`)} className="flex min-h-10 min-w-0 items-center gap-3 text-left">
+                      <FileText size={18} className="shrink-0 text-text-muted" />
+                      <span className="min-w-0 break-words font-semibold text-text-primary">{d.title}</span>
+                    </button>
+                  </TableCell>
+                  <TableCell className="hidden text-[13px] text-text-secondary sm:table-cell">{labelOf(d.document_type)}</TableCell>
+                  <TableCell className="hidden font-mono text-xs text-text-secondary md:table-cell">{fmtDate(d.linked_at)}</TableCell>
+                  {canManage && (
+                    <TableCell className="text-right">
+                      <Button variant="ghost" size="icon" aria-label={`Unlink ${d.title}`} onClick={() => void unlink(d)}>
+                        <Trash2 />
+                      </Button>
+                    </TableCell>
+                  )}
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </SectionBody>
+      </SectionCard>
       <LinkDocumentDialog
         open={linking}
         onOpenChange={setLinking}
@@ -489,7 +530,7 @@ function DocumentsTab({ companyId, canRead, canManage }: { companyId: string; ca
           }
         }}
       />
-    </div>
+    </>
   );
 }
 
@@ -518,13 +559,13 @@ function LinkDocumentDialog({ open, onOpenChange, linkedIds, onPick }: { open: b
           <DialogDescription>Only documents you can already open are listed.</DialogDescription>
         </DialogHeader>
         <Input aria-label="Search documents" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search by title" autoFocus />
-        <ul className="max-h-64 divide-y divide-line overflow-y-auto rounded-lg border border-line">
+        <ul className="max-h-64 divide-y divide-line overflow-y-auto rounded-md border border-line">
           {loading && <li className="px-3 py-3 text-sm text-text-muted">Loading…</li>}
           {!loading && shown.length === 0 && <li className="px-3 py-3 text-sm text-text-muted">No documents to link</li>}
           {shown.map((d) => (
             <li key={d.id}>
               <button type="button" onClick={() => onPick(d.id)} className="block w-full min-w-0 px-3 py-2 text-left hover:bg-surface-2">
-                <span className="block truncate text-sm font-medium text-text-primary">{d.title}</span>
+                <span className="block truncate text-sm font-semibold text-text-primary">{d.title}</span>
                 {d.document_type && <span className="block text-xs text-text-muted">{labelOf(d.document_type)}</span>}
               </button>
             </li>

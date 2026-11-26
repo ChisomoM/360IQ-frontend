@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import type { Document, Department } from '@/types/dms'
-import { MoreVertical, Download, History, MessageSquare, Sparkles, BarChart3, ChevronUp, ChevronDown, Archive, Trash2 } from 'lucide-react'
-import { formatDistanceToNow } from 'date-fns'
+import { MoreVertical, Download, History, Sparkles, BarChart3, ChevronUp, ChevronDown, Archive, Trash2, Eye } from '@/components/icons'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,6 +9,16 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Button } from '@/components/ui/button'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableHeaderRow,
+  TableRow,
+} from '@/components/ui/table'
+import { formatDate, formatDateTime } from '@/lib/format'
 import PDFIcon from '@/assets/file_types/PDF.svg'
 import DOCIcon from '@/assets/file_types/DOC.svg'
 import DOCXIcon from '@/assets/file_types/DOCX.svg'
@@ -35,21 +44,21 @@ interface DocumentTableV2Props {
   onDelete?: (doc: Document) => void
 }
 
-const fileTypeConfig: Record<string, { icon: string; lightBg: string; textColor: string; extLabel: string }> = {
-  pdf: { icon: PDFIcon, lightBg: 'bg-red-50', textColor: 'text-red-700', extLabel: 'PDF' },
-  doc: { icon: DOCIcon, lightBg: 'bg-blue-50', textColor: 'text-blue-700', extLabel: 'DOC' },
-  docx: { icon: DOCXIcon, lightBg: 'bg-blue-50', textColor: 'text-blue-700', extLabel: 'DOCX' },
-  xls: { icon: XLSIcon, lightBg: 'bg-green-50', textColor: 'text-green-700', extLabel: 'XLS' },
-  xlsx: { icon: XLSIcon, lightBg: 'bg-green-50', textColor: 'text-green-700', extLabel: 'XLSX' },
-  csv: { icon: CSVIcon, lightBg: 'bg-green-50', textColor: 'text-green-700', extLabel: 'CSV' },
-  ppt: { icon: PPTIcon, lightBg: 'bg-orange-50', textColor: 'text-orange-700', extLabel: 'PPT' },
-  pptx: { icon: PPTIcon, lightBg: 'bg-orange-50', textColor: 'text-orange-700', extLabel: 'PPTX' },
-  png: { icon: PNGIcon, lightBg: 'bg-purple-50', textColor: 'text-purple-700', extLabel: 'PNG' },
-  jpg: { icon: JPGIcon, lightBg: 'bg-purple-50', textColor: 'text-purple-700', extLabel: 'JPG' },
-  jpeg: { icon: JPGIcon, lightBg: 'bg-purple-50', textColor: 'text-purple-700', extLabel: 'JPEG' },
-  txt: { icon: TXTIcon, lightBg: 'bg-slate-50', textColor: 'text-slate-700', extLabel: 'TXT' },
-  tiff: { icon: TIFFIcon, lightBg: 'bg-slate-50', textColor: 'text-slate-700', extLabel: 'TIFF' },
-  default: { icon: TXTIcon, lightBg: 'bg-gray-50', textColor: 'text-gray-700', extLabel: 'FILE' },
+const fileTypeConfig: Record<string, { icon: string; extLabel: string }> = {
+  pdf: { icon: PDFIcon, extLabel: 'PDF' },
+  doc: { icon: DOCIcon, extLabel: 'DOC' },
+  docx: { icon: DOCXIcon, extLabel: 'DOCX' },
+  xls: { icon: XLSIcon, extLabel: 'XLS' },
+  xlsx: { icon: XLSIcon, extLabel: 'XLSX' },
+  csv: { icon: CSVIcon, extLabel: 'CSV' },
+  ppt: { icon: PPTIcon, extLabel: 'PPT' },
+  pptx: { icon: PPTIcon, extLabel: 'PPTX' },
+  png: { icon: PNGIcon, extLabel: 'PNG' },
+  jpg: { icon: JPGIcon, extLabel: 'JPG' },
+  jpeg: { icon: JPGIcon, extLabel: 'JPEG' },
+  txt: { icon: TXTIcon, extLabel: 'TXT' },
+  tiff: { icon: TIFFIcon, extLabel: 'TIFF' },
+  default: { icon: TXTIcon, extLabel: 'File' },
 }
 
 const getFileExtension = (filename: string): string => {
@@ -129,162 +138,144 @@ export function DocumentTableV2({
     return departments.find(d => d.id === deptId)?.name || 'Global'
   }
 
+  const sortHeader = (label: string, column: 'name' | 'date' | 'category') => (
+    <TableHead aria-sort={sortColumn === column ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}>
+      <button
+        type="button"
+        onClick={() => toggleSort(column)}
+        className="flex items-center gap-1 rounded-xs text-xs font-medium hover:text-text-primary"
+      >
+        {label}
+        {sortColumn === column && (
+          sortDirection === 'asc' ? <ChevronUp size={14} /> : <ChevronDown size={14} />
+        )}
+      </button>
+    </TableHead>
+  )
+
   return (
-    <div className="border border-gray-200 rounded-xl overflow-hidden shadow-sm">
-      <table className="w-full">
-        <thead className="bg-gray-50 border-b border-gray-200">
-          <tr>
-            <th className="px-6 py-3 text-left">
-              <button
-                onClick={() => toggleSort('name')}
-                className="flex items-center gap-2 font-semibold text-xs text-gray-700 uppercase tracking-wider hover:text-gray-900"
-              >
-                Document
-                {sortColumn === 'name' && (
-                  sortDirection === 'asc' ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />
-                )}
-              </button>
-            </th>
-            <th className="px-6 py-3 text-left">
-              <button
-                onClick={() => toggleSort('category')}
-                className="flex items-center gap-2 font-semibold text-xs text-gray-700 uppercase tracking-wider hover:text-gray-900"
-              >
-                Category
-                {sortColumn === 'category' && (
-                  sortDirection === 'asc' ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />
-                )}
-              </button>
-            </th>
-            <th className="px-6 py-3 text-left font-semibold text-xs text-gray-700 uppercase tracking-wider">Department</th>
-            <th className="px-6 py-3 text-left">
-              <button
-                onClick={() => toggleSort('date')}
-                className="flex items-center gap-2 font-semibold text-xs text-gray-700 uppercase tracking-wider hover:text-gray-900"
-              >
-                Modified
-                {sortColumn === 'date' && (
-                  sortDirection === 'asc' ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />
-                )}
-              </button>
-            </th>
-            <th className="px-6 py-3 text-left font-semibold text-xs text-gray-700 uppercase tracking-wider">Version</th>
-            <th className="px-6 py-3 text-right font-semibold text-xs text-gray-700 uppercase tracking-wider">Actions</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-gray-100">
-          {sorted.map((doc, idx) => {
+    <div className="overflow-hidden rounded-lg border border-line bg-surface-1 shadow-card">
+      <Table>
+        <TableHeader>
+          <TableHeaderRow>
+            {sortHeader('Document', 'name')}
+            {sortHeader('Category', 'category')}
+            <TableHead>Department</TableHead>
+            {sortHeader('Modified', 'date')}
+            <TableHead>Version</TableHead>
+            <TableHead className="text-right">Actions</TableHead>
+          </TableHeaderRow>
+        </TableHeader>
+        <TableBody>
+          {sorted.map((doc) => {
             const config = getFileTypeConfig(doc.title)
             return (
-              <tr key={doc.id} className={`hover:bg-gray-50 transition-colors ${idx % 2 === 0 ? 'bg-white' : 'bg-gray-50/30'}`}>
+              <TableRow key={doc.id}>
                 {/* Document Name */}
-                <td className="px-6 py-4 max-w-xs">
-                  <div className="flex items-center gap-3 min-w-0">
-                    <img src={config.icon} alt={config.extLabel} className="w-8 h-8 object-contain flex-shrink-0" />
+                <TableCell className="max-w-xs">
+                  <div className="flex min-w-0 items-center gap-3">
+                    <img src={config.icon} alt={config.extLabel} className="h-8 w-8 shrink-0 object-contain" />
                     <div className="min-w-0 flex-1">
-                      <p className="font-sans font-semibold text-sm text-gray-900 truncate">{doc.title}</p>
-                      <p className="text-xs text-gray-500">{getFileExtension(doc.file_type).toUpperCase()}</p>
+                      <p className="truncate text-[13px] font-semibold text-text-primary">{doc.title}</p>
+                      <p className="font-mono text-xs text-text-muted">{getFileExtension(doc.file_type).toUpperCase()}</p>
                     </div>
                   </div>
-                </td>
+                </TableCell>
 
                 {/* Category */}
-                <td className="px-6 py-4">
-                  <span className="text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                    {getCategoryLabel(doc.document_type)}
-                  </span>
-                </td>
+                <TableCell className="text-[13px] text-text-secondary">
+                  {getCategoryLabel(doc.document_type)}
+                </TableCell>
 
                 {/* Department */}
-                <td className="px-6 py-4">
-                  <p className="text-sm text-gray-600">{getDeptName(doc.document_departments?.find(dd => dd.is_primary)?.department_id ?? doc.department_id)}</p>
-                </td>
+                <TableCell className="text-[13px] text-text-secondary">
+                  {getDeptName(doc.document_departments?.find(dd => dd.is_primary)?.department_id ?? doc.department_id)}
+                </TableCell>
 
                 {/* Modified Date */}
-                <td className="px-6 py-4">
-                  <p className="text-sm text-gray-600">
-                    {doc.updated_at ? formatDistanceToNow(new Date(doc.updated_at), { addSuffix: true }) : 'N/A'}
-                  </p>
-                </td>
+                <TableCell className="whitespace-nowrap font-mono text-xs text-text-secondary" title={formatDateTime(doc.updated_at)}>
+                  {formatDate(doc.updated_at) || 'Not recorded'}
+                </TableCell>
 
                 {/* Version */}
-                <td className="px-6 py-4">
-                  <p className="text-sm text-gray-600 font-sans">v{(doc as any).version_number || '1.0'}</p>
-                </td>
+                <TableCell className="font-mono text-xs text-text-secondary">
+                  v{(doc as any).version_number || '1.0'}
+                </TableCell>
 
                 {/* Actions Menu */}
-                <td className="px-6 py-4 text-right">
+                <TableCell className="text-right">
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
-                        <MoreVertical className="h-4 w-4 text-gray-500" />
+                      <Button variant="ghost" size="icon" aria-label={`Actions for ${doc.title}`} title="More actions" className="h-8 w-8">
+                        <MoreVertical />
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-52">
-                      <DropdownMenuItem onClick={() => onDownload(doc)} className="text-sm cursor-pointer">
-                        <Download className="h-4 w-4 mr-2" />
+                      <DropdownMenuItem onClick={() => onDownload(doc)} className="cursor-pointer text-sm">
+                        <Download size={16} className="mr-2" />
                         Download
                       </DropdownMenuItem>
 
-                      <DropdownMenuSeparator className="my-1" />
-                      <DropdownMenuItem onClick={() => onVersions(doc)} className="text-sm cursor-pointer">
-                        <History className="h-4 w-4 mr-2" />
-                        Version History
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={() => onVersions(doc)} className="cursor-pointer text-sm">
+                        <History size={16} className="mr-2" />
+                        Version history
                       </DropdownMenuItem>
 
                       {(onChat || onSummarize || onAnalysis || onChartAnalysis) && (
                         <>
-                          <DropdownMenuSeparator className="my-1" />
+                          <DropdownMenuSeparator />
                           {onChat && (
-                            <DropdownMenuItem onClick={() => onChat?.(doc)} className="text-sm cursor-pointer">
-                              <MessageSquare className="h-4 w-4 mr-2" />
-                              AI Chat
+                            <DropdownMenuItem onClick={() => onChat?.(doc)} className="cursor-pointer text-sm">
+                              <Sparkles size={16} className="mr-2 text-signal-text" />
+                              Ask about this file
                             </DropdownMenuItem>
                           )}
                           {onSummarize && (
-                            <DropdownMenuItem onClick={() => onSummarize?.(doc)} className="text-sm cursor-pointer">
-                              <Sparkles className="h-4 w-4 mr-2" />
-                              Summarize
+                            <DropdownMenuItem onClick={() => onSummarize?.(doc)} className="cursor-pointer text-sm">
+                              <Sparkles size={16} className="mr-2 text-signal-text" />
+                              Summarise
                             </DropdownMenuItem>
                           )}
                           {onAnalysis && (
-                            <DropdownMenuItem onClick={() => onAnalysis?.(doc)} className="text-sm cursor-pointer">
-                              <Sparkles className="h-4 w-4 mr-2" />
-                              Analysis
+                            <DropdownMenuItem onClick={() => onAnalysis?.(doc)} className="cursor-pointer text-sm">
+                              <Sparkles size={16} className="mr-2 text-signal-text" />
+                              Analyse
                             </DropdownMenuItem>
                           )}
                           {isSpreadsheet(doc.title) && onChartAnalysis && (
-                            <DropdownMenuItem onClick={() => onChartAnalysis?.(doc)} className="text-sm cursor-pointer">
-                              <BarChart3 className="h-4 w-4 mr-2" />
-                              Chart Analysis
+                            <DropdownMenuItem onClick={() => onChartAnalysis?.(doc)} className="cursor-pointer text-sm">
+                              <BarChart3 size={16} className="mr-2" />
+                              Analyse charts
                             </DropdownMenuItem>
                           )}
                         </>
                       )}
 
-                      <DropdownMenuSeparator className="my-1" />
-                      <DropdownMenuItem onClick={() => onView(doc)} className="text-sm text-tenant-primary cursor-pointer">
-                        View Details
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={() => onView(doc)} className="cursor-pointer text-sm">
+                        <Eye size={16} className="mr-2" />
+                        View details
                       </DropdownMenuItem>
 
                       {(onArchive || onDelete) && (
                         <>
-                          <DropdownMenuSeparator className="my-1" />
+                          <DropdownMenuSeparator />
                           {onArchive && doc.status !== 'archived' && (
                             <DropdownMenuItem
                               onClick={() => onArchive(doc)}
-                              className="text-sm cursor-pointer text-amber-600 focus:text-amber-700"
+                              className="cursor-pointer text-sm"
                             >
-                              <Archive className="h-4 w-4 mr-2" />
+                              <Archive size={16} className="mr-2" />
                               Archive
                             </DropdownMenuItem>
                           )}
                           {onDelete && (
                             <DropdownMenuItem
                               onClick={() => onDelete(doc)}
-                              className="text-sm cursor-pointer text-red-600 focus:text-red-700"
+                              className="cursor-pointer text-sm text-risk focus:text-risk"
                             >
-                              <Trash2 className="h-4 w-4 mr-2" />
+                              <Trash2 size={16} className="mr-2" />
                               Delete
                             </DropdownMenuItem>
                           )}
@@ -292,12 +283,12 @@ export function DocumentTableV2({
                       )}
                     </DropdownMenuContent>
                   </DropdownMenu>
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
             )
           })}
-        </tbody>
-      </table>
+        </TableBody>
+      </Table>
     </div>
   )
 }

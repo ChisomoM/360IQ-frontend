@@ -1,6 +1,16 @@
 import { clsx, type ClassValue } from "clsx";
 import dayjs from "dayjs";
-import { twMerge } from "tailwind-merge";
+import { extendTailwindMerge } from "tailwind-merge";
+
+/** Teach tailwind-merge the custom 360IQ scale names so caller overrides win. */
+const twMerge = extendTailwindMerge({
+  extend: {
+    theme: {
+      shadow: ["card", "card-hover", "raised", "overlay"],
+      radius: ["xs", "inner", "pill"],
+    },
+  },
+});
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));

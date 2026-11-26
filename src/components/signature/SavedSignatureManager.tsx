@@ -1,11 +1,14 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
-import { Plus, Trash2, Star, StarOff, PenLine, Loader2, Type, Upload } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Plus, Trash2, Star, StarOff, PenLine, Loader2, Type, Upload } from '@/components/icons';
+import { Button, buttonVariants } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { SectionCard } from '@/components/shared/SectionCard';
+import { StatusBadge } from '@/components/shared/StatusBadge';
+import { EmptyState } from '@/components/shared/EmptyState';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -20,7 +23,6 @@ import SignaturePad from './SignaturePad';
 import type { SignaturePadHandle } from './SignaturePad';
 import { listMySignatures, saveMySignature, setDefaultSignature, deleteMySignature } from '@/lib/api/signatures';
 import type { UserSignature, SignatureType } from '@/types/signatures';
-import { cn } from '@/lib/utils';
 
 interface SavedSignatureManagerProps {
   /** Called when the user wants to use a saved signature in a signing flow */
@@ -89,21 +91,21 @@ export default function SavedSignatureManager({ onUse, selectMode = false }: Sav
 
     if (activeTab === 'draw') {
       if (!sigPadRef.current || sigPadRef.current.isEmpty()) {
-        toast.error('Please draw your signature first');
+        toast.error('Draw your signature first.');
         return;
       }
       sigData = sigPadRef.current.getDataURL();
       sigType = 'draw';
     } else if (activeTab === 'type') {
       if (!typedText.trim()) {
-        toast.error('Please type your signature text');
+        toast.error('Type your signature first.');
         return;
       }
       sigData = typeToDataURL(typedText.trim());
       sigType = 'type';
     } else {
       if (!imageDataUrl) {
-        toast.error('Please upload a signature image');
+        toast.error('Upload a signature image first.');
         return;
       }
       sigData = imageDataUrl;
@@ -162,7 +164,7 @@ export default function SavedSignatureManager({ onUse, selectMode = false }: Sav
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (!file.type.startsWith('image/')) { toast.error('Please select an image file'); return; }
+    if (!file.type.startsWith('image/')) { toast.error('Choose an image file, like a PNG or JPG.'); return; }
     const reader = new FileReader();
     reader.onload = ev => { setImageDataUrl(ev.target?.result as string); };
     reader.readAsDataURL(file);
@@ -175,27 +177,17 @@ export default function SavedSignatureManager({ onUse, selectMode = false }: Sav
   ];
 
   return (
-    <div className="space-y-4">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h3 className="font-sans font-semibold text-text-md text-gray-800">Saved Signatures</h3>
-          <p className="font-sans text-text-sm text-gray-500 mt-0.5">Reuse your saved signatures when signing documents</p>
-        </div>
-        {!showForm && (
-          <motion.button
-            type="button"
-            onClick={() => setShowForm(true)}
-            className="flex items-center gap-1.5 h-9 px-3 rounded-lg text-sm font-medium bg-primary text-primary-foreground outline-none"
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.97 }}
-            transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-          >
-            <Plus className="h-4 w-4" />
-            Add Signature
-          </motion.button>
-        )}
-      </div>
+    <SectionCard
+      title="Saved signatures"
+      actions={!showForm && (
+        <Button type="button" variant="secondary" size="sm" onClick={() => setShowForm(true)}>
+          <Plus />
+          Add signature
+        </Button>
+      )}
+      bodyClassName="space-y-4"
+    >
+      <p className="text-sm text-text-secondary">Reuse a saved signature when you sign documents.</p>
 
       {/* Add signature form */}
       <AnimatePresence>
@@ -205,35 +197,19 @@ export default function SavedSignatureManager({ onUse, selectMode = false }: Sav
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 8 }}
             transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
-            className="border border-gray-200 rounded-xl p-4 bg-white shadow-sm space-y-4"
+            className="space-y-4 rounded-md border border-line p-4"
           >
             {/* Tab switcher */}
-            <div className="bg-slate-50/80 p-1 rounded-xl flex w-fit">
-              {tabs.map(tab => (
-                <motion.button
-                  key={tab.key}
-                  type="button"
-                  onClick={() => setActiveTab(tab.key)}
-                  className={cn(
-                    'relative flex items-center gap-2 h-9 px-3 rounded-lg text-sm font-medium outline-none',
-                    activeTab === tab.key ? 'text-slate-900' : 'text-slate-400 hover:text-slate-600'
-                  )}
-                  whileHover={{ scale: 1.04 }}
-                  whileTap={{ scale: 0.94 }}
-                  transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-                >
-                  {activeTab === tab.key && (
-                    <motion.span
-                      layoutId="sig-tab-pill"
-                      className="absolute inset-0 bg-white rounded-lg shadow-sm"
-                      transition={{ type: 'spring', stiffness: 400, damping: 28 }}
-                    />
-                  )}
-                  <tab.icon className="h-3.5 w-3.5 relative z-10" />
-                  <span className="relative z-10">{tab.label}</span>
-                </motion.button>
-              ))}
-            </div>
+            <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as typeof activeTab)}>
+              <TabsList>
+                {tabs.map(tab => (
+                  <TabsTrigger key={tab.key} value={tab.key} className="gap-2">
+                    <tab.icon size={16} />
+                    {tab.label}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+            </Tabs>
 
             {/* Draw tab */}
             {activeTab === 'draw' && (
@@ -244,14 +220,14 @@ export default function SavedSignatureManager({ onUse, selectMode = false }: Sav
             {activeTab === 'type' && (
               <div className="space-y-2">
                 <Input
-                  placeholder="Type your name..."
+                  aria-label="Typed signature"
+                  placeholder="Natasha Lungu"
                   value={typedText}
                   onChange={e => setTypedText(e.target.value)}
-                  className="text-xl font-serif"
                 />
                 {typedText && (
-                  <div className="border rounded-lg bg-white p-3 flex items-center justify-center min-h-[80px]">
-                    <span className="text-3xl" style={{ fontFamily: '"Dancing Script", cursive, Georgia, serif' }}>
+                  <div data-theme="paper" className="flex min-h-[80px] items-center justify-center rounded-md border border-line bg-surface-1 p-3">
+                    <span className="text-3xl" style={{ fontFamily: '"Dancing Script", cursive, Georgia, serif', color: '#000000' }}>
                       {typedText}
                     </span>
                   </div>
@@ -269,50 +245,50 @@ export default function SavedSignatureManager({ onUse, selectMode = false }: Sav
                   className="hidden"
                   onChange={handleImageUpload}
                 />
-                <div
-                  className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:border-gray-400 transition-colors"
+                <button
+                  type="button"
+                  className="block w-full cursor-pointer rounded-md border-2 border-dashed border-line-strong p-6 text-center transition-colors hover:border-signal"
                   onClick={() => fileInputRef.current?.click()}
                 >
                   {imageDataUrl ? (
-                    <img src={imageDataUrl} alt="Uploaded signature" className="max-h-20 mx-auto object-contain" />
+                    <span data-theme="paper" className="mx-auto block w-fit rounded-xs bg-surface-1 p-1">
+                      <img src={imageDataUrl} alt="Uploaded signature" className="max-h-20 object-contain" />
+                    </span>
                   ) : (
-                    <div className="space-y-1">
-                      <Upload className="h-8 w-8 text-gray-400 mx-auto" />
-                      <p className="text-sm text-gray-500">Click to upload signature image</p>
-                      <p className="text-xs text-gray-400">PNG, JPG supported</p>
-                    </div>
+                    <span className="block space-y-1">
+                      <Upload size={24} className="mx-auto text-text-muted" />
+                      <span className="block text-sm text-text-secondary">Upload a signature image</span>
+                      <span className="block text-xs text-text-muted">PNG or JPG</span>
+                    </span>
                   )}
-                </div>
+                </button>
               </div>
             )}
 
             {/* Label + actions */}
             <div className="space-y-3">
               <div className="space-y-1.5">
-                <Label className="text-sm font-medium text-gray-700">Label (optional)</Label>
+                <Label htmlFor="signature-label">Label (optional)</Label>
                 <Input
-                  placeholder="e.g. My Signature, Initials..."
+                  id="signature-label"
+                  placeholder="Initials"
                   value={label}
                   onChange={e => setLabel(e.target.value)}
-                  className="h-9"
                 />
               </div>
               <div className="flex gap-2 justify-end">
-                <Button type="button" variant="outline" size="sm" onClick={resetForm} disabled={saving}>
+                <Button type="button" variant="secondary" size="sm" onClick={resetForm} disabled={saving}>
                   Cancel
                 </Button>
-                <motion.button
+                <Button
                   type="button"
+                  size="sm"
                   onClick={handleSave}
                   disabled={saving}
-                  className="flex items-center gap-1.5 h-9 px-4 rounded-lg text-sm font-medium bg-primary text-primary-foreground disabled:opacity-50 outline-none"
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.97 }}
-                  transition={{ type: 'spring', stiffness: 500, damping: 30 }}
                 >
-                  {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Plus className="h-3.5 w-3.5" />}
-                  Save
-                </motion.button>
+                  {saving ? <Loader2 className="animate-spin" /> : <Plus />}
+                  Save signature
+                </Button>
               </div>
             </div>
           </motion.div>
@@ -321,18 +297,19 @@ export default function SavedSignatureManager({ onUse, selectMode = false }: Sav
 
       {/* Saved signatures list */}
       {loading && !loaded ? (
-        <div className="flex items-center justify-center py-8 gap-2 text-gray-400">
-          <Loader2 className="h-4 w-4 animate-spin" />
-          <span className="text-sm">Loading...</span>
+        <div role="status" aria-busy="true" aria-label="Loading" className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div className="skeleton h-32 rounded-md" />
+          <div className="skeleton h-32 rounded-md" />
         </div>
       ) : signatures.length === 0 && loaded ? (
-        <div className="text-center py-8 text-gray-400">
-          <PenLine className="h-8 w-8 mx-auto mb-2 opacity-30" />
-          <p className="text-sm">No saved signatures yet.</p>
-          <p className="text-xs mt-0.5">Add one above to reuse it when signing documents.</p>
-        </div>
+        <EmptyState
+          className="py-6"
+          icon={<PenLine size={24} />}
+          title="No saved signatures"
+          description="Add one to reuse it when you sign documents."
+        />
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
           <AnimatePresence mode="popLayout">
             {signatures.map(sig => (
               <motion.div
@@ -342,11 +319,10 @@ export default function SavedSignatureManager({ onUse, selectMode = false }: Sav
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95 }}
                 transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-                whileHover={{ y: -3 }}
-                className="border border-gray-200 rounded-xl bg-white shadow-sm overflow-hidden"
+                className="overflow-hidden rounded-md border border-line bg-surface-1"
               >
-                {/* Preview */}
-                <div className="bg-gray-50 flex items-center justify-center h-20 border-b border-gray-100">
+                {/* Preview: white in both themes so the black ink stays visible */}
+                <div data-theme="paper" className="flex h-20 items-center justify-center border-b border-line bg-surface-1">
                   <img
                     src={sig.signature_data}
                     alt={sig.label}
@@ -357,70 +333,54 @@ export default function SavedSignatureManager({ onUse, selectMode = false }: Sav
                 {/* Footer */}
                 <div className="px-3 py-2 flex items-center justify-between gap-2">
                   <div className="min-w-0 flex-1">
-                    <p className="font-sans font-medium text-text-sm text-gray-800 truncate">{sig.label}</p>
-                    <div className="flex items-center gap-1.5 mt-0.5">
-                      <Badge variant="outline" className="text-xs px-1.5 py-0 h-4 font-normal text-gray-500">
-                        {typeLabel[sig.signature_type]}
-                      </Badge>
+                    <p className="truncate text-sm font-medium text-text-primary">{sig.label}</p>
+                    <div className="mt-1 flex items-center gap-1.5">
+                      <StatusBadge tone="neutral">{typeLabel[sig.signature_type]}</StatusBadge>
                       {sig.is_default && (
-                        <Badge className="text-xs px-1.5 py-0 h-4 bg-amber-50 text-amber-700 border border-amber-300 font-normal">
-                          Default
-                        </Badge>
+                        <StatusBadge tone="neutral"><Star size={14} />Default</StatusBadge>
                       )}
                     </div>
                   </div>
 
                   <div className="flex items-center gap-1 flex-shrink-0">
                     {selectMode && onUse ? (
-                      <motion.button
-                        type="button"
-                        onClick={() => onUse(sig)}
-                        className="h-7 px-2.5 text-xs font-medium rounded-lg bg-primary text-primary-foreground outline-none"
-                        whileHover={{ scale: 1.04 }}
-                        whileTap={{ scale: 0.94 }}
-                        transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-                      >
+                      <Button type="button" variant="secondary" size="sm" onClick={() => onUse(sig)}>
                         Use
-                      </motion.button>
+                      </Button>
                     ) : (
                       <>
                         {!sig.is_default && (
-                          <motion.button
+                          <Button
                             type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
                             title="Set as default"
+                            aria-label={`Set ${sig.label} as default`}
                             onClick={() => handleSetDefault(sig)}
                             disabled={settingDefaultId === sig.id}
-                            className="h-7 w-7 flex items-center justify-center rounded-lg text-gray-400 hover:text-amber-500 outline-none disabled:opacity-40"
-                            whileHover={{ scale: 1.15 }}
-                            whileTap={{ scale: 0.85 }}
-                            transition={{ type: 'spring', stiffness: 600, damping: 32 }}
                           >
                             {settingDefaultId === sig.id
-                              ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                              : <StarOff className="h-3.5 w-3.5" />
+                              ? <Loader2 className="animate-spin" />
+                              : <StarOff />
                             }
-                          </motion.button>
+                          </Button>
                         )}
-                        {sig.is_default && (
-                          <span className="h-7 w-7 flex items-center justify-center text-amber-400">
-                            <Star className="h-3.5 w-3.5 fill-amber-400" />
-                          </span>
-                        )}
-                        <motion.button
+                        <Button
                           type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 hover:text-risk"
                           title="Delete"
+                          aria-label={`Delete ${sig.label}`}
                           onClick={() => setDeleteTarget(sig)}
                           disabled={deletingId === sig.id}
-                          className="h-7 w-7 flex items-center justify-center rounded-lg text-gray-400 hover:text-red-500 outline-none disabled:opacity-40"
-                          whileHover={{ scale: 1.15 }}
-                          whileTap={{ scale: 0.85 }}
-                          transition={{ type: 'spring', stiffness: 600, damping: 32 }}
                         >
                           {deletingId === sig.id
-                            ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                            : <Trash2 className="h-3.5 w-3.5" />
+                            ? <Loader2 className="animate-spin" />
+                            : <Trash2 />
                           }
-                        </motion.button>
+                        </Button>
                       </>
                     )}
                   </div>
@@ -435,19 +395,19 @@ export default function SavedSignatureManager({ onUse, selectMode = false }: Sav
       <AlertDialog open={!!deleteTarget} onOpenChange={open => { if (!open) setDeleteTarget(null); }}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Signature</AlertDialogTitle>
+            <AlertDialogTitle>Delete this signature?</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete &ldquo;{deleteTarget?.label}&rdquo;? This cannot be undone.
+              &ldquo;{deleteTarget?.label}&rdquo; will be deleted. This cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-red-600 hover:bg-red-700 text-white">
-              Delete
+            <AlertDialogAction onClick={handleDelete} className={buttonVariants({ variant: 'destructive' })}>
+              Delete signature
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </SectionCard>
   );
 }

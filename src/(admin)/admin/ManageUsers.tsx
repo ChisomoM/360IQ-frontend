@@ -14,6 +14,8 @@ import { UserEditDialog } from '@/components/users/UserEditDialog';
 import { UserPermissionsModal } from '@/components/rbac/UserPermissionsModal';
 import { UserCard } from '@/components/users/UserCard';
 import { UserManagementEmptyState } from '@/components/users/UserManagementEmptyState';
+import { PageHeader } from '@/components/shared/PageHeader';
+import { ChevronLeft, ChevronRight, Plus } from '@/components/icons';
 
 interface User {
     id: string;
@@ -89,11 +91,11 @@ export default function ManageUsers() {
     }, [page, debouncedSearch]);
 
     const handleDelete = async (user: User) => {
-        if (!confirm(`Are you sure you want to delete ${user.email}?`)) return;
-        
+        if (!confirm(`Delete ${user.email}? This cannot be undone.`)) return;
+
         try {
             await remove('USERS', { id: user.id });
-            toast.success('User deleted successfully');
+            toast.success('User deleted');
             fetchUsers();
         } catch (error: any) {
             toast.error(error?.message || 'Failed to delete user');
@@ -104,35 +106,23 @@ export default function ManageUsers() {
 
     return (
         <PageTransition>
-            <div className="space-y-6">
-                {/* Header with title and create button */}
-                <div className="flex items-center justify-between">
-                    <div>
-                        <h1 className="font-display font-bold text-display-sm text-gray-900">
-                            User Management
-                        </h1>
-                        <p className="text-gray-600 mt-1 font-sans text-text-md">
-                            Manage users, roles, and permissions
-                        </p>
-                    </div>
-                    {hasPermission(currentUser, PERMISSIONS['users.write']) && (
-                        <motion.button
-                            onClick={() => setIsCreateOpen(true)}
-                            whileHover={{ scale: 1.02 }}
-                            whileTap={{ scale: 0.97 }}
-                            transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-                            className="h-10 px-4 rounded-xl bg-primary text-primary-fg hover:bg-primary-hover font-medium text-sm flex items-center gap-2"
-                        >
-                            + Create User
-                        </motion.button>
+            <div className="flex flex-col gap-5">
+                <PageHeader
+                    title="Users"
+                    description="Manage accounts, roles and permissions."
+                    actions={hasPermission(currentUser, PERMISSIONS['users.write']) && (
+                        <Button onClick={() => setIsCreateOpen(true)}>
+                            <Plus />
+                            Create user
+                        </Button>
                     )}
-                </div>
+                />
 
                 {/* Search & Filter Toolbar */}
                 <StandardSearchBar
                     searchQuery={searchQuery}
                     onSearchChange={setSearchQuery}
-                    placeholder="Search by name, email, or department..."
+                    placeholder="Search by name, email or department"
                     onFilterClick={() => setShowFilterPanel(!showFilterPanel)}
                     showFilterPanel={showFilterPanel}
                     filterCount={Object.keys({}).length}
@@ -162,10 +152,10 @@ export default function ManageUsers() {
                                     transition: { duration: 0.35, ease: [0.16, 1, 0.3, 1] },
                                 },
                             }}
-                            className="bg-card rounded-lg border border-border p-4"
+                            className="bg-surface-1 rounded-lg border border-line shadow-card p-4"
                         >
                             <div className="flex items-center gap-3 mb-3">
-                                <Skeleton className="h-10 w-10 rounded-full" />
+                                <Skeleton className="h-10 w-10 rounded-pill" />
                                 <div className="flex-1">
                                     <Skeleton className="h-4 w-24 mb-2" />
                                     <Skeleton className="h-3 w-32" />
@@ -220,33 +210,31 @@ export default function ManageUsers() {
                         duration: 0.35,
                         ease: [0.16, 1, 0.3, 1],
                     }}
-                    className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 rounded-lg border-t border-border bg-white shadow-sm"
+                    className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 rounded-lg border border-line bg-surface-1 shadow-card"
                 >
-                    <div className="font-sans text-text-sm text-muted-foreground">
-                        Showing {(page - 1) * limit + 1} to {Math.min(page * limit, total || page * limit)} of{' '}
-                        {total || 'many'} entries
-                    </div>
+                    <p className="text-xs text-text-muted">
+                        <span className="font-mono">{(page - 1) * limit + 1} to {Math.min(page * limit, total || page * limit)}</span> of{' '}
+                        <span className="font-mono">{total || 'many'}</span>
+                    </p>
                     <div className="flex gap-2">
-                        <motion.button
+                        <Button
+                            size="sm"
+                            variant="secondary"
                             onClick={() => setPage(page - 1)}
                             disabled={page === 1}
-                            whileHover={page === 1 ? {} : { scale: 1.04 }}
-                            whileTap={page === 1 ? {} : { scale: 0.94 }}
-                            transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-                            className="h-9 px-3 text-xs font-medium rounded-lg border border-border text-slate-600 hover:text-slate-900 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-150"
                         >
+                            <ChevronLeft />
                             Previous
-                        </motion.button>
-                        <motion.button
+                        </Button>
+                        <Button
+                            size="sm"
+                            variant="secondary"
                             onClick={() => setPage(page + 1)}
                             disabled={users.length < limit && total <= page * limit}
-                            whileHover={users.length < limit && total <= page * limit ? {} : { scale: 1.04 }}
-                            whileTap={users.length < limit && total <= page * limit ? {} : { scale: 0.94 }}
-                            transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-                            className="h-9 px-3 text-xs font-medium rounded-lg border border-border text-slate-600 hover:text-slate-900 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-150"
                         >
                             Next
-                        </motion.button>
+                            <ChevronRight />
+                        </Button>
                     </div>
                 </motion.div>
             )}

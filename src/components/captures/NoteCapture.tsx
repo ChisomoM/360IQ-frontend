@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Loader2, Mic, Square } from "lucide-react";
+import { Loader2, Mic, Square } from "@/components/icons";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { newClientKey, tzOffsetMinutes } from "@/lib/capture/pending";
@@ -112,20 +112,20 @@ export function NoteCapture({ eventName, meta, onDone }: { eventName: string; me
         value={text}
         maxLength={limit}
         onChange={(e) => setText(e.target.value)}
-        placeholder="Met Chipo Banda from Zamsolar. Needs 10 solar panels by March, budget around K200,000. Send a quote on Monday."
+        placeholder="Met Chipo Banda from Zamsolar. Needs 10 solar panels by March, budget around ZMW 200,000. Send a quote on Monday."
       />
       <div className="flex items-center justify-between gap-2 text-xs text-text-muted">
-        <span>{text.length} / {limit}</span>
+        <span className="font-mono">{text.length} / {limit}</span>
         {Speech ? null : <span>Dictation is not available in this browser. Use the microphone key on your keyboard.</span>}
       </div>
       {dictationError && <ErrorBanner tone="caution">{dictationError}</ErrorBanner>}
       <div className="flex flex-wrap gap-2">
         <Button type="button" size="lg" onClick={send} disabled={!text.trim() || sender.busy}>
-          {sender.busy ? <Loader2 className="h-4 w-4 animate-spin" /> : null} Read this note
+          {sender.busy ? <Loader2 className="animate-spin" /> : null} Read this note
         </Button>
         {Speech && (
-          <Button type="button" size="lg" variant="outline" onClick={toggleDictation} aria-pressed={listening}>
-            {listening ? <Square className="h-4 w-4" /> : <Mic className="h-4 w-4" />} {listening ? "Stop dictating" : "Dictate"}
+          <Button type="button" size="lg" variant="secondary" onClick={toggleDictation} aria-pressed={listening}>
+            {listening ? <Square /> : <Mic />} {listening ? "Stop dictating" : "Dictate"}
           </Button>
         )}
       </div>

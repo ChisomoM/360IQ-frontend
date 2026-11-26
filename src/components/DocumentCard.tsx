@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,27 +9,23 @@ import {
 } from '@/components/ui/dropdown-menu';
 import {
   FileText,
-  FileArchive,
   Eye,
   Download,
   MoreVertical,
   Lock,
   Globe,
   Shield,
-  CheckCircle2,
-  Clock,
-  AlertCircle,
   Archive,
   XCircle,
   Tag,
   User,
   Calendar,
-} from 'lucide-react';
+} from '@/components/icons';
+import { StatusBadge } from '@/components/shared/StatusBadge';
+import { DocumentStatusBadge } from '@/components/documents/DocumentStatusBadge';
+import { formatDate } from '@/lib/format';
+import { cn } from '@/lib/utils';
 import { type Document, type Department } from '@/types/dms';
-import dayjs from 'dayjs';
-import relativeTime from 'dayjs/plugin/relativeTime';
-
-dayjs.extend(relativeTime);
 
 interface DocumentCardProps {
   document: Document;
@@ -50,73 +45,16 @@ const formatBytes = (bytes: number) => {
   return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`;
 };
 
-// Status badge configuration with icons and colors
-const getStatusConfig = (status: string) => {
-  const config: Record<string, { icon: React.ReactNode; label: string; color: string; bgColor: string }> = {
-    active: {
-      icon: <CheckCircle2 className="h-3.5 w-3.5" />,
-      label: 'Active',
-      color: 'text-green-700',
-      bgColor: 'bg-green-50 border-green-200',
-    },
-    approved: {
-      icon: <CheckCircle2 className="h-3.5 w-3.5" />,
-      label: 'Approved',
-      color: 'text-blue-700',
-      bgColor: 'bg-blue-50 border-blue-200',
-    },
-    pending: {
-      icon: <Clock className="h-3.5 w-3.5" />,
-      label: 'Pending',
-      color: 'text-amber-700',
-      bgColor: 'bg-amber-50 border-amber-200',
-    },
-    archived: {
-      icon: <Archive className="h-3.5 w-3.5" />,
-      label: 'Archived',
-      color: 'text-gray-700',
-      bgColor: 'bg-gray-50 border-gray-200',
-    },
-    rejected: {
-      icon: <XCircle className="h-3.5 w-3.5" />,
-      label: 'Rejected',
-      color: 'text-red-700',
-      bgColor: 'bg-red-50 border-red-200',
-    },
-    deleted: {
-      icon: <XCircle className="h-3.5 w-3.5" />,
-      label: 'Deleted',
-      color: 'text-red-700',
-      bgColor: 'bg-red-50 border-red-200',
-    },
-  };
-
-  return config[status] || config.active;
-};
-
 // Visibility icon
 const getVisibilityIcon = (level: string) => {
   switch (level) {
     case 'public':
-      return <Globe className="h-3 w-3" />;
+      return <Globe size={14} />;
     case 'restricted':
-      return <Lock className="h-3 w-3" />;
+      return <Lock size={14} />;
     default:
-      return <Shield className="h-3 w-3" />;
+      return <Shield size={14} />;
   }
-};
-
-// Mini status dot for quick visual scan
-const getStatusDot = (status: string) => {
-  const dotColors: Record<string, string> = {
-    active: 'bg-green-500',
-    approved: 'bg-blue-500',
-    pending: 'bg-amber-500',
-    archived: 'bg-gray-400',
-    rejected: 'bg-red-500',
-    deleted: 'bg-red-500',
-  };
-  return dotColors[status] || 'bg-gray-400';
 };
 
 export default function DocumentCard({
@@ -129,112 +67,87 @@ export default function DocumentCard({
   onArchive = () => {},
 }: DocumentCardProps) {
   const [isHovered, setIsHovered] = useState(false);
-  const statusConfig = getStatusConfig(document.status);
 
   return (
     <div
-      className="group relative bg-white border border-gray-200 rounded-xl overflow-hidden transition-all duration-300 hover:shadow-md hover:border-tenant-primary/20"
+      className="group relative overflow-hidden rounded-lg border border-line bg-surface-1 shadow-card transition-shadow hover:shadow-card-hover"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
       {/* Main content container */}
-      <div className="p-4 flex gap-4">
-        {/* Left: Document thumbnail/icon area */}
-        <div className="relative flex-shrink-0">
-          {/* Icon background */}
-          <div className="w-16 h-16 bg-tenant-primary/10 rounded-lg flex items-center justify-center border border-tenant-primary/10">
-            <FileText className="h-8 w-8 text-tenant-primary" />
-          </div>
-
-          {/* Status dot indicator */}
-          <div className={`absolute -top-1 -right-1 w-3 h-3 rounded-full ${getStatusDot(document.status)} border-2 border-white shadow-sm`} />
+      <div className="flex gap-4 p-4">
+        {/* Left: Document icon */}
+        <div className="grid h-14 w-14 shrink-0 place-items-center rounded-sm bg-field text-text-secondary">
+          <FileText size={28} />
         </div>
 
         {/* Center: Content area */}
-        <div className="flex-1 min-w-0">
+        <div className="min-w-0 flex-1">
           {/* Title and metadata row */}
-          <div className="flex items-start justify-between gap-3 mb-2">
-            <div className="flex-1 min-w-0">
-              <h3 className="font-semibold text-sm text-gray-900 truncate hover:text-tenant-primary transition-colors">
+          <div className="mb-2 flex items-start justify-between gap-3">
+            <div className="min-w-0 flex-1">
+              <h3 className="truncate text-sm font-semibold text-text-primary">
                 {document.title}
               </h3>
-              {/* File metadata breadcrumb */}
-              <p className="text-xs text-gray-500 mt-0.5">
-                <span className="uppercase font-mono tracking-tight">{document.file_type}</span>
-                {' • '}
-                <span>{formatBytes(document.file_size)}</span>
-                {' • '}
-                <span className="flex items-center gap-1 inline-flex">
-                  <User className="h-3 w-3" />
+              {/* File metadata line */}
+              <p className="mt-0.5 flex flex-wrap items-center gap-x-2 text-xs text-text-muted">
+                <span className="font-mono uppercase">{document.file_type}</span>
+                <span className="font-mono">{formatBytes(document.file_size)}</span>
+                <span className="inline-flex items-center gap-1">
+                  <User size={14} />
                   {ownerName}
                 </span>
               </p>
             </div>
 
             {/* Right side: Status and date */}
-            <div className="flex flex-col items-end gap-2 flex-shrink-0">
-              {/* Status badge */}
-              <Badge className={`flex items-center gap-1.5 px-2 py-1 text-xs font-medium border ${statusConfig.bgColor} ${statusConfig.color}`}>
-                {statusConfig.icon}
-                <span>{statusConfig.label}</span>
-              </Badge>
-
-              {/* Date modified */}
-              <div className="flex items-center gap-1 text-xs text-gray-500">
-                <Calendar className="h-3 w-3" />
-                <span>{dayjs(document.updated_at).format('MMM DD')}</span>
+            <div className="flex shrink-0 flex-col items-end gap-2">
+              <DocumentStatusBadge status={document.status} />
+              <div className="flex items-center gap-1 text-xs text-text-muted">
+                <Calendar size={14} />
+                <span className="font-mono">{formatDate(document.updated_at)}</span>
               </div>
             </div>
           </div>
 
           {/* Description (if exists) */}
           {document.description && (
-            <p className="text-xs text-gray-600 mb-2 line-clamp-1">
+            <p className="mb-2 line-clamp-1 text-xs text-text-secondary">
               {document.description}
             </p>
           )}
 
           {/* Tags and metadata row */}
-          <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex flex-wrap items-center gap-2">
             {/* Tags */}
             {document.tags && document.tags.length > 0 && (
-              <div className="flex gap-1 flex-wrap">
+              <div className="flex flex-wrap gap-1">
                 {document.tags.slice(0, 2).map((tag) => (
-                  <Badge
-                    key={tag}
-                    variant="secondary"
-                    className="text-xs bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors"
-                  >
-                    <Tag className="h-2.5 w-2.5 mr-1" />
+                  <StatusBadge key={tag} tone="neutral">
+                    <Tag size={14} />
                     {tag}
-                  </Badge>
+                  </StatusBadge>
                 ))}
                 {document.tags.length > 2 && (
-                  <Badge variant="secondary" className="text-xs bg-gray-100 text-gray-700">
-                    +{document.tags.length - 2}
-                  </Badge>
+                  <StatusBadge tone="neutral">+{document.tags.length - 2}</StatusBadge>
                 )}
               </div>
             )}
 
-            {/* Document type badge */}
+            {/* Document type */}
             {document.document_type && (
-              <Badge variant="outline" className="text-xs border-gray-200 text-gray-600 bg-gray-50">
-                {document.document_type}
-              </Badge>
+              <StatusBadge tone="neutral">{document.document_type}</StatusBadge>
             )}
 
-            {/* Department code badge */}
+            {/* Department code */}
             {department && (
-              <Badge variant="outline" className="text-xs border-gray-200 text-gray-600 bg-gray-50">
-                {department.code}
-              </Badge>
+              <StatusBadge tone="neutral"><span className="font-mono">{department.code}</span></StatusBadge>
             )}
 
             {/* Visibility indicator */}
-            <div className="ml-auto flex items-center gap-1 text-gray-400 hover:text-gray-600 transition-colors">
+            <div className="ml-auto flex items-center gap-1 text-text-muted">
               {getVisibilityIcon(document.visibility_level)}
-              <span className="text-xs text-gray-500 capitalize">{document.visibility_level}</span>
+              <span className="text-xs capitalize">{document.visibility_level}</span>
             </div>
           </div>
         </div>
@@ -242,28 +155,31 @@ export default function DocumentCard({
 
       {/* Hover action buttons */}
       <div
-        className={`absolute bottom-0 right-0 p-2 flex gap-1 transition-all duration-300 ${
-          isHovered ? 'opacity-100' : 'opacity-0 pointer-events-none'
-        }`}
+        className={cn(
+          'absolute bottom-0 right-0 flex gap-1 rounded-tl-md bg-surface-1 p-2 transition-opacity duration-200 focus-within:pointer-events-auto focus-within:opacity-100',
+          isHovered ? 'opacity-100' : 'pointer-events-none opacity-0',
+        )}
       >
         <Button
           variant="ghost"
-          size="sm"
-          className="h-8 w-8 p-0 hover:bg-tenant-primary hover:text-white transition-colors"
+          size="icon"
+          className="h-8 w-8"
           onClick={() => onPreview(document)}
           title="Preview"
+          aria-label="Preview"
         >
-          <Eye className="h-4 w-4" />
+          <Eye />
         </Button>
 
         <Button
           variant="ghost"
-          size="sm"
-          className="h-8 w-8 p-0 hover:bg-Blue-100 hover:text-blue-600 transition-colors"
+          size="icon"
+          className="h-8 w-8"
           onClick={() => onDownload(document)}
           title="Download"
+          aria-label="Download"
         >
-          <Download className="h-4 w-4" />
+          <Download />
         </Button>
 
         {/* More menu */}
@@ -271,31 +187,32 @@ export default function DocumentCard({
           <DropdownMenuTrigger asChild>
             <Button
               variant="ghost"
-              size="sm"
-              className="h-8 w-8 p-0 hover:bg-gray-100 transition-colors"
-              title="More options"
+              size="icon"
+              className="h-8 w-8"
+              title="More actions"
+              aria-label="More actions"
             >
-              <MoreVertical className="h-4 w-4" />
+              <MoreVertical />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-44">
             <DropdownMenuItem onClick={() => onPreview(document)} className="flex gap-2">
-              <Eye className="h-4 w-4" />
-              <span>View Details</span>
+              <Eye size={16} />
+              <span>View details</span>
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => onDownload(document)} className="flex gap-2">
-              <Download className="h-4 w-4" />
+              <Download size={16} />
               <span>Download</span>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             {document.status !== 'archived' && (
-              <DropdownMenuItem onClick={() => onArchive(document)} className="flex gap-2 text-amber-600">
-                <Archive className="h-4 w-4" />
+              <DropdownMenuItem onClick={() => onArchive(document)} className="flex gap-2">
+                <Archive size={16} />
                 <span>Archive</span>
               </DropdownMenuItem>
             )}
-            <DropdownMenuItem onClick={() => onDelete(document)} className="flex gap-2 text-red-600">
-              <XCircle className="h-4 w-4" />
+            <DropdownMenuItem onClick={() => onDelete(document)} className="flex gap-2 text-risk focus:text-risk">
+              <XCircle size={16} />
               <span>Delete</span>
             </DropdownMenuItem>
           </DropdownMenuContent>

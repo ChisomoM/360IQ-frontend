@@ -1,8 +1,5 @@
 import { motion, useReducedMotion } from 'framer-motion';
-
-// Import background image
-// import pageHeaderBg from '../assets/Page-Header-Background.png';
-// import pageHeroBg from '../assets/Page-header-bg.png';
+import { HeroArcs } from '@/components/brand/HeroArcs';
 
 interface PageHeroProps {
   title: string;
@@ -12,55 +9,39 @@ interface PageHeroProps {
   className?: string;
 }
 
-function PageHero({ 
-  title, 
-  highlightText, 
-  description, 
-//   backgroundImage, // = pageHeroBg,
+function PageHero({
+  title,
+  highlightText,
+  description,
   className = ''
 }: PageHeroProps) {
   const shouldReduceMotion = useReducedMotion();
   return (
     <section
-      className={`relative bg-[url('/AVEC-IMAGE.jpg')] bg-cover bg-top bg-no-repeat py-20 sm:py-24 md:py-28 lg:py-32 overflow-hidden ${className}`}
-    //   style={{
-    //     backgroundImage: `url('${backgroundImage ?? '/AVEC-IMAGE.jpg'}')`,
-    //     backgroundSize: 'cover',
-    //     backgroundPosition: 'center',
-    //     backgroundRepeat: 'no-repeat'
-    //   }}
+      data-theme="ink"
+      className={`relative overflow-hidden py-20 sm:py-24 lg:py-32 ${className}`}
+      style={{ background: 'var(--gradient-hero-ink)' }}
     >
-      {/* 60% overlay to allow hero image visibility */}
-      <div className="absolute inset-0 bg-brand-ink/60"></div>
+      <HeroArcs />
 
       <motion.div
-        initial={{ opacity: shouldReduceMotion ? 1 : 0, scale: shouldReduceMotion ? 1 : 0.995 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.6, ease: 'easeOut' }}
-        className="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 z-10"
+        initial={shouldReduceMotion ? false : { opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+        className="relative max-w-5xl mx-auto px-6 lg:px-8 z-10"
       >
         <div className="text-center">
-          <motion.h1
-            initial={{ opacity: shouldReduceMotion ? 1 : 0, scale: shouldReduceMotion ? 1 : 0.995 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.15, duration: 0.5, ease: 'easeOut' }}
-            className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-tight font-inter"
-          >
-            {title}{highlightText && <span className="text-brand-signal"> {highlightText}</span>}
-          </motion.h1>
+          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-semibold tracking-[-0.025em] text-text-primary leading-tight">
+            {title}{highlightText && <> <span className="iq-grad-text">{highlightText}</span></>}
+          </h1>
           {description && (
-            <motion.p
-              initial={{ opacity: shouldReduceMotion ? 1 : 0, scale: shouldReduceMotion ? 1 : 0.995 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.25, duration: 0.5, ease: 'easeOut' }}
-              className="text-sm sm:text-base md:text-lg text-blue-100 max-w-4xl mx-auto leading-relaxed mt-4"
-            >
+            <p className="text-base md:text-lg text-text-secondary max-w-3xl mx-auto leading-relaxed mt-4">
               {description}
-            </motion.p>
+            </p>
           )}
         </div>
       </motion.div>
-  </section>
+    </section>
   );
 }
 

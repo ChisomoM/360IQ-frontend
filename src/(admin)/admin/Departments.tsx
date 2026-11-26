@@ -5,7 +5,13 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Button } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
+import { PageHeader } from '@/components/shared/PageHeader';
+import { KpiTile } from '@/components/shared/KpiTile';
+import { SectionCard } from '@/components/shared/SectionCard';
+import { StatusBadge } from '@/components/shared/StatusBadge';
+import { EmptyState } from '@/components/shared/EmptyState';
+import { DataTablePagination } from '@/components/shared/DataTablePagination';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -38,8 +44,8 @@ import {
 } from '@/components/ui/dropdown-menu';
 import {
   Plus, Search, Loader2, Building2, X,
-  MoreVertical, Users, Pencil, Trash2, Eye,
-} from 'lucide-react';
+  MoreVertical, Users, Pencil, Trash2, Eye, ArrowRight,
+} from '@/components/icons';
 import { toast } from 'sonner';
 import { fetchData } from '@/lib/api/crud';
 import { hasPermission, PERMISSIONS } from '@/lib/permissions';
@@ -90,10 +96,10 @@ function mapApiError(err: unknown): string {
   if (msg.toLowerCase().includes('duplicate') || msg.toLowerCase().includes('already exists'))
     return 'A department with that code already exists.';
   if (msg.toLowerCase().includes('not found'))
-    return 'Department not found — it may have already been removed.';
+    return 'Department not found. It may have already been removed.';
   if (msg.toLowerCase().includes('unauthorized') || msg.toLowerCase().includes('forbidden'))
-    return 'You do not have permission to perform this action.';
-  return msg || 'Something went wrong. Please try again.';
+    return 'You do not have permission to do this.';
+  return msg || 'Something went wrong. Try again.';
 }
 
 // Validates form fields before any network call
@@ -103,7 +109,7 @@ function validateForm(data: DeptFormData): FormErrors {
   if (!data.code.trim()) {
     errors.code = 'Department code is required.';
   } else if (!/^[A-Z]{2,8}$/.test(data.code.trim())) {
-    errors.code = 'Code must be 2–8 uppercase letters (e.g. CS, FIN, REGIS).';
+    errors.code = 'Use 2 to 8 uppercase letters, like FIN or REGIS.';
   }
   if (data.description && data.description.length > 200)
     errors.description = 'Description must be 200 characters or fewer.';
@@ -135,38 +141,24 @@ interface DeptCardProps {
 }
 
 function DeptCard({ dept, canManage, onView, onEdit, onDelete, onAssignUsers }: DeptCardProps) {
-  // Pick one of four accent colours based on the first letter of the dept code.
-  // Using charCodeAt keeps it consistent — same code always gets same colour.
-  const colors = [
-    { ring: 'from-ch-primary-600 to-ch-primary-600', bg: 'bg-ch-primary-50', badgeBg: 'bg-ch-primary/[0.12]', badgeText: 'text-ch-primary-700' },
-    { ring: 'from-ch-secondary-600 to-ch-secondary-600', bg: 'bg-ch-secondary-50', badgeBg: 'bg-ch-secondary/[0.12]', badgeText: 'text-ch-secondary-700' },
-    { ring: 'from-ch-tertiary-500 to-ch-tertiary-500', bg: 'bg-surface-2', badgeBg: 'bg-surface-2', badgeText: 'text-text-secondary' },
-    { ring: 'from-caution to-caution', bg: 'bg-caution-tint', badgeBg: 'bg-caution-tint', badgeText: 'text-caution' },
-  ];
-  const color = colors[dept.code.charCodeAt(0) % colors.length];
-
   return (
     <motion.div
       variants={cardVariants}
       initial="hidden"
       animate="visible"
       // Cards lift on hover (y translation) per design system — never scale a content surface
-      whileHover={{ y: -3 }}
-      whileTap={{ scale: 0.99 }}
+      whileHover={{ y: -2 }}
       transition={{ type: 'spring', stiffness: 400, damping: 28 }}
-      className="group relative bg-card rounded-xl border border-gray-200 p-5 hover:border-primary/30 hover:shadow-md transition-shadow duration-200 cursor-pointer"
+      className="group relative flex min-w-0 flex-col bg-surface-1 rounded-lg border border-line shadow-card hover:shadow-card-hover p-5 transition-shadow duration-200 cursor-pointer"
       onClick={onView}
     >
       {/* Top row: avatar + dropdown */}
       <div className="flex items-start justify-between mb-4">
-        {/* Gradient ring around the code initials avatar */}
-        <div className={`p-0.5 rounded-full bg-gradient-to-br ${color.ring}`}>
-          <Avatar className={`h-11 w-11 ${color.bg}`}>
-            <AvatarFallback className={`font-bold text-sm font-mono ${color.badgeText} bg-transparent`}>
-              {dept.code.slice(0, 2)}
-            </AvatarFallback>
-          </Avatar>
-        </div>
+        <Avatar className="h-11 w-11">
+          <AvatarFallback className="bg-field font-mono text-sm font-medium text-text-secondary">
+            {dept.code.slice(0, 2)}
+          </AvatarFallback>
+        </Avatar>
 
         {/* Actions dropdown — only visible on hover, only for manage-permission users */}
         {canManage && (
@@ -175,10 +167,11 @@ function DeptCard({ dept, canManage, onView, onEdit, onDelete, onAssignUsers }: 
             <DropdownMenuTrigger asChild onClick={e => e.stopPropagation()}>
               <Button
                 variant="ghost"
-                size="sm"
-                className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-foreground hover:bg-muted"
+                size="icon"
+                aria-label={`Actions for ${dept.name}`}
+                className="h-8 w-8 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 data-[state=open]:opacity-100"
               >
-                <MoreVertical className="h-4 w-4" />
+                <MoreVertical />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-44">
@@ -186,30 +179,30 @@ function DeptCard({ dept, canManage, onView, onEdit, onDelete, onAssignUsers }: 
                 onClick={e => { e.stopPropagation(); onView(); }}
                 className="cursor-pointer gap-2 text-xs"
               >
-                <Eye className="h-3.5 w-3.5 text-primary" />
-                View Details
+                <Eye size={14} className="text-text-muted" />
+                View details
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 onClick={e => { e.stopPropagation(); onAssignUsers(); }}
                 className="cursor-pointer gap-2 text-xs"
               >
-                <Users className="h-3.5 w-3.5 text-blue-500" />
-                Assign Users
+                <Users size={14} className="text-text-muted" />
+                Assign users
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={e => { e.stopPropagation(); onEdit(); }}
                 className="cursor-pointer gap-2 text-xs"
               >
-                <Pencil className="h-3.5 w-3.5 text-amber-500" />
-                Edit
+                <Pencil size={14} className="text-text-muted" />
+                Edit department
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={e => { e.stopPropagation(); onDelete(); }}
-                className="cursor-pointer gap-2 text-xs text-destructive focus:bg-destructive/10 focus:text-destructive"
+                className="cursor-pointer gap-2 text-xs text-risk focus:bg-risk-tint focus:text-risk"
               >
-                <Trash2 className="h-3.5 w-3.5" />
-                Delete
+                <Trash2 size={14} />
+                Delete department
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -217,36 +210,31 @@ function DeptCard({ dept, canManage, onView, onEdit, onDelete, onAssignUsers }: 
       </div>
 
       {/* Department name & code */}
-      <h3 className="font-display font-semibold text-sm text-foreground group-hover:text-primary transition-colors truncate mb-1">
+      <h3 className="font-semibold text-sm text-text-primary truncate mb-1">
         {dept.name}
       </h3>
-      <code className={`inline-block text-xs px-2 py-0.5 rounded font-mono font-bold ${color.badgeBg} ${color.badgeText} mb-3`}>
+      <code className="self-start text-xs px-2 py-0.5 rounded-pill font-mono bg-field text-text-secondary mb-3">
         {dept.code}
       </code>
 
-      {/* Description — capped at 2 lines */}
+      {/* Description, capped at 2 lines */}
       {dept.description && (
-        <p className="font-sans text-xs text-muted-foreground line-clamp-2 mb-3">
+        <p className="text-xs text-text-secondary line-clamp-2 mb-3">
           {dept.description}
         </p>
       )}
 
-      {/* Status dot + "View →" ghost link */}
-      <div className="flex items-center justify-between mt-auto pt-3 border-t border-gray-200">
-        <div className="flex items-center gap-1.5">
-          <div className={`w-1.5 h-1.5 rounded-full ${dept.is_active ? 'bg-positive' : 'bg-muted-foreground'}`} />
-          <span className={`text-xs font-medium font-sans ${dept.is_active ? 'text-positive' : 'text-muted-foreground'}`}>
-            {dept.is_active ? 'Active' : 'Inactive'}
-          </span>
-        </div>
-        {/* "View →" only appears on hover */}
+      {/* Status + view link */}
+      <div className="flex items-center justify-between mt-auto pt-3 border-t border-line">
+        <StatusBadge status={dept.is_active ? 'active' : 'inactive'} />
         <Button
           variant="ghost"
           size="sm"
           onClick={e => { e.stopPropagation(); onView(); }}
-          className="h-6 px-2 text-xs text-muted-foreground hover:text-primary opacity-0 group-hover:opacity-100 transition-opacity"
+          className="opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
         >
-          View →
+          View
+          <ArrowRight />
         </Button>
       </div>
     </motion.div>
@@ -257,15 +245,15 @@ function DeptCard({ dept, canManage, onView, onEdit, onDelete, onAssignUsers }: 
 // Shown while data is loading — mirrors the real card's layout
 function DeptCardSkeleton() {
   return (
-    <motion.div variants={cardVariants} initial="hidden" animate="visible" className="bg-card rounded-xl border border-gray-200 p-5">
+    <motion.div variants={cardVariants} initial="hidden" animate="visible" className="bg-surface-1 rounded-lg border border-line shadow-card p-5">
       <div className="flex items-start justify-between mb-4">
-        <Skeleton className="h-12 w-12 rounded-full" />
+        <Skeleton className="h-11 w-11 rounded-pill" />
       </div>
       <Skeleton className="h-4 w-3/4 mb-2" />
       <Skeleton className="h-5 w-14 mb-3" />
       <Skeleton className="h-3 w-full mb-1" />
       <Skeleton className="h-3 w-2/3 mb-4" />
-      <div className="pt-3 border-t border-gray-200">
+      <div className="pt-3 border-t border-line">
         <Skeleton className="h-3 w-12" />
       </div>
     </motion.div>
@@ -284,57 +272,57 @@ function DeptFormFields({
   onChange: (field: keyof DeptFormData, value: string) => void;
 }) {
   return (
-    <div className="grid gap-5 py-4">
+    <div className="grid gap-4">
       {/* Name */}
-      <div className="space-y-2">
-        <Label className="text-sm font-semibold text-foreground">
-          Department Name <span className="text-destructive">*</span>
-        </Label>
+      <div className="space-y-1.5">
+        <Label>Department name</Label>
         <Input
+          aria-label="Department name"
+          aria-invalid={!!errors.name}
           value={data.name}
           onChange={e => onChange('name', e.target.value)}
-          placeholder="e.g., Registry, Finance, HR"
-          className={errors.name ? 'border-destructive focus-visible:ring-destructive/50' : ''}
+          placeholder="Finance"
         />
-        {errors.name && <p className="text-xs text-destructive font-medium">{errors.name}</p>}
+        {errors.name && <p className="text-xs text-risk">{errors.name}</p>}
       </div>
 
       {/* Code */}
-      <div className="space-y-2">
-        <Label className="text-sm font-semibold text-foreground">
-          Department Code <span className="text-destructive">*</span>
-        </Label>
+      <div className="space-y-1.5">
+        <Label>Department code</Label>
         <Input
+          aria-label="Department code"
+          aria-invalid={!!errors.code}
           value={data.code}
           onChange={e => onChange('code', e.target.value.toUpperCase())}
-          placeholder="e.g., REG, FIN, HR"
+          placeholder="FIN"
           maxLength={8}
           // font-mono + tracking-widest makes the code look like a proper identifier
-          className={`font-mono tracking-widest uppercase ${errors.code ? 'border-destructive focus-visible:ring-destructive/50' : ''}`}
+          className="font-mono tracking-widest uppercase"
         />
         {errors.code
-          ? <p className="text-xs text-destructive font-medium">{errors.code}</p>
-          : <p className="text-xs text-muted-foreground">2–8 uppercase letters</p>
+          ? <p className="text-xs text-risk">{errors.code}</p>
+          : <p className="text-xs text-text-muted">2 to 8 uppercase letters.</p>
         }
       </div>
 
       {/* Description */}
-      <div className="space-y-2">
-        <Label className="text-sm font-semibold text-foreground">
+      <div className="space-y-1.5">
+        <Label>
           Description{' '}
-          <span className="text-muted-foreground font-normal text-xs">(optional)</span>
+          <span className="text-text-muted font-normal text-xs">(optional)</span>
         </Label>
         <Input
+          aria-label="Description"
+          aria-invalid={!!errors.description}
           value={data.description}
           onChange={e => onChange('description', e.target.value)}
-          placeholder="Brief description of the department..."
+          placeholder="Budgets, fees and supplier payments"
           maxLength={200}
-          className={errors.description ? 'border-destructive focus-visible:ring-destructive/50' : ''}
         />
         {errors.description && (
-          <p className="text-xs text-destructive font-medium">{errors.description}</p>
+          <p className="text-xs text-risk">{errors.description}</p>
         )}
-        <p className="text-xs text-muted-foreground text-right">{data.description.length}/200</p>
+        <p className="font-mono text-xs text-text-muted text-right">{data.description.length}/200</p>
       </div>
     </div>
   );
@@ -574,38 +562,28 @@ export default function Departments() {
     <PageTransition>
       <div className="space-y-6">
 
-        {/* Page Header */}
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <h1 className="font-display font-bold text-display-sm text-gray-900">
-              Departments
-            </h1>
-            <p className="font-sans text-text-sm text-muted-foreground mt-1">
-              {loading
-                ? 'Loading departments...'
-                : `${totalCount} organizational ${totalCount === 1 ? 'unit' : 'units'} · ${activeCount} active`}
-            </p>
-          </div>
-
-          {/* Add Department — only shown to users with manage permission */}
-          {canManage && (
+        {/* Page header: "Add department" only for users with manage permission */}
+        <PageHeader
+          title="Departments"
+          description={loading
+            ? 'Loading departments'
+            : `${totalCount} ${totalCount === 1 ? 'department' : 'departments'}, ${activeCount} active`}
+          actions={canManage && (
             <Dialog open={isAddDialogOpen} onOpenChange={(open) => {
               setIsAddDialogOpen(open);
               if (!open) { setFormData(EMPTY_FORM); setFormErrors({}); }
             }}>
               <DialogTrigger asChild>
-                <Button className="bg-primary text-primary-foreground hover:bg-primary/90 font-semibold shadow-sm">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Department
+                <Button>
+                  <Plus />
+                  Add department
                 </Button>
               </DialogTrigger>
-              <DialogContent className="max-w-md bg-white">
+              <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
-                  <DialogTitle className="font-display font-bold text-lg text-foreground">
-                    Create Department
-                  </DialogTitle>
-                  <DialogDescription className="font-sans text-text-sm text-muted-foreground">
-                    Add a new organizational unit to the system.
+                  <DialogTitle>Create department</DialogTitle>
+                  <DialogDescription>
+                    Add a department to your organisation.
                   </DialogDescription>
                 </DialogHeader>
                 <DeptFormFields
@@ -616,69 +594,50 @@ export default function Departments() {
                     if (formErrors[field]) setFormErrors(prev => ({ ...prev, [field]: undefined }));
                   }}
                 />
-                <DialogFooter className="gap-2">
-                  <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
+                <DialogFooter className="gap-3">
+                  <Button variant="secondary" onClick={() => setIsAddDialogOpen(false)}>
                     Cancel
                   </Button>
                   <Button
                     onClick={handleCreateDepartment}
-                    className="bg-primary text-primary-foreground hover:bg-primary/90 font-semibold"
                     disabled={isSubmitting}
                   >
-                    {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    Create
+                    {isSubmitting && <Loader2 className="animate-spin" />}
+                    Create department
                   </Button>
                 </DialogFooter>
               </DialogContent>
             </Dialog>
           )}
-        </div>
+        />
 
-        {/* Stat Cards */}
-        <motion.div
-          variants={listVariants}
-          initial="hidden"
-          animate="visible"
-          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"
-        >
-          {[
-            { label: 'Total Departments', value: loading ? '—' : totalCount, color: 'text-ch-primary-600', bg: 'bg-ch-primary/[0.08]' },
-            { label: 'Active', value: loading ? '—' : activeCount, color: 'text-positive', bg: 'bg-positive-tint' },
-            { label: 'Inactive', value: loading ? '—' : totalCount - activeCount, color: 'text-muted-foreground', bg: 'bg-muted' },
-            { label: 'This Page', value: loading ? '—' : filteredDepartments.length, color: 'text-ch-secondary-600', bg: 'bg-ch-secondary/[0.08]' },
-          ].map(({ label, value, color, bg }) => (
-            <motion.div
-              key={label}
-              variants={cardVariants}
-              className="bg-card rounded-xl border border-gray-200 p-4 flex items-center gap-3"
-            >
-              <div className={`p-2.5 rounded-lg ${bg}`}>
-                <Building2 className={`h-5 w-5 ${color}`} />
-              </div>
-              <div>
-                <p className="font-sans text-text-xs text-muted-foreground">{label}</p>
-                <p className={`font-display font-bold text-xl ${color}`}>{value}</p>
-              </div>
-            </motion.div>
-          ))}
-        </motion.div>
+        {/* KPI row */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+          <KpiTile label="Departments" value={loading ? 'N/A' : totalCount} icon={<Building2 size={18} />} />
+          <KpiTile label="Active" value={loading ? 'N/A' : activeCount} />
+          <KpiTile label="Inactive" value={loading ? 'N/A' : totalCount - activeCount} />
+          <KpiTile label="Shown on this page" value={loading ? 'N/A' : filteredDepartments.length} />
+        </div>
 
         {/* Search Bar */}
         <div className="relative max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
           <Input
-            placeholder="Search by name or code..."
+            aria-label="Search departments by name or code"
+            placeholder="Search by name or code"
             className="pl-10 pr-10"
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
           />
-          {/* Clear button — only rendered when there's text in the search box */}
+          {/* Clear button, only rendered when there's text in the search box */}
           {searchQuery && (
             <button
+              type="button"
+              aria-label="Clear search"
               onClick={() => setSearchQuery('')}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+              className="absolute right-3 top-1/2 -translate-y-1/2 rounded-xs text-text-muted hover:text-text-primary transition-colors"
             >
-              <X className="h-4 w-4" />
+              <X size={16} />
             </button>
           )}
         </div>
@@ -698,36 +657,21 @@ export default function Departments() {
           </motion.div>
 
         ) : filteredDepartments.length === 0 ? (
-          // Empty state — message differs based on whether search is active
-          <div className="flex flex-col items-center justify-center py-20 px-6 text-center rounded-xl border-2 border-dashed border-gray-200 bg-muted/30">
-            <div className="rounded-full bg-muted p-6 mb-4">
-              <Building2 className="h-10 w-10 text-muted-foreground" />
-            </div>
-            <h3 className="font-display font-bold text-lg text-foreground mb-2">
-              {searchQuery ? 'No departments found' : 'No departments yet'}
-            </h3>
-            <p className="font-sans text-text-sm text-muted-foreground mb-6 max-w-sm">
-              {searchQuery
-                ? `No departments match "${searchQuery}". Try adjusting your search.`
-                : 'Create your first department to start organizing your institution.'}
-            </p>
-            <div className="flex gap-3">
-              {!searchQuery && canManage && (
-                <Button
-                  onClick={() => setIsAddDialogOpen(true)}
-                  className="bg-primary text-primary-foreground hover:bg-primary/90 font-semibold"
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Create First Department
-                </Button>
-              )}
-              {searchQuery && (
-                <Button variant="outline" onClick={() => setSearchQuery('')}>
-                  Clear Search
-                </Button>
-              )}
-            </div>
-          </div>
+          // Empty state: message differs based on whether search is active
+          <SectionCard padded={false}>
+            <EmptyState
+              icon={<Building2 size={24} />}
+              title={searchQuery ? 'No departments found' : 'No departments yet'}
+              description={searchQuery
+                ? `No departments match "${searchQuery}". Change your search.`
+                : 'Departments group your people and documents. Create the first one.'}
+              action={searchQuery
+                ? { label: 'Clear search', onAction: () => setSearchQuery('') }
+                : canManage
+                  ? { label: 'Create department', onAction: () => setIsAddDialogOpen(true) }
+                  : undefined}
+            />
+          </SectionCard>
 
         ) : (
           // Actual department cards, staggered in
@@ -755,37 +699,14 @@ export default function Departments() {
           </motion.div>
         )}
 
-        {/* Pagination — only shown when there's more than one page */}
+        {/* Pagination, only shown when there's more than one page */}
         {!loading && totalPages > 1 && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-            className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pt-4 border-t border-gray-200"
-          >
-            <p className="font-sans text-text-sm text-muted-foreground">
-              Page <span className="font-semibold text-foreground">{currentPage}</span> of{' '}
-              <span className="font-semibold text-foreground">{totalPages}</span> · {totalCount} total
-            </p>
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={currentPage === 1}
-                onClick={() => setCurrentPage(p => p - 1)}
-              >
-                Previous
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={currentPage === totalPages}
-                onClick={() => setCurrentPage(p => p + 1)}
-              >
-                Next
-              </Button>
-            </div>
-          </motion.div>
+          <DataTablePagination
+            page={currentPage}
+            pageSize={PAGE_SIZE}
+            total={totalCount}
+            onPageChange={setCurrentPage}
+          />
         )}
 
         {/* Edit Dialog */}
@@ -793,13 +714,11 @@ export default function Departments() {
           setIsEditDialogOpen(open);
           if (!open) { setEditTarget(null); setEditFormErrors({}); }
         }}>
-          <DialogContent className="max-w-md bg-white">
+          <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle className="font-display font-bold text-lg text-foreground">
-                Edit Department
-              </DialogTitle>
-              <DialogDescription className="font-sans text-text-sm text-muted-foreground">
-                Update <span className="font-semibold text-foreground">{editTarget?.name}</span>.
+              <DialogTitle>Edit department</DialogTitle>
+              <DialogDescription>
+                Update <span className="font-semibold text-text-primary">{editTarget?.name}</span>.
               </DialogDescription>
             </DialogHeader>
             <DeptFormFields
@@ -820,15 +739,14 @@ export default function Departments() {
                 }
               />
             </div>
-            <DialogFooter className="gap-2">
-              <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>Cancel</Button>
+            <DialogFooter className="gap-3">
+              <Button variant="secondary" onClick={() => setIsEditDialogOpen(false)}>Cancel</Button>
               <Button
                 onClick={handleUpdateDepartment}
-                className="bg-primary text-primary-foreground hover:bg-primary/90 font-semibold"
                 disabled={isEditSubmitting}
               >
-                {isEditSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Save Changes
+                {isEditSubmitting && <Loader2 className="animate-spin" />}
+                Save changes
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -836,26 +754,24 @@ export default function Departments() {
 
         {/* Delete Confirmation Dialog */}
         <AlertDialog open={!!deleteTarget} onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}>
-          <AlertDialogContent className="bg-white">
+          <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle className="font-display font-bold text-foreground">
-                Delete Department?
-              </AlertDialogTitle>
-              <AlertDialogDescription className="font-sans text-text-sm text-muted-foreground">
+              <AlertDialogTitle>Delete this department?</AlertDialogTitle>
+              <AlertDialogDescription>
                 This will deactivate{' '}
-                <span className="font-semibold text-foreground">{deleteTarget?.name}</span>{' '}
-                ({deleteTarget?.code}). Existing documents will not be affected.
+                <span className="font-semibold text-text-primary">{deleteTarget?.name}</span>{' '}
+                (<span className="font-mono">{deleteTarget?.code}</span>). Existing documents will not be affected.
               </AlertDialogDescription>
             </AlertDialogHeader>
-            <AlertDialogFooter className="gap-2">
+            <AlertDialogFooter className="gap-3">
               <AlertDialogCancel disabled={isDeleteSubmitting}>Cancel</AlertDialogCancel>
               <AlertDialogAction
                 onClick={handleDeleteDepartment}
                 disabled={isDeleteSubmitting}
-                className="bg-destructive hover:bg-destructive/90 text-destructive-foreground font-semibold"
+                className={buttonVariants({ variant: 'destructive' })}
               >
-                {isDeleteSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Delete
+                {isDeleteSubmitting && <Loader2 className="animate-spin" />}
+                Delete department
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
@@ -866,14 +782,12 @@ export default function Departments() {
           setIsAssignUsersOpen(open);
           if (!open) setAssignUsersTarget(null);
         }}>
-          <DialogContent className="max-w-md bg-white">
+          <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle className="font-display font-bold text-lg text-foreground">
-                Assign Users
-              </DialogTitle>
-              <DialogDescription className="font-sans text-text-sm text-muted-foreground">
+              <DialogTitle>Assign users</DialogTitle>
+              <DialogDescription>
                 Set the department head for{' '}
-                <span className="font-semibold text-foreground">{assignUsersTarget?.name}</span>.
+                <span className="font-semibold text-text-primary">{assignUsersTarget?.name}</span>.
               </DialogDescription>
             </DialogHeader>
             {assignUsersTarget && (
@@ -884,7 +798,7 @@ export default function Departments() {
               />
             )}
             <DialogFooter>
-              <Button variant="outline" onClick={() => setIsAssignUsersOpen(false)}>Close</Button>
+              <Button variant="secondary" onClick={() => setIsAssignUsersOpen(false)}>Close</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>

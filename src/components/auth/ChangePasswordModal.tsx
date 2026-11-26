@@ -10,14 +10,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Eye, EyeOff, Loader2 } from 'lucide-react';
+import { Loader2 } from '@/components/icons';
 import { toast } from 'sonner';
+import { AUTH_FIELD, PasswordInput } from './PasswordInput';
 
 export function ChangePasswordModal() {
   const auth = useAuth();
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -39,8 +39,7 @@ export function ChangePasswordModal() {
       setNewPassword('');
       setConfirmPassword('');
     } catch (_error) {
-              toast.error(`Error: ${_error}`);
-
+      toast.error(`Couldn't change your password. ${_error}`);
     } finally {
       setIsSubmitting(false);
     }
@@ -49,55 +48,46 @@ export function ChangePasswordModal() {
   if (!auth.forceChangePassword) return null;
 
   return (
-    <Dialog open={auth.forceChangePassword}  onOpenChange={() => {}}>
-      <DialogContent className="sm:max-w-md bg-white [&>button]:hidden">
+    <Dialog open={auth.forceChangePassword} onOpenChange={() => {}}>
+      <DialogContent className="sm:max-w-md [&>button]:hidden">
         <DialogHeader>
-          <DialogTitle>Change Your Password</DialogTitle>
+          <DialogTitle>Change your password</DialogTitle>
           <DialogDescription>
-            For security, you must change your temporary password before accessing the system.
+            Replace your temporary password before you continue.
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <Label htmlFor="newPassword">New Password</Label>
-            <div className="relative">
-              <Input
-                id="newPassword"
-                type={showPassword ? 'text' : 'password'}
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                placeholder="Enter new password"
-                required
-                minLength={6}
-              />
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                onClick={() => setShowPassword(!showPassword)}
-              >
-                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-              </Button>
-            </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="newPassword" className="text-[13px] font-medium text-text-secondary">New password</Label>
+            <PasswordInput
+              id="newPassword"
+              autoComplete="new-password"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              placeholder="At least 6 characters"
+              required
+              minLength={6}
+            />
           </div>
 
-          <div>
-            <Label htmlFor="confirmPassword">Confirm New Password</Label>
+          <div className="space-y-1.5">
+            <Label htmlFor="confirmPassword" className="text-[13px] font-medium text-text-secondary">Confirm new password</Label>
             <Input
               id="confirmPassword"
               type="password"
+              autoComplete="new-password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              placeholder="Confirm new password"
+              placeholder="Type it again"
+              className={AUTH_FIELD}
               required
             />
           </div>
 
-          <Button type="submit" className="w-full" disabled={isSubmitting}>
-            {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Change Password
+          <Button type="submit" size="lg" className="w-full" disabled={isSubmitting}>
+            {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
+            Change password
           </Button>
         </form>
       </DialogContent>

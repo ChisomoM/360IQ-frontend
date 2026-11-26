@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -9,7 +8,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
@@ -28,7 +26,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Loader2, Plus, Search } from "lucide-react";
+import { SectionCard } from "@/components/shared/SectionCard";
+import { StatusBadge } from "@/components/shared/StatusBadge";
+import { EmptyState } from "@/components/shared/EmptyState";
+import { TableSkeleton } from "@/components/shared/TableSkeleton";
+import { Loader2, Plus, Search, Users } from "@/components/icons";
 import { toast } from "sonner";
 import { chPost } from "@/lib/api/controlhub";
 
@@ -39,16 +41,9 @@ interface TenantAdminsViewProps {
   onUpdate: (admins: any[]) => void;
 }
 
-const getRoleBadgeColor = (roleSlug: string) => {
-  switch (roleSlug) {
-    case "super_admin": return "bg-red-100 text-red-800 border-red-200";
-    case "admin": return "bg-blue-100 text-blue-800 border-blue-200";
-    case "manager": return "bg-signal-tint text-signal-text border-line";
-    case "records_authority": return "bg-surface-2 text-sky-text border-line";
-    case "finance_officer": return "bg-caution-tint text-caution border-line";
-    case "hr_officer": return "bg-surface-2 text-text-secondary border-line";
-    default: return "bg-gray-100 text-gray-800 border-gray-200";
-  }
+const formatRole = (role: string) => {
+  const words = role.replace(/_/g, " ").toLowerCase();
+  return words.charAt(0).toUpperCase() + words.slice(1);
 };
 
 const TenantAdminsView: React.FC<TenantAdminsViewProps> = ({ tenantId, admins, loading = false, onUpdate }) => {
@@ -65,7 +60,7 @@ const TenantAdminsView: React.FC<TenantAdminsViewProps> = ({ tenantId, admins, l
 
   const handleAddAdmin = async () => {
     if (!formData.firstName || !formData.lastName || !formData.email || !formData.password) {
-      toast.error("Please fill in all required fields");
+      toast.error("Enter a first name, last name, email and password.");
       return;
     }
 
@@ -85,7 +80,7 @@ const TenantAdminsView: React.FC<TenantAdminsViewProps> = ({ tenantId, admins, l
       onUpdate([...admins, created]);
       setIsAddDialogOpen(false);
       setFormData({ firstName: "", lastName: "", email: "", password: "", role: "super_admin" });
-      toast.success("Administrator created successfully");
+      toast.success("Administrator created");
     } catch (err: any) {
       toast.error(err?.message || "Failed to create administrator");
     } finally {
@@ -102,170 +97,147 @@ const TenantAdminsView: React.FC<TenantAdminsViewProps> = ({ tenantId, admins, l
     );
   });
 
-  return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h3 className="text-xl font-bold text-gray-900">Administrators</h3>
-          <p className="text-gray-600 mt-1">Manage users with administrative access to this tenant.</p>
-        </div>
-        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              Add Administrator
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-2xl bg-white max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Add New Administrator</DialogTitle>
-              <DialogDescription>
-                Create a new administrator account for this tenant.
-              </DialogDescription>
-            </DialogHeader>
+  const addDialog = (
+    <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+      <DialogTrigger asChild>
+        <Button size="sm">
+          <Plus />
+          Add administrator
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Add administrator</DialogTitle>
+          <DialogDescription>
+            Create an administrator account for this tenant.
+          </DialogDescription>
+        </DialogHeader>
 
-            <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>First Name</Label>
-                  <Input
-                    value={formData.firstName}
-                    onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                    placeholder="John"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Last Name</Label>
-                  <Input
-                    value={formData.lastName}
-                    onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-                    placeholder="Doe"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Email Address</Label>
-                <Input
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  placeholder="john.doe@example.com"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label>Password</Label>
-                <Input
-                  type="password"
-                  value={formData.password}
-                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  placeholder="••••••••"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label>Role</Label>
-                <Select
-                  value={formData.role}
-                  onValueChange={(val) => setFormData({ ...formData, role: val })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a role" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="super_admin">Super Administrator</SelectItem>
-                    <SelectItem value="admin">Administrator</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+        <div className="grid gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="admin-first-name">First name</Label>
+              <Input
+                id="admin-first-name"
+                value={formData.firstName}
+                onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                placeholder="Mutinta"
+              />
             </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="admin-last-name">Last name</Label>
+              <Input
+                id="admin-last-name"
+                value={formData.lastName}
+                onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                placeholder="Banda"
+              />
+            </div>
+          </div>
 
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
-                Cancel
-              </Button>
-              <Button onClick={handleAddAdmin} disabled={isSubmitting}>
-                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Create Account
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      </div>
-
-      {/* Search */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Search className="h-5 w-5" />
-            Search Administrators
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <div className="space-y-1.5">
+            <Label htmlFor="admin-email">Email address</Label>
             <Input
-              placeholder="Search by name or email..."
-              className="pl-10"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              id="admin-email"
+              type="email"
+              value={formData.email}
+              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              placeholder="name@company.co.zm"
             />
           </div>
-        </CardContent>
-      </Card>
 
-      {/* Table */}
-      <Card>
-        <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Role</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Status</TableHead>
+          <div className="space-y-1.5">
+            <Label htmlFor="admin-password">Password</Label>
+            <Input
+              id="admin-password"
+              type="password"
+              value={formData.password}
+              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="admin-role">Role</Label>
+            <Select
+              value={formData.role}
+              onValueChange={(val) => setFormData({ ...formData, role: val })}
+            >
+              <SelectTrigger id="admin-role">
+                <SelectValue placeholder="Choose a role" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="super_admin">Super administrator</SelectItem>
+                <SelectItem value="admin">Administrator</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        <DialogFooter className="gap-3">
+          <Button variant="secondary" onClick={() => setIsAddDialogOpen(false)}>
+            Cancel
+          </Button>
+          <Button onClick={handleAddAdmin} disabled={isSubmitting}>
+            {isSubmitting && <Loader2 className="animate-spin" />}
+            Create account
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+
+  return (
+    <SectionCard title="Administrators" actions={addDialog} padded={false}>
+      <div className="px-4 pb-4 border-b border-line">
+        <div className="relative max-w-sm">
+          <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
+          <Input
+            aria-label="Search administrators"
+            placeholder="Search by name or email"
+            className="pl-9"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </div>
+      </div>
+
+      {loading ? (
+        <TableSkeleton rows={4} columns={4} />
+      ) : filteredAdmins.length === 0 ? (
+        <EmptyState
+          icon={<Users size={24} />}
+          title="No administrators found"
+          description="Administrators manage this tenant. Add one or change your search."
+        />
+      ) : (
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead scope="col">Name</TableHead>
+              <TableHead scope="col">Role</TableHead>
+              <TableHead scope="col">Email</TableHead>
+              <TableHead scope="col">Status</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {filteredAdmins.map((admin) => (
+              <TableRow key={admin.id}>
+                <TableCell className="font-semibold">
+                  {admin.first_name} {admin.last_name}
+                </TableCell>
+                <TableCell>
+                  <StatusBadge tone="neutral" label={formatRole(admin.role?.name || admin.role_slug || "N/A")} />
+                </TableCell>
+                <TableCell className="text-text-secondary">{admin.email}</TableCell>
+                <TableCell>
+                  <StatusBadge status={admin.is_active ? "active" : "inactive"} />
+                </TableCell>
               </TableRow>
-            </TableHeader>
-            <TableBody>
-              {loading ? (
-                <TableRow>
-                  <TableCell colSpan={4} className="text-center py-8">
-                    <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
-                  </TableCell>
-                </TableRow>
-              ) : filteredAdmins.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={4} className="text-center py-8 text-gray-500">
-                    No administrators found
-                  </TableCell>
-                </TableRow>
-              ) : (
-                filteredAdmins.map((admin) => (
-                  <TableRow key={admin.id}>
-                    <TableCell className="font-medium">
-                      {admin.first_name} {admin.last_name}
-                    </TableCell>
-                    <TableCell>
-                      <Badge className={getRoleBadgeColor(admin.role_slug || admin.role?.slug || "")}>
-                        {(admin.role?.name || admin.role_slug || "—").replace(/_/g, " ").toUpperCase()}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>{admin.email}</TableCell>
-                    <TableCell>
-                      <Badge variant={admin.is_active ? "default" : "secondary"}>
-                        {admin.is_active ? "Active" : "Inactive"}
-                      </Badge>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-    </div>
+            ))}
+          </TableBody>
+        </Table>
+      )}
+    </SectionCard>
   );
 };
 

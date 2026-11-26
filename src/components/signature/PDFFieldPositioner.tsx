@@ -2,7 +2,7 @@
 import { Document, Page, pdfjs } from 'react-pdf';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 import 'react-pdf/dist/Page/TextLayer.css';
-import { ChevronLeft, ChevronRight, Loader2, AlertCircle } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Loader2, AlertCircle } from '@/components/icons';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
@@ -170,55 +170,57 @@ export default function PDFFieldPositioner({
     switch (status) {
       case 'signed':
         return {
-          frame: 'border-green-500 bg-green-500/10',
-          badge: 'bg-green-600 text-white',
+          frame: 'border-positive bg-[color-mix(in_srgb,var(--positive)_10%,transparent)]',
+          badge: 'bg-positive text-surface-1',
         };
       case 'declined':
         return {
-          frame: 'border-red-500 bg-red-500/10',
-          badge: 'bg-red-600 text-white',
+          frame: 'border-risk bg-[color-mix(in_srgb,var(--risk)_10%,transparent)]',
+          badge: 'bg-risk text-surface-1',
         };
       case 'expired':
         return {
-          frame: 'border-slate-400 bg-slate-400/10',
-          badge: 'bg-slate-600 text-white',
+          frame: 'border-line-strong bg-[color-mix(in_srgb,var(--line-strong)_10%,transparent)]',
+          badge: 'bg-text-secondary text-surface-1',
         };
       default:
         return {
-          frame: 'border-amber-500 bg-amber-500/10',
-          badge: 'bg-amber-600 text-white',
+          frame: 'border-caution bg-[color-mix(in_srgb,var(--caution)_10%,transparent)]',
+          badge: 'bg-caution text-surface-1',
         };
     }
   };
 
   return (
     <div className="flex flex-col gap-2">
-      <div className="flex items-center justify-between bg-gray-50 border border-gray-200 rounded-t-lg px-3 py-1.5">
-        <span className="text-xs text-gray-500 font-medium">
-          Page {currentPage} of {numPages || '...'}
+      <div className="flex items-center justify-between rounded-md bg-field px-3 py-1.5">
+        <span className="text-xs font-medium text-text-secondary">
+          Page <span className="font-mono">{currentPage}</span> of <span className="font-mono">{numPages || '…'}</span>
         </span>
         <div className="flex items-center gap-1">
-          <Button type="button" variant="ghost" size="icon" className="h-7 w-7" disabled={currentPage <= 1} onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}>
-            <ChevronLeft className="h-4 w-4" />
+          <Button type="button" variant="ghost" size="icon" className="h-8 w-8" aria-label="Previous page" title="Previous page" disabled={currentPage <= 1} onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}>
+            <ChevronLeft />
           </Button>
-          <Button type="button" variant="ghost" size="icon" className="h-7 w-7" disabled={currentPage >= numPages} onClick={() => setCurrentPage((p) => Math.min(numPages, p + 1))}>
-            <ChevronRight className="h-4 w-4" />
+          <Button type="button" variant="ghost" size="icon" className="h-8 w-8" aria-label="Next page" title="Next page" disabled={currentPage >= numPages} onClick={() => setCurrentPage((p) => Math.min(numPages, p + 1))}>
+            <ChevronRight />
           </Button>
         </div>
       </div>
 
       {/* Scrollable viewport — lets tall pages be scrolled within the modal */}
       <div
-        className="border border-gray-200 rounded-b-lg overflow-auto bg-gray-100"
+        className="overflow-auto rounded-sm border border-line bg-surface-2"
       >
-        {/* Inner container sized exactly to the page so absolute overlays align */}
+        {/* Inner container sized exactly to the page so absolute overlays align.
+            A PDF page is white in both themes, so its overlays use the paper tokens. */}
         <div
-          className="relative select-none"
+          data-theme="paper"
+          className="relative select-none bg-surface-1"
           style={{ width: pageWidth, height: renderedHeight ?? 200 }}
         >
           {loadError ? (
-            <div className="flex flex-col items-center justify-center h-48 gap-2 text-red-500">
-              <AlertCircle className="h-6 w-6" />
+            <div role="alert" className="flex h-48 flex-col items-center justify-center gap-2 text-risk">
+              <AlertCircle size={24} />
               <p className="text-sm">{loadError}</p>
             </div>
           ) : (
@@ -228,9 +230,9 @@ export default function PDFFieldPositioner({
               onLoadSuccess={handleDocumentLoad}
               onLoadError={(err) => setLoadError(err.message)}
               loading={
-                <div className="flex items-center justify-center h-48 gap-2 text-gray-400">
-                  <Loader2 className="h-5 w-5 animate-spin" />
-                  <span className="text-sm">Loading PDF...</span>
+                <div role="status" className="flex h-48 items-center justify-center gap-2 text-text-muted">
+                  <Loader2 size={20} className="animate-spin" />
+                  <span className="text-sm">Loading PDF</span>
                 </div>
               }
             >
@@ -260,8 +262,8 @@ export default function PDFFieldPositioner({
           {showField && mode === 'place' && renderedHeight && (
             <div
               className={cn(
-                'absolute border-2 rounded flex items-center justify-center',
-                mode === 'place' ? 'border-signal bg-signal/10 cursor-grab' : 'border-signal bg-signal/15 pointer-events-none',
+                'absolute border-2 rounded-xs flex items-center justify-center bg-[color-mix(in_srgb,var(--signal)_12%,transparent)]',
+                mode === 'place' ? 'border-signal cursor-grab' : 'border-signal pointer-events-none',
               )}
               style={{
                 left: `${field!.x * 100}%`,
@@ -277,7 +279,7 @@ export default function PDFFieldPositioner({
               </span>
               {mode === 'place' && (
                 <div
-                  className="absolute bottom-0 right-0 w-3 h-3 cursor-se-resize bg-signal rounded-tl"
+                  className="absolute bottom-0 right-0 w-3 h-3 cursor-se-resize bg-signal rounded-tl-xs"
                   onMouseDown={handleResizeMouseDown}
                   style={{ zIndex: 30 }}
                 />
@@ -291,7 +293,7 @@ export default function PDFFieldPositioner({
               <div
                 key={previewField.id}
                 className={cn(
-                  'absolute rounded-md border-2 shadow-sm pointer-events-none',
+                  'absolute rounded-xs border-2 pointer-events-none',
                   previewStyles.frame,
                 )}
                 style={{
@@ -304,7 +306,7 @@ export default function PDFFieldPositioner({
               >
                 <span
                   className={cn(
-                    'absolute left-1 top-1 max-w-[calc(100%-8px)] truncate rounded-full px-2 py-0.5 text-[10px] font-semibold shadow-sm',
+                    'absolute left-1 top-1 max-w-[calc(100%-8px)] truncate rounded-pill px-2 py-0.5 text-[10px] font-semibold',
                     previewStyles.badge,
                   )}
                 >
@@ -317,8 +319,8 @@ export default function PDFFieldPositioner({
       </div>
 
       {mode === 'place' && (
-        <p className="text-xs text-gray-400 text-center">
-          {field ? 'Drag to reposition - drag corner to resize' : 'Click anywhere on the page to place the signature field'}
+        <p className="text-center text-xs text-text-muted">
+          {field ? 'Drag to move the field, or drag its corner to resize' : 'Click anywhere on the page to place the signature field'}
         </p>
       )}
     </div>

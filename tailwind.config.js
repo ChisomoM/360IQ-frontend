@@ -1,3 +1,6 @@
+/** A CSS-variable colour that still accepts opacity modifiers such as `bg-signal/10`. */
+const token = (name) => `color-mix(in srgb, var(${name}) calc(<alpha-value> * 100%), transparent)`;
+
 /** @type {import('tailwindcss').Config} */
 export default {
   darkMode: ['variant', ['&:where(.dark, .dark *)', '&:where([data-theme="ink"], [data-theme="ink"] *)']],
@@ -16,22 +19,23 @@ export default {
       // ─────────────────────────────────────────────────────────────────────
       colors: {
         // 360IQ semantic tokens (design.md section 2.2). Product UI uses these, never raw hex.
-        'surface-0': 'var(--surface-0)',
-        'surface-1': 'var(--surface-1)',
-        'surface-2': 'var(--surface-2)',
-        line: { DEFAULT: 'var(--line)', strong: 'var(--line-strong)' },
-        'text-primary': 'var(--text-primary)',
-        'text-secondary': 'var(--text-secondary)',
-        'text-muted': 'var(--text-muted)',
-        signal: { DEFAULT: 'var(--signal)', hover: 'var(--signal-hover)', text: 'var(--signal-text)', tint: 'var(--signal-tint)' },
-        'on-signal': 'var(--on-signal)',
-        'sky-text': 'var(--sky-text)',
-        risk: { DEFAULT: 'var(--risk)', tint: 'var(--risk-tint)' },
-        caution: { DEFAULT: 'var(--caution)', tint: 'var(--caution-tint)' },
-        positive: { DEFAULT: 'var(--positive)', tint: 'var(--positive-tint)' },
-        grade: { platinum: 'var(--grade-platinum)', gold: 'var(--grade-gold)', silver: 'var(--grade-silver)', bronze: 'var(--grade-bronze)' },
-        'on-grade': 'var(--on-grade)',
-        focus: 'var(--focus)',
+        'surface-0': token('--surface-0'),
+        'surface-1': token('--surface-1'),
+        'surface-2': token('--surface-2'),
+        field: { DEFAULT: token('--field'), hover: token('--field-hover') },
+        line: { DEFAULT: token('--line'), strong: token('--line-strong') },
+        'text-primary': token('--text-primary'),
+        'text-secondary': token('--text-secondary'),
+        'text-muted': token('--text-muted'),
+        signal: { DEFAULT: token('--signal'), hover: token('--signal-hover'), text: token('--signal-text'), tint: token('--signal-tint') },
+        'on-signal': token('--on-signal'),
+        'sky-text': token('--sky-text'),
+        risk: { DEFAULT: token('--risk'), tint: token('--risk-tint') },
+        caution: { DEFAULT: token('--caution'), tint: token('--caution-tint') },
+        positive: { DEFAULT: token('--positive'), tint: token('--positive-tint') },
+        grade: { platinum: token('--grade-platinum'), gold: token('--grade-gold'), silver: token('--grade-silver'), bronze: token('--grade-bronze') },
+        'on-grade': token('--on-grade'),
+        focus: token('--focus'),
         // Brand palette: logo files, heroes and slides only
         brand: { ink: '#0B1B2B', blue: '#2A7FD4', sky: '#4FB8E8', signal: '#19C3A6', paper: '#F4F7F9' },
 
@@ -72,18 +76,18 @@ export default {
         'ch-tertiary-900': 'hsl(var(--ch-tertiary-900))',
         'ch-tertiary-950': 'hsl(var(--ch-tertiary-950))',
         primary: {
-          DEFAULT: "var(--tenant-primary)",
+          DEFAULT: token('--tenant-primary'),
           foreground: "hsl(var(--primary-foreground))",
           hover: "var(--tenant-primary-hover)",
           light: "var(--tenant-primary-light)",
         },
         secondary: {
-          DEFAULT: "var(--tenant-secondary)",
+          DEFAULT: token('--tenant-secondary'),
           foreground: "hsl(var(--secondary-foreground))",
           hover: "var(--tenant-secondary-hover)",
         },
         tertiary: {
-          DEFAULT: "var(--tenant-accent)",
+          DEFAULT: token('--tenant-accent'),
         },
         /** Tenant on-primary / on-secondary (hex); synced by useTenantBranding */
         'primary-fg': 'var(--tenant-primary-fg)',
@@ -101,6 +105,27 @@ export default {
           border: 'hsl(var(--sidebar-border))',
           ring: 'hsl(var(--sidebar-ring))',
         }
+      },
+
+      // shadcn names, mapped onto 360IQ tokens per property so `text-muted` stays readable text
+      backgroundColor: {
+        background: token('--surface-0'),
+        card: token('--surface-1'),
+        popover: token('--surface-1'),
+        muted: token('--surface-2'),
+        accent: token('--surface-2'),
+      },
+      textColor: {
+        foreground: token('--text-primary'),
+        'card-foreground': token('--text-primary'),
+        'popover-foreground': token('--text-primary'),
+        muted: token('--text-muted'),
+        'muted-foreground': token('--text-muted'),
+        'accent-foreground': token('--text-primary'),
+      },
+      borderColor: {
+        border: token('--line'),
+        input: token('--line-strong'),
       },
 
       // ─────────────────────────────────────────────────────────────────────
@@ -199,12 +224,15 @@ export default {
       // SHADOWS
       // ─────────────────────────────────────────────────────────────────────
       boxShadow: {
-        'xs':  '0 1px 2px rgba(16, 24, 40, 0.05)',
-        'sm':  '0 1px 3px rgba(16, 24, 40, 0.1), 0 1px 2px rgba(16, 24, 40, 0.06)',
-        'md':  '0 4px 8px -2px rgba(16, 24, 40, 0.1), 0 2px 4px -2px rgba(16, 24, 40, 0.06)',
-        'lg':  '0 12px 16px -4px rgba(16, 24, 40, 0.1), 0 4px 6px -2px rgba(16, 24, 40, 0.05)',
-        'xl':  '0 20px 25px -5px rgba(16, 24, 40, 0.1), 0 10px 10px -5px rgba(16, 24, 40, 0.04)',
-        '2xl': '0 25px 50px -12px rgba(16, 24, 40, 0.25)',
+        // legacy sizes resolve to the soft 360IQ shadows
+        'xs':  'var(--shadow-card)',
+        'sm':  'var(--shadow-card)',
+        'md':  'var(--shadow-card-hover)',
+        'lg':  'var(--shadow-raised)',
+        'xl':  'var(--shadow-overlay)',
+        '2xl': 'var(--shadow-overlay)',
+        'card': 'var(--shadow-card)',
+        'card-hover': 'var(--shadow-card-hover)',
         'raised': 'var(--shadow-raised)',
         'overlay': 'var(--shadow-overlay)',
         'focus-ring': '0 0 0 4px hsl(var(--ch-primary-500) / 0.14)',
@@ -215,17 +243,20 @@ export default {
       },
 
       // ─────────────────────────────────────────────────────────────────────
-      // BORDER RADIUS — ControlHub design system scale
+      // BORDER RADIUS — 360IQ: soft and round (md controls, lg cards, pills)
       // ─────────────────────────────────────────────────────────────────────
       borderRadius: {
         'none': '0px',
-        'sm': '0.125rem',   // 2px
-        'DEFAULT': '0.25rem', // 4px
-        'md': '0.375rem',   // 6px
-        'lg': '0.5rem',     // 8px
-        'xl': '0.75rem',    // 12px
-        '2xl': '1rem',      // 16px
-        '3xl': '1.5rem',    // 24px
+        'xs': '6px',
+        'sm': '8px',
+        'DEFAULT': '8px',
+        'inner': '10px',
+        'md': '12px',
+        'lg': '16px',
+        'xl': '16px',
+        '2xl': '16px',
+        '3xl': '24px',
+        'pill': '999px',
         'full': '9999px',
       },
 

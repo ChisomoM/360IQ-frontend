@@ -1,6 +1,13 @@
 import { useEffect, useState, useCallback } from 'react';
-import { motion } from 'framer-motion';
-import { Badge } from '@/components/ui/badge';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { PageHeader } from '@/components/shared/PageHeader';
+import { SectionCard } from '@/components/shared/SectionCard';
+import { KpiTile } from '@/components/shared/KpiTile';
+import { StatusBadge } from '@/components/shared/StatusBadge';
+import { EmptyState } from '@/components/shared/EmptyState';
+import { TableSkeleton } from '@/components/shared/TableSkeleton';
+import { formatDate } from '@/lib/format';
+import type { Tone } from '@/lib/status';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -18,16 +25,14 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { list } from '@/lib/api/crud';
-import { toast } from 'sonner';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import {
   Loader2, Activity, Eye, Download, FilePen,
   CheckCircle2, XCircle, LogIn, LogOut, Upload,
-  Shield, RefreshCw, Trash2, Search, Filter,
-} from 'lucide-react';
+  Shield, RefreshCw, Trash2, Search, Clock, Calendar,
+} from '@/components/icons';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { cn } from '@/lib/utils';
 
 dayjs.extend(relativeTime);
 
@@ -96,7 +101,7 @@ const MOCK_LOGS: AuditLog[] = [
   },
   {
     id: 'log-007', user_id: 'u-005', action: 'document.rejected', resource: 'document',
-    resource_id: 'doc-mno345', details: 'Rejected: Procurement Request — incomplete supporting docs',
+    resource_id: 'doc-mno345', details: 'Rejected: Procurement Request, incomplete supporting docs',
     ip_address: '197.211.62.20', user_agent: 'Chrome/120 Windows',
     created_at: dayjs().subtract(5, 'hour').toISOString(),
     user: { id: 'u-005', first_name: 'Bongani', last_name: 'Ncube', email: 'bongani.ncube@unilus.ac.zm' },
@@ -110,7 +115,7 @@ const MOCK_LOGS: AuditLog[] = [
   },
   {
     id: 'log-009', user_id: 'u-001', action: 'document.deleted', resource: 'document',
-    resource_id: 'doc-pqr678', details: 'Soft deleted: Draft Memo — superseded by v2',
+    resource_id: 'doc-pqr678', details: 'Soft deleted: Draft Memo, superseded by v2',
     ip_address: '197.211.62.14', user_agent: 'Chrome/120 Windows',
     created_at: dayjs().subtract(1, 'day').toISOString(),
     user: { id: 'u-001', first_name: 'Tendai', last_name: 'Moyo', email: 'tendai.moyo@unilus.ac.zm' },
@@ -124,26 +129,33 @@ const MOCK_LOGS: AuditLog[] = [
   },
 ];
 
-// ─── Action config — icon + colour + label for each action type ───────────────
-const ACTION_CONFIG: Record<string, { icon: React.ReactNode; bg: string; text: string; label: string }> = {
-  'document.viewed': { icon: <Eye className="h-3.5 w-3.5" />, bg: 'bg-blue-50', text: 'text-blue-600', label: 'Viewed' },
-  'document.downloaded': { icon: <Download className="h-3.5 w-3.5" />, bg: 'bg-signal-tint', text: 'text-signal-text', label: 'Downloaded' },
-  'document.uploaded': { icon: <Upload className="h-3.5 w-3.5" />, bg: 'bg-surface-2', text: 'text-sky-text', label: 'Uploaded' },
-  'document.edited': { icon: <FilePen className="h-3.5 w-3.5" />, bg: 'bg-amber-50', text: 'text-amber-600', label: 'Edited' },
-  'document.approved': { icon: <CheckCircle2 className="h-3.5 w-3.5" />, bg: 'bg-positive-tint', text: 'text-positive', label: 'Approved' },
-  'document.rejected': { icon: <XCircle className="h-3.5 w-3.5" />, bg: 'bg-red-50', text: 'text-red-600', label: 'Rejected' },
-  'document.deleted': { icon: <Trash2 className="h-3.5 w-3.5" />, bg: 'bg-red-50', text: 'text-red-600', label: 'Deleted' },
-  'user.login': { icon: <LogIn className="h-3.5 w-3.5" />, bg: 'bg-positive-tint', text: 'text-positive', label: 'Login' },
-  'user.logout': { icon: <LogOut className="h-3.5 w-3.5" />, bg: 'bg-gray-100', text: 'text-gray-500', label: 'Logout' },
-  'permission.changed': { icon: <Shield className="h-3.5 w-3.5" />, bg: 'bg-surface-2', text: 'text-text-secondary', label: 'Permission' },
+// ─── Action config: icon, tone and label for each action type ────────────────
+const ACTION_CONFIG: Record<string, { icon: React.ReactNode; tone: Tone; label: string }> = {
+  'document.viewed': { icon: <Eye size={14} />, tone: 'neutral', label: 'Viewed' },
+  'document.downloaded': { icon: <Download size={14} />, tone: 'neutral', label: 'Downloaded' },
+  'document.uploaded': { icon: <Upload size={14} />, tone: 'neutral', label: 'Uploaded' },
+  'document.edited': { icon: <FilePen size={14} />, tone: 'neutral', label: 'Edited' },
+  'document.approved': { icon: <CheckCircle2 size={14} />, tone: 'positive', label: 'Approved' },
+  'document.rejected': { icon: <XCircle size={14} />, tone: 'risk', label: 'Rejected' },
+  'document.deleted': { icon: <Trash2 size={14} />, tone: 'risk', label: 'Deleted' },
+  'user.login': { icon: <LogIn size={14} />, tone: 'neutral', label: 'Signed in' },
+  'user.logout': { icon: <LogOut size={14} />, tone: 'neutral', label: 'Signed out' },
+  'permission.changed': { icon: <Shield size={14} />, tone: 'caution', label: 'Permission changed' },
 };
 
-const getActionConfig = (action: string) =>
-  ACTION_CONFIG[action] ?? { icon: <Activity className="h-3.5 w-3.5" />, bg: 'bg-gray-100', text: 'text-gray-500', label: action };
+const getActionConfig = (action: string): { icon: React.ReactNode; tone: Tone; label: string } =>
+  ACTION_CONFIG[action] ?? { icon: <Activity size={14} />, tone: 'neutral', label: action };
 
-// Animation variants
-const listVariants = { hidden: {}, visible: { transition: { staggerChildren: 0.02 } } };
-const rowVariants = { hidden: { opacity: 0, y: 6 }, visible: { opacity: 1, y: 0, transition: { duration: 0.2 } } };
+// Toned badges carry their own icon; neutral ones show the action icon.
+function ActionBadge({ action }: { action: string }) {
+  const config = getActionConfig(action);
+  return (
+    <StatusBadge tone={config.tone}>
+      {config.tone === 'neutral' && config.icon}
+      {config.label}
+    </StatusBadge>
+  );
+}
 
 export default function AuditTrails() {
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
@@ -201,79 +213,58 @@ export default function AuditTrails() {
   };
 
   return (
-    <div className="w-full space-y-6">
-      {/* Page Header */}
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="font-display font-bold text-display-sm text-gray-900">Audit Trails</h1>
-          <p className="font-sans text-text-sm text-muted-foreground mt-1">
-            Monitor and review system activity logs
-          </p>
-        </div>
-        <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.94 }}
-          transition={{ type: 'spring', stiffness: 500, damping: 30 }}>
-          <Button onClick={fetchAuditLogs} disabled={loading} className="bg-primary text-primary-foreground gap-2">
+    <div className="w-full flex flex-col gap-5">
+      <PageHeader
+        title="Audit trails"
+        description="Review who did what, and when."
+        actions={
+          <Button variant="secondary" onClick={fetchAuditLogs} disabled={loading}>
             {loading
-              ? <Loader2 className="h-4 w-4 animate-spin" />
-              : <RefreshCw className="h-4 w-4" />}
+              ? <Loader2 className="animate-spin" />
+              : <RefreshCw />}
             Refresh
           </Button>
-        </motion.div>
+        }
+      />
+
+      {/* KPI row */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <KpiTile label="Total entries" value={stats.total} icon={<Activity size={18} />} />
+        <KpiTile label="Today" value={stats.today} icon={<Clock size={18} />} />
+        <KpiTile label="This week" value={stats.thisWeek} icon={<Calendar size={18} />} />
       </div>
 
-      {/* Stat cards */}
-      <motion.div variants={listVariants} initial="hidden" animate="visible"
-        className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        {[
-          { label: 'Total Logs', value: stats.total, color: 'text-ch-primary-600', bg: 'bg-ch-primary/[0.08]', icon: <Activity className="h-5 w-5" /> },
-          { label: 'Today', value: stats.today, color: 'text-positive', bg: 'bg-positive-tint', icon: <CheckCircle2 className="h-5 w-5" /> },
-          { label: 'This Week', value: stats.thisWeek, color: 'text-ch-secondary-600', bg: 'bg-ch-secondary/[0.08]', icon: <Filter className="h-5 w-5" /> },
-        ].map(({ label, value, color, bg, icon }) => (
-          <motion.div key={label} variants={rowVariants}
-            className="bg-card rounded-xl border border-gray-200 p-4 flex items-center gap-3">
-            <div className={`p-2.5 rounded-lg ${bg}`}>
-              <span className={color}>{icon}</span>
-            </div>
-            <div>
-              <p className="font-sans text-text-xs text-muted-foreground">{label}</p>
-              <p className={`font-display font-bold text-xl ${color}`}>{value}</p>
-            </div>
-          </motion.div>
-        ))}
-      </motion.div>
-
       {/* Search & Filters */}
-      <div className="bg-card rounded-xl border border-gray-200 p-4">
+      <SectionCard padded={false} bodyClassName="p-4">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
             <Input
-              placeholder="Search user, action, or resource…"
+              aria-label="Search audit entries"
+              placeholder="Search user, action or resource"
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
-              className="pl-9 border-gray-200"
+              className="pl-9"
             />
           </div>
           <Select value={actionFilter || '__all__'} onValueChange={v => setActionFilter(v === '__all__' ? '' : v)}>
-            <SelectTrigger className="border-gray-200"><SelectValue placeholder="All Actions" /></SelectTrigger>
+            <SelectTrigger aria-label="Filter by action"><SelectValue placeholder="All actions" /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="__all__">All Actions</SelectItem>
+              <SelectItem value="__all__">All actions</SelectItem>
               {uniqueActions.map(a => (
                 <SelectItem key={a} value={a}>
                   <span className="flex items-center gap-2">
-                    <span className={cn('p-0.5 rounded', getActionConfig(a).bg, getActionConfig(a).text)}>
-                      {getActionConfig(a).icon}
-                    </span>
-                    {a}
+                    <span className="text-text-muted">{getActionConfig(a).icon}</span>
+                    <span className="font-mono text-xs">{a}</span>
                   </span>
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
           <Select value={resourceFilter || '__all__'} onValueChange={v => setResourceFilter(v === '__all__' ? '' : v)}>
-            <SelectTrigger className="border-gray-200"><SelectValue placeholder="All Resources" /></SelectTrigger>
+            <SelectTrigger aria-label="Filter by resource"><SelectValue placeholder="All resources" /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="__all__">All Resources</SelectItem>
+              <SelectItem value="__all__">All resources</SelectItem>
               {uniqueResources.map(r => <SelectItem key={r} value={r}>{r}</SelectItem>)}
             </SelectContent>
           </Select>
@@ -281,206 +272,175 @@ export default function AuditTrails() {
         {(searchQuery || actionFilter || resourceFilter) && (
           <div className="flex justify-end mt-3">
             <Button variant="ghost" size="sm" onClick={() => { setSearchQuery(''); setActionFilter(''); setResourceFilter(''); }}>
-              Clear Filters
+              Clear filters
             </Button>
           </div>
         )}
-      </div>
+      </SectionCard>
 
       {/* Logs Table */}
-      <div className="bg-card rounded-xl border border-gray-200 overflow-hidden">
-        <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
-          <h2 className="font-display font-semibold text-base text-foreground">
-            Activity Logs
-            <span className="ml-2 text-sm font-normal text-muted-foreground">
-              ({filteredLogs.length} of {auditLogs.length})
-            </span>
-          </h2>
-        </div>
-
+      <SectionCard
+        padded={false}
+        title="Activity"
+        actions={
+          <span className="text-xs text-text-muted">
+            <span className="font-mono">{filteredLogs.length}</span> of <span className="font-mono">{auditLogs.length}</span>
+          </span>
+        }
+      >
         {loading ? (
-          <div className="flex items-center justify-center py-16">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          </div>
+          <TableSkeleton rows={8} columns={6} />
         ) : filteredLogs.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 gap-3 text-center">
-            <Activity className="h-10 w-10 text-gray-200" />
-            <p className="font-display font-semibold text-foreground">No logs found</p>
-            <p className="font-sans text-text-sm text-muted-foreground">Try adjusting your filters</p>
-          </div>
+          <EmptyState
+            icon={<Activity size={24} />}
+            title="No entries found"
+            description="Change your search or filters to see more."
+          />
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-gray-100 bg-gray-50/60">
-                  {['Action', 'User', 'Resource', 'Details', 'Time', 'IP', ''].map(h => (
-                    <th key={h} className="px-4 py-3 text-left font-sans font-medium text-text-xs text-muted-foreground uppercase tracking-wide">
-                      {h}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <motion.tbody variants={listVariants} initial="hidden" animate="visible">
-                {filteredLogs.map(log => {
-                  const ac = getActionConfig(log.action);
-                  return (
-                    <motion.tr
-                      key={log.id}
-                      variants={rowVariants}
-                      whileHover={{ x: 2 }}
-                      transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-                      className="border-b border-gray-100 hover:bg-slate-50/60 transition-colors"
-                    >
-                      {/* Action — icon + badge */}
-                      <td className="px-4 py-3">
-                        <span className={cn(
-                          'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium font-sans',
-                          ac.bg, ac.text
-                        )}>
-                          {ac.icon}
-                          {ac.label}
-                        </span>
-                      </td>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                {['Action', 'User', 'Resource', 'Details', 'Time', 'IP address'].map(h => (
+                  <TableHead key={h} scope="col">{h}</TableHead>
+                ))}
+                <TableHead scope="col"><span className="sr-only">View details</span></TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredLogs.map(log => (
+                <TableRow key={log.id}>
+                  <TableCell>
+                    <ActionBadge action={log.action} />
+                  </TableCell>
 
-                      {/* User */}
-                      <td className="px-4 py-3">
-                        <p className="font-semibold text-foreground font-sans text-xs">
-                          {log.user?.first_name} {log.user?.last_name}
-                        </p>
-                        <p className="text-muted-foreground font-sans text-[11px] truncate max-w-[140px]">
-                          {log.user?.email}
-                        </p>
-                      </td>
+                  {/* User */}
+                  <TableCell>
+                    <p className="font-semibold text-text-primary text-xs">
+                      {log.user?.first_name} {log.user?.last_name}
+                    </p>
+                    <p className="text-text-muted text-xs truncate max-w-[160px]">
+                      {log.user?.email}
+                    </p>
+                  </TableCell>
 
-                      {/* Resource */}
-                      <td className="px-4 py-3">
-                        <Badge variant="outline" className="text-xs capitalize border-gray-200 font-sans">
-                          {log.resource}
-                        </Badge>
-                      </td>
+                  {/* Resource */}
+                  <TableCell>
+                    <span className="inline-flex items-center h-[1.572rem] px-2.5 rounded-pill bg-field text-xs text-text-secondary capitalize">
+                      {log.resource}
+                    </span>
+                  </TableCell>
 
-                      {/* Details */}
-                      <td className="px-4 py-3 max-w-[200px]">
-                        <p className="text-xs text-muted-foreground font-sans truncate" title={log.details}>
-                          {log.details || '—'}
-                        </p>
-                      </td>
+                  {/* Details */}
+                  <TableCell className="max-w-[220px]">
+                    <p className="text-xs text-text-secondary truncate" title={log.details}>
+                      {log.details || 'None'}
+                    </p>
+                  </TableCell>
 
-                      {/* Time */}
-                      <td className="px-4 py-3 whitespace-nowrap">
-                        <p className="text-xs text-foreground font-sans">{dayjs(log.created_at).fromNow()}</p>
-                        <p className="text-[11px] text-muted-foreground font-mono">
-                          {dayjs(log.created_at).format('HH:mm:ss')}
-                        </p>
-                      </td>
+                  {/* Time */}
+                  <TableCell className="whitespace-nowrap font-mono text-xs text-text-secondary" title={dayjs(log.created_at).fromNow()}>
+                    <p>{formatDate(log.created_at)}</p>
+                    <p className="text-text-muted">{dayjs(log.created_at).format('HH:mm:ss')}</p>
+                  </TableCell>
 
-                      {/* IP */}
-                      <td className="px-4 py-3">
-                        <p className="text-xs font-mono text-muted-foreground">{log.ip_address || '—'}</p>
-                      </td>
+                  {/* IP */}
+                  <TableCell className="font-mono text-xs text-text-secondary">
+                    {log.ip_address || 'N/A'}
+                  </TableCell>
 
-                      {/* View details */}
-                      <td className="px-4 py-3">
-                        <Button variant="ghost" size="sm"
-                          onClick={() => { setSelectedLog(log); setIsDialogOpen(true); }}
-                          className="h-7 w-7 p-0 hover:text-primary">
-                          <Eye className="h-3.5 w-3.5" />
-                        </Button>
-                      </td>
-                    </motion.tr>
-                  );
-                })}
-              </motion.tbody>
-            </table>
-          </div>
+                  {/* View details */}
+                  <TableCell>
+                    <Button variant="ghost" size="icon"
+                      aria-label="View entry details"
+                      title="View details"
+                      onClick={() => { setSelectedLog(log); setIsDialogOpen(true); }}
+                      className="h-8 w-8">
+                      <Eye />
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         )}
-      </div>
+      </SectionCard>
 
       {/* Detail Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-lg bg-white">
+        <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle className="font-display font-bold text-foreground">Audit Log Details</DialogTitle>
-            <DialogDescription className="font-sans text-text-sm text-muted-foreground">
-              Complete information about this activity
+            <DialogTitle>Audit entry</DialogTitle>
+            <DialogDescription>
+              Everything recorded for this activity.
             </DialogDescription>
           </DialogHeader>
-          {selectedLog && (() => {
-            const ac = getActionConfig(selectedLog.action);
-            return (
-              <ScrollArea className="max-h-[60vh] pr-2">
-                <div className="space-y-5">
-                  {/* Action badge */}
-                  <span className={cn('inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium', ac.bg, ac.text)}>
-                    {ac.icon} {ac.label} — {selectedLog.action}
-                  </span>
+          {selectedLog && (
+            <ScrollArea className="max-h-[60vh] pr-2">
+              <div className="space-y-4">
+                <div className="flex flex-wrap items-center gap-2">
+                  <ActionBadge action={selectedLog.action} />
+                  <span className="font-mono text-xs text-text-muted">{selectedLog.action}</span>
+                </div>
 
-                  {/* User */}
-                  <div>
-                    <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide mb-2">User</p>
-                    <div className="grid grid-cols-2 gap-3 text-sm">
-                      <div>
-                        <p className="text-muted-foreground text-xs">Name</p>
-                        <p className="font-medium text-foreground">{selectedLog.user?.first_name} {selectedLog.user?.last_name}</p>
-                      </div>
-                      <div>
-                        <p className="text-muted-foreground text-xs">Email</p>
-                        <p className="font-medium text-foreground">{selectedLog.user?.email}</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="border-t border-gray-100" />
-
-                  {/* Resource */}
-                  <div>
-                    <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide mb-2">Resource</p>
-                    <div className="grid grid-cols-2 gap-3 text-sm">
-                      <div>
-                        <p className="text-muted-foreground text-xs">Type</p>
-                        <p className="font-medium text-foreground capitalize">{selectedLog.resource}</p>
-                      </div>
-                      <div>
-                        <p className="text-muted-foreground text-xs">ID</p>
-                        <p className="font-mono text-xs text-foreground break-all">{selectedLog.resource_id || '—'}</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="border-t border-gray-100" />
-
-                  {/* Details */}
-                  {selectedLog.details && (
+                {/* User */}
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[.04em] text-text-muted mb-2">User</p>
+                  <div className="grid grid-cols-2 gap-3 text-sm">
                     <div>
-                      <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide mb-2">Details</p>
-                      <p className="text-sm text-foreground font-sans">{selectedLog.details}</p>
+                      <p className="text-text-muted text-xs">Name</p>
+                      <p className="font-medium text-text-primary">{selectedLog.user?.first_name} {selectedLog.user?.last_name}</p>
                     </div>
-                  )}
-
-                  <div className="border-t border-gray-100" />
-
-                  {/* Network */}
-                  <div>
-                    <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide mb-2">Network</p>
-                    <div className="space-y-2 text-sm">
-                      <div>
-                        <p className="text-muted-foreground text-xs">IP Address</p>
-                        <p className="font-mono text-foreground">{selectedLog.ip_address || '—'}</p>
-                      </div>
-                      <div>
-                        <p className="text-muted-foreground text-xs">Timestamp</p>
-                        <p className="font-mono text-xs text-foreground">{dayjs(selectedLog.created_at).format('DD MMM YYYY, HH:mm:ss')}</p>
-                      </div>
-                      <div>
-                        <p className="text-muted-foreground text-xs">User Agent</p>
-                        <p className="font-mono text-xs text-foreground break-all">{selectedLog.user_agent || '—'}</p>
-                      </div>
+                    <div className="min-w-0">
+                      <p className="text-text-muted text-xs">Email</p>
+                      <p className="font-medium text-text-primary break-all">{selectedLog.user?.email}</p>
                     </div>
                   </div>
                 </div>
-              </ScrollArea>
-            );
-          })()}
+
+                {/* Resource */}
+                <div className="border-t border-line pt-4">
+                  <p className="text-xs font-semibold uppercase tracking-[.04em] text-text-muted mb-2">Resource</p>
+                  <div className="grid grid-cols-2 gap-3 text-sm">
+                    <div>
+                      <p className="text-text-muted text-xs">Type</p>
+                      <p className="font-medium text-text-primary capitalize">{selectedLog.resource}</p>
+                    </div>
+                    <div>
+                      <p className="text-text-muted text-xs">ID</p>
+                      <p className="font-mono text-xs text-text-primary break-all">{selectedLog.resource_id || 'N/A'}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Details */}
+                {selectedLog.details && (
+                  <div className="border-t border-line pt-4">
+                    <p className="text-xs font-semibold uppercase tracking-[.04em] text-text-muted mb-2">Details</p>
+                    <p className="text-sm text-text-primary">{selectedLog.details}</p>
+                  </div>
+                )}
+
+                {/* Network */}
+                <div className="border-t border-line pt-4">
+                  <p className="text-xs font-semibold uppercase tracking-[.04em] text-text-muted mb-2">Network</p>
+                  <div className="space-y-2 text-sm">
+                    <div>
+                      <p className="text-text-muted text-xs">IP address</p>
+                      <p className="font-mono text-xs text-text-primary">{selectedLog.ip_address || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <p className="text-text-muted text-xs">Time</p>
+                      <p className="font-mono text-xs text-text-primary">{formatDate(selectedLog.created_at)}, {dayjs(selectedLog.created_at).format('HH:mm:ss')}</p>
+                    </div>
+                    <div>
+                      <p className="text-text-muted text-xs">User agent</p>
+                      <p className="font-mono text-xs text-text-primary break-all">{selectedLog.user_agent || 'N/A'}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </ScrollArea>
+          )}
         </DialogContent>
       </Dialog>
     </div>

@@ -1,6 +1,11 @@
 import { useEffect, useState } from "react";
-import { Panel } from "@/components/profiles/ui";
+import { Activity } from "@/components/icons";
+import { EmptyState } from "@/components/shared/EmptyState";
+import { SectionBody } from "@/components/shared/SectionBody";
+import { SectionCard } from "@/components/shared/SectionCard";
+import { StatusBadge } from "@/components/shared/StatusBadge";
 import { getSignals } from "@/lib/api/captures";
+import { formatDate } from "@/lib/format";
 import type { SignalView } from "@/types/capture";
 
 const LABEL: Record<string, string> = {
@@ -35,32 +40,35 @@ export function SignalsPanel({ entity, id }: { entity: "person" | "company"; id:
   const sources = Array.from(new Set((items ?? []).map((s) => s.lead_source).filter(Boolean)));
 
   return (
-    <Panel title="Lead signals">
-      {failed && <p className="text-sm text-text-muted">Signals could not be loaded.</p>}
-      {!failed && items === null && <p className="text-sm text-text-muted">Loading...</p>}
-      {items && items.length === 0 && <p className="text-sm text-text-muted">No captured signals yet.</p>}
-      {items && items.length > 0 && (
-        <div className="space-y-3">
-          {sources.length > 0 && (
-            <p className="text-sm text-text-secondary">
-              Lead source: <span className="font-medium text-text-primary">{sources.join(", ")}</span>
-            </p>
-          )}
-          <ul className="space-y-2">
-            {items.map((s) => (
-              <li key={s.id} className="rounded-lg border border-line bg-surface-1 p-3 text-sm">
-                <p className="font-medium text-text-primary">
-                  {LABEL[s.signal_type] ?? s.signal_type}: <span className="break-words font-normal">{s.value}</span>
-                </p>
-                <p className="mt-1 text-xs text-text-muted">
+    <SectionCard title="Lead signals" padded={false}>
+      <SectionBody
+        loading={!failed && items === null}
+        error={failed ? "Signals could not be loaded." : undefined}
+        isEmpty={items?.length === 0}
+        empty={<EmptyState icon={<Activity size={24} />} title="No captured signals yet" description="Needs, budgets and next steps confirmed from captured leads appear here." />}
+      >
+        {sources.length > 0 && (
+          <p className="px-6 pb-3 text-sm text-text-secondary">
+            Lead source: <span className="font-semibold text-text-primary">{sources.join(", ")}</span>
+          </p>
+        )}
+        <ul className="divide-y divide-line border-t border-line">
+          {(items ?? []).map((s) => (
+            <li key={s.id} className="flex min-w-0 flex-col items-start gap-1.5 px-6 py-3 text-sm sm:flex-row sm:gap-3">
+              <StatusBadge tone="neutral" className="sm:w-32 sm:shrink-0 sm:justify-center">
+                {LABEL[s.signal_type] ?? s.signal_type}
+              </StatusBadge>
+              <div className="min-w-0 flex-1">
+                <p className="break-words text-text-primary">{s.value}</p>
+                <p className="mt-0.5 text-xs text-text-muted">
                   {s.origin}
-                  {s.lead_source ? ` · ${s.lead_source}` : ""} · {new Date(s.captured_at).toLocaleDateString()}
+                  {s.lead_source ? ` · ${s.lead_source}` : ""} · {formatDate(s.captured_at)}
                 </p>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-    </Panel>
+              </div>
+            </li>
+          ))}
+        </ul>
+      </SectionBody>
+    </SectionCard>
   );
 }

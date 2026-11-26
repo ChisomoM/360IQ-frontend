@@ -1,19 +1,24 @@
 import React, { useState, useMemo } from 'react';
-import { Card, CardHeader, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
-import { CalendarIcon, Download, Filter, TrendingUp, BarChart3, PieChart as PieChartIcon, MapPin } from 'lucide-react';
-import { format } from 'date-fns';
+import { Label } from '@/components/ui/label';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, PieChart, Pie, Cell, LineChart, Line, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { CalendarIcon, Download, MapPin } from '@/components/icons';
+import { PageHeader } from '@/components/shared/PageHeader';
+import { SectionCard } from '@/components/shared/SectionCard';
+import { SectionBody } from '@/components/shared/SectionBody';
+import { EmptyState } from '@/components/shared/EmptyState';
+import {
+  axisProps, gridProps, tooltipProps, legendProps, barCursor, lineCursor, seriesColor,
+  BAR_RADIUS, MAX_BAR_SIZE,
+} from '@/components/dashboard/chartTheme';
+import { formatDate } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { useAnalyticsData, type AnalyticsFilters } from '@/hooks/useAnalyticsData';
 import { exportToCSV } from '@/lib/csvExport';
 import dayjs from 'dayjs';
-
-const COLORS = ['var(--chart-1)', 'var(--chart-2)', 'var(--chart-3)', 'var(--chart-4)', 'var(--chart-5)', 'var(--chart-6)'];
 
 export const ReportsPage: React.FC = () => {
   const [filters, setFilters] = useState<AnalyticsFilters>({});
@@ -122,57 +127,54 @@ export const ReportsPage: React.FC = () => {
     exportToCSV(exportData, `360IQ_Reports_${dayjs().format('YYYY-MM-DD')}`);
   };
 
-  if (loading) {
-    return <div className="p-6">Loading reports...</div>;
-  }
-
-  if (error) {
-    return <div className="p-6 text-red-500">Error loading reports: {error}</div>;
+  if (loading || error) {
+    return (
+      <div className="mx-auto flex w-full max-w-[1440px] flex-col gap-5">
+        <PageHeader title="Reports and analytics" />
+        <SectionCard padded={false}>
+          <SectionBody loading={loading} error={error ? `Couldn't load the reports. ${error}` : undefined}>
+            {null}
+          </SectionBody>
+        </SectionCard>
+      </div>
+    );
   }
 
   return (
-    <div className="p-6 space-y-6 bg-gray-50 min-h-screen">
-      {/* Header with filters */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-        <div>
-          <h1 className="text-3xl font-bold text-text-primary">Reports & Analytics</h1>
-          <p className="text-sm text-muted-foreground mt-1">Comprehensive insights and data visualization</p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <Button onClick={handleExportCSV} className="bg-primary text-on-signal hover:bg-signal-hover font-bold" size="sm">
-            <Download className="h-4 w-4 mr-2" />
+    <div className="mx-auto flex w-full max-w-[1440px] flex-col gap-5">
+      {/* Header */}
+      <PageHeader
+        title="Reports and analytics"
+        description="Applications by area, salary scale, source and month."
+        actions={
+          <Button onClick={handleExportCSV}>
+            <Download size={16} />
             Export CSV
           </Button>
-        </div>
-      </div>
+        }
+      />
 
       {/* Filters */}
-      <Card className="shadow-md border-gray-200">
-        <CardHeader className="bg-surface-2 border-b-2 border-line">
-          <div className="flex items-center gap-2 text-gray-800">
-            <Filter className="h-5 w-5 text-signal-text" />
-            <span className="font-semibold">Filters</span>
-          </div>
-        </CardHeader>
-        <CardContent>
+      <SectionCard title="Filters">
           <div className="flex flex-wrap gap-4 items-end">
             {/* Start Date */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Start Date</label>
+            <div className="space-y-1.5">
+              <Label htmlFor="report-from">Start date</Label>
               <Popover>
                 <PopoverTrigger asChild>
                   <Button
-                    variant="outline"
+                    id="report-from"
+                    variant="secondary"
                     className={cn(
                       "w-[200px] justify-start text-left font-normal",
-                      !startDate && "text-muted-foreground"
+                      !startDate && "text-text-muted"
                     )}
                   >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {startDate ? format(startDate, "PPP") : "Pick a date"}
+                    <CalendarIcon size={16} />
+                    {startDate ? formatDate(startDate) : "Pick a date"}
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-0 bg-white">
+                <PopoverContent className="w-auto p-0">
                   <Calendar
                     mode="single"
                     selected={startDate}
@@ -184,22 +186,23 @@ export const ReportsPage: React.FC = () => {
             </div>
 
             {/* End Date */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium">End Date</label>
+            <div className="space-y-1.5">
+              <Label htmlFor="report-to">End date</Label>
               <Popover>
                 <PopoverTrigger asChild>
                   <Button
-                    variant="outline"
+                    id="report-to"
+                    variant="secondary"
                     className={cn(
                       "w-[200px] justify-start text-left font-normal",
-                      !endDate && "text-muted-foreground"
+                      !endDate && "text-text-muted"
                     )}
                   >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {endDate ? format(endDate, "PPP") : "Pick a date"}
+                    <CalendarIcon size={16} />
+                    {endDate ? formatDate(endDate) : "Pick a date"}
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-0 bg-white">
+                <PopoverContent className="w-auto p-0">
                   <Calendar
                     mode="single"
                     selected={endDate}
@@ -211,14 +214,14 @@ export const ReportsPage: React.FC = () => {
             </div>
 
             {/* Status Filter */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Status</label>
+            <div className="space-y-1.5">
+              <Label htmlFor="report-status-filter">Status</Label>
               <Select value={filters.status || 'all'} onValueChange={(value) => setFilters(prev => ({ ...prev, status: value === 'all' ? undefined : value as 'pending' | 'approved' | 'rejected' }))}>
-                <SelectTrigger className="w-[150px]">
-                  <SelectValue placeholder="All Status" />
+                <SelectTrigger id="report-status-filter" className="w-[160px]">
+                  <SelectValue placeholder="All statuses" />
                 </SelectTrigger>
-                <SelectContent className="bg-white">
-                  <SelectItem value="all">All Status</SelectItem>
+                <SelectContent>
+                  <SelectItem value="all">All statuses</SelectItem>
                   <SelectItem value="pending">Pending</SelectItem>
                   <SelectItem value="approved">Approved</SelectItem>
                   <SelectItem value="rejected">Rejected</SelectItem>
@@ -226,11 +229,10 @@ export const ReportsPage: React.FC = () => {
               </Select>
             </div>
 
-            <Button onClick={handleApplyFilters}>Apply Filters</Button>
-            <Button onClick={handleClearFilters} variant="outline">Clear</Button>
+            <Button onClick={handleApplyFilters} variant="secondary">Apply filters</Button>
+            <Button onClick={handleClearFilters} variant="ghost">Clear filters</Button>
           </div>
-        </CardContent>
-      </Card>
+      </SectionCard>
 
       {/* Summary Cards */}
       {/* <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -285,203 +287,126 @@ export const ReportsPage: React.FC = () => {
       </div> */}
 
       {/* Charts Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-2">
         {/* Province Distribution */}
-        <Card className="shadow-md hover:shadow-lg transition-shadow border-gray-200">
-          <CardHeader className="bg-surface-2">
-            <div className="flex justify-between items-center">
-              <div className="flex items-center gap-2">
-                <MapPin className="h-5 w-5 text-signal-text" />
-                <h3 className="text-lg font-semibold text-gray-800">Applications by Province</h3>
-              </div>
-              <span className="text-xs text-muted-foreground bg-white px-2 py-1 rounded-full">Click to drill down</span>
-            </div>
-          </CardHeader>
-          <CardContent className="pt-6">
-            <div className="w-full overflow-x-auto">
-              <ChartContainer
-                config={{
-                  count: {
-                    label: "Applications",
-                    color: "var(--chart-1)",
-                  },
-                }}
-                className="h-[280px]"
-                style={{ minWidth: `${Math.max(400, provinceData.length * 80)}px` }}
-              >
+        <SectionCard eyebrow="Applications, select a bar to see districts" title="Applications by province">
+          <div className="w-full overflow-x-auto">
+            <div className="h-[280px]" style={{ minWidth: `${Math.max(400, provinceData.length * 80)}px` }}>
+              <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={provinceData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
-                <XAxis dataKey="province" style={{ fontSize: '12px' }} />
-                <YAxis style={{ fontSize: '12px' }} />
-                <ChartTooltip content={<ChartTooltipContent />} />
-                <Bar
-                  dataKey="count"
-                  fill="var(--chart-1)"
-                  radius={[8, 8, 0, 0]}
-                  maxBarSize={60}
-                  onClick={(data) => {
-                    if (data && data.payload && data.payload.province) {
-                      setSelectedProvince(data.payload.province);
-                    }
-                  }}
-                  style={{ cursor: 'pointer' }}
-                  className="hover:opacity-80 transition-opacity"
-                />
-              </BarChart>
-            </ChartContainer>
+                  <CartesianGrid {...gridProps} />
+                  <XAxis {...axisProps} dataKey="province" />
+                  <YAxis {...axisProps} />
+                  <Tooltip {...tooltipProps} cursor={barCursor} />
+                  <Bar
+                    dataKey="count"
+                    name="Applications"
+                    fill="var(--chart-1)"
+                    radius={BAR_RADIUS}
+                    maxBarSize={MAX_BAR_SIZE}
+                    onClick={(data) => {
+                      if (data && data.payload && data.payload.province) {
+                        setSelectedProvince(data.payload.province);
+                      }
+                    }}
+                    style={{ cursor: 'pointer' }}
+                  />
+                </BarChart>
+              </ResponsiveContainer>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </SectionCard>
 
         {/* District Distribution (when province selected) */}
-        <Card className="shadow-md hover:shadow-lg transition-shadow border-gray-200">
-          <CardHeader className="bg-surface-2">
-            <div className="flex items-center gap-2">
-              <BarChart3 className="h-5 w-5 text-sky-text" />
-              <h3 className="text-lg font-semibold text-gray-800">
-                {selectedProvince ? `Districts in ${selectedProvince}` : 'Select a Province'}
-              </h3>
+        <SectionCard
+          eyebrow="Applications"
+          title={selectedProvince ? `Districts in ${selectedProvince}` : 'Districts'}
+        >
+          {selectedProvince ? (
+            <div className="w-full overflow-x-auto">
+              <div className="h-[280px]" style={{ minWidth: `${Math.max(400, districtData.length * 80)}px` }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={districtData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
+                    <CartesianGrid {...gridProps} />
+                    <XAxis {...axisProps} dataKey="district" angle={-45} textAnchor="end" height={70} />
+                    <YAxis {...axisProps} />
+                    <Tooltip {...tooltipProps} cursor={barCursor} />
+                    <Bar dataKey="count" name="Applications" fill="var(--chart-1)" radius={BAR_RADIUS} maxBarSize={MAX_BAR_SIZE} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
             </div>
-          </CardHeader>
-          <CardContent className="pt-6">
-            {selectedProvince ? (
-              <div className="w-full overflow-x-auto">
-                <ChartContainer
-                  config={{
-                    count: {
-                      label: "Applications",
-                      color: "var(--chart-2)",
-                    },
-                  }}
-                  className="h-[280px]"
-                  style={{ minWidth: `${Math.max(400, districtData.length * 80)}px` }}
-                >
-                  <BarChart data={districtData} margin={{ top: 5, right: 10, left: 0, bottom: 70 }}>
-                  <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
-                  <XAxis dataKey="district" style={{ fontSize: '10px' }} angle={-45} textAnchor="end" height={65} />
-                  <YAxis style={{ fontSize: '12px' }} />
-                  <ChartTooltip content={<ChartTooltipContent />} />
-                  <Bar dataKey="count" fill="var(--chart-2)" radius={[8, 8, 0, 0]} maxBarSize={50} />
-                </BarChart>
-              </ChartContainer>
-              </div>
-            ) : (
-              <div className="h-[280px] flex flex-col items-center justify-center text-muted-foreground">
-                <MapPin className="h-12 w-12 mb-3 opacity-20" />
-                <p className="text-sm">Click on a province bar to see district breakdown</p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+          ) : (
+            <EmptyState
+              icon={<MapPin size={24} />}
+              title="Select a province"
+              description="Choose a province bar to see its districts."
+            />
+          )}
+        </SectionCard>
 
         {/* Salary Scale Distribution */}
-        <Card className="shadow-md hover:shadow-lg transition-shadow border-gray-200">
-          <CardHeader className="bg-surface-2">
-            <div className="flex items-center gap-2">
-              <TrendingUp className="h-5 w-5 text-positive" />
-              <h3 className="text-lg font-semibold text-gray-800">Salary Scale Distribution</h3>
-            </div>
-          </CardHeader>
-          <CardContent className="pt-6">
-            <ChartContainer
-              config={{
-                count: {
-                  label: "Applications",
-                  color: "var(--chart-3)",
-                },
-              }}
-              className="h-[280px] w-full"
-            >
+        <SectionCard eyebrow="Applications" title="Salary scale distribution">
+          <div className="h-[280px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
               <BarChart data={salaryData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
-                <XAxis dataKey="scale" style={{ fontSize: '12px' }} />
-                <YAxis style={{ fontSize: '12px' }} />
-                <ChartTooltip content={<ChartTooltipContent />} />
-                <Bar dataKey="count" fill="var(--chart-3)" radius={[8, 8, 0, 0]} maxBarSize={60} />
+                <CartesianGrid {...gridProps} />
+                <XAxis {...axisProps} dataKey="scale" />
+                <YAxis {...axisProps} />
+                <Tooltip {...tooltipProps} cursor={barCursor} />
+                <Bar dataKey="count" name="Applications" fill="var(--chart-1)" radius={BAR_RADIUS} maxBarSize={MAX_BAR_SIZE} />
               </BarChart>
-            </ChartContainer>
-          </CardContent>
-        </Card>
+            </ResponsiveContainer>
+          </div>
+        </SectionCard>
 
         {/* Referral Source */}
-        <Card className="shadow-md hover:shadow-lg transition-shadow border-gray-200">
-          <CardHeader className="bg-surface-2">
-            <div className="flex items-center gap-2">
-              <PieChartIcon className="h-5 w-5 text-caution" />
-              <h3 className="text-lg font-semibold text-gray-800">Referral vs Direct Applications</h3>
-            </div>
-          </CardHeader>
-          <CardContent className="pt-6">
-            <ChartContainer
-              config={{
-                withReferral: {
-                  label: "With Referral",
-                  color: "var(--chart-4)",
-                },
-                direct: {
-                  label: "Direct",
-                  color: "var(--chart-5)",
-                },
-              }}
-              className="h-[280px] w-full"
-            >
+        <SectionCard eyebrow="Applications" title="Referral and direct applications">
+          <div className="h-[280px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
                   data={referralData}
                   cx="50%"
                   cy="50%"
                   labelLine={false}
-                  label={({ name, percent }) => `${name} ${percent ? (percent * 100).toFixed(0) : 0}%`}
+                  label={({ percent }) => `${percent ? (percent * 100).toFixed(0) : 0}%`}
                   outerRadius={90}
                   innerRadius={0}
-                  fill="var(--chart-1)"
                   dataKey="value"
                 >
-                  {referralData.map((_, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  {referralData.map((entry, index) => (
+                    <Cell key={entry.name} fill={seriesColor(index)} stroke="var(--surface-1)" />
                   ))}
                 </Pie>
-                <ChartTooltip content={<ChartTooltipContent />} />
+                <Tooltip {...tooltipProps} />
+                <Legend {...legendProps} />
               </PieChart>
-            </ChartContainer>
-          </CardContent>
-        </Card>
+            </ResponsiveContainer>
+          </div>
+        </SectionCard>
 
         {/* Growth Trend */}
-        <Card className="lg:col-span-2 shadow-md hover:shadow-lg transition-shadow border-gray-200">
-          <CardHeader className="bg-surface-2">
-            <div className="flex items-center gap-2">
-              <TrendingUp className="h-5 w-5 text-signal-text" />
-              <h3 className="text-lg font-semibold text-gray-800">Application Growth Trend</h3>
-            </div>
-          </CardHeader>
-          <CardContent className="pt-6">
-            <ChartContainer
-              config={{
-                count: {
-                  label: "Applications",
-                  color: "var(--chart-1)",
-                },
-              }}
-              className="h-[280px] w-full"
-            >
+        <SectionCard eyebrow="Applications per month" title="Application growth" className="lg:col-span-2">
+          <div className="h-[280px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
               <LineChart data={growthData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
-                <XAxis dataKey="month" style={{ fontSize: '12px' }} />
-                <YAxis style={{ fontSize: '12px' }} />
-                <ChartTooltip content={<ChartTooltipContent />} />
+                <CartesianGrid {...gridProps} />
+                <XAxis {...axisProps} dataKey="month" />
+                <YAxis {...axisProps} />
+                <Tooltip {...tooltipProps} cursor={lineCursor} />
                 <Line
                   type="monotone"
                   dataKey="count"
+                  name="Applications"
                   stroke="var(--chart-1)"
-                  strokeWidth={3}
-                  dot={{ fill: 'var(--chart-1)', r: 5 }}
-                  activeDot={{ r: 7 }}
+                  strokeWidth={2}
+                  dot={false}
                 />
               </LineChart>
-            </ChartContainer>
-          </CardContent>
-        </Card>
+            </ResponsiveContainer>
+          </div>
+        </SectionCard>
       </div>
     </div>
   );

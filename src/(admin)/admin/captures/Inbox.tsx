@@ -1,10 +1,16 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
-import { Inbox as InboxIcon, Loader2, Plus } from "lucide-react";
+import { Inbox as InboxIcon, Plus } from "@/components/icons";
 import { PageTransition } from "@/components/PageTransition";
 import { Button } from "@/components/ui/button";
-import { EmptyPanel, Pager, Pill, TabBar } from "@/components/profiles/ui";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { EmptyState } from "@/components/shared/EmptyState";
+import { PageHeader } from "@/components/shared/PageHeader";
+import { SectionBody } from "@/components/shared/SectionBody";
+import { SectionCard } from "@/components/shared/SectionCard";
+import { TableSkeleton } from "@/components/shared/TableSkeleton";
+import { Pager, Pill, TabBar } from "@/components/profiles/ui";
 import { METHOD_LABEL, MethodIcon, StatusPill, fmtTime, useCaptureMeta } from "@/components/captures/parts";
 import { listCaptures } from "@/lib/api/captures";
 import { notifyInboxChanged } from "@/lib/hooks/useCaptureInbox";
@@ -42,20 +48,20 @@ export function Inbox() {
 
   return (
     <PageTransition>
-      <div className="mx-auto w-full min-w-0 max-w-2xl space-y-4">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div className="min-w-0">
-            <h1 className="font-display text-display-xs font-bold text-text-primary">Lead inbox</h1>
-            <p className="text-sm text-text-secondary">Check what the AI read before it reaches a profile.</p>
-          </div>
-          {(meta?.permissions.create ?? true) && (
-            <Button asChild>
-              <Link to="/admin/capture">
-                <Plus className="h-4 w-4" /> Add lead
-              </Link>
-            </Button>
-          )}
-        </div>
+      <div className="flex w-full min-w-0 flex-col gap-5">
+        <PageHeader
+          title="Lead inbox"
+          description="Check what the AI read before it reaches a profile."
+          actions={
+            (meta?.permissions.create ?? true) && (
+              <Button asChild>
+                <Link to="/admin/capture">
+                  <Plus /> Add lead
+                </Link>
+              </Button>
+            )
+          }
+        />
 
         <TabBar<Filter>
           tabs={[
@@ -69,47 +75,67 @@ export function Inbox() {
             setFilter(f);
             setPage(1);
           }}
-        />
-
-        {loading ? (
-          <div className="flex justify-center py-12 text-text-muted" role="status">
-            <Loader2 className="h-6 w-6 animate-spin" />
-          </div>
-        ) : items.length === 0 ? (
-          <EmptyPanel icon={<InboxIcon className="h-8 w-8" />} title={filter === "OPEN" ? "Nothing waiting for review" : "Nothing here yet"}>
-            New cards, voice debriefs and notes appear here as soon as they are read.
-          </EmptyPanel>
-        ) : (
-          <ul className="space-y-2">
-            {items.map((c) => (
-              <li key={c.id}>
-                <Link
-                  to={`/admin/capture/${c.id}`}
-                  className="flex min-h-16 min-w-0 items-start gap-3 rounded-xl border border-line bg-surface-1 p-3 outline-none transition-colors hover:bg-surface-2 focus-visible:ring-2 focus-visible:ring-focus"
-                >
-                  <span className="mt-0.5 rounded-lg bg-surface-2 p-2 text-text-secondary">
-                    <MethodIcon method={c.method} className="h-5 w-5" />
-                  </span>
-                  <span className="min-w-0 flex-1 space-y-1">
-                    <span className="block break-words font-medium text-text-primary">
-                      {c.person_name || c.company_name || (c.status === "AI_FAILED" ? `${METHOD_LABEL[c.method]} (not read)` : METHOD_LABEL[c.method])}
-                    </span>
-                    {c.person_name && c.company_name && <span className="block break-words text-sm text-text-secondary">{c.company_name}</span>}
-                    <span className="flex flex-wrap items-center gap-1.5 text-xs text-text-muted">
-                      <StatusPill status={c.status} />
-                      {c.uncertain > 0 && c.status === "NEEDS_REVIEW" && <Pill variant="caution">{c.uncertain} to check</Pill>}
-                      <span>{METHOD_LABEL[c.method]}</span>
-                      <span>· {fmtTime(c.created_at)}</span>
-                      {c.event_name && <span className="break-words">· {c.event_name}</span>}
-                      {!c.mine && c.created_by_name && <span>· by {c.created_by_name}</span>}
-                    </span>
-                  </span>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        )}
-        <Pager page={page} pageSize={PAGE_SIZE} total={total} onPage={setPage} />
+        >
+          <SectionCard padded={false}>
+            <SectionBody
+              loading={loading}
+              skeleton={<TableSkeleton rows={6} columns={4} />}
+              isEmpty={items.length === 0}
+              empty={
+                <EmptyState
+                  icon={<InboxIcon size={24} />}
+                  title={filter === "OPEN" ? "Nothing waiting for review" : "Nothing here yet"}
+                  description="New cards, voice debriefs and notes appear here as soon as they are read."
+                />
+              }
+            >
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Lead</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="hidden md:table-cell">Source</TableHead>
+                    <TableHead className="hidden lg:table-cell">Event</TableHead>
+                    <TableHead className="hidden sm:table-cell">Captured</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {items.map((c) => (
+                    <TableRow key={c.id}>
+                      <TableCell>
+                        <Link to={`/admin/capture/${c.id}`} className="flex min-h-10 min-w-0 items-center gap-3">
+                          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-sm bg-surface-2 text-text-secondary">
+                            <MethodIcon method={c.method} className="h-5 w-5" />
+                          </span>
+                          <span className="min-w-0">
+                            <span className="block break-words font-semibold text-text-primary">
+                              {c.person_name || c.company_name || (c.status === "AI_FAILED" ? `${METHOD_LABEL[c.method]} (not read)` : METHOD_LABEL[c.method])}
+                            </span>
+                            {c.person_name && c.company_name && <span className="block break-words font-normal text-text-secondary">{c.company_name}</span>}
+                            <span className="block text-xs font-normal text-text-muted sm:hidden">{fmtTime(c.created_at)}</span>
+                          </span>
+                        </Link>
+                      </TableCell>
+                      <TableCell>
+                        <span className="flex flex-wrap items-center gap-1.5">
+                          <StatusPill status={c.status} />
+                          {c.uncertain > 0 && c.status === "NEEDS_REVIEW" && <Pill variant="caution">{c.uncertain} to check</Pill>}
+                        </span>
+                      </TableCell>
+                      <TableCell className="hidden text-[13px] text-text-secondary md:table-cell">
+                        {METHOD_LABEL[c.method]}
+                        {!c.mine && c.created_by_name && <span className="block text-xs text-text-muted">by {c.created_by_name}</span>}
+                      </TableCell>
+                      <TableCell className="hidden break-words text-[13px] text-text-secondary lg:table-cell">{c.event_name || <span className="text-text-muted">None</span>}</TableCell>
+                      <TableCell className="hidden font-mono text-xs text-text-secondary sm:table-cell">{fmtTime(c.created_at)}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </SectionBody>
+            <Pager page={page} pageSize={PAGE_SIZE} total={total} onPage={setPage} />
+          </SectionCard>
+        </TabBar>
       </div>
     </PageTransition>
   );

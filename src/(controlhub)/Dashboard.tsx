@@ -11,49 +11,87 @@ import {
   ShieldCheck,
   Copy,
   CheckCircle,
-} from "lucide-react";
-import { AreaChart, Area, ResponsiveContainer } from "recharts";
+  TrendingUp,
+  Plus,
+  RefreshCw,
+} from "@/components/icons";
 import { retrieve, post } from "@/lib/api/crud";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { PageHeader } from "@/components/shared/PageHeader";
+import { KpiTile } from "@/components/shared/KpiTile";
+import { SectionCard } from "@/components/shared/SectionCard";
+import { StatusBadge } from "@/components/shared/StatusBadge";
+import { EmptyState } from "@/components/shared/EmptyState";
+import { TableSkeleton } from "@/components/shared/TableSkeleton";
+import type { Tone } from "@/lib/status";
+
+const STATE_TONES: Record<string, Tone> = {
+  SUBMITTED: "positive",
+  INFO_REQUESTED: "caution",
+};
+
+const DOC_TONES: Record<string, Tone> = {
+  VERIFIED: "positive",
+  REJECTED: "risk",
+};
+
+const sentenceCase = (value: string) => {
+  const words = (value ?? "").replace(/_/g, " ").toLowerCase();
+  return words.charAt(0).toUpperCase() + words.slice(1);
+};
+
+const pipelineAmount = (value: number) => `USD ${(value || 0).toLocaleString()}`;
+
+function Detail({ label, value, mono }: { label: string; value: React.ReactNode; mono?: boolean }) {
+  return (
+    <div className="min-w-0">
+      <dt className="text-xs text-text-muted">{label}</dt>
+      <dd className={`mt-0.5 break-words font-medium text-text-primary ${mono ? "font-mono text-xs" : ""}`}>{value}</dd>
+    </div>
+  );
+}
 
 export default function ControlHubDashboard() {
   const [stats] = useState<any[]>([
     {
       id: "tenants",
       icon: Building2,
-      title: "Total Tenants",
-      subtitle: "Active ecosystem",
+      title: "Total tenants",
       value: "12",
       trend: { direction: "up" as const, percentage: 20, label: "+2 this week" },
-      sparkline: [40, 50, 60, 65, 70, 75, 80, 85, 90],
     },
     {
       id: "users",
       icon: Users,
-      title: "Active Users",
-      subtitle: "Across all tenants",
+      title: "Active users",
       value: "2,845",
       trend: { direction: "up" as const, percentage: 15, label: "+340 this month" },
-      sparkline: [50, 55, 58, 65, 72, 78, 82, 88, 95],
     },
     {
       id: "health",
       icon: Activity,
-      title: "System Health",
-      subtitle: "Overall uptime",
+      title: "Overall uptime",
       value: "99.9%",
       trend: { direction: "up" as const, percentage: 0.1, label: "vs last week" },
-      sparkline: [95, 96, 98, 99, 99, 99, 99, 99, 100],
     },
     {
       id: "reach",
       icon: Globe,
-      title: "Global Reach",
-      subtitle: "Regions covered",
+      title: "Regions covered",
       value: "8",
       trend: { direction: "up" as const, percentage: 33, label: "+1 new region" },
-      sparkline: [2, 3, 4, 5, 6, 7, 7, 8, 8],
     },
   ]);
 
@@ -115,7 +153,7 @@ export default function ControlHubDashboard() {
     try {
       const res: any = await post("CH_ONBOARDING_VERIFY_DOC", { status, reason: "Supervisor verification review" }, { id: docId });
       if (res) {
-        toast.success(`Document marked as ${status}`);
+        toast.success(`Document marked as ${status.toLowerCase()}`);
         // Refresh selected request state
         if (selectedRequest) {
           const updatedDocs = selectedRequest.documents.map((d: any) =>
@@ -142,7 +180,7 @@ export default function ControlHubDashboard() {
       }, { id: selectedRequest.id });
 
       if (res) {
-        toast.success(`Onboarding transitioned to ${state}`);
+        toast.success(`Onboarding status: ${sentenceCase(state)}`);
 
         // If approved, capture invitation setup link DTO
         if (state === "APPROVED" && res.admin_setup_link) {
@@ -164,7 +202,7 @@ export default function ControlHubDashboard() {
   const handleInitiateOnboarding = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!initCompanyName.trim() || !initContactEmail.trim()) {
-      toast.error("All fields are required");
+      toast.error("Enter a company name and a contact email.");
       return;
     }
 
@@ -176,7 +214,7 @@ export default function ControlHubDashboard() {
       });
 
       if (res && res.admin_setup_link) {
-        toast.success("B2B Onboarding Request successfully initiated!");
+        toast.success("Onboarding request created");
         setClaimLink(res.admin_setup_link);
         setIsInitiating(false);
         setInitCompanyName("");
@@ -195,475 +233,335 @@ export default function ControlHubDashboard() {
   const handleCopyLink = () => {
     if (claimLink) {
       navigator.clipboard.writeText(claimLink);
-      toast.success("Invitation setup link copied to clipboard!");
+      toast.success("Setup link copied");
     }
   };
 
-  const inputClass =
-    "w-full p-2.5 rounded-lg border border-line bg-surface-1 text-xs text-gray-900 focus:ring-2 focus:ring-ch-primary focus:border-transparent focus:outline-none";
+  const closeClaimLink = () => {
+    setClaimLink(null);
+    setSelectedRequest(null);
+  };
 
   return (
-    <div className="space-y-12">
-      {/* Page Header */}
-      <div>
-        <h1 className="text-4xl font-bold tracking-tight text-gray-900">Control Hub</h1>
-        <p className="text-gray-600 text-lg mt-2">Manage your tenant ecosystem and onboarding supervisor review panels.</p>
+    <div className="flex flex-col gap-5">
+      <PageHeader
+        title="Control Hub"
+        description="Manage tenants and review client onboarding."
+        actions={
+          <Button onClick={() => setIsInitiating(true)}>
+            <Plus />
+            Start onboarding
+          </Button>
+        }
+      />
+
+      {/* KPI row */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+        {stats.map((stat) => {
+          const Icon = stat.icon;
+          return (
+            <KpiTile
+              key={stat.id}
+              label={stat.title}
+              value={stat.value}
+              icon={<Icon size={18} />}
+              hint={stat.trend && (
+                <>
+                  <TrendingUp size={14} className="text-positive" />
+                  <span className="text-positive">{stat.trend.percentage}%</span>
+                  <span>{stat.trend.label}</span>
+                </>
+              )}
+            />
+          );
+        })}
       </div>
 
-      {/* System Overview Section */}
-      <section className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-xl font-semibold text-gray-900">System Overview</h2>
-            <p className="text-sm text-gray-500 mt-1">Real-time metrics across your organization</p>
-          </div>
-        </div>
-
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 auto-rows-max">
-          {stats.map((stat, idx) => {
-            const Icon = stat.icon;
-            
-            // Color schemes for each stat card
-            const colorSchemes = [
-              { // Signal teal - Primary
-                bg: "bg-surface-1",
-                border: "border-line",
-                iconBg: "bg-signal-tint",
-                icon: "text-signal-text",
-                hex: "var(--chart-1)",
-              },
-              { // Blue - Secondary
-                bg: "bg-surface-1",
-                border: "border-line",
-                iconBg: "bg-positive-tint",
-                icon: "text-positive",
-                hex: "var(--chart-2)",
-              },
-              { // Caution
-                bg: "bg-surface-1",
-                border: "border-line",
-                iconBg: "bg-caution-tint",
-                icon: "text-caution",
-                hex: "var(--chart-3)",
-              },
-              { // Positive
-                bg: "bg-surface-1",
-                border: "border-line",
-                iconBg: "bg-positive-tint",
-                icon: "text-positive",
-                hex: "var(--chart-4)",
-              },
-            ];
-            
-            const scheme = colorSchemes[idx % colorSchemes.length];
-            const areaData = stat.sparkline.map((v: number) => ({ v }));
-            
-            return (
-              <div
-                key={stat.id}
-                className={`${scheme.bg} border ${scheme.border} rounded-xl p-6 shadow-sm hover:shadow-md transition-all duration-300 h-full flex flex-col group`}
-              >
-                {/* Header: Title + Trend */}
-                <div className="flex items-start justify-between mb-6">
-                  <div className="space-y-1 flex-1">
-                    <p className="text-xs font-semibold text-gray-600 tracking-tight">
-                      {stat.title}
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      {stat.subtitle}
-                    </p>
-                  </div>
-                  
-                  {/* Icon Badge */}
-                  <div className={`h-9 w-9 rounded-lg ${scheme.iconBg} flex items-center justify-center flex-shrink-0 ml-2 shadow-sm`}>
-                    <Icon className={`h-5 w-5 ${scheme.icon}`} />
-                  </div>
-                </div>
-
-                {/* Main Number + Sparkline */}
-                <div className="space-y-4 flex-1 flex flex-col">
-                  {/* Number + Trend */}
-                  <div>
-                    <span className="text-3xl font-bold text-gray-900">{stat.value}</span>
-                    {stat.trend && (
-                      <div className="flex items-center gap-2 mt-2">
-                        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-positive-tint">
-                          <span className="text-xs font-semibold text-positive">
-                            {stat.trend.direction === "up" ? "↑" : "↓"} {stat.trend.percentage}%
-                          </span>
-                        </span>
-                        <span className="text-xs text-gray-500">{stat.trend.label}</span>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Area Chart Sparkline */}
-                  {stat.sparkline && (
-                    <div className="mt-auto -mx-1">
-                      <ResponsiveContainer width="100%" height={52}>
-                        <AreaChart data={areaData} margin={{ top: 2, right: 0, left: 0, bottom: 0 }}>
-                          <defs>
-                            <linearGradient id={`grad-${stat.id}`} x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="5%" stopColor={scheme.hex} stopOpacity={0.35} />
-                              <stop offset="95%" stopColor={scheme.hex} stopOpacity={0} />
-                            </linearGradient>
-                          </defs>
-                          <Area
-                            type="monotone"
-                            dataKey="v"
-                            stroke={scheme.hex}
-                            strokeWidth={2}
-                            fill={`url(#grad-${stat.id})`}
-                            dot={false}
-                            isAnimationActive={false}
-                          />
-                        </AreaChart>
-                      </ResponsiveContainer>
-                    </div>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </section>
-
-      {/* B2B Onboarding Audit Panel */}
-      <section className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-xl font-semibold text-gray-900">Corporate Onboarding Audit Panel</h2>
-            <p className="text-sm text-gray-500 mt-1">Review registrations, verify company documents, and transition client lifecycles.</p>
-          </div>
-          <div className="flex items-center gap-2">
+      {/* Onboarding review */}
+      <SectionCard
+        eyebrow="Onboarding"
+        title="Client onboarding review"
+        padded={false}
+        actions={
+          <>
             <Button
-              onClick={() => setIsInitiating(true)}
-              className="bg-ch-primary hover:bg-ch-primary/90 text-white text-xs font-semibold"
-            >
-              + Initiate Onboarding Request
-            </Button>
-            <Button
-              variant="outline"
+              size="sm"
+              variant="ghost"
               onClick={() => setListScope(listScope === "actionable" ? "unclaimed" : "actionable")}
-              className="border-line text-xs"
             >
               {listScope === "actionable" ? "Show unclaimed setup links" : "Show needs review"}
             </Button>
-            <Button variant="outline" onClick={() => fetchOnboardingRequests()} className="flex items-center gap-1.5 border-line text-xs">
-              ↻ Refresh list
+            <Button size="sm" variant="secondary" onClick={() => fetchOnboardingRequests()}>
+              <RefreshCw />
+              Refresh list
             </Button>
-          </div>
-        </div>
-
+          </>
+        }
+      >
         {isLoadingRequests ? (
-          <div className="bg-surface-1 border border-line rounded-xl p-10 flex items-center justify-center">
-            <Loader2 className="h-8 w-8 animate-spin text-ch-primary" />
-          </div>
+          <TableSkeleton rows={4} columns={4} />
         ) : onboardingRequests.length === 0 ? (
-          <div className="bg-surface-1 border border-line rounded-xl p-10 text-center text-gray-400 space-y-3">
-            <ShieldCheck className="h-10 w-10 mx-auto text-gray-300" />
-            <p className="text-sm font-semibold">No pending corporate onboarding requests at this time</p>
-          </div>
+          <EmptyState
+            icon={<ShieldCheck size={24} />}
+            title="No onboarding requests"
+            description="Company registrations that need your attention appear here."
+          />
         ) : (
-          <div className="bg-surface-1 border border-line rounded-xl overflow-hidden shadow-sm">
-            <div className="divide-y divide-line">
-              {onboardingRequests.map((req) => (
-                <div key={req.id} className="p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-gray-50/50 transition-colors">
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <h3 className="font-bold text-gray-900 text-lg">{req.company_name}</h3>
-                      <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold uppercase ${
-                        req.state === "SUBMITTED"
-                          ? "bg-positive-tint text-positive"
-                          : req.state === "INFO_REQUESTED"
-                          ? "bg-caution-tint text-caution"
-                          : "bg-gray-100 text-gray-700"
-                      }`}>
-                        {req.state.replace("_", " ")}
-                      </span>
-                    </div>
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-6 gap-y-1 text-xs text-gray-500">
-                      <p>Lead: <span className="font-semibold text-gray-700">{req.commercial_lead || "—"}</span></p>
-                      <p>Email: <span className="font-semibold text-gray-700">{req.contact_email}</span></p>
-                      <p>Team Size: <span className="font-semibold text-gray-700">{req.sales_team_size || 0} reps</span></p>
-                      <p>Pipeline: <span className="font-semibold text-gray-700">${(req.expected_pipeline || 0).toLocaleString()}</span></p>
-                    </div>
+          <div className="divide-y divide-line border-t border-line">
+            {onboardingRequests.map((req) => (
+              <div key={req.id} className="px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-surface-2 transition-colors">
+                <div className="space-y-2 min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h3 className="font-semibold text-sm text-text-primary">{req.company_name}</h3>
+                    <StatusBadge tone={STATE_TONES[req.state] ?? "neutral"} label={sentenceCase(req.state)} />
                   </div>
-
-                  {listScope === "unclaimed" ? (
-                    <Button
-                      disabled={resendingId === req.id}
-                      onClick={() => handleResend(req.id)}
-                      className="bg-ch-secondary hover:bg-ch-secondary/90 text-white font-semibold text-xs"
-                    >
-                      {resendingId === req.id ? "Sending..." : "Resend setup link"}
-                    </Button>
-                  ) : (
-                    <Button
-                      onClick={() => setSelectedRequest(req)}
-                      className="bg-ch-secondary hover:bg-ch-secondary/90 text-white font-semibold text-xs"
-                    >
-                      Open Review
-                    </Button>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-      </section>
-
-      {/* Onboarding Request Initiation Modal */}
-      {isInitiating && (
-        <div className="fixed inset-0 bg-gray-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-6">
-          <div className="bg-surface-1 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl border border-line">
-            <div className="p-6 bg-ch-primary text-white flex items-center justify-between">
-              <div>
-                <h3 className="text-xl font-bold">Initiate B2B Client Onboarding</h3>
-                <p className="text-xs text-white/70 mt-1">Pre-registers the organization and generates a password setup claim token.</p>
-              </div>
-              <button onClick={() => setIsInitiating(false)} className="text-white/80 hover:text-white">
-                <X className="h-6 w-6" />
-              </button>
-            </div>
-
-            <form onSubmit={handleInitiateOnboarding} className="p-6 space-y-4">
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-gray-500 uppercase">Company Name</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. Acme Corporation"
-                  value={initCompanyName}
-                  onChange={(e) => setInitCompanyName(e.target.value)}
-                  className={inputClass}
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-gray-500 uppercase">Contact Email</label>
-                <input
-                  type="email"
-                  required
-                  placeholder="e.g. lead@acme.com"
-                  value={initContactEmail}
-                  onChange={(e) => setInitContactEmail(e.target.value)}
-                  className={inputClass}
-                />
-              </div>
-
-              <div className="pt-4 flex items-center justify-end gap-2">
-                <Button variant="outline" type="button" onClick={() => setIsInitiating(false)} className="text-xs border-line">
-                  Cancel
-                </Button>
-                <Button
-                  type="submit"
-                  disabled={isSubmittingInit}
-                  className="bg-ch-primary hover:bg-ch-primary/90 text-white text-xs font-semibold min-w-[120px]"
-                >
-                  {isSubmittingInit ? "Initiating..." : "Create Request"}
-                </Button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* Review Drawer / Modal */}
-      {selectedRequest && (
-        <div className="fixed inset-0 bg-gray-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-6">
-          <div className="bg-surface-1 rounded-2xl w-full max-w-2xl overflow-hidden shadow-2xl border border-line flex flex-col max-h-[85vh]">
-            <div className="p-6 bg-ch-secondary text-white flex items-center justify-between">
-              <div>
-                <h3 className="text-xl font-bold">{selectedRequest.company_name}</h3>
-                <p className="text-xs text-white/70 mt-1">Request ID: {selectedRequest.id}</p>
-              </div>
-              <button onClick={() => setSelectedRequest(null)} className="text-white/80 hover:text-white">
-                <X className="h-6 w-6" />
-              </button>
-            </div>
-
-            <div className="flex-1 overflow-y-auto p-6 space-y-6 text-sm text-gray-600">
-              {/* Client Info grid */}
-              <div className="grid grid-cols-2 gap-4 bg-gray-50 p-4 rounded-xl border border-line">
-                <div>
-                  <p className="text-xs font-bold text-gray-400 uppercase">Reg Number</p>
-                  <p className="font-semibold text-gray-900 mt-0.5">{selectedRequest.registration_number || "—"}</p>
-                </div>
-                <div>
-                  <p className="text-xs font-bold text-gray-400 uppercase">TPIN Tax Number</p>
-                  <p className="font-semibold text-gray-900 mt-0.5">{selectedRequest.tax_number || "—"}</p>
-                </div>
-                <div>
-                  <p className="text-xs font-bold text-gray-400 uppercase">Expected pipeline</p>
-                  <p className="font-semibold text-gray-900 mt-0.5">${(selectedRequest.expected_pipeline || 0).toLocaleString()}</p>
-                </div>
-                <div>
-                  <p className="text-xs font-bold text-gray-400 uppercase">Address / Location</p>
-                  <p className="font-semibold text-gray-900 mt-0.5">
-                    {selectedRequest.location ? `${selectedRequest.location}, ${selectedRequest.district}, ${selectedRequest.province}` : "—"}
-                  </p>
-                </div>
-              </div>
-
-              {/* Uploaded Documents List */}
-              <div className="space-y-3">
-                <h4 className="font-bold text-gray-900 text-sm">Uploaded Compliance Files</h4>
-                {selectedRequest.documents && selectedRequest.documents.length > 0 ? (
-                  <div className="space-y-2">
-                    {selectedRequest.documents.map((doc: any) => (
-                      <div key={doc.id} className="flex items-center justify-between p-3 bg-gray-50 border border-line rounded-lg">
-                        <div className="flex items-center gap-2">
-                          <FileText className="h-4 w-4 text-ch-secondary" />
-                          <span className="font-semibold text-gray-700 text-xs">{doc.document_type.replace(/_/g, " ")}</span>
-                          <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                            doc.verification_status === "VERIFIED"
-                              ? "bg-positive-tint text-positive"
-                              : doc.verification_status === "REJECTED"
-                              ? "bg-destructive/10 text-destructive"
-                              : "bg-caution-tint text-caution"
-                          }`}>
-                            {doc.verification_status}
-                          </span>
-                        </div>
-
-                        <div className="flex items-center gap-2">
-                          <a
-                            href={`/api/v1/controlhub/admin/onboarding/documents/download?bucket=${selectedRequest.tenant_id}&object=${encodeURIComponent(doc.file_path)}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-xs text-ch-secondary hover:underline font-semibold"
-                          >
-                            View Raw
-                          </a>
-                          {doc.verification_status !== "VERIFIED" && (
-                            <button
-                              onClick={() => handleVerifyDoc(doc.id, "VERIFIED")}
-                              className="p-1 text-positive hover:bg-positive-tint rounded"
-                              title="Mark verified"
-                            >
-                              <Check className="h-4 w-4" />
-                            </button>
-                          )}
-                          {doc.verification_status !== "REJECTED" && (
-                            <button
-                              onClick={() => handleVerifyDoc(doc.id, "REJECTED")}
-                              className="p-1 text-destructive hover:bg-destructive/10 rounded"
-                              title="Mark rejected"
-                            >
-                              <X className="h-4 w-4" />
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    ))}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-x-6 gap-y-1 text-xs text-text-muted">
+                    <p>Lead: <span className="font-semibold text-text-secondary">{req.commercial_lead || "N/A"}</span></p>
+                    <p className="break-all">Email: <span className="font-semibold text-text-secondary">{req.contact_email}</span></p>
+                    <p>Team size: <span className="font-mono text-text-secondary">{req.sales_team_size || 0}</span> reps</p>
+                    <p>Pipeline: <span className="font-mono text-text-secondary">{pipelineAmount(req.expected_pipeline)}</span></p>
                   </div>
+                </div>
+
+                {listScope === "unclaimed" ? (
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    disabled={resendingId === req.id}
+                    onClick={() => handleResend(req.id)}
+                  >
+                    {resendingId === req.id ? "Sending" : "Resend setup link"}
+                  </Button>
                 ) : (
-                  <p className="text-xs text-gray-400">No documents uploaded yet.</p>
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    onClick={() => setSelectedRequest(req)}
+                  >
+                    Open review
+                  </Button>
                 )}
               </div>
+            ))}
+          </div>
+        )}
+      </SectionCard>
 
-              {/* Action Notes forms */}
-              <div className="space-y-4 pt-4 border-t border-line">
-                <h4 className="font-bold text-gray-900 text-sm">Supervisor Verification Notes</h4>
-                <div className="space-y-2">
-                  <label className="text-xs font-bold text-gray-500 uppercase">Public Notes (Visible to Client)</label>
-                  <textarea
-                    placeholder="Enter notes about document checks or general client notifications..."
-                    value={notes}
-                    onChange={(e) => setNotes(e.target.value)}
-                    className={`${inputClass} min-h-[60px]`}
+      {/* Onboarding Request Initiation Modal */}
+      <Dialog open={isInitiating} onOpenChange={(open) => { if (!open) setIsInitiating(false); }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Start client onboarding</DialogTitle>
+            <DialogDescription>Registers the organisation and creates a setup link for its administrator.</DialogDescription>
+          </DialogHeader>
+
+          <form onSubmit={handleInitiateOnboarding} className="space-y-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="init-company-name">Company name</Label>
+              <Input
+                id="init-company-name"
+                type="text"
+                required
+                placeholder="Zambezi Logistics Ltd"
+                value={initCompanyName}
+                onChange={(e) => setInitCompanyName(e.target.value)}
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="init-contact-email">Contact email</Label>
+              <Input
+                id="init-contact-email"
+                type="email"
+                required
+                placeholder="name@company.co.zm"
+                value={initContactEmail}
+                onChange={(e) => setInitContactEmail(e.target.value)}
+              />
+            </div>
+
+            <DialogFooter className="gap-3 pt-2">
+              <Button variant="secondary" type="button" onClick={() => setIsInitiating(false)}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={isSubmittingInit}>
+                {isSubmittingInit && <Loader2 className="animate-spin" />}
+                Create request
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Review Modal (hidden while the setup link is showing) */}
+      <Dialog open={!!selectedRequest && !claimLink} onOpenChange={(open) => { if (!open) setSelectedRequest(null); }}>
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+          {selectedRequest && (
+            <>
+              <DialogHeader>
+                <DialogTitle>{selectedRequest.company_name}</DialogTitle>
+                <DialogDescription>
+                  Request ID <span className="font-mono text-xs">{selectedRequest.id}</span>
+                </DialogDescription>
+              </DialogHeader>
+
+              <div className="space-y-4 text-sm">
+                {/* Client Info grid */}
+                <dl className="grid grid-cols-2 gap-4 bg-field p-4 rounded-md">
+                  <Detail label="Registration number" mono value={selectedRequest.registration_number || "N/A"} />
+                  <Detail label="TPIN" mono value={selectedRequest.tax_number || "N/A"} />
+                  <Detail label="Expected pipeline" mono value={pipelineAmount(selectedRequest.expected_pipeline)} />
+                  <Detail
+                    label="Address"
+                    value={selectedRequest.location ? `${selectedRequest.location}, ${selectedRequest.district}, ${selectedRequest.province}` : "N/A"}
                   />
+                </dl>
+
+                {/* Uploaded Documents List */}
+                <div className="space-y-2">
+                  <h4 className="font-semibold text-text-primary text-sm">Compliance files</h4>
+                  {selectedRequest.documents && selectedRequest.documents.length > 0 ? (
+                    <div className="space-y-2">
+                      {selectedRequest.documents.map((doc: any) => (
+                        <div key={doc.id} className="flex flex-wrap items-center justify-between gap-2 p-3 border border-line rounded-md">
+                          <div className="flex flex-wrap items-center gap-2 min-w-0">
+                            <FileText size={16} className="text-text-muted" />
+                            <span className="font-semibold text-text-primary text-xs">{doc.document_type.replace(/_/g, " ")}</span>
+                            <StatusBadge tone={DOC_TONES[doc.verification_status] ?? "caution"} label={sentenceCase(doc.verification_status)} />
+                          </div>
+
+                          <div className="flex items-center gap-1">
+                            <Button asChild size="sm" variant="ghost">
+                              <a
+                                href={`/api/v1/controlhub/admin/onboarding/documents/download?bucket=${selectedRequest.tenant_id}&object=${encodeURIComponent(doc.file_path)}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                              >
+                                View file
+                              </a>
+                            </Button>
+                            {doc.verification_status !== "VERIFIED" && (
+                              <Button
+                                type="button"
+                                size="icon"
+                                variant="ghost"
+                                onClick={() => handleVerifyDoc(doc.id, "VERIFIED")}
+                                className="h-8 w-8 text-positive hover:text-positive hover:bg-positive-tint"
+                                title="Mark verified"
+                                aria-label="Mark verified"
+                              >
+                                <Check />
+                              </Button>
+                            )}
+                            {doc.verification_status !== "REJECTED" && (
+                              <Button
+                                type="button"
+                                size="icon"
+                                variant="ghost"
+                                onClick={() => handleVerifyDoc(doc.id, "REJECTED")}
+                                className="h-8 w-8 text-risk hover:text-risk hover:bg-risk-tint"
+                                title="Mark rejected"
+                                aria-label="Mark rejected"
+                              >
+                                <X />
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-text-muted">No documents uploaded yet.</p>
+                  )}
                 </div>
 
-                <div className="space-y-2">
-                  <label className="text-xs font-bold text-gray-500 uppercase">Correction details (Required for INFO_REQUESTED)</label>
-                  <input
-                    type="text"
-                    placeholder="e.g. Please re-sign Standard NDA on page 4."
-                    value={infoRequestedFields}
-                    onChange={(e) => setInfoRequestedFields(e.target.value)}
-                    className={inputClass}
-                  />
+                {/* Action Notes forms */}
+                <div className="space-y-4 pt-4 border-t border-line">
+                  <h4 className="font-semibold text-text-primary text-sm">Review notes</h4>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="review-public-notes">Notes the client can see</Label>
+                    <Textarea
+                      id="review-public-notes"
+                      placeholder="Add notes about the document checks"
+                      value={notes}
+                      onChange={(e) => setNotes(e.target.value)}
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label htmlFor="review-corrections">Corrections needed (for information requests)</Label>
+                    <Input
+                      id="review-corrections"
+                      type="text"
+                      placeholder="Sign the standard NDA on page 4"
+                      value={infoRequestedFields}
+                      onChange={(e) => setInfoRequestedFields(e.target.value)}
+                    />
+                  </div>
                 </div>
               </div>
-            </div>
 
-            <div className="p-6 bg-gray-50 border-t border-line flex items-center justify-end gap-2">
-              <Button
-                variant="outline"
-                onClick={() => handleTransitionState("INFO_REQUESTED")}
-                className="border-caution/40 text-caution hover:bg-caution-tint"
-              >
-                Request Info
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => handleTransitionState("REJECTED")}
-                className="border-destructive/40 text-destructive hover:bg-destructive/10"
-              >
-                Reject Client
-              </Button>
-              <Button
-                onClick={() => handleTransitionState("APPROVED")}
-                className="bg-ch-primary hover:bg-ch-primary/90 text-white font-semibold flex items-center gap-1.5"
-              >
-                <CheckCircle className="h-4 w-4" /> Approve & Seed Tenant
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
+              <DialogFooter className="gap-3 border-t border-line pt-4">
+                <Button
+                  variant="secondary"
+                  onClick={() => handleTransitionState("INFO_REQUESTED")}
+                >
+                  Request information
+                </Button>
+                <Button
+                  variant="destructive"
+                  onClick={() => handleTransitionState("REJECTED")}
+                >
+                  Reject client
+                </Button>
+                <Button onClick={() => handleTransitionState("APPROVED")}>
+                  <CheckCircle />
+                  Approve and create tenant
+                </Button>
+              </DialogFooter>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Copy link modal after successful approval or initiation */}
-      {claimLink && (
-        <div className="fixed inset-0 bg-gray-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-6">
-          <div className="bg-surface-1 rounded-2xl w-full max-w-md p-6 text-center space-y-6 shadow-2xl border border-line">
-            <div className="h-16 w-16 bg-signal-tint text-signal-text rounded-full flex items-center justify-center mx-auto border-2 border-line animate-bounce">
-              <CheckCircle className="h-9 w-9" />
-            </div>
+      <Dialog open={!!claimLink} onOpenChange={(open) => { if (!open) closeClaimLink(); }}>
+        <DialogContent className="max-w-md" onInteractOutside={(e) => e.preventDefault()}>
+          <DialogHeader>
+            <DialogTitle>Setup link created</DialogTitle>
+            <DialogDescription>
+              Share this link so the administrator can set a password.
+            </DialogDescription>
+          </DialogHeader>
 
-            <div className="space-y-2">
-              <h3 className="text-2xl font-extrabold text-gray-900">Operation Success!</h3>
-              <p className="text-xs text-gray-400">
-                The setup invitation claim token has been created successfully. Use the link below to configure password credentials.
-              </p>
+          <div className="space-y-1.5">
+            <Label htmlFor="claim-link">Setup link</Label>
+            <div className="flex items-center gap-2">
+              <Input
+                id="claim-link"
+                type="text"
+                readOnly
+                value={claimLink ?? ""}
+                className="font-mono text-xs"
+              />
+              <Button
+                type="button"
+                size="icon"
+                variant="secondary"
+                onClick={handleCopyLink}
+                title="Copy link"
+                aria-label="Copy link"
+              >
+                <Copy />
+              </Button>
             </div>
-
-            <div className="space-y-1.5 text-left bg-gray-50 p-4 border border-line rounded-xl">
-              <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wide">
-                Invitation Setup Link
-              </label>
-              <div className="flex items-center gap-2 mt-1">
-                <input
-                  type="text"
-                  readOnly
-                  value={claimLink}
-                  className="w-full text-xs font-mono bg-transparent border-none text-gray-600 focus:outline-none"
-                />
-                <button
-                  onClick={handleCopyLink}
-                  className="p-1.5 rounded hover:bg-gray-200 text-gray-500"
-                  title="Copy link"
-                >
-                  <Copy className="h-4 w-4" />
-                </button>
-              </div>
-            </div>
-
-            <Button
-              onClick={() => {
-                setClaimLink(null);
-                setSelectedRequest(null);
-              }}
-              className="w-full bg-ch-secondary hover:bg-ch-secondary/90 text-white"
-            >
-              Done & Return
-            </Button>
           </div>
-        </div>
-      )}
+
+          <DialogFooter>
+            <Button onClick={closeClaimLink}>Done</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

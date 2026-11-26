@@ -1,6 +1,6 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import ScrollToTop from './components/ScrollToTop'
-import { Toaster } from 'sonner';
+import { Toaster } from './components/ui/sonner';
 import Login from './components/Login';
 import { ProtectedRoute } from './lib/ProtectedRoute';
 import { ChangePasswordModal } from './components/auth/ChangePasswordModal';
@@ -139,7 +139,7 @@ function App() {
           <Route path="tenants/:id" element={<TenantDetail />} />
         </Route>
       </Routes>
-      <Toaster position="top-right" richColors />
+      <Toaster position="top-right" />
     </>
   );
 }

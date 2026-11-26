@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Loader2, CheckCircle, XCircle } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { StatusBadge } from '@/components/shared/StatusBadge';
+import { Loader2, CheckCircle, XCircle, AlertCircle } from '@/components/icons';
 import { toast } from 'sonner';
 
 export interface MakerCheckerRequest {
@@ -49,7 +51,7 @@ export function MakerCheckerRequestCard({
 
   const handleReject = async () => {
     if (comment.length < 5) {
-      setErrors({ comment: 'Comment must be at least 5 characters' });
+      setErrors({ comment: 'Enter a comment of at least 5 characters.' });
       return;
     }
     setErrors({});
@@ -65,69 +67,80 @@ export function MakerCheckerRequestCard({
   };
 
   return (
-    <div className="border border-gray-200 rounded-lg p-4 bg-white space-y-3">
-      <div className="flex items-start justify-between">
-        <div>
-          <p className="font-medium text-gray-900">{request.description}</p>
-          <p className="text-sm text-gray-500">
+    <div className="min-w-0 border border-line rounded-lg shadow-card p-4 bg-surface-1 space-y-3">
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <div className="min-w-0">
+          <p className="font-semibold text-sm text-text-primary">{request.description}</p>
+          <p className="font-mono text-xs text-text-muted">
             {request.actionCode} · {request.resourceType}
           </p>
-          <p className="text-sm text-gray-500">Initiated by: {request.initiatorName}</p>
+          <p className="text-sm text-text-secondary">Requested by {request.initiatorName}</p>
         </div>
-        <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full">
-          {progressText}
-        </span>
+        <StatusBadge tone="caution" label={progressText} />
       </div>
 
-      <div className="w-full bg-gray-200 rounded-full h-2">
+      <div
+        role="meter"
+        aria-label="Approvals"
+        aria-valuemin={0}
+        aria-valuemax={request.requiredApprovals}
+        aria-valuenow={request.currentApprovals}
+        className="w-full bg-surface-2 rounded-pill h-1.5 overflow-hidden"
+      >
         <div
-          className="bg-green-600 h-2 rounded-full transition-all"
+          className="bg-signal h-full rounded-pill transition-all"
           style={{ width: `${(request.currentApprovals / request.requiredApprovals) * 100}%` }}
         />
       </div>
 
       <div>
-        <input
+        <Input
           type="text"
-          title="Comment"
-          placeholder="Add a comment (required for rejection)"
+          aria-label="Comment"
+          placeholder="Comment, required to reject"
           value={comment}
           onChange={(e) => setComment(e.target.value)}
           disabled={isSubmitting || isInitiator}
-          className="w-full h-9 border border-gray-300 rounded-md px-3 text-sm"
+          aria-invalid={!!errors.comment}
         />
-        {errors.comment && <p className="text-red-500 text-xs mt-1">{errors.comment}</p>}
+        {errors.comment && (
+          <p className="flex items-center gap-1 text-xs text-risk mt-1">
+            <AlertCircle size={14} />
+            {errors.comment}
+          </p>
+        )}
       </div>
 
       <div className="flex gap-2">
         <Button
+          variant="secondary"
           onClick={handleApprove}
           disabled={isSubmitting || isInitiator}
-          className="flex-1 bg-green-700 hover:bg-green-800 text-white"
+          className="flex-1"
         >
           {isSubmitting ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
+            <Loader2 className="animate-spin" />
           ) : (
-            <><CheckCircle className="h-4 w-4 mr-1" /> Approve</>
+            <><CheckCircle /> Approve</>
           )}
         </Button>
         <Button
           onClick={handleReject}
           disabled={isSubmitting || isInitiator}
-          variant="outline"
-          className="flex-1 border-red-300 text-red-600 hover:bg-red-50"
+          variant="destructive"
+          className="flex-1"
         >
           {isSubmitting ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
+            <Loader2 className="animate-spin" />
           ) : (
-            <><XCircle className="h-4 w-4 mr-1" /> Reject</>
+            <><XCircle /> Reject</>
           )}
         </Button>
       </div>
 
       {isInitiator && (
-        <p className="text-xs text-gray-400 text-center">
-          You cannot approve or reject your own request
+        <p className="text-xs text-text-muted text-center">
+          You cannot approve or reject your own request.
         </p>
       )}
     </div>

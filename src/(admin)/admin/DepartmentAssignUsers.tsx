@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Loader2, UserCircle, Search, Trash2 } from 'lucide-react';
+import { UserCircle, Search, Trash2, CheckCircle } from '@/components/icons';
+import { TableSkeleton } from '@/components/shared/TableSkeleton';
 import { Input } from '@/components/ui/input';
 import { fetchData } from '@/lib/api/crud';
 import { toast } from 'sonner';
@@ -111,47 +112,46 @@ export function DepartmentAssignUsers({
   );
 
   return (
-    <div className="space-y-4 pt-4 border-t">
+    <div className="space-y-4 pt-4 border-t border-line">
       <div>
-        <h4 className="text-sm font-semibold text-gray-900 mb-1">Assigned Members</h4>
-        <p className="text-xs text-gray-500 mb-3">
-          Manage who belongs to this department and select the department head.
+        <h4 className="text-sm font-semibold text-text-primary mb-1">Members</h4>
+        <p className="text-xs text-text-muted mb-3">
+          Choose who belongs to this department and who leads it.
         </p>
 
         <div className="relative mb-3">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-          <Input 
-            placeholder="Search users to assign..." 
+          <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
+          <Input
+            aria-label="Search users to assign"
+            placeholder="Search by name or email"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-9 h-9 text-sm"
+            className="pl-9"
           />
         </div>
 
-        <div className="border rounded-md max-h-[200px] overflow-y-auto">
+        <div className="border border-line rounded-md max-h-[200px] overflow-y-auto">
           {loading ? (
-            <div className="flex justify-center py-4">
-              <Loader2 className="h-5 w-5 animate-spin text-gray-400" />
-            </div>
+            <TableSkeleton rows={3} columns={2} />
           ) : filteredUsers.length === 0 ? (
-            <div className="text-center py-4 text-xs text-gray-500">
+            <div className="text-center py-4 text-xs text-text-muted">
               No users found.
             </div>
           ) : (
-            <div className="divide-y">
+            <div className="divide-y divide-line">
               {filteredUsers.map(user => {
                 const isAssigned = assignedMemberIds.has(user.id);
                 const isHead = currentHeadId === user.id;
 
                 return (
-                  <div key={user.id} className={`flex items-center justify-between p-3 ${isAssigned ? 'bg-positive-tint' : 'bg-white'}`}>
+                  <div key={user.id} className={`flex items-center justify-between gap-2 p-3 ${isAssigned ? 'bg-surface-2' : ''}`}>
                     <div className="flex items-center gap-3 min-w-0">
-                      <UserCircle className={`h-8 w-8 shrink-0 ${isAssigned ? 'text-positive' : 'text-gray-300'}`} />
+                      <UserCircle size={28} className={`shrink-0 ${isAssigned ? 'text-signal-text' : 'text-text-muted'}`} />
                       <div className="min-w-0">
-                        <p className="text-sm font-medium text-gray-900 truncate">
+                        <p className="text-sm font-medium text-text-primary truncate">
                           {user.first_name} {user.last_name}
                         </p>
-                        <p className="text-xs text-gray-500 truncate">{user.email}</p>
+                        <p className="text-xs text-text-muted truncate">{user.email}</p>
                       </div>
                     </div>
 
@@ -161,33 +161,34 @@ export function DepartmentAssignUsers({
                           <Button
                             size="sm"
                             type="button"
-                            variant={isHead ? "default" : "outline"}
-                            className={isHead ? "bg-primary text-on-signal hover:bg-signal-hover h-7 text-xs" : "h-7 text-xs"}
+                            variant={isHead ? "default" : "secondary"}
+                            aria-pressed={isHead}
                             onClick={() => onHeadChange(isHead ? undefined : user.id)}
-                            title={isHead ? "Currently the Department Head" : "Make Department Head"}
+                            title={isHead ? "Currently the department head" : "Make department head"}
                           >
-                            {isHead ? 'Dept Head' : 'Make Head'}
+                            {isHead && <CheckCircle />}
+                            {isHead ? 'Head' : 'Make head'}
                           </Button>
                           <Button
                             size="icon"
                             type="button"
                             variant="ghost"
-                            className="h-7 w-7 text-risk hover:text-risk hover:bg-risk-tint"
+                            className="h-8 w-8 text-risk hover:text-risk hover:bg-risk-tint"
                             onClick={() => handleToggleMember(user.id)}
                             title="Remove from department"
+                            aria-label="Remove from department"
                           >
-                            <Trash2 className="h-4 w-4" />
+                            <Trash2 />
                           </Button>
                         </>
                       ) : (
                         <Button
                           size="sm"
                           type="button"
-                          variant="outline"
-                          className="h-7 text-xs border-line text-positive hover:bg-positive-tint"
+                          variant="secondary"
                           onClick={() => handleToggleMember(user.id)}
                         >
-                          Add to Dept
+                          Add member
                         </Button>
                       )}
                     </div>

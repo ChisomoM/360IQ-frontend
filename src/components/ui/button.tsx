@@ -4,31 +4,38 @@ import { cva, type VariantProps } from "class-variance-authority"
 
 import { cn } from "@/lib/utils"
 
+/** Flat teal with the hover shimmer. No gradient fill, no glow. */
+const primary = "btn-shimmer bg-signal text-on-signal hover:bg-signal-hover"
+const secondary =
+  "border border-line-strong bg-surface-1 text-text-primary hover:bg-surface-2"
+const danger = "border border-risk bg-surface-1 text-risk hover:bg-risk-tint"
+
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-semibold transition-all duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
+  "relative overflow-hidden inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-semibold transition-[background-color,border-color,color,box-shadow,opacity,transform] duration-150 ease-spring active:scale-[0.98] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:pointer-events-none disabled:bg-surface-2 disabled:text-text-muted [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
   {
     variants: {
       variant: {
-        default: "bg-signal bg-[image:var(--gradient-button)] text-on-signal hover:brightness-110",
-        destructive:
-          "bg-surface-1 border border-risk text-risk hover:bg-risk-tint",
-        outline:
-          "border border-line-strong bg-surface-1 text-text-primary hover:bg-surface-2",
-        secondary:
-          "border border-line-strong bg-surface-1 text-text-primary hover:bg-surface-2",
+        default: primary,
+        primary,
+        secondary,
+        outline: secondary,
+        soft: "bg-field text-text-primary hover:bg-field-hover",
+        ghost: "bg-transparent text-text-primary hover:bg-surface-2",
+        danger,
+        destructive: danger,
         orange:
-          "bg-caution-tint text-caution border border-caution hover:bg-caution-tint/70",
+          "border border-caution bg-caution-tint text-caution hover:bg-surface-1",
         tenantPrimary:
-          "bg-primary text-primary-foreground hover:bg-primary/90 [&_svg]:text-primary-foreground",
+          "btn-shimmer bg-primary text-primary-foreground hover:bg-primary-hover [&_svg]:text-primary-foreground disabled:[&_svg]:text-text-muted",
         tenantSecondary:
-          "bg-secondary text-secondary-foreground [&_svg]:text-secondary-foreground",
-        ghost: "text-text-secondary hover:bg-surface-2 hover:text-text-primary",
-        link: "text-signal-text underline-offset-4 hover:underline",
+          "bg-secondary text-secondary-foreground hover:bg-secondary-hover [&_svg]:text-secondary-foreground disabled:[&_svg]:text-text-muted",
+        link: "overflow-visible text-signal-text underline-offset-4 hover:underline disabled:bg-transparent",
       },
       size: {
         default: "h-10 px-4 text-sm",
-        sm: "h-8 px-3 text-xs",
-        lg: "h-11 px-6 text-base",
+        sm: "h-8 px-3 text-[13px]",
+        md: "h-10 px-4 text-sm",
+        lg: "h-11 px-5 text-[15px]",
         icon: "h-10 w-10",
       },
     },

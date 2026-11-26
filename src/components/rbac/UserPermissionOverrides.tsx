@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
-import { Button } from '@/components/ui/button';
-import { Loader2, Check } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
+import { AlertCircle } from '@/components/icons';
 import { toast } from 'sonner';
 import { post, remove } from '@/lib/api/crud';
 import type { Permission, UserPermissionOverride } from '@/types/rbac';
@@ -73,59 +73,43 @@ export function UserPermissionOverrides({
     return (
         <div className="space-y-6">
             {sortedResources.length === 0 ? (
-                <p className="text-sm text-gray-500">No permissions available</p>
+                <p className="text-sm text-text-muted">No permissions available.</p>
             ) : (
                 sortedResources.map((resource) => {
                     const permissions = groupedPermissions[resource];
                     return (
                         <div key={resource} className="space-y-3">
                             {/* Section Header */}
-                            <div className="flex items-center gap-2 mb-3">
-                                <div className="h-1 w-6 bg-primary rounded-full"></div>
-                                <h3 className="text-sm font-semibold text-gray-900 capitalize">
+                            <div className="flex items-center gap-2">
+                                <h3 className="text-sm font-semibold text-text-primary first-letter:uppercase">
                                     {resource}
                                 </h3>
-                                <span className="text-xs text-gray-500 ml-auto">
+                                <span className="font-mono text-xs text-text-muted ml-auto">
                                     {permissions.filter((p) => selectedPermIds.has(String(p.id))).length} of{' '}
                                     {permissions.length}
                                 </span>
                             </div>
 
                             {/* Permissions Grid */}
-                            <div className="bg-gray-50 rounded-lg p-4 space-y-2">
+                            <div className="bg-field rounded-md p-2 space-y-1">
                                 {permissions.map((permission) => {
                                     const isSelected = selectedPermIds.has(String(permission.id));
                                     return (
                                         <label
                                             key={String(permission.id)}
-                                            className="flex items-center gap-3 p-2.5 rounded-md hover:bg-white transition-colors cursor-pointer group"
+                                            className="flex items-center gap-3 p-2.5 rounded-sm hover:bg-surface-2 transition-colors cursor-pointer"
                                         >
-                                            <div className="relative">
-                                                <input
-                                                    type="checkbox"
-                                                    checked={isSelected}
-                                                    onChange={() => handleTogglePermission(permission)}
-                                                    disabled={isSubmitting}
-                                                    className="sr-only"
-                                                />
-                                                <div
-                                                    className={`w-5 h-5 rounded border-2 transition-all ${
-                                                        isSelected
-                                                            ? 'bg-primary border-primary'
-                                                            : 'border-gray-300 bg-white group-hover:border-primary'
-                                                    }`}
-                                                >
-                                                    {isSelected && (
-                                                        <Check className="h-3.5 w-3.5 text-white absolute top-0.5 left-0.5" />
-                                                    )}
-                                                </div>
-                                            </div>
+                                            <Checkbox
+                                                checked={isSelected}
+                                                onCheckedChange={() => handleTogglePermission(permission)}
+                                                disabled={isSubmitting}
+                                            />
                                             <div className="flex-1 min-w-0">
-                                                <p className="text-sm font-medium text-gray-900">
+                                                <p className="text-sm font-medium text-text-primary">
                                                     {permission.action}
                                                 </p>
                                                 {permission.description && (
-                                                    <p className="text-xs text-gray-500 line-clamp-1">
+                                                    <p className="text-xs text-text-muted line-clamp-1">
                                                         {permission.description}
                                                     </p>
                                                 )}
@@ -141,10 +125,9 @@ export function UserPermissionOverrides({
 
             {/* Info message */}
             {userPermissions.length > 0 && (
-                <div className="bg-blue-50 rounded-lg p-3 border border-blue-100">
-                    <p className="text-xs text-blue-700">
-                        ✓ Selected permissions override the user's role permissions
-                    </p>
+                <div className="flex items-center gap-2 bg-field rounded-md p-3 text-xs text-text-secondary">
+                    <AlertCircle size={14} className="shrink-0" />
+                    <p>Selected permissions override this person's role permissions.</p>
                 </div>
             )}
         </div>

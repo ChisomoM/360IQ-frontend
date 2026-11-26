@@ -11,8 +11,8 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Loader2, FileText, PenLine, AlertCircle, CheckCircle2, Download, ChevronDown } from 'lucide-react';
+import { StatusBadge } from '@/components/shared/StatusBadge';
+import { Loader2, FileText, PenLine, CheckCircle2, Download, ChevronDown } from '@/components/icons';
 import SignaturePad from './SignaturePad';
 import type { SignaturePadHandle } from './SignaturePad';
 import PDFFieldPositioner from './PDFFieldPositioner';
@@ -157,7 +157,7 @@ export default function SignDocumentModal({ request, open, onClose, onSigned }: 
   const handleSign = async () => {
     const sigDataUrl = appliedSigDataUrl ?? (sigPadRef.current?.isEmpty() === false ? sigPadRef.current.getDataURL() : null);
     if (!sigDataUrl) {
-      toast.error('Please draw or select your signature first');
+      toast.error('Draw or choose your signature first.');
       return;
     }
 
@@ -216,7 +216,7 @@ export default function SignDocumentModal({ request, open, onClose, onSigned }: 
         setSignedPdfUrl(URL.createObjectURL(new Blob([signedBuf], { type: 'application/pdf' })));
       }
       setActiveView('signed');
-      toast.success('Document signed successfully');
+      toast.success('Document signed');
     } catch (err) {
       toast.error(getErrorMessage(err, 'Failed to sign document'));
     } finally {
@@ -226,31 +226,27 @@ export default function SignDocumentModal({ request, open, onClose, onSigned }: 
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="max-w-5xl bg-white">
+      <DialogContent className="max-h-[90vh] max-w-5xl overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            {activeView === 'signed' ? (
-              <><CheckCircle2 className="h-5 w-5 text-green-600" />Signing Complete</>
-            ) : (
-              <><PenLine className="h-5 w-5 text-signal-text" />Sign Document</>
-            )}
+          <DialogTitle>
+            {activeView === 'signed' ? 'Document signed' : 'Sign document'}
           </DialogTitle>
           <DialogDescription>
             {activeView === 'signed'
-              ? 'Your signature has been embedded and the signed document is ready.'
-              : 'Review the signature field location, draw your signature, then apply.'}
+              ? 'Your signature is recorded.'
+              : 'Check where the signature goes, draw or choose your signature, then apply it.'}
           </DialogDescription>
         </DialogHeader>
 
         {activeView === 'signed' ? (
           <div className="space-y-4 py-2">
             {/* Success banner */}
-            <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg border border-green-200">
-              <CheckCircle2 className="h-5 w-5 text-green-600 flex-shrink-0" />
+            <div role="status" className="flex items-center gap-3 rounded-md bg-positive-tint p-3 text-positive">
+              <CheckCircle2 size={20} className="shrink-0" />
               <div>
-                <p className="text-sm font-semibold text-green-800">Signed successfully</p>
-                <p className="text-xs text-green-600 mt-0.5">
-                  Your signature was embedded on page {sigField.page} of &ldquo;{doc?.title ?? 'Document'}&rdquo;
+                <p className="text-sm font-semibold">Signed</p>
+                <p className="mt-0.5 text-xs">
+                  Signature on page <span className="font-mono">{sigField.page}</span> of &ldquo;{doc?.title ?? 'Document'}&rdquo;
                 </p>
               </div>
             </div>
@@ -258,25 +254,27 @@ export default function SignDocumentModal({ request, open, onClose, onSigned }: 
             {/* Signed PDF preview */}
             {signedPdfUrl ? (
               <div>
-                <p className="text-sm font-medium text-gray-700 mb-2">Signed document preview</p>
-                <PDFFieldPositioner file={signedPdfUrl} mode="preview" />
+                <p className="mb-2 text-sm font-medium text-text-secondary">Signed document preview</p>
+                <div className="overflow-x-auto">
+                  <PDFFieldPositioner file={signedPdfUrl} mode="preview" />
+                </div>
               </div>
             ) : (
-              <p className="text-sm text-gray-500 text-center py-6">Signature recorded successfully.</p>
+              <p className="py-6 text-center text-sm text-text-muted">No preview is available for this file.</p>
             )}
           </div>
         ) : (
-          <div className="flex gap-5 py-2">
+          <div className="flex flex-col gap-5 py-2 lg:flex-row">
             {/* Left column — PDF preview */}
             {isPdf && (
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-700 mb-2">
-                  Signature field location <span className="text-signal-text">(highlighted)</span>
+              <div className="min-w-0 flex-1 overflow-x-auto">
+                <p className="mb-2 text-sm font-medium text-text-secondary">
+                  Signature field location (highlighted)
                 </p>
                 {loadingPdf ? (
-                  <div className="flex items-center justify-center h-64 gap-2 text-gray-400 border rounded-lg">
-                    <Loader2 className="h-5 w-5 animate-spin" />
-                    <span className="text-sm">Loading document...</span>
+                  <div role="status" className="flex h-64 items-center justify-center gap-2 rounded-md bg-field text-text-muted">
+                    <Loader2 size={20} className="animate-spin" />
+                    <span className="text-sm">Loading document</span>
                   </div>
                 ) : pdfUrl ? (
                   <PDFFieldPositioner
@@ -287,11 +285,11 @@ export default function SignDocumentModal({ request, open, onClose, onSigned }: 
                     pageWidth={420}
                   />
                 ) : (
-                  <div className="flex flex-col items-center justify-center h-64 text-gray-400 border rounded-lg text-sm gap-2 px-4 text-center">
+                  <div className="flex h-64 flex-col items-center justify-center gap-2 rounded-md bg-field px-4 text-center text-sm text-text-muted">
                     <span>Document preview unavailable</span>
-                    {previewError && <span className="text-xs text-red-500">{previewError}</span>}
-                    <Button type="button" variant="outline" size="sm" onClick={() => void loadPreview()}>
-                      Retry Preview
+                    {previewError && <span className="text-xs text-risk">{previewError}</span>}
+                    <Button type="button" variant="secondary" size="sm" onClick={() => void loadPreview()}>
+                      Try again
                     </Button>
                   </div>
                 )}
@@ -299,26 +297,23 @@ export default function SignDocumentModal({ request, open, onClose, onSigned }: 
             )}
 
             {/* Right column — doc info + signature pad */}
-            <div className="flex flex-col gap-4" style={{ width: 340, flexShrink: 0 }}>
+            <div className="flex w-full max-w-[340px] shrink-0 flex-col gap-4">
               {/* Document info */}
-              <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg border border-gray-100">
-                <FileText className="h-5 w-5 text-gray-400 flex-shrink-0 mt-0.5" />
+              <div className="flex items-start gap-3 rounded-md bg-field p-3">
+                <FileText size={20} className="mt-0.5 shrink-0 text-text-muted" />
                 <div className="min-w-0">
-                  <p className="text-sm font-semibold text-gray-800 truncate">{doc?.title ?? 'Document'}</p>
-                  <p className="text-xs text-gray-500 mt-0.5">
+                  <p className="truncate text-sm font-semibold text-text-primary">{doc?.title ?? 'Document'}</p>
+                  <p className="mt-0.5 text-xs text-text-muted">
                     Requested by {request.requested_by?.first_name} {request.requested_by?.last_name}
                   </p>
                   {!isPdf && (
-                    <Badge variant="outline" className="mt-1 text-amber-700 border-amber-300 bg-amber-50 flex items-center gap-1 w-fit">
-                      <AlertCircle className="h-3 w-3" />
-                      Non-PDF document
-                    </Badge>
+                    <StatusBadge tone="caution" className="mt-1">Not a PDF</StatusBadge>
                   )}
                 </div>
               </div>
 
               {request.message && (
-                <p className="text-sm text-gray-600 italic border-l-2 border-signal pl-3">
+                <p className="text-sm text-text-secondary">
                   &ldquo;{request.message}&rdquo;
                 </p>
               )}
@@ -331,10 +326,11 @@ export default function SignDocumentModal({ request, open, onClose, onSigned }: 
                     <button
                       type="button"
                       onClick={() => setSavedSigsOpen(v => !v)}
-                      className="flex items-center gap-1.5 text-sm font-medium text-gray-700 mb-2 hover:text-gray-900 transition-colors"
+                      aria-expanded={savedSigsOpen}
+                      className="mb-2 flex items-center gap-1.5 rounded-xs text-sm font-medium text-text-secondary transition-colors hover:text-text-primary"
                     >
                       <motion.span animate={{ rotate: savedSigsOpen ? 180 : 0 }} transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}>
-                        <ChevronDown className="h-3.5 w-3.5" />
+                        <ChevronDown size={16} />
                       </motion.span>
                       Saved signatures
                     </button>
@@ -357,16 +353,19 @@ export default function SignDocumentModal({ request, open, onClose, onSigned }: 
                                   setSavedSigsOpen(false);
                                   sigPadRef.current?.clear();
                                 }}
-                                className="border border-gray-200 rounded-lg bg-white hover:border-gray-400 transition-colors p-1.5 flex flex-col items-center gap-1"
+                                className="flex flex-col items-center gap-1 rounded-md border border-line bg-surface-1 p-1.5 transition-colors hover:border-line-strong"
                                 whileHover={{ y: -2 }}
                                 whileTap={{ scale: 0.97 }}
                                 transition={{ type: 'spring', stiffness: 400, damping: 28 }}
                                 title={`Apply "${sig.label}"`}
                               >
-                                <img src={sig.signature_data} alt={sig.label} className="h-10 max-w-[90px] object-contain" />
-                                <span className="text-[10px] text-gray-500 truncate max-w-[90px]">{sig.label}</span>
+                                {/* White ground in both themes so black ink stays visible */}
+                                <span data-theme="paper" className="rounded-xs bg-surface-1 px-1">
+                                  <img src={sig.signature_data} alt={sig.label} className="h-10 max-w-[90px] object-contain" />
+                                </span>
+                                <span className="max-w-[90px] truncate text-xs text-text-secondary">{sig.label}</span>
                                 {sig.is_default && (
-                                  <span className="text-[9px] text-amber-600 font-medium">Default</span>
+                                  <span className="text-xs font-medium text-signal-text">Default</span>
                                 )}
                               </motion.button>
                             ))}
@@ -380,18 +379,17 @@ export default function SignDocumentModal({ request, open, onClose, onSigned }: 
                 {/* Show saved sig as image OR the drawable canvas */}
                 {appliedSigDataUrl ? (
                   <div className="space-y-2">
-                    <p className="text-sm font-medium text-gray-700">Your signature</p>
-                    <div className="border-2 border-dashed border-gray-300 rounded-lg bg-white flex items-center justify-center" style={{ height: 160 }}>
+                    <p className="text-sm font-medium text-text-secondary">Your signature</p>
+                    <div data-theme="paper" className="flex items-center justify-center rounded-md border-2 border-dashed border-line-strong bg-surface-1" style={{ height: 160 }}>
                       <img src={appliedSigDataUrl} alt="Saved signature" className="max-h-32 max-w-full object-contain p-3" />
                     </div>
                     <div className="flex items-center justify-between">
-                      <p className="text-xs text-gray-400">Saved signature applied</p>
+                      <p className="text-xs text-text-muted">Saved signature applied</p>
                       <Button
                         type="button"
                         variant="ghost"
                         size="sm"
                         onClick={() => setAppliedSigDataUrl(null)}
-                        className="text-gray-500 h-7 px-2 text-xs"
                       >
                         Draw instead
                       </Button>
@@ -399,7 +397,7 @@ export default function SignDocumentModal({ request, open, onClose, onSigned }: 
                   </div>
                 ) : (
                   <>
-                    <p className="text-sm font-medium text-gray-700 mb-2">Draw your signature</p>
+                    <p className="mb-2 text-sm font-medium text-text-secondary">Draw your signature</p>
                     <SignaturePad ref={sigPadRef} width={340} height={160} />
                   </>
                 )}
@@ -412,8 +410,8 @@ export default function SignDocumentModal({ request, open, onClose, onSigned }: 
           {activeView === 'signed' ? (
             <>
               {signedPdfBuffer && (
-                <Button variant="outline" onClick={downloadSignedPdf}>
-                  <Download className="mr-2 h-4 w-4" />
+                <Button variant="secondary" onClick={downloadSignedPdf}>
+                  <Download />
                   Download
                 </Button>
               )}
@@ -423,15 +421,15 @@ export default function SignDocumentModal({ request, open, onClose, onSigned }: 
             </>
           ) : (
             <>
-              <Button variant="outline" onClick={onClose} disabled={isSigning}>Cancel</Button>
+              <Button variant="secondary" onClick={onClose} disabled={isSigning}>Cancel</Button>
               <Button
                 onClick={handleSign}
                 disabled={isSigning}
-                              >
+              >
                 {isSigning ? (
-                  <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Signing...</>
+                  <><Loader2 className="animate-spin" />Signing</>
                 ) : (
-                  <><PenLine className="mr-2 h-4 w-4" />Apply Signature</>
+                  <><PenLine />Apply signature</>
                 )}
               </Button>
             </>

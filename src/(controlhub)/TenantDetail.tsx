@@ -1,21 +1,17 @@
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import {
   ChevronLeft,
   Building2,
-  RefreshCw,
-  Database,
-  Calendar,
-  Globe,
   Users,
   Palette,
-  Settings2,
-  ShieldCheck,
   Hash,
-} from "lucide-react";
+} from "@/components/icons";
+import { PageHeader } from "@/components/shared/PageHeader";
+import { SectionCard } from "@/components/shared/SectionCard";
+import { StatusBadge } from "@/components/shared/StatusBadge";
+import { formatDate } from "@/lib/format";
 import type { Tenant } from "@/types/tenant";
 import TenantBrandingEditor from "@/(controlhub)/components/TenantBrandingEditor";
 import TenantSettingsEditor from "@/(controlhub)/components/TenantSettingsEditor";
@@ -24,10 +20,19 @@ import { chGet } from "@/lib/api/controlhub";
 import { toast } from "sonner";
 
 const TYPE_LABELS: Record<string, string> = {
-  "higher-academic": "Higher Academic",
+  "higher-academic": "Higher academic",
   parastetal: "Parastatal",
-  company: "Private Company",
+  company: "Private company",
 };
+
+function DetailRow({ label, value }: { label: string; value: React.ReactNode }) {
+  return (
+    <div className="py-3 flex items-center justify-between gap-4">
+      <dt className="text-xs font-medium text-text-muted">{label}</dt>
+      <dd className="min-w-0 break-words text-right text-sm font-medium text-text-primary">{value}</dd>
+    </div>
+  );
+}
 
 export default function TenantDetail() {
   const { id } = useParams<{ id: string }>();
@@ -58,23 +63,32 @@ export default function TenantDetail() {
     fetchTenant();
   }, [fetchTenant]);
 
+  const backLink = (
+    <button
+      type="button"
+      onClick={() => navigate("/controlhub/tenants")}
+      className="inline-flex items-center gap-1 hover:text-text-primary transition-colors"
+    >
+      <ChevronLeft size={14} /> Tenants
+    </button>
+  );
+
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <RefreshCw className="h-6 w-6 animate-spin text-ch-primary" />
+      <div role="status" aria-busy="true" aria-label="Loading" className="flex flex-col gap-5">
+        <div className="skeleton h-9 w-64 rounded-md" />
+        <div className="skeleton h-10 w-72 rounded-md" />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {[1, 2, 3, 4].map((i) => <div key={i} className="skeleton h-44 rounded-lg" />)}
+        </div>
       </div>
     );
   }
 
   if (!tenant) {
     return (
-      <div className="space-y-4">
-        <button onClick={() => navigate("/controlhub/tenants")} className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-900 transition-colors">
-          <ChevronLeft className="h-4 w-4" /> Back to Tenants
-        </button>
-        <div className="h-64 flex items-center justify-center text-gray-500">
-          Tenant not found.
-        </div>
+      <div className="flex flex-col gap-5">
+        <PageHeader crumb={backLink} title="Tenant not found" description="Go back to the list and choose another tenant." />
       </div>
     );
   }
@@ -83,179 +97,111 @@ export default function TenantDetail() {
   const isActive = tenant.status === "active";
 
   return (
-    <div className="space-y-10">
-      {/* Breadcrumb */}
-      <button
-        onClick={() => navigate("/controlhub/tenants")}
-        className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-900 transition-colors"
-      >
-        <ChevronLeft className="h-4 w-4" /> Back to Tenants
-      </button>
-
-      {/* Hero Header */}
-      <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
-        {/* Color bar */}
-        <div className="h-1.5 w-full" style={{ backgroundColor: brandColor }} />
-
-        <div className="px-8 py-7 flex items-start gap-6">
-          {/* Org Avatar */}
-          <div
-            className="h-16 w-16 rounded-xl flex items-center justify-center flex-shrink-0 shadow-md"
-            style={{ backgroundColor: brandColor }}
-          >
-            <Building2 className="h-8 w-8 text-white" />
-          </div>
-
-          {/* Title block */}
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-3 flex-wrap">
-              <h1 className="text-3xl font-bold text-gray-900 tracking-tight">{tenant.name}</h1>
-              <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold ${isActive ? "bg-positive-tint text-positive" : "bg-gray-100 text-gray-600"}`}>
-                <div className={`h-1.5 w-1.5 rounded-full ${isActive ? "bg-positive" : "bg-gray-400"}`} />
-                {isActive ? "Active" : "Inactive"}
-              </div>
-            </div>
-            <p className="text-gray-500 text-sm mt-1.5 font-mono">{tenant.id}</p>
-
-            {/* Quick stats row */}
-            <div className="flex items-center gap-6 mt-5 flex-wrap">
-              <div className="flex items-center gap-2 text-sm text-gray-600">
-                <Database className="h-4 w-4 text-gray-400" />
-                <span className="font-mono text-xs bg-gray-100 px-2 py-0.5 rounded">{tenant.id}</span>
-              </div>
-              <div className="flex items-center gap-2 text-sm text-gray-600">
-                <Globe className="h-4 w-4 text-gray-400" />
-                <span>{TYPE_LABELS[tenant.type] ?? tenant.type}</span>
-              </div>
-              <div className="flex items-center gap-2 text-sm text-gray-600">
-                <Users className="h-4 w-4 text-gray-400" />
-                <span>{admins.length} admin{admins.length !== 1 ? "s" : ""}</span>
-              </div>
-              <div className="flex items-center gap-2 text-sm text-gray-600">
-                <Calendar className="h-4 w-4 text-gray-400" />
-                <span>Joined {new Date(tenant.created_at).toLocaleDateString("en-US", { month: "short", year: "numeric" })}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+    <div className="flex flex-col gap-5">
+      <PageHeader
+        crumb={backLink}
+        title={
+          <span className="flex items-center gap-3">
+            {/* Tile in the tenant's brand colour */}
+            <span
+              className="h-10 w-10 rounded-md flex items-center justify-center shrink-0 text-white"
+              style={{ backgroundColor: brandColor }}
+              aria-hidden="true"
+            >
+              <Building2 size={20} />
+            </span>
+            {tenant.name}
+          </span>
+        }
+        description={
+          <span className="flex flex-wrap items-center gap-x-3 gap-y-2">
+            <StatusBadge status={isActive ? "active" : "inactive"} />
+            <span className="font-mono text-xs">{tenant.id}</span>
+            <span>{TYPE_LABELS[tenant.type] ?? tenant.type}</span>
+            <span><span className="font-mono text-xs">{admins.length}</span> admin{admins.length !== 1 ? "s" : ""}</span>
+            <span>Joined {new Date(tenant.created_at).toLocaleDateString("en-GB", { month: "short", year: "numeric" })}</span>
+          </span>
+        }
+      />
 
       {/* Tabs */}
       <Tabs defaultValue="overview" className="w-full">
-        <TabsList className="bg-transparent border-b border-gray-200 rounded-none w-full justify-start gap-0 h-auto p-0">
+        <TabsList>
           {[
             { value: "overview", label: "Overview", icon: Hash },
             { value: "admins", label: "Admins", icon: Users },
             { value: "branding", label: "Branding", icon: Palette },
             // { value: "settings", label: "Settings", icon: Settings2 },
           ].map(({ value, label, icon: Icon }) => (
-            <TabsTrigger
-              key={value}
-              value={value}
-              className="rounded-none border-b-2 border-transparent data-[state=active]:border-ch-primary data-[state=active]:text-ch-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-5 py-3 text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors"
-            >
-              <Icon className="h-4 w-4 mr-2" />
+            <TabsTrigger key={value} value={value} className="gap-1.5">
+              <Icon size={16} />
               {label}
             </TabsTrigger>
           ))}
         </TabsList>
 
         {/* Overview */}
-        <TabsContent value="overview" className="mt-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            {/* Org Details Card */}
-            <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
-              <div className="px-5 py-4 border-b border-gray-100 bg-gray-50/40 flex items-center gap-2">
-                <Building2 className="h-4 w-4 text-ch-primary" />
-                <h3 className="font-semibold text-gray-900 text-sm">Organization</h3>
-              </div>
-              <div className="divide-y divide-gray-100">
-                {[
-                  { label: "Full Name", value: tenant.name },
-                  { label: "Short Name", value: tenant.config?.branding?.short_name || "—" },
-                  { label: "Tagline", value: tenant.config?.branding?.tagline || "—" },
-                  { label: "Type", value: TYPE_LABELS[tenant.type] ?? tenant.type },
-                ].map(({ label, value }) => (
-                  <div key={label} className="px-5 py-3.5 flex items-center justify-between">
-                    <span className="text-xs font-medium text-gray-500">{label}</span>
-                    <span className="text-sm font-medium text-gray-900">{value}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
+        <TabsContent value="overview">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 items-start">
+            <SectionCard title="Organisation">
+              <dl className="divide-y divide-line -my-3">
+                <DetailRow label="Full name" value={tenant.name} />
+                <DetailRow label="Short name" value={tenant.config?.branding?.short_name || "N/A"} />
+                <DetailRow label="Tagline" value={tenant.config?.branding?.tagline || "N/A"} />
+                <DetailRow label="Type" value={TYPE_LABELS[tenant.type] ?? tenant.type} />
+              </dl>
+            </SectionCard>
 
-            {/* Technical Details Card */}
-            <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
-              <div className="px-5 py-4 border-b border-gray-100 bg-gray-50/40 flex items-center gap-2">
-                <Database className="h-4 w-4 text-amber-600" />
-                <h3 className="font-semibold text-gray-900 text-sm">Technical</h3>
-              </div>
-              <div className="divide-y divide-gray-100">
-                {[
-                  { label: "Tenant ID", value: <span className="font-mono text-xs text-gray-600 bg-gray-100 px-2 py-0.5 rounded">{tenant.id}</span> },
-                  { label: "Tenant ID", value: <span className="font-mono text-xs text-gray-600 bg-gray-100 px-2 py-0.5 rounded">{tenant.id}</span> },
-                  { label: "Created", value: new Date(tenant.created_at).toLocaleDateString() },
-                  { label: "Last Updated", value: new Date(tenant.updated_at).toLocaleDateString() },
-                ].map(({ label, value }) => (
-                  <div key={label} className="px-5 py-3.5 flex items-center justify-between">
-                    <span className="text-xs font-medium text-gray-500">{label}</span>
-                    <span className="text-sm font-medium text-gray-900">{value}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
+            <SectionCard title="Technical">
+              <dl className="divide-y divide-line -my-3">
+                <DetailRow label="Tenant ID" value={<span className="font-mono text-xs">{tenant.id}</span>} />
+                <DetailRow label="Created" value={<span className="font-mono text-xs">{formatDate(tenant.created_at)}</span>} />
+                <DetailRow label="Last updated" value={<span className="font-mono text-xs">{formatDate(tenant.updated_at)}</span>} />
+              </dl>
+            </SectionCard>
 
-            {/* Branding Preview Card */}
-            <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
-              <div className="px-5 py-4 border-b border-gray-100 bg-gray-50/40 flex items-center gap-2">
-                <Palette className="h-4 w-4 text-signal-text" />
-                <h3 className="font-semibold text-gray-900 text-sm">Branding</h3>
-              </div>
-              <div className="px-5 py-5 flex items-center gap-4">
-                <div className="h-14 w-14 rounded-xl shadow-md flex-shrink-0 flex items-center justify-center" style={{ backgroundColor: brandColor }}>
-                  <Building2 className="h-7 w-7 text-white" />
+            <SectionCard title="Branding">
+              <div className="flex items-center gap-4">
+                <div className="h-12 w-12 rounded-md shrink-0 flex items-center justify-center text-white" style={{ backgroundColor: brandColor }}>
+                  <Building2 size={24} />
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-gray-900">{tenant.config?.branding?.short_name || tenant.name}</p>
+                  <p className="text-sm font-semibold text-text-primary">{tenant.config?.branding?.short_name || tenant.name}</p>
                   <div className="flex items-center gap-2 mt-1.5">
-                    <div className="h-4 w-4 rounded border border-gray-200 shadow-sm" style={{ backgroundColor: brandColor }} />
-                    <span className="font-mono text-xs text-gray-500">{brandColor}</span>
+                    <div className="h-4 w-4 rounded-xs border border-line" style={{ backgroundColor: brandColor }} />
+                    <span className="font-mono text-xs text-text-muted">{brandColor}</span>
                   </div>
                 </div>
               </div>
-            </div>
+            </SectionCard>
 
-            {/* Security Settings Card */}
-            <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
-              <div className="px-5 py-4 border-b border-gray-100 bg-gray-50/40 flex items-center gap-2">
-                <ShieldCheck className="h-4 w-4 text-positive" />
-                <h3 className="font-semibold text-gray-900 text-sm">Security & Access</h3>
-              </div>
-              <div className="divide-y divide-gray-100">
-                <div className="px-5 py-3.5 flex items-center justify-between">
-                  <span className="text-xs font-medium text-gray-500">Public Registration</span>
-                  <span className={`inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full ${tenant.config?.settings?.allow_public_reg ? "bg-positive-tint text-positive" : "bg-gray-100 text-gray-600"}`}>
-                    <div className={`h-1.5 w-1.5 rounded-full ${tenant.config?.settings?.allow_public_reg ? "bg-positive" : "bg-gray-400"}`} />
-                    {tenant.config?.settings?.allow_public_reg ? "Enabled" : "Disabled"}
-                  </span>
-                </div>
-                <div className="px-5 py-3.5 flex items-center justify-between">
-                  <span className="text-xs font-medium text-gray-500">Two-Factor Auth</span>
-                  <span className={`inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full ${tenant.config?.settings?.enforce_2fa ? "bg-positive-tint text-positive" : "bg-gray-100 text-gray-600"}`}>
-                    <div className={`h-1.5 w-1.5 rounded-full ${tenant.config?.settings?.enforce_2fa ? "bg-positive" : "bg-gray-400"}`} />
-                    {tenant.config?.settings?.enforce_2fa ? "Enforced" : "Optional"}
-                  </span>
-                </div>
-                <div className="px-5 py-3.5 flex items-center justify-between">
-                  <span className="text-xs font-medium text-gray-500">Admin Count</span>
-                  <span className="text-sm font-semibold text-gray-900">{admins.length}</span>
-                </div>
-              </div>
-            </div>
+            <SectionCard title="Security and access">
+              <dl className="divide-y divide-line -my-3">
+                <DetailRow
+                  label="Public registration"
+                  value={
+                    <StatusBadge
+                      tone={tenant.config?.settings?.allow_public_reg ? "positive" : "neutral"}
+                      label={tenant.config?.settings?.allow_public_reg ? "Enabled" : "Disabled"}
+                    />
+                  }
+                />
+                <DetailRow
+                  label="Two-factor authentication"
+                  value={
+                    <StatusBadge
+                      tone={tenant.config?.settings?.enforce_2fa ? "positive" : "neutral"}
+                      label={tenant.config?.settings?.enforce_2fa ? "Enforced" : "Optional"}
+                    />
+                  }
+                />
+                <DetailRow label="Admins" value={<span className="font-mono text-xs">{admins.length}</span>} />
+              </dl>
+            </SectionCard>
           </div>
         </TabsContent>
 
-        <TabsContent value="admins" className="mt-8">
+        <TabsContent value="admins">
           <TenantAdminsView
             tenantId={id!}
             admins={admins}
@@ -263,7 +209,7 @@ export default function TenantDetail() {
           />
         </TabsContent>
 
-        <TabsContent value="branding" className="mt-8">
+        <TabsContent value="branding">
           <TenantBrandingEditor
             tenantId={tenant.id}
             branding={tenant.config.branding}
@@ -277,7 +223,7 @@ export default function TenantDetail() {
           />
         </TabsContent>
 
-        <TabsContent value="settings" className="mt-8">
+        <TabsContent value="settings">
           <TenantSettingsEditor
             tenantId={tenant.id}
             settings={tenant.config.settings}
@@ -294,6 +240,3 @@ export default function TenantDetail() {
     </div>
   );
 }
-
-
-

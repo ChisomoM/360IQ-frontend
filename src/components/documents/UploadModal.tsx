@@ -1,39 +1,39 @@
 import { useState, useCallback } from 'react'
-import { motion } from 'framer-motion'
-import { 
-  Upload, 
-  X, 
-  FileText, 
-  Shield, 
-  Building, 
-  Lock, 
-  Tag, 
-  CheckCircle2, 
+import {
+  X,
+  FileText,
+  Shield,
+  Building,
+  Lock,
+  Tag,
+  Check,
+  CheckCircle2,
   FileUp,
   Loader2,
   Star
-} from 'lucide-react'
+} from '@/components/icons'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
 } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
-import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { Switch } from '@/components/ui/switch'
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogDescription, 
-  DialogHeader, 
-  DialogTitle 
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle
 } from '@/components/ui/dialog'
+import { StatusBadge } from '@/components/shared/StatusBadge'
+import { cn } from '@/lib/utils'
 import toast from 'react-hot-toast'
 import { type Department } from '@/types/dms'
 
@@ -79,6 +79,9 @@ const categories = [
   'technical',
   'other',
 ]
+
+const optionLabel = (value: string) =>
+  value === 'hr' ? 'Human resources' : value.charAt(0).toUpperCase() + value.slice(1)
 
 const formatBytes = (bytes: number) => {
   if (bytes === 0) return '0 B'
@@ -128,8 +131,8 @@ export function UploadModal({
     if (files && files[0]) {
       const droppedFile = files[0]
       const fileNameWithoutExt = droppedFile.name.split('.').slice(0, -1).join('.')
-      setFormData(prev => ({ 
-        ...prev, 
+      setFormData(prev => ({
+        ...prev,
         file: droppedFile,
         title: prev.title.trim() === '' ? fileNameWithoutExt : prev.title
       }))
@@ -141,8 +144,8 @@ export function UploadModal({
     if (files && files[0]) {
       const selectedFile = files[0]
       const fileNameWithoutExt = selectedFile.name.split('.').slice(0, -1).join('.')
-      setFormData(prev => ({ 
-        ...prev, 
+      setFormData(prev => ({
+        ...prev,
         file: selectedFile,
         title: prev.title.trim() === '' ? fileNameWithoutExt : prev.title
       }))
@@ -169,7 +172,7 @@ export function UploadModal({
 
   const handleSubmit = async () => {
     if (!formData.file || !formData.title.trim()) {
-      toast.error('Please provide a title and select a file')
+      toast.error('Add a title and choose a file.')
       return
     }
     try {
@@ -192,13 +195,13 @@ export function UploadModal({
 
   return (
     <Dialog open={open} onOpenChange={(val) => !val && onClose()}>
-      <DialogContent className="max-w-4xl bg-white p-0 overflow-hidden border-none shadow-2xl">
-        <div className="flex h-full max-h-[90vh]">
+      <DialogContent className="max-w-4xl gap-0 overflow-hidden p-0">
+        <div className="flex max-h-[90vh] flex-col overflow-y-auto md:flex-row md:overflow-hidden">
           {/* Left Column: File Dropzone & Preview */}
-          <div className="w-2/5 bg-slate-50 p-8 border-r border-slate-100 flex flex-col justify-center">
-            <div className="mb-8">
-              <h3 className="text-xl font-bold text-slate-800">File Ingestion</h3>
-              <p className="text-sm text-slate-500 mt-1">Upload your document to safely archive it in the vault.</p>
+          <div className="flex shrink-0 flex-col justify-center border-b border-line bg-surface-0 p-6 md:w-2/5 md:border-b-0 md:border-r">
+            <div className="mb-6">
+              <h3 className="text-base font-semibold text-text-primary">File</h3>
+              <p className="mt-1 text-sm text-text-secondary">Choose the document you want to add.</p>
             </div>
 
             {!formData.file ? (
@@ -207,92 +210,92 @@ export function UploadModal({
                 onDragLeave={handleDrag}
                 onDragOver={handleDrag}
                 onDrop={handleDrop}
-                className={`
-                  relative border-2 border-dashed rounded-2xl p-10 transition-all cursor-pointer
-                  flex flex-col items-center justify-center text-center space-y-4
-                  ${dragActive ? 'border-primary bg-primary/5 scale-[1.02]' : 'border-slate-300 hover:border-primary hover:bg-white'}
-                `}
+                className={cn(
+                  'relative flex cursor-pointer flex-col items-center justify-center gap-3 rounded-lg border-2 border-dashed p-8 text-center transition-colors',
+                  dragActive ? 'border-signal bg-signal-tint' : 'border-line-strong bg-surface-1 hover:border-signal',
+                )}
               >
-                <input 
+                <input
                   type="file"
+                  aria-label="Choose a file"
                   onChange={handleFileInput}
-                  className="absolute inset-0 opacity-0 cursor-pointer"
+                  className="absolute inset-0 cursor-pointer opacity-0"
                   disabled={isLoading}
                 />
-                <div className="p-4 bg-white rounded-full shadow-sm text-primary">
-                  <FileUp className="h-10 w-10" />
+                <div className="grid h-12 w-12 place-items-center rounded-lg bg-field text-text-secondary">
+                  <FileUp size={24} />
                 </div>
                 <div>
-                  <p className="font-semibold text-slate-700">Click or drag file</p>
-                  <p className="text-xs text-slate-400 mt-1">Supports PDF, DOCX, XLSX (Max 50MB)</p>
+                  <p className="text-sm font-semibold text-text-primary">Drop a file here or browse</p>
+                  <p className="mt-1 text-xs text-text-muted">PDF, DOCX or XLSX, up to 50MB</p>
                 </div>
               </div>
             ) : (
-              <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 relative group">
-                <button 
-                  onClick={() => setFormData(prev => ({ ...prev, file: null }))}
-                  className="absolute -top-2 -right-2 p-1.5 bg-red-500 text-white rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity"
-                  disabled={isLoading}
-                >
-                  <X className="h-3 w-3" />
-                </button>
-                <div className="flex items-center gap-4">
-                  <div className="p-3 bg-blue-50 text-blue-600 rounded-xl">
-                    <FileText className="h-8 w-8" />
+              <div className="rounded-lg border border-line bg-surface-1 p-4 shadow-card">
+                <div className="flex items-center gap-3">
+                  <div className="grid h-12 w-12 shrink-0 place-items-center rounded-sm bg-field text-text-secondary">
+                    <FileText size={24} />
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-bold text-slate-800 truncate" title={formData.file.name}>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-semibold text-text-primary" title={formData.file.name}>
                       {formData.file.name}
                     </p>
-                    <p className="text-xs text-slate-500">
-                      {formatBytes(formData.file.size)} • {formData.file.type.split('/').pop()?.toUpperCase() || 'FILE'}
+                    <p className="font-mono text-xs text-text-muted">
+                      {formatBytes(formData.file.size)} · {formData.file.type.split('/').pop()?.toUpperCase() || 'FILE'}
                     </p>
                   </div>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    aria-label="Remove file"
+                    title="Remove file"
+                    onClick={() => setFormData(prev => ({ ...prev, file: null }))}
+                    disabled={isLoading}
+                  >
+                    <X />
+                  </Button>
                 </div>
-                <div className="mt-4 flex items-center gap-2 text-green-600 text-[10px] font-bold uppercase tracking-wider bg-green-50 px-3 py-1 rounded-full w-fit">
-                  <CheckCircle2 className="h-3 w-3" /> Ready for upload
-                </div>
+                <StatusBadge tone="positive" className="mt-3">Ready to upload</StatusBadge>
               </div>
             )}
 
-            <div className="mt-auto pt-8">
-              <div className="flex items-center gap-2 text-xs text-slate-400">
-                <Shield className="h-3 w-3" />
-                <span>Secure end-to-end encryption available</span>
-              </div>
-            </div>
+            <p className="mt-6 flex items-center gap-2 text-xs text-text-muted">
+              <Shield size={16} />
+              You can encrypt the file before it is stored.
+            </p>
           </div>
 
           {/* Right Column: Metadata Form */}
-          <div className="flex-1 p-8 overflow-y-auto bg-white">
-            <DialogHeader className="mb-6">
-              <DialogTitle className="text-2xl font-black text-slate-900 leading-none">Metadata & Settings</DialogTitle>
-              <DialogDescription>Index your document with precision for easy retrieval.</DialogDescription>
+          <div className="flex-1 p-6 md:overflow-y-auto">
+            <DialogHeader className="mb-5">
+              <DialogTitle>Upload document</DialogTitle>
+              <DialogDescription>Add the details people will use to find this document.</DialogDescription>
             </DialogHeader>
 
-            <div className="grid gap-6">
+            <div className="grid gap-5">
               {/* Basic Info */}
-              <div className="space-y-4 pt-2">
-                <div className="space-y-2">
-                  <Label className="text-slate-700 font-bold">Document Title *</Label>
-                  <Input 
-                    value={formData.title} 
-                    onChange={(e) => setFormData({ ...formData, title: e.target.value })} 
-                    placeholder="e.g., Annual Financial Audit 2024"
+              <div className="space-y-4">
+                <div className="space-y-1.5">
+                  <Label htmlFor="upload-modal-title">Title (required)</Label>
+                  <Input
+                    id="upload-modal-title"
+                    value={formData.title}
+                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                    placeholder="Annual financial audit 2026"
                     disabled={isLoading}
-                    className="h-11 border-slate-200 focus:ring-primary shadow-sm"
                   />
                 </div>
 
-                <div className="space-y-2">
-                  <Label className="text-slate-700 font-bold">Description</Label>
-                  <Textarea 
-                    value={formData.description} 
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })} 
-                    placeholder="Provide deep context for this record..." 
+                <div className="space-y-1.5">
+                  <Label htmlFor="upload-modal-description">Description</Label>
+                  <Textarea
+                    id="upload-modal-description"
+                    value={formData.description}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    placeholder="Audit of the 2026 accounts, prepared for the board"
                     rows={3}
                     disabled={isLoading}
-                    className="resize-none border-slate-200 shadow-sm"
                   />
                 </div>
               </div>
@@ -300,37 +303,37 @@ export function UploadModal({
               <Separator />
 
               {/* Classification */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label className="text-slate-700 font-bold text-xs uppercase tracking-wider">Document Type</Label>
-                  <Select 
-                    value={formData.document_type} 
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div className="space-y-1.5">
+                  <Label>Document type</Label>
+                  <Select
+                    value={formData.document_type}
                     onValueChange={(v) => setFormData({ ...formData, document_type: v })}
                     disabled={isLoading}
                   >
-                    <SelectTrigger className="h-10 border-slate-200 bg-slate-50/50">
+                    <SelectTrigger aria-label="Document type">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
                       {documentTypes.map(t => (
-                        <SelectItem key={t} value={t}>{t.charAt(0).toUpperCase() + t.slice(1)}</SelectItem>
+                        <SelectItem key={t} value={t}>{optionLabel(t)}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="space-y-2">
-                  <Label className="text-slate-700 font-bold text-xs uppercase tracking-wider">Classification</Label>
-                  <Select 
-                    value={formData.category} 
+                <div className="space-y-1.5">
+                  <Label>Classification</Label>
+                  <Select
+                    value={formData.category}
                     onValueChange={(v) => setFormData({ ...formData, category: v })}
                     disabled={isLoading}
                   >
-                    <SelectTrigger className="h-10 border-slate-200 bg-slate-50/50">
+                    <SelectTrigger aria-label="Classification">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
                       {categories.map(c => (
-                        <SelectItem key={c} value={c}>{c.charAt(0).toUpperCase() + c.slice(1)}</SelectItem>
+                        <SelectItem key={c} value={c}>{optionLabel(c)}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -338,98 +341,103 @@ export function UploadModal({
               </div>
 
               {/* Organization & Sensitivity */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2 col-span-2">
-                  <Label className="text-slate-700 font-bold text-xs uppercase tracking-wider text-primary flex items-center gap-1">
-                    <Building className="h-3 w-3" /> Departments
-                    <span className="text-slate-400 normal-case font-normal ml-1">— first selected is the owning department</span>
-                  </Label>
-                  <div className="border border-slate-200 rounded-lg bg-slate-50/50 max-h-40 overflow-y-auto p-2 space-y-1">
-                    {departments.filter(d => d.id?.trim()).length === 0 && (
-                      <p className="text-xs text-slate-400 px-2 py-1">No departments available</p>
-                    )}
-                    {departments.filter(d => d.id?.trim()).map(d => {
-                      const isSelected = formData.department_ids.includes(d.id)
-                      const isPrimary = formData.department_ids[0] === d.id
-                      return (
-                        <button
-                          key={d.id}
-                          type="button"
-                          disabled={isLoading}
-                          onClick={() => {
-                            const current = formData.department_ids
-                            const next = isSelected
-                              ? current.filter(id => id !== d.id)
-                              : [...current, d.id]
-                            setFormData({ ...formData, department_ids: next })
-                          }}
-                          className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-sm transition-colors ${
-                            isSelected
-                              ? 'bg-primary/10 text-primary font-medium'
-                              : 'hover:bg-slate-100 text-slate-600'
-                          }`}
-                        >
-                          <div className={`h-4 w-4 rounded border flex-shrink-0 flex items-center justify-center ${
-                            isSelected ? 'bg-primary border-primary' : 'border-slate-300'
-                          }`}>
-                            {isSelected && <X className="h-2.5 w-2.5 text-white" />}
-                          </div>
-                          <span className="flex-1 text-left truncate">{d.name}</span>
-                          {isPrimary && (
-                            <span className="flex items-center gap-0.5 text-amber-500 text-xs font-semibold">
-                              <Star className="h-3 w-3 fill-amber-400" /> Primary
-                            </span>
-                          )}
-                        </button>
-                      )
-                    })}
-                  </div>
-                  {formData.department_ids.length === 0 && (
-                    <p className="text-xs text-slate-400">No department selected — document will be institution-wide</p>
+              <div className="space-y-1.5">
+                <Label className="flex items-center gap-1.5">
+                  <Building size={16} /> Departments
+                </Label>
+                <div className="max-h-40 space-y-1 overflow-y-auto rounded-md bg-field p-1.5">
+                  {departments.filter(d => d.id?.trim()).length === 0 && (
+                    <p className="px-2 py-1 text-xs text-text-muted">No departments available</p>
                   )}
+                  {departments.filter(d => d.id?.trim()).map(d => {
+                    const isSelected = formData.department_ids.includes(d.id)
+                    const isPrimary = formData.department_ids[0] === d.id
+                    return (
+                      <button
+                        key={d.id}
+                        type="button"
+                        disabled={isLoading}
+                        aria-pressed={isSelected}
+                        onClick={() => {
+                          const current = formData.department_ids
+                          const next = isSelected
+                            ? current.filter(id => id !== d.id)
+                            : [...current, d.id]
+                          setFormData({ ...formData, department_ids: next })
+                        }}
+                        className={cn(
+                          'flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm transition-colors',
+                          isSelected ? 'bg-surface-1 font-medium text-text-primary' : 'text-text-secondary hover:bg-field-hover',
+                        )}
+                      >
+                        <span className={cn('grid h-4 w-4 shrink-0 place-items-center rounded-xs border', isSelected ? 'border-signal bg-signal text-on-signal' : 'border-line-strong bg-surface-1')}>
+                          {isSelected && <Check size={12} />}
+                        </span>
+                        <span className="flex-1 truncate text-left">{d.name}</span>
+                        {isPrimary && (
+                          <span className="flex items-center gap-1 text-xs font-semibold text-signal-text">
+                            <Star size={14} />Primary
+                          </span>
+                        )}
+                      </button>
+                    )
+                  })}
                 </div>
-                <div className="space-y-2 col-span-2">
-                  <Label className="text-slate-700 font-bold text-xs uppercase tracking-wider flex items-center gap-1">
-                    <Lock className="h-3 w-3" /> Visibility Level
-                  </Label>
-                  <Select 
-                    value={formData.visibility_level} 
-                    onValueChange={(v: any) => setFormData({ ...formData, visibility_level: v })}
-                    disabled={isLoading}
-                  >
-                    <SelectTrigger className="h-10 border-slate-200 bg-slate-50/50">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="department">Department Internal</SelectItem>
-                      <SelectItem value="public">Institution Public</SelectItem>
-                      <SelectItem value="restricted">Restricted Access</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+                <p className="text-xs text-text-muted">
+                  {formData.department_ids.length === 0
+                    ? 'No department selected, so the document is shared across the organisation.'
+                    : 'The first one you select is the primary department.'}
+                </p>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label className="flex items-center gap-1.5">
+                  <Lock size={16} /> Visibility
+                </Label>
+                <Select
+                  value={formData.visibility_level}
+                  onValueChange={(v: any) => setFormData({ ...formData, visibility_level: v })}
+                  disabled={isLoading}
+                >
+                  <SelectTrigger aria-label="Visibility">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="department">Department only</SelectItem>
+                    <SelectItem value="public">Everyone in the organisation</SelectItem>
+                    <SelectItem value="restricted">Restricted</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
               {/* Tags */}
-              <div className="space-y-2">
-                <Label className="text-slate-700 font-bold text-xs uppercase tracking-wider flex items-center gap-1">
-                  <Tag className="h-3 w-3" /> Tags
+              <div className="space-y-1.5">
+                <Label htmlFor="upload-modal-tag" className="flex items-center gap-1.5">
+                  <Tag size={16} /> Tags
                 </Label>
-                <div className="flex gap-2 mb-2 flex-wrap">
-                  {formData.tags.map(t => (
-                    <Badge key={t} variant="secondary" className="px-2 py-0.5 rounded-md flex items-center gap-1 bg-slate-100 text-slate-600 hover:bg-slate-200 group">
-                      {t}
-                      <X 
-                        className="h-3 w-3 cursor-pointer opacity-50 group-hover:opacity-100" 
-                        onClick={() => handleRemoveTag(t)} 
-                      />
-                    </Badge>
-                  ))}
-                </div>
-                <div className="flex gap-2">
-                  <Input 
-                    placeholder="Add tag and press Enter..." 
-                    value={tagInput} 
-                    onChange={(e) => setTagInput(e.target.value)} 
+                {formData.tags.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {formData.tags.map(t => (
+                      <StatusBadge key={t} tone="neutral">
+                        {t}
+                        <button
+                          type="button"
+                          aria-label={`Remove tag ${t}`}
+                          className="rounded-pill hover:text-text-primary"
+                          onClick={() => handleRemoveTag(t)}
+                        >
+                          <X size={12} />
+                        </button>
+                      </StatusBadge>
+                    ))}
+                  </div>
+                )}
+                <div className="flex items-center gap-2">
+                  <Input
+                    id="upload-modal-tag"
+                    placeholder="renewal"
+                    value={tagInput}
+                    onChange={(e) => setTagInput(e.target.value)}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') {
                         e.preventDefault()
@@ -437,61 +445,58 @@ export function UploadModal({
                       }
                     }}
                     disabled={isLoading}
-                    className="h-9 border-slate-200 text-sm"
                   />
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={handleAddTag} 
+                  <Button
+                    variant="secondary"
+                    onClick={handleAddTag}
                     disabled={isLoading || !tagInput.trim()}
                   >
-                    Add
+                    Add tag
                   </Button>
                 </div>
               </div>
 
               {/* Vault Encryption */}
-              <div className="flex items-center justify-between p-4 rounded-2xl bg-blue-50/50 border border-blue-100">
+              <div className="flex items-center justify-between gap-3 rounded-lg border border-line p-4">
                 <div className="flex gap-3">
-                  <div className="p-2 bg-blue-100 text-blue-600 rounded-lg h-fit">
-                    <Shield className="h-5 w-5" />
+                  <div className="grid h-10 w-10 shrink-0 place-items-center rounded-sm bg-field text-text-secondary">
+                    <Shield size={20} />
                   </div>
                   <div>
-                    <p className="text-sm font-bold text-slate-800">Zero-Trust Encryption</p>
-                    <p className="text-xs text-slate-500">Encrypt this file before storing it in the persistent vault.</p>
+                    <p className="text-sm font-semibold text-text-primary">Encrypt this file</p>
+                    <p className="text-xs text-text-muted">The file is encrypted before it is stored.</p>
                   </div>
                 </div>
-                <Switch 
-                  checked={formData.is_encrypted} 
+                <Switch
+                  aria-label="Encrypt this file"
+                  checked={formData.is_encrypted}
                   onCheckedChange={(checked) => setFormData({ ...formData, is_encrypted: checked })}
                   disabled={isLoading}
                 />
               </div>
             </div>
 
-            <div className="mt-10 flex gap-3">
-              <Button 
-                variant="ghost" 
-                className="flex-1 h-12 text-slate-500" 
+            <div className="mt-6 flex justify-end gap-2">
+              <Button
+                variant="secondary"
                 onClick={onClose}
                 disabled={isLoading}
               >
-                Discard
+                Cancel
               </Button>
-              <Button 
-                className="flex-[2] h-12 shadow-md shadow-primary/20 text-lg font-bold" 
-                onClick={handleSubmit} 
+              <Button
+                onClick={handleSubmit}
                 disabled={isLoading || !formData.file}
               >
                 {isLoading ? (
                   <>
-                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                    Archiving Document...
+                    <Loader2 className="animate-spin" />
+                    Uploading
                   </>
                 ) : (
                   <>
-                    <CheckCircle2 className="mr-2 h-5 w-5" />
-                    Upload
+                    <CheckCircle2 />
+                    Upload document
                   </>
                 )}
               </Button>

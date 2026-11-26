@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { Card, CardHeader, CardContent, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ChevronDown, Plus, Trash2, Eye } from 'lucide-react';
+import { ChevronDown, Plus, Trash2, Eye, BarChart3 } from '@/components/icons';
+import { SectionCard } from '@/components/shared/SectionCard';
+import { EmptyState } from '@/components/shared/EmptyState';
+import { cn } from '@/lib/utils';
 
 interface Metric {
   id: string;
@@ -22,70 +23,70 @@ interface SelectedMetric {
 const availableMetrics: Metric[] = [
   {
     id: 'total_docs',
-    name: 'Total Documents',
+    name: 'Total documents',
     category: 'Count',
     description: 'Total number of documents in the period',
     example: '1,245',
   },
   {
     id: 'approval_rate',
-    name: 'Approval Rate',
+    name: 'Approval rate',
     category: 'Percentage',
     description: 'Percentage of documents approved',
     example: '71.6%',
   },
   {
     id: 'overdue_count',
-    name: 'Overdue Count',
+    name: 'Overdue count',
     category: 'Count',
     description: 'Number of overdue documents',
     example: '45',
   },
   {
     id: 'avg_processing_time',
-    name: 'Avg Processing Time',
+    name: 'Average processing time',
     category: 'Duration',
     description: 'Average time to process documents',
     example: '2.3 days',
   },
   {
     id: 'document_value',
-    name: 'Document Value',
+    name: 'Document value',
     category: 'Financial',
     description: 'Total monetary value of documents',
     example: '$125,000',
   },
   {
     id: 'rejected_count',
-    name: 'Rejected Count',
+    name: 'Rejected count',
     category: 'Count',
     description: 'Number of rejected documents',
     example: '60',
   },
   {
     id: 'pending_signatures',
-    name: 'Pending Signatures',
+    name: 'Pending signatures',
     category: 'Count',
     description: 'Documents awaiting signature',
     example: '65',
   },
   {
     id: 'completion_rate',
-    name: 'Completion Rate',
+    name: 'Completion rate',
     category: 'Percentage',
     description: 'Percentage of completed workflows',
     example: '85.2%',
   },
   {
     id: 'user_count',
-    name: 'Active Users',
+    name: 'Active people',
     category: 'Count',
-    description: 'Number of active users in period',
+    description: 'Number of active people in the period',
     example: '128',
   },
   {
     id: 'department_breakdown',
-    name: 'Department Breakdown',
+    name: 'Department breakdown',
     category: 'Dimension',
     description: 'Metrics split by department',
     example: 'Finance, HR, Registry',
@@ -93,15 +94,15 @@ const availableMetrics: Metric[] = [
 ];
 
 const groupingOptions = [
-  { id: 'none', name: 'No Grouping' },
-  { id: 'day', name: 'By Day' },
-  { id: 'week', name: 'By Week' },
-  { id: 'month', name: 'By Month' },
-  { id: 'quarter', name: 'By Quarter' },
-  { id: 'year', name: 'By Year' },
-  { id: 'department', name: 'By Department' },
-  { id: 'status', name: 'By Status' },
-  { id: 'user', name: 'By User' },
+  { id: 'none', name: 'No grouping' },
+  { id: 'day', name: 'By day' },
+  { id: 'week', name: 'By week' },
+  { id: 'month', name: 'By month' },
+  { id: 'quarter', name: 'By quarter' },
+  { id: 'year', name: 'By year' },
+  { id: 'department', name: 'By department' },
+  { id: 'status', name: 'By status' },
+  { id: 'user', name: 'By person' },
 ];
 
 interface CustomReportBuilderProps {
@@ -162,184 +163,159 @@ export const CustomReportBuilder: React.FC<CustomReportBuilderProps> = ({
 
   const handleSave = () => {
     if (selectedMetrics.length === 0) {
-      alert('Please select at least one metric');
+      alert('Select at least one metric');
       return;
     }
     onSave?.(selectedMetrics);
   };
 
   return (
-    <div className="space-y-6">
-      {/* Main Content */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Metrics Selector */}
-        <div className="lg:col-span-2">
-          <Card className="shadow-md border-gray-200">
-            <CardHeader>
-              <CardTitle>Select Metrics</CardTitle>
-              <CardDescription>
-                Choose metrics to include in your custom report
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4 max-h-96 overflow-y-auto">
-              {categories.map(category => (
-                <div key={category} className="space-y-2">
-                  <button
-                    onClick={() => toggleCategory(category)}
-                    className="w-full flex items-center justify-between p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors"
-                  >
-                    <span className="font-semibold text-gray-800">{category}</span>
-                    <ChevronDown
-                      className={`h-5 w-5 transition-transform ${
-                        expandedCategories.has(category) ? 'rotate-180' : ''
-                      }`}
-                    />
-                  </button>
+    <div className="space-y-5">
+      {/* Main content */}
+      <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-3">
+        {/* Metrics selector */}
+        <SectionCard eyebrow="Choose what the report includes" title="Select metrics" className="lg:col-span-2">
+          <div className="max-h-96 space-y-3 overflow-y-auto">
+            {categories.map(category => (
+              <div key={category} className="space-y-2">
+                <button
+                  type="button"
+                  onClick={() => toggleCategory(category)}
+                  aria-expanded={expandedCategories.has(category)}
+                  className="flex w-full items-center justify-between rounded-md bg-field p-3 transition-colors hover:bg-field-hover"
+                >
+                  <span className="text-sm font-semibold text-text-primary">{category}</span>
+                  <ChevronDown
+                    size={16}
+                    className={cn('transition-transform', expandedCategories.has(category) && 'rotate-180')}
+                  />
+                </button>
 
-                  {expandedCategories.has(category) && (
-                    <div className="pl-4 space-y-2">
-                      {getCategoryMetrics(category).map(metric => (
-                        <button
-                          key={metric.id}
-                          onClick={() => handleAddMetric(metric)}
-                          className="w-full text-left p-3 rounded-lg border border-gray-200 hover:border-primary hover:bg-primary/5 transition-all group"
-                        >
-                          <div className="flex items-start justify-between">
-                            <div className="flex-1">
-                              <p className="font-medium text-gray-800 group-hover:text-primary">
-                                {metric.name}
-                              </p>
-                              <p className="text-sm text-gray-600 mt-1">
-                                {metric.description}
-                              </p>
-                              <p className="text-xs text-gray-500 mt-1">
-                                Example: {metric.example}
-                              </p>
-                            </div>
-                            <Plus className="h-5 w-5 text-gray-400 group-hover:text-primary flex-shrink-0 ml-2" />
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Selected Metrics */}
-        <div className="lg:col-span-1">
-          <Card className="shadow-md border-gray-200 sticky top-6">
-            <CardHeader>
-              <CardTitle className="text-lg">Selected Metrics</CardTitle>
-              <CardDescription>
-                {selectedMetrics.length} metric{selectedMetrics.length !== 1 ? 's' : ''} selected
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3 max-h-96 overflow-y-auto">
-              {selectedMetrics.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">
-                  <p className="text-sm">No metrics selected yet</p>
-                  <p className="text-xs mt-1">Select metrics from the left</p>
-                </div>
-              ) : (
-                selectedMetrics.map(metric => (
-                  <div
-                    key={metric.id}
-                    className="p-3 rounded-lg bg-gray-50 border border-gray-200 space-y-2"
-                  >
-                    <div className="flex items-start justify-between">
-                      <p className="font-semibold text-sm text-gray-800">
-                        {metric.name}
-                      </p>
+                {expandedCategories.has(category) && (
+                  <div className="space-y-2 pl-4">
+                    {getCategoryMetrics(category).map(metric => (
                       <button
-                        onClick={() => handleRemoveMetric(metric.id)}
-                        className="text-gray-400 hover:text-red-600 transition-colors"
+                        type="button"
+                        key={metric.id}
+                        onClick={() => handleAddMetric(metric)}
+                        className="flex w-full items-start justify-between rounded-md border border-line p-3 text-left transition-colors hover:bg-surface-2"
                       >
-                        <Trash2 className="h-4 w-4" />
+                        <span className="block flex-1">
+                          <span className="block text-sm font-semibold text-text-primary">{metric.name}</span>
+                          <span className="mt-1 block text-xs text-text-secondary">{metric.description}</span>
+                          <span className="mt-1 block text-xs text-text-muted">Example: {metric.example}</span>
+                        </span>
+                        <Plus size={18} className="ml-2 flex-shrink-0 text-text-muted" />
                       </button>
-                    </div>
-                    <Select
-                      value={metric.groupBy}
-                      onValueChange={(value) =>
-                        handleUpdateGrouping(metric.id, value)
-                      }
-                    >
-                      <SelectTrigger className="h-8 text-xs">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {groupingOptions.map(opt => (
-                          <SelectItem key={opt.id} value={opt.id}>
-                            {opt.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    ))}
                   </div>
-                ))
-              )}
-            </CardContent>
-          </Card>
-        </div>
-      </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </SectionCard>
 
-      {/* Preview Section */}
-      {previewMode && selectedMetrics.length > 0 && (
-        <Card className="shadow-lg border-primary/20">
-          <CardHeader className="border-b border-primary/10">
-            <CardTitle>Report Preview</CardTitle>
-            <CardDescription>
-              Shows how your selected metrics will appear in the report
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {selectedMetrics.map(metric => (
+        {/* Selected metrics */}
+        <SectionCard
+          eyebrow={`${selectedMetrics.length} metric${selectedMetrics.length !== 1 ? 's' : ''} selected`}
+          title="Selected metrics"
+        >
+          <div className="max-h-96 space-y-3 overflow-y-auto">
+            {selectedMetrics.length === 0 ? (
+              <EmptyState
+                icon={<BarChart3 size={24} />}
+                title="No metrics yet"
+                description="Select metrics from the list to add them here."
+              />
+            ) : (
+              selectedMetrics.map(metric => (
                 <div
                   key={metric.id}
-                  className="p-4 rounded-lg bg-gray-50 border border-gray-200"
+                  className="space-y-2 rounded-md border border-line p-3"
                 >
-                  <p className="font-semibold text-gray-800 text-sm">
-                    {metric.name}
-                  </p>
-                  <p className="text-xs text-gray-600 mt-1">
-                    Grouped by: {groupingOptions.find(o => o.id === metric.groupBy)?.name}
-                  </p>
-                  <div className="mt-3 h-32 bg-white rounded border border-gray-300 flex items-center justify-center">
-                    <p className="text-xs text-gray-500">[Chart Preview]</p>
+                  <div className="flex items-start justify-between gap-2">
+                    <p className="text-sm font-semibold text-text-primary">
+                      {metric.name}
+                    </p>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleRemoveMetric(metric.id)}
+                      aria-label={`Remove ${metric.name}`}
+                    >
+                      <Trash2 size={14} />
+                    </Button>
                   </div>
+                  <Select
+                    value={metric.groupBy}
+                    onValueChange={(value) =>
+                      handleUpdateGrouping(metric.id, value)
+                    }
+                  >
+                    <SelectTrigger className="h-8 text-xs" aria-label={`Grouping for ${metric.name}`}>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {groupingOptions.map(opt => (
+                        <SelectItem key={opt.id} value={opt.id}>
+                          {opt.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+              ))
+            )}
+          </div>
+        </SectionCard>
+      </div>
+
+      {/* Preview */}
+      {previewMode && selectedMetrics.length > 0 && (
+        <SectionCard eyebrow="How the selected metrics appear" title="Report preview">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            {selectedMetrics.map(metric => (
+              <div
+                key={metric.id}
+                className="rounded-md border border-line p-4"
+              >
+                <p className="text-sm font-semibold text-text-primary">
+                  {metric.name}
+                </p>
+                <p className="mt-1 text-xs text-text-secondary">
+                  Grouped by: {groupingOptions.find(o => o.id === metric.groupBy)?.name}
+                </p>
+                <div className="mt-3 flex h-32 items-center justify-center rounded-sm border border-dashed border-line-strong bg-surface-2">
+                  <p className="text-xs text-text-muted">[Chart preview]</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </SectionCard>
       )}
 
-      {/* Action Buttons */}
-      <div className="flex justify-between">
+      {/* Actions */}
+      <div className="flex flex-wrap justify-between gap-2">
         <div className="flex gap-2">
           {selectedMetrics.length > 0 && (
             <Button
-              variant="outline"
+              variant="ghost"
               onClick={() => setPreviewMode(!previewMode)}
             >
-              <Eye className="h-4 w-4 mr-2" />
-              {previewMode ? 'Hide' : 'Preview'}
+              <Eye size={16} />
+              {previewMode ? 'Hide preview' : 'Show preview'}
             </Button>
           )}
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={onCancel}>
+          <Button variant="secondary" onClick={onCancel}>
             Cancel
           </Button>
           <Button
             onClick={handleSave}
             disabled={selectedMetrics.length === 0}
-            variant="default"
           >
-            Save Report
+            Save report
           </Button>
         </div>
       </div>

@@ -3,7 +3,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Dialog, DialogContent, DialogFooter } from '@/components/ui/dialog';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import {
   Select,
   SelectContent,
@@ -11,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Loader2, ChevronLeft, ChevronRight, Mail, Lock, Users, Building } from 'lucide-react';
+import { Loader2, ChevronLeft, ChevronRight, AlertCircle } from '@/components/icons';
 import { toast } from 'sonner';
 import { post, list } from '@/lib/api/crud';
 import type { RoleSlug, Permission } from '@/types/rbac';
@@ -39,7 +40,7 @@ interface Department {
 }
 
 const ROLE_OPTIONS: { value: RoleSlug; label: string }[] = [
-    { value: 'super_admin', label: 'Super Admin' },
+    { value: 'super_admin', label: 'Super admin' },
     { value: 'admin', label: 'Admin' },
     { value: 'user', label: 'User' },
 ];
@@ -113,28 +114,28 @@ export function UserCreateDialog({ isOpen, onClose, onSubmit }: UserCreateDialog
     const validateStep1 = (): boolean => {
         const newErrors: Record<string, string> = {};
 
-        if (!firstName.trim()) newErrors.firstName = 'First name is required';
-        if (!lastName.trim()) newErrors.lastName = 'Last name is required';
+        if (!firstName.trim()) newErrors.firstName = 'Enter a first name.';
+        if (!lastName.trim()) newErrors.lastName = 'Enter a last name.';
 
         if (!email.trim()) {
-            newErrors.email = 'Email is required';
+            newErrors.email = 'Enter an email address.';
         } else if (!/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email)) {
-            newErrors.email = 'Invalid email format';
+            newErrors.email = 'Enter a full email address, like name@company.co.zm.';
         }
 
         if (!password) {
-            newErrors.password = 'Password is required';
+            newErrors.password = 'Enter a password.';
         } else if (password.length < 8) {
-            newErrors.password = 'Password must be at least 8 characters';
+            newErrors.password = 'Use at least 8 characters.';
         }
 
-        if (!roleSlug) newErrors.roleSlug = 'Role is required';
+        if (!roleSlug) newErrors.roleSlug = 'Choose a role.';
 
         if (roleSlug === 'admin' && !title.trim()) {
-            newErrors.title = 'Position is required for admin users';
+            newErrors.title = 'Enter a position for this admin.';
         }
         if (roleSlug === 'admin' && !departmentIds.length) {
-            newErrors.departmentIds = 'At least one department is required for admin users';
+            newErrors.departmentIds = 'Choose at least one department for this admin.';
         }
 
         setErrors(newErrors);
@@ -171,14 +172,14 @@ export function UserCreateDialog({ isOpen, onClose, onSubmit }: UserCreateDialog
                 password,
                 role_id: roleSlug,
                 is_active: isActive,
-                ...(roleSlug === 'admin' && { 
+                ...(roleSlug === 'admin' && {
                     position: title.trim(),
                     department_ids: departmentIds
                 }),
             };
 
             await post('USERS', payload);
-            toast.success('User created successfully');
+            toast.success('User created');
             onSubmit(payload);
             handleClose();
         } catch (err) {
@@ -203,377 +204,336 @@ export function UserCreateDialog({ isOpen, onClose, onSubmit }: UserCreateDialog
         onClose();
     };
 
+    const fieldError = (key: string) =>
+        errors[key] ? (
+            <p id={`create-user-${key}-error`} className="flex items-center gap-1 text-xs text-risk">
+                <AlertCircle size={14} />
+                {errors[key]}
+            </p>
+        ) : null;
+
+    const errorProps = (key: string) => ({
+        'aria-invalid': !!errors[key],
+        'aria-describedby': errors[key] ? `create-user-${key}-error` : undefined,
+    });
+
     return (
         <Dialog open={isOpen} onOpenChange={handleClose}>
-            <DialogContent className="max-w-2xl bg-white p-0 overflow-hidden border-none shadow-2xl">
-                {/* Header */}
-                <div className="px-8 py-6 border-b border-gray-200">
-                    <div className="flex items-center justify-between gap-4">
-                        <div>
-                            <h1 className="font-display font-bold text-display-sm text-gray-900">
-                                Create New User
-                            </h1>
-                            <p className="font-sans text-text-sm text-gray-600 mt-1">
-                                {step === 1 ? 'Add user details and account settings' : 'Configure roles and permissions'}
-                            </p>
-                        </div>
-                        <div className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 rounded-lg border border-gray-200">
-                            <span className="text-sm font-semibold text-gray-900">{step}</span>
-                            <span className="text-sm text-gray-600">/2</span>
-                        </div>
-                    </div>
-                </div>
+            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                    <p className="text-xs text-text-muted">Step <span className="font-mono">{step}</span> of <span className="font-mono">2</span></p>
+                    <DialogTitle>Create user</DialogTitle>
+                    <DialogDescription>
+                        {step === 1 ? 'Add the user details and account settings.' : 'Choose permissions for this user.'}
+                    </DialogDescription>
+                </DialogHeader>
 
-                {/* Content */}
-                <div className="p-8 overflow-y-auto max-h-[calc(90vh-200px)]">
-                    <AnimatePresence mode="wait">
-                        {step === 1 ? (
-                            <motion.div
-                                key="step1"
-                                initial={{ opacity: 0, x: 20 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                exit={{ opacity: 0, x: -20 }}
-                                transition={{ duration: 0.2 }}
-                                className="space-y-6"
-                            >
-                                {/* Name Fields */}
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="space-y-2">
-                                        <Label className="font-sans font-semibold text-text-sm text-gray-900">
-                                            First Name *
-                                        </Label>
-                                        <Input
-                                            value={firstName}
-                                            onChange={(e) => {
-                                                setFirstName(e.target.value);
-                                                if (errors.firstName) setErrors({ ...errors, firstName: '' });
-                                            }}
-                                            placeholder="e.g. John"
-                                            className={`h-11 border-gray-200 focus:ring-primary shadow-sm rounded-lg ${
-                                                errors.firstName ? 'border-red-500' : ''
-                                            }`}
-                                        />
-                                        {errors.firstName && (
-                                            <p className="text-xs text-red-600">{errors.firstName}</p>
-                                        )}
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label className="font-sans font-semibold text-text-sm text-gray-900">
-                                            Last Name *
-                                        </Label>
-                                        <Input
-                                            value={lastName}
-                                            onChange={(e) => {
-                                                setLastName(e.target.value);
-                                                if (errors.lastName) setErrors({ ...errors, lastName: '' });
-                                            }}
-                                            placeholder="e.g. Smith"
-                                            className={`h-11 border-gray-200 focus:ring-primary shadow-sm rounded-lg ${
-                                                errors.lastName ? 'border-red-500' : ''
-                                            }`}
-                                        />
-                                        {errors.lastName && (
-                                            <p className="text-xs text-red-600">{errors.lastName}</p>
-                                        )}
-                                    </div>
-                                </div>
-
-                                {/* Email */}
-                                <div className="space-y-2">
-                                    <Label className="font-sans font-semibold text-text-sm text-gray-900 flex items-center gap-2">
-                                        <Mail className="h-4 w-4 text-blue-600" />
-                                        Email Address *
-                                    </Label>
+                <AnimatePresence mode="wait">
+                    {step === 1 ? (
+                        <motion.div
+                            key="step1"
+                            initial={{ opacity: 0, x: 20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            exit={{ opacity: 0, x: -20 }}
+                            transition={{ duration: 0.2 }}
+                            className="space-y-4"
+                        >
+                            {/* Name Fields */}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div className="space-y-1.5">
+                                    <Label htmlFor="create-user-first-name">First name</Label>
                                     <Input
-                                        type="email"
-                                        value={email}
+                                        id="create-user-first-name"
+                                        value={firstName}
                                         onChange={(e) => {
-                                            setEmail(e.target.value);
-                                            if (errors.email) setErrors({ ...errors, email: '' });
+                                            setFirstName(e.target.value);
+                                            if (errors.firstName) setErrors({ ...errors, firstName: '' });
                                         }}
-                                        placeholder="user@organization.com"
-                                        className={`h-11 border-gray-200 focus:ring-primary shadow-sm rounded-lg ${
-                                            errors.email ? 'border-red-500' : ''
-                                        }`}
+                                        placeholder="Natasha"
+                                        {...errorProps('firstName')}
                                     />
-                                    {errors.email && (
-                                        <p className="text-xs text-red-600">{errors.email}</p>
-                                    )}
+                                    {fieldError('firstName')}
                                 </div>
-
-                                {/* Password */}
-                                <div className="space-y-2">
-                                    <Label className="font-sans font-semibold text-text-sm text-gray-900 flex items-center gap-2">
-                                        <Lock className="h-4 w-4 text-blue-600" />
-                                        Password *
-                                    </Label>
+                                <div className="space-y-1.5">
+                                    <Label htmlFor="create-user-last-name">Last name</Label>
                                     <Input
-                                        type="password"
-                                        value={password}
+                                        id="create-user-last-name"
+                                        value={lastName}
                                         onChange={(e) => {
-                                            setPassword(e.target.value);
-                                            if (errors.password) setErrors({ ...errors, password: '' });
+                                            setLastName(e.target.value);
+                                            if (errors.lastName) setErrors({ ...errors, lastName: '' });
                                         }}
-                                        placeholder="Minimum 8 characters"
-                                        className={`h-11 border-gray-200 focus:ring-primary shadow-sm rounded-lg ${
-                                            errors.password ? 'border-red-500' : ''
-                                        }`}
+                                        placeholder="Lungu"
+                                        {...errorProps('lastName')}
                                     />
-                                    {errors.password && (
-                                        <p className="text-xs text-red-600">{errors.password}</p>
-                                    )}
+                                    {fieldError('lastName')}
                                 </div>
+                            </div>
 
-                                {/* Role */}
-                                <div className="space-y-2">
-                                    <Label className="font-sans font-semibold text-text-xs text-gray-700 uppercase tracking-wider flex items-center gap-2">
-                                        <Users className="h-4 w-4 text-blue-600" />
-                                        Role *
-                                    </Label>
-                                    <Select value={roleSlug} onValueChange={(v) => {
-                                        setRoleSlug(v as RoleSlug);
-                                        if (errors.roleSlug) setErrors({ ...errors, roleSlug: '' });
-                                    }}>
-                                        <SelectTrigger className="h-11 border-gray-200 bg-white shadow-sm rounded-lg">
-                                            <SelectValue />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {ROLE_OPTIONS.map((opt) => (
-                                                <SelectItem key={opt.value} value={opt.value}>
-                                                    {opt.label}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                    {errors.roleSlug && (
-                                        <p className="text-xs text-red-600">{errors.roleSlug}</p>
-                                    )}
-                                </div>
+                            {/* Email */}
+                            <div className="space-y-1.5">
+                                <Label htmlFor="create-user-email">Email address</Label>
+                                <Input
+                                    id="create-user-email"
+                                    type="email"
+                                    value={email}
+                                    onChange={(e) => {
+                                        setEmail(e.target.value);
+                                        if (errors.email) setErrors({ ...errors, email: '' });
+                                    }}
+                                    placeholder="name@company.co.zm"
+                                    {...errorProps('email')}
+                                />
+                                {fieldError('email')}
+                            </div>
 
-                                {/* Admin-only fields */}
-                                {roleSlug === 'admin' && (
-                                    <motion.div
-                                        initial={{ opacity: 0, height: 0 }}
-                                        animate={{ opacity: 1, height: 'auto' }}
-                                        exit={{ opacity: 0, height: 0 }}
-                                        className="space-y-4 pt-4 border-t border-gray-200"
-                                    >
-                                        <p className="font-sans text-text-xs text-gray-600 uppercase tracking-wider font-medium">
-                                            Admin Configuration
-                                        </p>
-                                        <div className="space-y-2">
-                                            <Label className="font-sans font-semibold text-text-sm text-gray-900">
-                                                Position *
-                                            </Label>
-                                            <Input
-                                                value={title}
-                                                onChange={(e) => {
-                                                    setTitle(e.target.value);
-                                                    if (errors.title) setErrors({ ...errors, title: '' });
-                                                }}
-                                                placeholder="e.g. Head of Admissions"
-                                                className={`h-11 border-gray-200 focus:ring-primary shadow-sm rounded-lg ${
-                                                    errors.title ? 'border-red-500' : ''
-                                                }`}
-                                            />
-                                            {errors.title && (
-                                                <p className="text-xs text-red-600">{errors.title}</p>
-                                            )}
-                                        </div>
-                                        <div className="space-y-2">
-                                            <Label className="font-sans font-semibold text-text-sm text-gray-900 flex items-center gap-2">
-                                                <Building className="h-4 w-4 text-blue-600" />
-                                                Departments *
-                                            </Label>
-                                            {isDepartmentsLoading ? (
-                                                <div className="p-3 bg-gray-50 rounded-lg border border-gray-200 text-sm text-gray-600">
-                                                    Loading departments...
-                                                </div>
-                                            ) : (
-                                                <div className="space-y-2 p-3 bg-gray-50 rounded-lg border border-gray-200">
-                                                    {departments.length === 0 ? (
-                                                        <p className="text-sm text-gray-600">No departments available</p>
-                                                    ) : (
-                                                        departments.map((dept) => (
-                                                            <label key={dept.id} className="flex items-center gap-2 cursor-pointer hover:bg-white p-2 rounded">
-                                                                <input
-                                                                    type="checkbox"
-                                                                    checked={departmentIds.includes(dept.id)}
-                                                                    onChange={() => toggleDepartment(dept.id)}
-                                                                    className="h-4 w-4 rounded border-gray-300"
-                                                                />
-                                                                <span className="text-sm text-gray-700 font-medium">
-                                                                    {dept.name}
-                                                                </span>
-                                                            </label>
-                                                        ))
-                                                    )}
-                                                </div>
-                                            )}
-                                            {errors.departmentIds && (
-                                                <p className="text-xs text-red-600">{errors.departmentIds}</p>
-                                            )}
-                                        </div>
-                                    </motion.div>
+                            {/* Password */}
+                            <div className="space-y-1.5">
+                                <Label htmlFor="create-user-password">Password</Label>
+                                <Input
+                                    id="create-user-password"
+                                    type="password"
+                                    value={password}
+                                    onChange={(e) => {
+                                        setPassword(e.target.value);
+                                        if (errors.password) setErrors({ ...errors, password: '' });
+                                    }}
+                                    {...errorProps('password')}
+                                />
+                                {errors.password ? fieldError('password') : (
+                                    <p className="text-xs text-text-muted">At least 8 characters.</p>
                                 )}
-                            </motion.div>
-                        ) : (
-                            <motion.div
-                                key="step2"
-                                initial={{ opacity: 0, x: 20 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                exit={{ opacity: 0, x: -20 }}
-                                transition={{ duration: 0.2 }}
-                                className="space-y-4"
-                            >
-                                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-sm text-blue-800">
-                                    <p className="font-semibold">Roles & Permissions</p>
-                                    <p className="text-xs mt-1 text-blue-700">
-                                        Configure permissions for {firstName} {lastName} ({email}) as a {roleSlug}
+                            </div>
+
+                            {/* Role */}
+                            <div className="space-y-1.5">
+                                <Label htmlFor="create-user-role">Role</Label>
+                                <Select value={roleSlug} onValueChange={(v) => {
+                                    setRoleSlug(v as RoleSlug);
+                                    if (errors.roleSlug) setErrors({ ...errors, roleSlug: '' });
+                                }}>
+                                    <SelectTrigger id="create-user-role">
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {ROLE_OPTIONS.map((opt) => (
+                                            <SelectItem key={opt.value} value={opt.value}>
+                                                {opt.label}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                                {fieldError('roleSlug')}
+                            </div>
+
+                            {/* Admin-only fields */}
+                            {roleSlug === 'admin' && (
+                                <motion.div
+                                    initial={{ opacity: 0, height: 0 }}
+                                    animate={{ opacity: 1, height: 'auto' }}
+                                    exit={{ opacity: 0, height: 0 }}
+                                    className="space-y-4 pt-4 border-t border-line"
+                                >
+                                    <p className="text-xs font-semibold uppercase tracking-[.04em] text-text-muted">
+                                        Admin settings
+                                    </p>
+                                    <div className="space-y-1.5">
+                                        <Label htmlFor="create-user-position">Position</Label>
+                                        <Input
+                                            id="create-user-position"
+                                            value={title}
+                                            onChange={(e) => {
+                                                setTitle(e.target.value);
+                                                if (errors.title) setErrors({ ...errors, title: '' });
+                                            }}
+                                            placeholder="Sales manager"
+                                            {...errorProps('title')}
+                                        />
+                                        {fieldError('title')}
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        <p className="text-sm font-medium text-text-secondary">Departments</p>
+                                        {isDepartmentsLoading ? (
+                                            <div role="status" aria-busy="true" aria-label="Loading departments" className="grid gap-2 py-2">
+                                                <div className="skeleton h-4 w-1/2 rounded-xs" />
+                                                <div className="skeleton h-4 w-2/3 rounded-xs" />
+                                            </div>
+                                        ) : (
+                                            <div className="space-y-1 p-2 rounded-md border border-line">
+                                                {departments.length === 0 ? (
+                                                    <p className="p-2 text-sm text-text-muted">No departments yet.</p>
+                                                ) : (
+                                                    departments.map((dept) => (
+                                                        <label key={dept.id} className="flex items-center gap-2 cursor-pointer hover:bg-surface-2 p-2 rounded-sm">
+                                                            <Checkbox
+                                                                checked={departmentIds.includes(dept.id)}
+                                                                onCheckedChange={() => toggleDepartment(dept.id)}
+                                                            />
+                                                            <span className="text-sm text-text-primary font-medium">
+                                                                {dept.name}
+                                                            </span>
+                                                        </label>
+                                                    ))
+                                                )}
+                                            </div>
+                                        )}
+                                        {fieldError('departmentIds')}
+                                    </div>
+                                </motion.div>
+                            )}
+                        </motion.div>
+                    ) : (
+                        <motion.div
+                            key="step2"
+                            initial={{ opacity: 0, x: 20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            exit={{ opacity: 0, x: -20 }}
+                            transition={{ duration: 0.2 }}
+                            className="space-y-4"
+                        >
+                            <div className="rounded-md bg-field p-4 text-sm text-text-secondary">
+                                <p className="font-semibold text-text-primary">Roles and permissions</p>
+                                <p className="text-xs mt-1">
+                                    Permissions for {firstName} {lastName} ({email}), role {roleSlug.replace(/_/g, ' ')}.
+                                </p>
+                            </div>
+
+                            {isLoadingPermissions ? (
+                                <div role="status" aria-busy="true" aria-label="Loading permissions" className="grid gap-3 py-4">
+                                    <div className="skeleton h-4 w-1/3 rounded-xs" />
+                                    <div className="skeleton h-4 w-full rounded-xs" />
+                                    <div className="skeleton h-4 w-2/3 rounded-xs" />
+                                </div>
+                            ) : (
+                                <div className="space-y-6">
+                                    {allPermissions.length === 0 ? (
+                                        <p className="text-sm text-text-muted">No permissions available.</p>
+                                    ) : (
+                                        Object.entries(
+                                            allPermissions.reduce<Record<string, typeof allPermissions>>((acc, perm) => {
+                                                if (!acc[perm.resource]) acc[perm.resource] = [];
+                                                acc[perm.resource].push(perm);
+                                                return acc;
+                                            }, {})
+                                        ).map(([resource, perms]) => {
+                                            const resourcePermsIds = perms.map(p => String(p.id));
+                                            const allSelectedInResource = resourcePermsIds.length > 0 && resourcePermsIds.every(id =>
+                                                selectedPermissions.includes(id) || roleSlug === 'super_admin'
+                                            );
+
+                                            const toggleAllInResource = () => {
+                                                if (roleSlug === 'super_admin') return;
+
+                                                if (allSelectedInResource) {
+                                                    // Deselect all
+                                                    setSelectedPermissions(prev =>
+                                                        prev.filter(id => !resourcePermsIds.includes(id))
+                                                    );
+                                                } else {
+                                                    // Select all
+                                                    setSelectedPermissions(prev => [
+                                                        ...prev,
+                                                        ...resourcePermsIds.filter(id => !prev.includes(id))
+                                                    ]);
+                                                }
+                                            };
+
+                                            return (
+                                                <div key={resource}>
+                                                    <div className="flex items-center justify-between gap-3 mb-2">
+                                                        <p className="text-xs font-semibold text-text-muted uppercase tracking-[.04em]">
+                                                            {resource}
+                                                        </p>
+                                                        <Button
+                                                            type="button"
+                                                            onClick={toggleAllInResource}
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            disabled={roleSlug === 'super_admin'}
+                                                        >
+                                                            {allSelectedInResource ? 'Clear all' : 'Select all'}
+                                                        </Button>
+                                                    </div>
+                                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pl-2">
+                                                        {perms.map((perm) => {
+                                                            const permId = String(perm.id);
+                                                            const isChecked = selectedPermissions.includes(permId) || roleSlug === 'super_admin';
+                                                            return (
+                                                                <label
+                                                                    key={perm.id}
+                                                                    className="flex items-start gap-2 text-sm cursor-pointer group"
+                                                                >
+                                                                    <Checkbox
+                                                                        checked={isChecked}
+                                                                        onCheckedChange={() => {
+                                                                            if (roleSlug === 'super_admin') return;
+                                                                            setSelectedPermissions(prev =>
+                                                                                prev.includes(permId)
+                                                                                    ? prev.filter(id => id !== permId)
+                                                                                    : [...prev, permId]
+                                                                            );
+                                                                        }}
+                                                                        disabled={roleSlug === 'super_admin'}
+                                                                        className="mt-0.5"
+                                                                    />
+                                                                    <span className="flex flex-col gap-0.5 min-w-0">
+                                                                        <span className="text-text-primary font-medium leading-tight">
+                                                                            {perm.action}
+                                                                        </span>
+                                                                        {perm.description && (
+                                                                            <span className="text-text-muted text-xs leading-tight">
+                                                                                {perm.description}
+                                                                            </span>
+                                                                        )}
+                                                                    </span>
+                                                                </label>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                </div>
+                                            );
+                                        })
+                                    )}
+                                    <p className="rounded-md bg-field p-3 text-xs text-text-secondary">
+                                        You can change permissions after the user is created, from Manage permissions.
                                     </p>
                                 </div>
-
-                                {isLoadingPermissions ? (
-                                    <div className="flex justify-center py-8">
-                                        <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
-                                    </div>
-                                ) : (
-                                    <div className="space-y-6">
-                                        {allPermissions.length === 0 ? (
-                                            <p className="text-sm text-gray-600">No permissions available</p>
-                                        ) : (
-                                            Object.entries(
-                                                allPermissions.reduce<Record<string, typeof allPermissions>>((acc, perm) => {
-                                                    if (!acc[perm.resource]) acc[perm.resource] = [];
-                                                    acc[perm.resource].push(perm);
-                                                    return acc;
-                                                }, {})
-                                            ).map(([resource, perms]) => {
-                                                const resourcePermsIds = perms.map(p => String(p.id));
-                                                const allSelectedInResource = resourcePermsIds.length > 0 && resourcePermsIds.every(id => 
-                                                    selectedPermissions.includes(id) || roleSlug === 'super_admin'
-                                                );
-                                                
-                                                const toggleAllInResource = () => {
-                                                    if (roleSlug === 'super_admin') return;
-                                                    
-                                                    if (allSelectedInResource) {
-                                                        // Deselect all
-                                                        setSelectedPermissions(prev => 
-                                                            prev.filter(id => !resourcePermsIds.includes(id))
-                                                        );
-                                                    } else {
-                                                        // Select all
-                                                        setSelectedPermissions(prev => [
-                                                            ...prev,
-                                                            ...resourcePermsIds.filter(id => !prev.includes(id))
-                                                        ]);
-                                                    }
-                                                };
-
-                                                return (
-                                                    <div key={resource}>
-                                                        <div className="flex items-center justify-between gap-3 mb-3">
-                                                            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                                                                {resource}
-                                                            </p>
-                                                            <Button
-                                                                onClick={toggleAllInResource}
-                                                                variant="ghost"
-                                                                size="sm"
-                                                                className="h-6 px-2 text-xs font-medium text-blue-600 hover:bg-blue-50"
-                                                                disabled={roleSlug === 'super_admin'}
-                                                            >
-                                                                {allSelectedInResource ? 'Deselect All' : 'Select All'}
-                                                            </Button>
-                                                        </div>
-                                                        <div className="grid grid-cols-2 gap-3 pl-2">
-                                                            {perms.map((perm) => {
-                                                                const permId = String(perm.id);
-                                                                const isChecked = selectedPermissions.includes(permId) || roleSlug === 'super_admin';
-                                                                return (
-                                                                    <label
-                                                                        key={perm.id}
-                                                                        className="flex items-start gap-2 text-sm cursor-pointer group"
-                                                                    >
-                                                                        <input
-                                                                            type="checkbox"
-                                                                            checked={isChecked}
-                                                                            onChange={() => {
-                                                                                if (roleSlug === 'super_admin') return;
-                                                                                setSelectedPermissions(prev =>
-                                                                                    prev.includes(permId)
-                                                                                        ? prev.filter(id => id !== permId)
-                                                                                        : [...prev, permId]
-                                                                                );
-                                                                            }}
-                                                                            disabled={roleSlug === 'super_admin'}
-                                                                            className="h-4 w-4 mt-0.5 flex-shrink-0"
-                                                                        />
-                                                                        <div className="flex flex-col gap-0.5 min-w-0">
-                                                                            <span className="text-gray-700 font-medium leading-tight">
-                                                                                {perm.action}
-                                                                            </span>
-                                                                            {perm.description && (
-                                                                                <span className="text-gray-400 text-xs leading-tight">
-                                                                                    {perm.description}
-                                                                                </span>
-                                                                            )}
-                                                                        </div>
-                                                                    </label>
-                                                                );
-                                                            })}
-                                                        </div>
-                                                    </div>
-                                                );
-                                            })
-                                        )}
-                                        <div className="bg-blue-50 border border-blue-200 rounded p-2 text-xs text-blue-700 mt-3">
-                                            💡 Tip: Permissions can be customized after user creation through User Permissions.
-                                        </div>
-                                    </div>
-                                )}
-                            </motion.div>
-                        )}
-                    </AnimatePresence>
-                </div>
+                            )}
+                        </motion.div>
+                    )}
+                </AnimatePresence>
 
                 {/* Footer */}
-                <DialogFooter className="flex gap-3 border-t border-gray-200 bg-gray-50 px-8 py-4">
+                <DialogFooter className="gap-3 pt-2">
                     <Button
-                        variant="outline"
+                        variant="secondary"
                         onClick={step === 1 ? handleClose : handlePreviousStep}
-                        className="h-11"
                     >
                         {step === 1 ? 'Cancel' : (
                             <>
-                                <ChevronLeft className="h-4 w-4 mr-2" />
+                                <ChevronLeft />
                                 Back
                             </>
                         )}
                     </Button>
 
                     {step === 1 ? (
-                        <Button
-                            onClick={handleNextStep}
-                            className="h-11 bg-primary text-primary-foreground hover:bg-primary-dark"
-                        >
+                        <Button onClick={handleNextStep}>
                             Continue
-                            <ChevronRight className="h-4 w-4 ml-2" />
+                            <ChevronRight />
                         </Button>
                     ) : (
                         <Button
                             onClick={handleSubmit}
                             disabled={isSubmitting}
-                            className="h-11 bg-primary text-primary-foreground hover:bg-primary-dark"
                         >
                             {isSubmitting ? (
                                 <>
-                                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                                    Creating...
+                                    <Loader2 className="animate-spin" />
+                                    Creating
                                 </>
                             ) : (
-                                'Create User'
+                                'Create user'
                             )}
                         </Button>
                     )}

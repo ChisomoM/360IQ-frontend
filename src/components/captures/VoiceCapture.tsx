@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { FileAudio, Loader2, Mic, MicOff, RotateCcw, Square } from "lucide-react";
+import { FileAudio, Loader2, Mic, MicOff, RotateCcw, Square } from "@/components/icons";
 import { Button } from "@/components/ui/button";
 import { newClientKey, savePending, tzOffsetMinutes } from "@/lib/capture/pending";
 import { classifyMicError, clock, extensionFor, micSupport, pickRecorderType, type MicError } from "@/lib/capture/media";
@@ -178,7 +178,7 @@ export function VoiceCapture({ eventName, meta, onDone }: { eventName: string; m
       {micError && (
         <ErrorBanner tone="caution">
           <span className="flex items-start gap-2">
-            <MicOff className="mt-0.5 h-4 w-4 shrink-0" />
+            <MicOff size={16} className="mt-0.5 shrink-0" />
             <span>{MIC_HELP[micError]}</span>
           </span>
         </ErrorBanner>
@@ -186,15 +186,15 @@ export function VoiceCapture({ eventName, meta, onDone }: { eventName: string; m
       {problem && <ErrorBanner>{problem}</ErrorBanner>}
 
       {state === "recording" && (
-        <div className="flex flex-col items-center gap-3 rounded-xl border border-line bg-surface-0 px-4 py-6" role="status" aria-live="polite">
+        <div className="flex flex-col items-center gap-3 rounded-lg bg-field px-4 py-6" role="status" aria-live="polite">
           <span className="relative flex h-4 w-4">
-            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-risk opacity-60" />
-            <span className="relative inline-flex h-4 w-4 rounded-full bg-risk" />
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-pill bg-risk opacity-60" />
+            <span className="relative inline-flex h-4 w-4 rounded-pill bg-risk" />
           </span>
-          <p className="font-display text-3xl font-semibold tabular-nums text-text-primary">{clock(seconds)}</p>
+          <p className="font-mono text-3xl font-medium text-text-primary">{clock(seconds)}</p>
           <p className="text-xs text-text-muted">Recording stops by itself at {clock(maxSeconds)}</p>
           <Button type="button" size="lg" className="h-14 w-full sm:w-auto" onClick={stop}>
-            <Square className="h-5 w-5" /> Stop
+            <Square /> Stop recording
           </Button>
         </div>
       )}
@@ -203,11 +203,11 @@ export function VoiceCapture({ eventName, meta, onDone }: { eventName: string; m
         <div className="grid gap-2 sm:grid-cols-2">
           {support === "ok" && (
             <Button type="button" size="lg" className="h-14" onClick={() => void start()} disabled={state === "starting"}>
-              {state === "starting" ? <Loader2 className="h-5 w-5 animate-spin" /> : <Mic className="h-5 w-5" />} Start recording
+              {state === "starting" ? <Loader2 className="animate-spin" /> : <Mic />} Start recording
             </Button>
           )}
-          <Button type="button" size="lg" variant="outline" className="h-14" onClick={() => file.current?.click()}>
-            <FileAudio className="h-5 w-5" /> Choose an audio file
+          <Button type="button" size="lg" variant="secondary" className="h-14" onClick={() => file.current?.click()}>
+            <FileAudio /> Choose an audio file
           </Button>
         </div>
       )}
@@ -221,10 +221,10 @@ export function VoiceCapture({ eventName, meta, onDone }: { eventName: string; m
           </p>
           <div className="flex flex-wrap gap-2">
             <Button type="button" size="lg" onClick={send} disabled={sender.busy}>
-              {sender.busy ? <Loader2 className="h-4 w-4 animate-spin" /> : null} Transcribe and review
+              {sender.busy ? <Loader2 className="animate-spin" /> : null} Transcribe and review
             </Button>
-            <Button type="button" size="lg" variant="outline" onClick={() => void again()} disabled={sender.busy}>
-              <RotateCcw className="h-4 w-4" /> Record again
+            <Button type="button" size="lg" variant="secondary" onClick={() => void again()} disabled={sender.busy}>
+              <RotateCcw /> Record again
             </Button>
           </div>
         </div>

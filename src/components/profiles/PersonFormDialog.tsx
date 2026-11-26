@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
+import { Loader2 } from "@/components/icons";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -8,7 +8,7 @@ import { createPerson, updatePerson, withDuplicateConfirm, type PersonPayload } 
 import type { MatchResult, Person, ProfileMeta } from "@/types/profile";
 import { DuplicatePanel } from "./DuplicatePanel";
 import { EntityPicker } from "./EntityPicker";
-import { Field, SelectField, SensitiveField } from "./formParts";
+import { Field, FormError, SelectField, SensitiveField } from "./formParts";
 
 interface Form {
   first_name: string;
@@ -194,11 +194,11 @@ export function PersonFormDialog({
           <SensitiveField id="pf-notes" label="Notes" multiline value={form.notes} onChange={set("notes")} masked={masked} hasSavedValue={Boolean(person?.notes)} />
 
           {!editing && (
-            <div className="space-y-2 rounded-lg border border-line p-3">
-              <p className="text-sm font-medium text-text-primary">Company (optional)</p>
+            <div className="space-y-2 rounded-md border border-line p-3">
+              <p className="text-sm font-semibold text-text-primary">Company (optional)</p>
               {company ? (
                 <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
-                  <span className="min-w-0 break-words font-medium">{company.name}</span>
+                  <span className="min-w-0 break-words font-semibold">{company.name}</span>
                   <div className="flex items-center gap-2">
                     <Input aria-label="Start date" type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="h-8 w-40" />
                     <Button type="button" variant="ghost" size="sm" onClick={() => setCompany(null)}>
@@ -213,18 +213,14 @@ export function PersonFormDialog({
           )}
 
           {dupes && <DuplicatePanel match={dupes} entity="person" busy={busy} onCreateAnyway={() => void submit(true)} />}
-          {error && (
-            <p role="alert" className="rounded-md bg-risk-tint px-3 py-2 text-sm text-risk">
-              {error}
-            </p>
-          )}
+          {error && <FormError>{error}</FormError>}
 
-          <DialogFooter className="gap-2 sm:gap-0">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+          <DialogFooter className="gap-2">
+            <Button type="button" variant="secondary" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
             <Button type="submit" disabled={busy || Boolean(dupes)}>
-              {busy && <Loader2 className="h-4 w-4 animate-spin" />}
+              {busy && <Loader2 className="animate-spin" />}
               {editing ? "Save changes" : "Add person"}
             </Button>
           </DialogFooter>

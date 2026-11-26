@@ -1,45 +1,34 @@
 // src/(admin)/admin/AnalyticsDashboard.tsx
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { motion } from 'framer-motion';
 import {
   AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell,
 } from 'recharts';
-import { Card, CardHeader, CardContent, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
-  FileText, TrendingUp, Clock, Building2, AlertTriangle,
-  Download, RefreshCw, AlertCircle, CheckCircle, XCircle,
-  Hourglass,
-} from 'lucide-react';
+  Table, TableHeader, TableBody, TableHead, TableRow, TableCell,
+} from '@/components/ui/table';
+import {
+  FileText, Clock, Download, RefreshCw, Lock, CheckCircle, Hourglass, X,
+} from '@/components/icons';
 import { toast } from 'sonner';
 import { useAuth } from '@/lib/context/useAuth';
 import { hasPermission, PERMISSIONS } from '@/lib/permissions';
 import { PageTransition } from '@/components/PageTransition';
 import AIAnalysisPanel from '@/components/AIAnalysisPanel';
-
-// ─── Animation config ─────────────────────────────────────────────────────────
-// 0.03s stagger — cards appear quickly, not one-by-one
-const listVariants = {
-  hidden: {},
-  visible: { transition: { staggerChildren: 0.03 } },
-};
-const cardVariants = {
-  hidden: { opacity: 0, y: 10 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.25, ease: [0.16, 1, 0.3, 1] } },
-};
-
-// ─── Design system status colors ──────────────────────────────────────────────
-// CSS vars so recharts SVG attrs stay token-driven, not hardcoded hex
-const STATUS_COLOR = {
-  approved: { bar: 'var(--tenant-success)', bg: 'bg-success-light', text: 'text-success-fg' },
-  pending: { bar: 'var(--tenant-warning)', bg: 'bg-warning-light', text: 'text-warning-fg' },
-  rejected: { bar: 'var(--tenant-destructive)', bg: 'bg-danger-light', text: 'text-danger-fg' },
-};
+import { PageHeader } from '@/components/shared/PageHeader';
+import { SectionCard } from '@/components/shared/SectionCard';
+import { KpiTile } from '@/components/shared/KpiTile';
+import { StatusBadge } from '@/components/shared/StatusBadge';
+import { EmptyState } from '@/components/shared/EmptyState';
+import {
+  axisProps, gridProps, tooltipProps, legendProps, barCursor, lineCursor, seriesColor,
+  BAR_RADIUS, BAR_RADIUS_HORIZONTAL, MAX_BAR_SIZE,
+} from '@/components/dashboard/chartTheme';
+import type { Tone } from '@/lib/status';
 
 // ─── Mock data ────────────────────────────────────────────────────────────────
 const MOCK_VOLUME = [
@@ -74,7 +63,7 @@ const MOCK_DEPT_PERFORMANCE = [
 ];
 const MOCK_BOTTLENECKS = [
   { stage: 'Submitted', count: 993 },
-  { stage: 'Under Review', count: 847 },
+  { stage: 'Under review', count: 847 },
   { stage: 'Approved', count: 703 },
   { stage: 'Signed', count: 612 },
   { stage: 'Completed', count: 541 },
@@ -84,6 +73,13 @@ const MOCK_STATUS_SUMMARY = [
   { name: 'Pending', value: 186 },
   { name: 'Rejected', value: 106 },
 ];
+
+const DATE_RANGES = [
+  { value: 'last_3_months', label: '3M' },
+  { value: 'last_6_months', label: '6M' },
+  { value: 'last_year', label: '1Y' },
+  { value: 'all_time', label: 'All' },
+] as const;
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface Filters {
@@ -97,88 +93,34 @@ interface Filters {
 
 function ChartSkeleton() {
   return (
-    <Card className="border-gray-200">
-      <CardHeader>
-        <Skeleton className="h-5 w-40 mb-1" />
-        <Skeleton className="h-3 w-56" />
-      </CardHeader>
-      <CardContent>
-        <Skeleton className="h-[280px] w-full rounded-lg" />
-      </CardContent>
-    </Card>
-  );
-}
-
-function StatSkeleton() {
-  return (
-    <div className="bg-card rounded-xl border border-gray-200 p-4 flex items-center gap-3">
-      <Skeleton className="h-10 w-10 rounded-lg" />
-      <div className="flex-1">
-        <Skeleton className="h-3 w-20 mb-2" />
-        <Skeleton className="h-6 w-14" />
+    <SectionCard>
+      <div role="status" aria-busy="true" aria-label="Loading" className="grid gap-3">
+        <div className="skeleton h-4 w-40 rounded-xs" />
+        <div className="skeleton h-[280px] w-full rounded-sm" />
       </div>
-    </div>
-  );
-}
-
-interface StatCardProps {
-  label: string;
-  value: string | number;
-  sub?: string;
-  icon: React.ReactNode;
-  iconBg: string;
-}
-
-function StatCard({ label, value, sub, icon, iconBg }: StatCardProps) {
-  return (
-    <motion.div
-      variants={cardVariants}
-      whileHover={{ y: -3 }}
-      whileTap={{ scale: 0.99 }}
-      transition={{ type: 'spring', stiffness: 400, damping: 28 }}
-      className="bg-card rounded-xl border border-gray-200 p-4 flex items-center gap-3"
-    >
-      <div className={`p-2.5 rounded-lg ${iconBg}`}>{icon}</div>
-      <div>
-        <p className="font-sans text-text-xs text-muted-foreground">{label}</p>
-        <p className="font-display font-bold text-display-xs text-foreground">{value}</p>
-        {sub && <p className="font-sans text-text-xs text-muted-foreground">{sub}</p>}
-      </div>
-    </motion.div>
+    </SectionCard>
   );
 }
 
 function ChartEmpty({ message = 'No data for this filter' }: { message?: string }) {
-  return (
-    <div className="flex flex-col items-center justify-center h-[280px] gap-3 text-muted-foreground">
-      <AlertCircle className="h-8 w-8 opacity-30" />
-      <p className="font-sans text-text-sm">{message}</p>
-    </div>
-  );
+  return <EmptyState title={message} description="Change the filters to see more." />;
 }
 
 function FilterChip({ label, onRemove }: { label: string; onRemove: () => void }) {
   return (
-    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-ch-secondary/10 text-ch-secondary border border-ch-secondary/20">
+    <span className="inline-flex items-center gap-1.5 rounded-pill bg-field py-1 pl-3 pr-1.5 text-xs font-medium text-text-secondary">
       {label}
-      <button onClick={onRemove} className="hover:opacity-70 transition-opacity">×</button>
+      <button
+        type="button"
+        onClick={onRemove}
+        aria-label={`Remove filter ${label}`}
+        className="grid h-5 w-5 place-items-center rounded-pill hover:bg-field-hover"
+      >
+        <X size={12} />
+      </button>
     </span>
   );
 }
-
-const CustomTooltip = ({ active, payload, label }: any) => {
-  if (!active || !payload?.length) return null;
-  return (
-    <div className="bg-card border border-gray-200 rounded-lg shadow-lg p-3 text-xs font-sans">
-      <p className="font-semibold text-foreground mb-1">{label}</p>
-      {payload.map((p: any) => (
-        <p key={p.name} style={{ color: p.color }}>
-          {p.name}: <span className="font-bold">{p.value}</span>
-        </p>
-      ))}
-    </div>
-  );
-};
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export const AnalyticsDashboard: React.FC = () => {
@@ -210,16 +152,16 @@ export const AnalyticsDashboard: React.FC = () => {
 
   const handleExport = () => {
     if (!canExportAnalytics) { toast.error('You do not have permission to export analytics'); return; }
-    toast.success('Exporting report... (PDF download will start shortly)');
+    toast.success('Exporting report. The PDF download starts shortly.');
   };
 
   const handleRefresh = () => {
-    toast.success('Refreshing analytics data...');
+    toast.success('Refreshing analytics data');
     fetchData();
   };
 
   const activeFilters = [
-    filters.department !== 'all' && { key: 'department', label: `Dept: ${filters.department}` },
+    filters.department !== 'all' && { key: 'department', label: `Department: ${filters.department}` },
     filters.docType !== 'all' && { key: 'docType', label: `Type: ${filters.docType}` },
     filters.status !== 'all' && { key: 'status', label: `Status: ${filters.status}` },
   ].filter(Boolean) as { key: keyof Filters; label: string }[];
@@ -228,83 +170,60 @@ export const AnalyticsDashboard: React.FC = () => {
   const totalApproved = MOCK_STATUS_SUMMARY.find(d => d.name === 'Approved')?.value ?? 0;
   const totalPending = MOCK_STATUS_SUMMARY.find(d => d.name === 'Pending')?.value ?? 0;
   const avgApproval = (MOCK_APPROVAL_TIME.reduce((s, d) => s + d.avgDays, 0) / MOCK_APPROVAL_TIME.length).toFixed(1);
+  const statusTotal = MOCK_STATUS_SUMMARY.reduce((acc, d) => acc + d.value, 0);
+  const firstStage = MOCK_BOTTLENECKS[0];
+  const lastStage = MOCK_BOTTLENECKS[MOCK_BOTTLENECKS.length - 1];
 
   if (!canViewAnalytics) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
-        <AlertCircle className="h-12 w-12 text-destructive opacity-60" />
-        <h2 className="font-display font-bold text-lg text-foreground">You don't have permission to view analytics</h2>
-        <p className="font-sans text-text-sm text-muted-foreground">Contact your administrator to request access.</p>
+      <div className="flex min-h-[60vh] flex-col items-center justify-center">
+        <EmptyState
+          icon={<Lock size={24} />}
+          title="You don't have permission to view analytics"
+          description="Ask your administrator for access."
+        />
       </div>
     );
   }
 
   return (
     <PageTransition>
-      <div className="space-y-6">
+      <div className="mx-auto flex w-full max-w-[1440px] flex-col gap-5">
 
-        {/* Page Header */}
-        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-          <div>
-            <h1 className="font-display font-bold text-display-sm text-gray-900">Analytics</h1>
-            <p className="font-sans text-text-sm text-muted-foreground mt-1">
-              Leadership performance view — document workflows across all departments
-            </p>
-          </div>
-          <div className="flex items-center gap-2 flex-shrink-0">
-            <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.94 }}
-              transition={{ type: 'spring', stiffness: 500, damping: 30 }}>
-              <Button variant="outline" size="sm" onClick={handleRefresh} disabled={loading}
-                className="font-sans text-text-sm border-gray-200">
-                <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+        <PageHeader
+          title="Analytics"
+          description="Leadership view of document workflows across all departments."
+          actions={
+            <>
+              <Button variant="secondary" onClick={handleRefresh} disabled={loading}>
+                <RefreshCw size={16} className={loading ? 'animate-spin' : undefined} />
                 Refresh
               </Button>
-            </motion.div>
-            <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}
-              transition={{ type: 'spring', stiffness: 500, damping: 30 }}>
-              <Button size="sm" onClick={handleExport} disabled={!canExportAnalytics || loading}
-                className="bg-primary text-primary-fg hover:bg-primary-hover font-medium font-sans text-text-sm">
-                <Download className="h-4 w-4 mr-2" />
-                Export Report
+              <Button onClick={handleExport} disabled={!canExportAnalytics || loading}>
+                <Download size={16} />
+                Export report
               </Button>
-            </motion.div>
-          </div>
-        </div>
+            </>
+          }
+        />
 
-        {/* Filters Row */}
+        {/* Filters */}
         <div className="flex flex-wrap items-center gap-3">
-          {/* Date range — Frosted Pill labeled toggle (Chisomo's design) */}
-          <motion.div className="flex bg-slate-50/80 p-1 rounded-xl gap-0.5"
-            initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}>
-            {([
-              { value: 'last_3_months', label: '3M' },
-              { value: 'last_6_months', label: '6M' },
-              { value: 'last_year', label: '1Y' },
-              { value: 'all_time', label: 'All' },
-            ] as const).map((opt) => (
-              <motion.button key={opt.value} onClick={() => setFilter('dateRange', opt.value)}
-                className={`relative h-9 px-3 rounded-lg font-sans text-text-sm font-medium outline-none transition-colors duration-150
-                  ${filters.dateRange === opt.value ? 'text-slate-900' : 'text-slate-400'}`}
-                whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.94 }}
-                transition={{ type: 'spring', stiffness: 500, damping: 30 }}>
-                {filters.dateRange === opt.value && (
-                  <motion.span layoutId="dateRangeActivePill"
-                    className="absolute inset-0 bg-white rounded-lg shadow-sm"
-                    transition={{ type: 'spring', stiffness: 400, damping: 28 }} />
-                )}
-                <span className="relative z-10">{opt.label}</span>
-              </motion.button>
-            ))}
-          </motion.div>
+          <Tabs value={filters.dateRange} onValueChange={(v) => setFilter('dateRange', v)}>
+            <TabsList aria-label="Date range">
+              {DATE_RANGES.map((opt) => (
+                <TabsTrigger key={opt.value} value={opt.value}>{opt.label}</TabsTrigger>
+              ))}
+            </TabsList>
+          </Tabs>
 
           {canViewDepts && (
             <Select value={filters.department} onValueChange={v => setFilter('department', v)}>
-              <SelectTrigger className="w-44 h-9 font-sans text-text-sm border-gray-200">
-                <SelectValue placeholder="All Departments" />
+              <SelectTrigger className="w-48" aria-label="Department">
+                <SelectValue placeholder="All departments" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Departments</SelectItem>
+                <SelectItem value="all">All departments</SelectItem>
                 <SelectItem value="registry">Registry</SelectItem>
                 <SelectItem value="finance">Finance</SelectItem>
                 <SelectItem value="hr">HR</SelectItem>
@@ -315,11 +234,11 @@ export const AnalyticsDashboard: React.FC = () => {
           )}
 
           <Select value={filters.docType} onValueChange={v => setFilter('docType', v)}>
-            <SelectTrigger className="w-40 h-9 font-sans text-text-sm border-gray-200">
-              <SelectValue placeholder="All Types" />
+            <SelectTrigger className="w-40" aria-label="Document type">
+              <SelectValue placeholder="All types" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Types</SelectItem>
+              <SelectItem value="all">All types</SelectItem>
               <SelectItem value="invoice">Invoice</SelectItem>
               <SelectItem value="contract">Contract</SelectItem>
               <SelectItem value="memo">Memo</SelectItem>
@@ -328,11 +247,11 @@ export const AnalyticsDashboard: React.FC = () => {
           </Select>
 
           <Select value={filters.status} onValueChange={v => setFilter('status', v)}>
-            <SelectTrigger className="w-36 h-9 font-sans text-text-sm border-gray-200">
-              <SelectValue placeholder="All Status" />
+            <SelectTrigger className="w-40" aria-label="Status">
+              <SelectValue placeholder="All statuses" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Status</SelectItem>
+              <SelectItem value="all">All statuses</SelectItem>
               <SelectItem value="pending">Pending</SelectItem>
               <SelectItem value="approved">Approved</SelectItem>
               <SelectItem value="rejected">Rejected</SelectItem>
@@ -344,352 +263,224 @@ export const AnalyticsDashboard: React.FC = () => {
           ))}
         </div>
 
-        {/* Stat Cards */}
+        {/* KPI tiles */}
         {loading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {Array.from({ length: 4 }).map((_, i) => <StatSkeleton key={i} />)}
+          <div role="status" aria-busy="true" aria-label="Loading" className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            {Array.from({ length: 4 }).map((_, i) => <div key={i} className="skeleton h-[104px] rounded-lg" />)}
           </div>
         ) : (
-          <motion.div variants={listVariants} initial="hidden" animate="visible"
-            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <StatCard label="Total Documents" value={totalDocs.toLocaleString()} sub="This period"
-              icon={<FileText className="h-5 w-5 text-ch-primary-600" />} iconBg="bg-ch-primary/[0.08]" />
-            <StatCard label="Approved" value={totalApproved.toLocaleString()}
-              sub={`${Math.round((totalApproved / (totalApproved + totalPending + 106)) * 100)}% approval rate`}
-              icon={<CheckCircle className="h-5 w-5 text-positive" />} iconBg="bg-positive-tint" />
-            <StatCard label="Pending Review" value={totalPending.toLocaleString()} sub="Awaiting action"
-              icon={<Hourglass className="h-5 w-5 text-amber-600" />} iconBg="bg-amber-500/[0.08]" />
-            <StatCard label="Avg Approval Time" value={`${avgApproval} days`} sub="Across all departments"
-              icon={<Clock className="h-5 w-5 text-ch-secondary-600" />} iconBg="bg-ch-secondary/[0.08]" />
-          </motion.div>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <KpiTile label="Total documents" value={totalDocs.toLocaleString()} hint="This period"
+              icon={<FileText size={18} />} />
+            <KpiTile label="Approved" value={totalApproved.toLocaleString()}
+              hint={`${Math.round((totalApproved / (totalApproved + totalPending + 106)) * 100)}% approval rate`}
+              icon={<CheckCircle size={18} />} />
+            <KpiTile label="Pending review" value={totalPending.toLocaleString()} hint="Awaiting action"
+              icon={<Hourglass size={18} />} />
+            <KpiTile label="Average approval time" value={`${avgApproval} days`} hint="Across all departments"
+              icon={<Clock size={18} />} />
+          </div>
         )}
 
-        {/* Row 1: Volume trend + Status breakdown */}
-        <motion.div variants={listVariants} initial="hidden" animate="visible"
-          className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <motion.div variants={cardVariants}>
-            {loading ? <ChartSkeleton /> : (
-              <Card className="border-gray-200">
-                <CardHeader>
-                  <CardTitle className="font-display font-semibold text-text-xl text-foreground flex items-center gap-2">
-                    <TrendingUp className="h-4 w-4 text-ch-primary-600" />Documents Processed Over Time
-                  </CardTitle>
-                  <CardDescription className="font-sans text-text-xs text-muted-foreground">
-                    Monthly volume of documents entering the system
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {MOCK_VOLUME.length === 0 ? <ChartEmpty /> : (
-                    <ResponsiveContainer width="100%" height={280}>
-                      <AreaChart data={MOCK_VOLUME}>
-                        <defs>
-                          <linearGradient id="volGrad" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="var(--chart-1)" stopOpacity={0.3} />
-                            <stop offset="95%" stopColor="var(--chart-1)" stopOpacity={0} />
-                          </linearGradient>
-                        </defs>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
-                        <XAxis dataKey="month" tick={{ fontSize: 11, fontFamily: 'Plus Jakarta Sans' }} />
-                        <YAxis tick={{ fontSize: 11, fontFamily: 'Plus Jakarta Sans' }} />
-                        <Tooltip content={<CustomTooltip />} />
-                        <Area type="monotone" dataKey="count" name="Documents"
-                          stroke="var(--chart-1)" strokeWidth={2} fill="url(#volGrad)" />
-                      </AreaChart>
-                    </ResponsiveContainer>
-                  )}
-                </CardContent>
-              </Card>
-            )}
-          </motion.div>
-
-          <motion.div variants={cardVariants}>
-            {loading ? <ChartSkeleton /> : (
-              <Card className="border-gray-200">
-                <CardHeader>
-                  <CardTitle className="font-display font-semibold text-text-xl text-foreground flex items-center gap-2">
-                    <FileText className="h-4 w-4 text-positive" />Pending vs Approved vs Rejected
-                  </CardTitle>
-                  <CardDescription className="font-sans text-text-xs text-muted-foreground">
-                    Monthly document status distribution
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {MOCK_STATUS.length === 0 ? <ChartEmpty /> : (
-                    <ResponsiveContainer width="100%" height={280}>
-                      <BarChart data={MOCK_STATUS}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
-                        <XAxis dataKey="month" tick={{ fontSize: 11, fontFamily: 'Plus Jakarta Sans' }} />
-                        <YAxis tick={{ fontSize: 11, fontFamily: 'Plus Jakarta Sans' }} />
-                        <Tooltip content={<CustomTooltip />} />
-                        <Legend wrapperStyle={{ fontSize: 11, fontFamily: 'Plus Jakarta Sans' }} />
-                        <Bar dataKey="approved" name="Approved" stackId="a" fill={STATUS_COLOR.approved.bar} radius={[0, 0, 0, 0]} />
-                        <Bar dataKey="pending" name="Pending" stackId="a" fill={STATUS_COLOR.pending.bar} />
-                        <Bar dataKey="rejected" name="Rejected" stackId="a" fill={STATUS_COLOR.rejected.bar} radius={[4, 4, 0, 0]} />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  )}
-                </CardContent>
-              </Card>
-            )}
-          </motion.div>
-        </motion.div>
-
-        {/* Row 2: Avg approval time + Department performance */}
-        <motion.div variants={listVariants} initial="hidden" animate="visible"
-          className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <motion.div variants={cardVariants}>
-            {loading ? <ChartSkeleton /> : (
-              <Card className="border-gray-200">
-                <CardHeader>
-                  <CardTitle className="font-display font-semibold text-text-xl text-foreground flex items-center gap-2">
-                    <Clock className="h-4 w-4 text-amber-600" />Average Approval Time by Department
-                  </CardTitle>
-                  <CardDescription className="font-sans text-text-xs text-muted-foreground">
-                    How many days on average to approve a document
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {MOCK_APPROVAL_TIME.length === 0 ? <ChartEmpty /> : (
-                    <ResponsiveContainer width="100%" height={280}>
-                      <BarChart data={MOCK_APPROVAL_TIME} layout="vertical">
-                        <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" horizontal={false} />
-                        <XAxis type="number" unit=" days" tick={{ fontSize: 11, fontFamily: 'Plus Jakarta Sans' }} />
-                        <YAxis type="category" dataKey="department" tick={{ fontSize: 11, fontFamily: 'Plus Jakarta Sans' }} width={90} />
-                        <Tooltip content={<CustomTooltip />} />
-                        <Bar dataKey="avgDays" name="Avg Days" fill="var(--tenant-warning)" radius={[0, 4, 4, 0]} />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  )}
-                </CardContent>
-              </Card>
-            )}
-          </motion.div>
-
-          <motion.div variants={cardVariants}>
-            {loading ? <ChartSkeleton /> : (
-              <Card className="border-gray-200">
-                <CardHeader>
-                  <CardTitle className="font-display font-semibold text-text-xl text-foreground flex items-center gap-2">
-                    <Building2 className="h-4 w-4 text-ch-secondary-600" />Department Performance
-                  </CardTitle>
-                  <CardDescription className="font-sans text-text-xs text-muted-foreground">
-                    Documents submitted vs processed per department
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {MOCK_DEPT_PERFORMANCE.length === 0 ? <ChartEmpty /> : (
-                    <ResponsiveContainer width="100%" height={280}>
-                      <BarChart data={MOCK_DEPT_PERFORMANCE}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
-                        <XAxis dataKey="department" tick={{ fontSize: 10, fontFamily: 'Plus Jakarta Sans' }} />
-                        <YAxis tick={{ fontSize: 11, fontFamily: 'Plus Jakarta Sans' }} />
-                        <Tooltip content={<CustomTooltip />} />
-                        <Legend wrapperStyle={{ fontSize: 11, fontFamily: 'Plus Jakarta Sans' }} />
-                        <Bar dataKey="submitted" name="Submitted" fill="var(--chart-2)" radius={[4, 4, 0, 0]} />
-                        <Bar dataKey="processed" name="Processed" fill="var(--chart-1)" radius={[4, 4, 0, 0]} />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  )}
-                </CardContent>
-              </Card>
-            )}
-          </motion.div>
-        </motion.div>
-
-        {/* Row 3: Bottlenecks + Overall status donut */}
-        <motion.div variants={listVariants} initial="hidden" animate="visible"
-          className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <motion.div variants={cardVariants}>
-            {loading ? <ChartSkeleton /> : (
-              <Card className="border-gray-200">
-                <CardHeader>
-                  <CardTitle className="font-display font-semibold text-text-xl text-foreground flex items-center gap-2">
-                    <AlertTriangle className="h-4 w-4 text-destructive" />Bottlenecks by Stage
-                  </CardTitle>
-                  <CardDescription className="font-sans text-text-xs text-muted-foreground">
-                    Where documents are getting stuck in the workflow
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {MOCK_BOTTLENECKS.length === 0 ? <ChartEmpty /> : (
-                    <div className="space-y-3 pt-2">
-                      {MOCK_BOTTLENECKS.map((stage, i) => {
-                        const pct = Math.round((stage.count / MOCK_BOTTLENECKS[0].count) * 100);
-                        const dropOff = i > 0 ? MOCK_BOTTLENECKS[i - 1].count - stage.count : 0;
-                        return (
-                          <div key={stage.stage} className="space-y-1.5">
-                            <div className="flex items-center justify-between">
-                              <span className="font-sans text-text-sm font-medium text-foreground">{stage.stage}</span>
-                              <div className="flex items-center gap-3">
-                                {dropOff > 0 && (
-                                  <span className="font-sans text-text-xs text-destructive font-medium">↓ {dropOff} dropped</span>
-                                )}
-                                <span className="font-mono text-text-sm font-bold text-foreground">{stage.count.toLocaleString()}</span>
-                              </div>
-                            </div>
-                            <div className="h-7 bg-muted rounded-lg overflow-hidden">
-                              <div className="h-full bg-ch-primary-500 rounded-lg flex items-center justify-end pr-3 transition-all duration-500"
-                                style={{ width: `${pct}%` }}>
-                                <span className="text-white text-xs font-bold font-sans">{pct}%</span>
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })}
-                      <div className="pt-2 border-t border-gray-200">
-                        <p className="font-sans text-text-xs text-muted-foreground">
-                          Overall completion rate:{' '}
-                          <span className="font-bold text-positive">
-                            {Math.round((MOCK_BOTTLENECKS[MOCK_BOTTLENECKS.length - 1].count / MOCK_BOTTLENECKS[0].count) * 100)}%
-                          </span>
-                          {' '}({MOCK_BOTTLENECKS[MOCK_BOTTLENECKS.length - 1].count} completed of {MOCK_BOTTLENECKS[0].count} submitted)
-                        </p>
-                      </div>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            )}
-          </motion.div>
-
-          <motion.div variants={cardVariants}>
-            {loading ? <ChartSkeleton /> : (
-              <Card className="border-gray-200">
-                <CardHeader>
-                  <CardTitle className="font-display font-semibold text-text-xl text-foreground flex items-center gap-2">
-                    <XCircle className="h-4 w-4 text-ch-primary-600" />Overall Status Summary
-                  </CardTitle>
-                  <CardDescription className="font-sans text-text-xs text-muted-foreground">
-                    Total document outcomes across the selected period
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex items-center gap-6">
-                    <div className="flex-shrink-0">
-                      <ResponsiveContainer width={160} height={160}>
-                        <PieChart>
-                          <Pie data={MOCK_STATUS_SUMMARY} cx="50%" cy="50%"
-                            innerRadius={45} outerRadius={70} dataKey="value" strokeWidth={0}>
-                            <Cell fill={STATUS_COLOR.approved.bar} />
-                            <Cell fill={STATUS_COLOR.pending.bar} />
-                            <Cell fill={STATUS_COLOR.rejected.bar} />
-                          </Pie>
-                          <Tooltip content={<CustomTooltip />} />
-                        </PieChart>
-                      </ResponsiveContainer>
-                    </div>
-                    <div className="flex-1 space-y-3">
-                      {MOCK_STATUS_SUMMARY.map((s) => {
-                        const total = MOCK_STATUS_SUMMARY.reduce((acc, d) => acc + d.value, 0);
-                        const pct = Math.round((s.value / total) * 100);
-                        const color = STATUS_COLOR[s.name.toLowerCase() as keyof typeof STATUS_COLOR];
-                        return (
-                          <div key={s.name} className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                              <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: color.bar }} />
-                              <span className="font-sans text-text-sm text-foreground">{s.name}</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <span className="font-mono text-text-sm font-bold text-foreground">{s.value.toLocaleString()}</span>
-                              <Badge className={`${color.bg} ${color.text} border-0 text-xs font-sans`}>{pct}%</Badge>
-                            </div>
-                          </div>
-                        );
-                      })}
-                      <div className="pt-2 border-t border-gray-200">
-                        <p className="font-sans text-text-xs text-muted-foreground">
-                          Total:{' '}
-                          <span className="font-bold text-foreground">
-                            {MOCK_STATUS_SUMMARY.reduce((a, d) => a + d.value, 0).toLocaleString()}
-                          </span>{' '}documents
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-          </motion.div>
-        </motion.div>
-
-        {/* Department Leaderboard Table */}
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1], delay: 0.1 }}>
+        {/* Row 1: volume trend and status breakdown */}
+        <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-2">
           {loading ? <ChartSkeleton /> : (
-            <Card className="border-gray-200">
-              <CardHeader>
-                <CardTitle className="font-display font-semibold text-text-xl text-foreground flex items-center gap-2">
-                  <Building2 className="h-4 w-4 text-ch-primary-600" />Department Leaderboard
-                </CardTitle>
-                <CardDescription className="font-sans text-text-xs text-muted-foreground">
-                  Ranked by processing efficiency — documents processed vs submitted
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {MOCK_DEPT_PERFORMANCE.length === 0 ? <ChartEmpty message="No department data available" /> : (
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
-                      <thead>
-                        <tr className="border-b border-gray-200">
-                          {['Rank', 'Department', 'Submitted', 'Processed', 'Efficiency', 'Status'].map(h => (
-                            <th key={h} className="pb-3 text-left font-sans font-medium text-text-xs text-gray-500 uppercase tracking-wide first:w-12">{h}</th>
-                          ))}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {[...MOCK_DEPT_PERFORMANCE]
-                          .sort((a, b) => (b.processed / b.submitted) - (a.processed / a.submitted))
-                          .map((dept, i) => {
-                            const efficiency = Math.round((dept.processed / dept.submitted) * 100);
-                            const isHigh = efficiency >= 90;
-                            const isMid = efficiency >= 75 && efficiency < 90;
-                            return (
-                              <motion.tr key={dept.department}
-                                whileHover={{ x: 2 }}
-                                transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-                                className="border-b border-gray-200 hover:bg-slate-50/60 transition-colors duration-150">
-                                <td className="py-3">
-                                  <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold font-sans ${i === 0 ? 'bg-amber-100 text-amber-700' :
-                                      i === 1 ? 'bg-gray-100 text-gray-600' :
-                                        i === 2 ? 'bg-orange-100 text-orange-600' :
-                                          'bg-muted text-muted-foreground'}`}>{i + 1}</div>
-                                </td>
-                                <td className="py-3 font-sans font-semibold text-foreground">{dept.department}</td>
-                                <td className="py-3 font-mono text-text-sm text-muted-foreground">{dept.submitted.toLocaleString()}</td>
-                                <td className="py-3 font-mono text-text-sm text-foreground font-semibold">{dept.processed.toLocaleString()}</td>
-                                <td className="py-3">
-                                  <div className="flex items-center gap-2">
-                                    <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden max-w-[80px]">
-                                      <div className={`h-full rounded-full ${isHigh ? 'bg-positive' : isMid ? 'bg-caution' : 'bg-risk'}`}
-                                        style={{ width: `${efficiency}%` }} />
-                                    </div>
-                                    <span className="font-mono text-text-sm font-bold text-foreground">{efficiency}%</span>
-                                  </div>
-                                </td>
-                                <td className="py-3">
-                                  <Badge className={`font-sans text-xs border-0 ${isHigh ? 'bg-success-light text-success-fg' :
-                                      isMid ? 'bg-warning-light text-warning-fg' :
-                                        'bg-danger-light text-danger-fg'}`}>
-                                    {isHigh ? 'On Track' : isMid ? 'At Risk' : 'Behind'}
-                                  </Badge>
-                                </td>
-                              </motion.tr>
-                            );
-                          })}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+            <SectionCard eyebrow="Documents per month" title="Documents processed over time">
+              {MOCK_VOLUME.length === 0 ? <ChartEmpty /> : (
+                <ResponsiveContainer width="100%" height={280}>
+                  <AreaChart data={MOCK_VOLUME} margin={{ top: 4, right: 8, bottom: 0, left: -8 }}>
+                    <CartesianGrid {...gridProps} />
+                    <XAxis {...axisProps} dataKey="month" />
+                    <YAxis {...axisProps} width={48} />
+                    <Tooltip {...tooltipProps} cursor={lineCursor} />
+                    <Area type="monotone" dataKey="count" name="Documents"
+                      stroke="var(--chart-1)" strokeWidth={2} fill="var(--chart-1)" fillOpacity={0.12} />
+                  </AreaChart>
+                </ResponsiveContainer>
+              )}
+            </SectionCard>
           )}
-        </motion.div>
 
-        {/* AI Analysis Panel */}
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1], delay: 0.15 }}>
-          <AIAnalysisPanel />
-        </motion.div>
+          {loading ? <ChartSkeleton /> : (
+            <SectionCard eyebrow="Documents per month" title="Pending, approved and rejected">
+              {MOCK_STATUS.length === 0 ? <ChartEmpty /> : (
+                <ResponsiveContainer width="100%" height={280}>
+                  <BarChart data={MOCK_STATUS} margin={{ top: 4, right: 8, bottom: 0, left: -8 }}>
+                    <CartesianGrid {...gridProps} />
+                    <XAxis {...axisProps} dataKey="month" />
+                    <YAxis {...axisProps} width={48} />
+                    <Tooltip {...tooltipProps} cursor={barCursor} />
+                    <Legend {...legendProps} />
+                    <Bar dataKey="approved" name="Approved" stackId="a" fill="var(--chart-1)" maxBarSize={MAX_BAR_SIZE} />
+                    <Bar dataKey="pending" name="Pending" stackId="a" fill="var(--chart-2)" maxBarSize={MAX_BAR_SIZE} />
+                    <Bar dataKey="rejected" name="Rejected" stackId="a" fill="var(--chart-3)" radius={BAR_RADIUS} maxBarSize={MAX_BAR_SIZE} />
+                  </BarChart>
+                </ResponsiveContainer>
+              )}
+            </SectionCard>
+          )}
+        </div>
+
+        {/* Row 2: average approval time and department performance */}
+        <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-2">
+          {loading ? <ChartSkeleton /> : (
+            <SectionCard eyebrow="Days" title="Average approval time by department">
+              {MOCK_APPROVAL_TIME.length === 0 ? <ChartEmpty /> : (
+                <ResponsiveContainer width="100%" height={280}>
+                  <BarChart data={MOCK_APPROVAL_TIME} layout="vertical" margin={{ top: 0, right: 16, bottom: 0, left: 0 }}>
+                    <XAxis {...axisProps} type="number" unit="d" />
+                    <YAxis {...axisProps} type="category" dataKey="department" width={96} />
+                    <Tooltip {...tooltipProps} cursor={barCursor} />
+                    <Bar dataKey="avgDays" name="Average days" fill="var(--chart-1)" radius={BAR_RADIUS_HORIZONTAL} maxBarSize={MAX_BAR_SIZE} />
+                  </BarChart>
+                </ResponsiveContainer>
+              )}
+            </SectionCard>
+          )}
+
+          {loading ? <ChartSkeleton /> : (
+            <SectionCard eyebrow="Documents" title="Submitted and processed by department">
+              {MOCK_DEPT_PERFORMANCE.length === 0 ? <ChartEmpty /> : (
+                <ResponsiveContainer width="100%" height={280}>
+                  <BarChart data={MOCK_DEPT_PERFORMANCE} margin={{ top: 4, right: 8, bottom: 0, left: -8 }}>
+                    <CartesianGrid {...gridProps} />
+                    <XAxis {...axisProps} dataKey="department" />
+                    <YAxis {...axisProps} width={48} />
+                    <Tooltip {...tooltipProps} cursor={barCursor} />
+                    <Legend {...legendProps} />
+                    <Bar dataKey="submitted" name="Submitted" fill="var(--chart-1)" radius={BAR_RADIUS} maxBarSize={MAX_BAR_SIZE} />
+                    <Bar dataKey="processed" name="Processed" fill="var(--chart-2)" radius={BAR_RADIUS} maxBarSize={MAX_BAR_SIZE} />
+                  </BarChart>
+                </ResponsiveContainer>
+              )}
+            </SectionCard>
+          )}
+        </div>
+
+        {/* Row 3: bottlenecks and overall status */}
+        <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-2">
+          {loading ? <ChartSkeleton /> : (
+            <SectionCard eyebrow="Documents reaching each stage" title="Bottlenecks by stage">
+              {MOCK_BOTTLENECKS.length === 0 ? <ChartEmpty /> : (
+                <div className="space-y-3">
+                  {MOCK_BOTTLENECKS.map((stage, i) => {
+                    const pct = Math.round((stage.count / firstStage.count) * 100);
+                    const dropOff = i > 0 ? MOCK_BOTTLENECKS[i - 1].count - stage.count : 0;
+                    return (
+                      <div key={stage.stage} className="space-y-1.5">
+                        <div className="flex items-center justify-between gap-3">
+                          <span className="text-sm text-text-primary">{stage.stage}</span>
+                          <div className="flex items-center gap-3 font-mono text-xs">
+                            {dropOff > 0 && <span className="text-risk">{dropOff} dropped</span>}
+                            <span className="text-text-primary">{stage.count.toLocaleString()}</span>
+                            <span className="w-10 text-right text-text-muted">{pct}%</span>
+                          </div>
+                        </div>
+                        <div className="h-2 overflow-hidden rounded-pill bg-surface-2" aria-hidden="true">
+                          <div className="h-full rounded-pill" style={{ width: `${pct}%`, background: 'var(--chart-1)' }} />
+                        </div>
+                      </div>
+                    );
+                  })}
+                  <p className="border-t border-line pt-3 text-xs text-text-muted">
+                    Overall completion rate:{' '}
+                    <span className="font-semibold text-text-primary">
+                      {Math.round((lastStage.count / firstStage.count) * 100)}%
+                    </span>
+                    {' '}({lastStage.count} completed of {firstStage.count} submitted)
+                  </p>
+                </div>
+              )}
+            </SectionCard>
+          )}
+
+          {loading ? <ChartSkeleton /> : (
+            <SectionCard eyebrow="Documents in the selected period" title="Overall status summary">
+              <div className="flex flex-wrap items-center gap-6">
+                <div className="flex-shrink-0">
+                  <ResponsiveContainer width={160} height={160}>
+                    <PieChart>
+                      <Pie data={MOCK_STATUS_SUMMARY} cx="50%" cy="50%"
+                        innerRadius={45} outerRadius={70} dataKey="value" strokeWidth={0}>
+                        {MOCK_STATUS_SUMMARY.map((s, i) => <Cell key={s.name} fill={seriesColor(i)} />)}
+                      </Pie>
+                      <Tooltip {...tooltipProps} />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+                <div className="min-w-[12rem] flex-1 space-y-3">
+                  {MOCK_STATUS_SUMMARY.map((s, i) => {
+                    const pct = Math.round((s.value / statusTotal) * 100);
+                    return (
+                      <div key={s.name} className="flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-2">
+                          <span className="h-2.5 w-2.5 rounded-pill" style={{ backgroundColor: seriesColor(i) }} aria-hidden="true" />
+                          <span className="text-sm text-text-primary">{s.name}</span>
+                        </div>
+                        <span className="font-mono text-xs text-text-secondary">
+                          {s.value.toLocaleString()} ({pct}%)
+                        </span>
+                      </div>
+                    );
+                  })}
+                  <p className="border-t border-line pt-3 text-xs text-text-muted">
+                    Total: <span className="font-semibold text-text-primary">{statusTotal.toLocaleString()}</span> documents
+                  </p>
+                </div>
+              </div>
+            </SectionCard>
+          )}
+        </div>
+
+        {/* Department leaderboard */}
+        {loading ? <ChartSkeleton /> : (
+          <SectionCard eyebrow="Ranked by documents processed out of submitted" title="Department leaderboard" padded={false}>
+            {MOCK_DEPT_PERFORMANCE.length === 0 ? <ChartEmpty message="No department data available" /> : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-16">Rank</TableHead>
+                    <TableHead>Department</TableHead>
+                    <TableHead className="text-right">Submitted</TableHead>
+                    <TableHead className="text-right">Processed</TableHead>
+                    <TableHead>Efficiency</TableHead>
+                    <TableHead>Status</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {[...MOCK_DEPT_PERFORMANCE]
+                    .sort((a, b) => (b.processed / b.submitted) - (a.processed / a.submitted))
+                    .map((dept, i) => {
+                      const efficiency = Math.round((dept.processed / dept.submitted) * 100);
+                      const status: { tone: Tone; label: string } =
+                        efficiency >= 90 ? { tone: 'positive', label: 'On track' }
+                          : efficiency >= 75 ? { tone: 'caution', label: 'At risk' }
+                            : { tone: 'risk', label: 'Behind' };
+                      return (
+                        <TableRow key={dept.department}>
+                          <TableCell className="font-mono text-xs text-text-muted">{i + 1}</TableCell>
+                          <TableCell className="font-semibold">{dept.department}</TableCell>
+                          <TableCell className="text-right font-mono text-xs text-text-secondary">{dept.submitted.toLocaleString()}</TableCell>
+                          <TableCell className="text-right font-mono text-xs text-text-secondary">{dept.processed.toLocaleString()}</TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <div className="h-1.5 w-20 overflow-hidden rounded-pill bg-surface-2" aria-hidden="true">
+                                <div className="h-full rounded-pill" style={{ width: `${efficiency}%`, background: 'var(--chart-1)' }} />
+                              </div>
+                              <span className="font-mono text-xs">{efficiency}%</span>
+                            </div>
+                          </TableCell>
+                          <TableCell><StatusBadge tone={status.tone} label={status.label} /></TableCell>
+                        </TableRow>
+                      );
+                    })}
+                </TableBody>
+              </Table>
+            )}
+          </SectionCard>
+        )}
+
+        <AIAnalysisPanel />
 
       </div>
     </PageTransition>

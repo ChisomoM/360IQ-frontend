@@ -3,20 +3,23 @@ import { useNavigate, useOutletContext } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd'
 import type { DropResult } from '@hello-pangea/dnd'
-import { Loader2, Plus, ListFilter, Search, Settings, Upload, FileUp, X, CheckCircle2, Shield, Building, Lock, Tag, LayoutGrid, List } from 'lucide-react'
+import { Loader2, Upload, FileUp, X, Check, CheckCircle2, Shield, Building, Lock, Tag, Star } from '@/components/icons'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
-import { AlertDialog, AlertDialogTrigger, AlertDialogContent } from '@/components/ui/alert-dialog'
+import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
-import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { Switch } from '@/components/ui/switch'
 import { PageTransition } from '@/components/PageTransition'
 import { StandardSearchBar } from '@/components/SearchBar/StandardSearchBar'
 import { EmptyState } from '@/components/shared/EmptyState'
+import { PageHeader } from '@/components/shared/PageHeader'
+import { SectionCard } from '@/components/shared/SectionCard'
+import { StatusBadge } from '@/components/shared/StatusBadge'
+import { DataTablePagination } from '@/components/shared/DataTablePagination'
+import { cn } from '@/lib/utils'
 import { DocumentCardV2 } from '@/components/documents/DocumentCardV2'
 import { DocumentTableV2 } from '@/components/documents/DocumentTableV2'
 import type { AdminLayoutContext } from '@/layouts/AdminLayout'
@@ -363,7 +366,7 @@ export default function DocumentsV2() {
 
   const handleUpload = async () => {
     if (!uploadData.file || !uploadData.title.trim()) {
-      toast.error('Please provide a title and select a file')
+      toast.error('Add a title and choose a file.')
       return
     }
     try {
@@ -384,7 +387,7 @@ export default function DocumentsV2() {
       }
 
       await fetchData('DOCUMENTS', 'POST', {}, form)
-      toast.success('Document uploaded successfully')
+      toast.success('Document uploaded')
       setIsUploadOpen(false)
       setUploadData({
         title: '',
@@ -476,7 +479,7 @@ export default function DocumentsV2() {
     try {
       setIsUpdating(true)
       await fetchData('DOCUMENTS', 'PATCH', { id: selectedDoc.id }, data)
-      toast.success('Document updated successfully')
+      toast.success('Document updated')
       setIsEditOpen(false)
       fetchAll()
     } catch (err: any) {
@@ -493,7 +496,7 @@ export default function DocumentsV2() {
     try {
       setIsDeleting(true)
       await fetchData('DOCUMENT_DELETE', 'DELETE', { id: selectedDoc.id })
-      toast.success('Document deleted successfully')
+      toast.success('Document deleted')
       setIsDeleteOpen(false)
       fetchAll()
     } catch (err: any) {
@@ -510,7 +513,7 @@ export default function DocumentsV2() {
     try {
       setIsArchiving(true)
       await fetchData('DOCUMENTS', 'PATCH', { id: selectedDoc.id }, { status: 'archived' })
-      toast.success('Document archived successfully')
+      toast.success('Document archived')
       setIsArchiveOpen(false)
       fetchAll()
     } catch (err: any) {
@@ -615,34 +618,26 @@ export default function DocumentsV2() {
 
   return (
     <PageTransition>
-      <div className="w-full space-y-6 pb-12">
+      <div className="flex w-full flex-col gap-5 pb-12">
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="font-display font-bold text-display-sm text-gray-900">
-              Document Repository
-            </h1>
-            <p className="text-gray-600 mt-1 font-sans text-text-md">
-              Manage and organize your institutional documents
-            </p>
-          </div>
-
-          {/* Upload Button */}
-          {canUpload && (
+        <PageHeader
+          title="Documents"
+          description="Search, upload and manage your organisation's documents."
+          actions={canUpload && (
             <Dialog open={isUploadOpen} onOpenChange={setIsUploadOpen}>
               <DialogTrigger asChild>
-                <Button className="gap-2" variant="tenantPrimary">
-                  <Upload className="h-4 w-4" />
-                  Upload Document
+                <Button>
+                  <Upload size={18} />
+                  Upload document
                 </Button>
               </DialogTrigger>
-              <DialogContent className="max-w-4xl bg-white p-0 overflow-hidden border-none shadow-2xl">
-                <div className="flex h-full max-h-[90vh]">
+              <DialogContent className="max-w-4xl gap-0 overflow-hidden p-0">
+                <div className="flex max-h-[90vh] flex-col overflow-y-auto md:flex-row md:overflow-hidden">
                   {/* Left Column: File Dropzone & Preview */}
-                  <div className="w-2/5 bg-slate-50 p-8 border-r border-slate-100 flex flex-col justify-center">
-                    <div className="mb-8">
-                      <h3 className="text-xl font-bold text-slate-800">File Ingestion</h3>
-                      <p className="text-sm text-slate-500 mt-1">Upload your document to safely archive it in the vault.</p>
+                  <div className="flex shrink-0 flex-col justify-center border-b border-line bg-surface-0 p-6 md:w-2/5 md:border-b-0 md:border-r">
+                    <div className="mb-6">
+                      <h3 className="text-base font-semibold text-text-primary">File</h3>
+                      <p className="mt-1 text-sm text-text-secondary">Choose the document you want to add.</p>
                     </div>
 
                     {!uploadData.file ? (
@@ -651,88 +646,88 @@ export default function DocumentsV2() {
                         onDragLeave={handleDrag}
                         onDragOver={handleDrag}
                         onDrop={handleDrop}
-                        className={`
-                          relative border-2 border-dashed rounded-2xl p-10 transition-all cursor-pointer
-                          flex flex-col items-center justify-center text-center space-y-4
-                          ${dragActive ? 'border-primary bg-primary/5 scale-[1.02]' : 'border-slate-300 hover:border-primary hover:bg-white'}
-                        `}
+                        className={cn(
+                          'relative flex cursor-pointer flex-col items-center justify-center gap-3 rounded-lg border-2 border-dashed p-8 text-center transition-colors',
+                          dragActive ? 'border-signal bg-signal-tint' : 'border-line-strong bg-surface-1 hover:border-signal',
+                        )}
                       >
                         <input
                           type="file"
+                          aria-label="Choose a file"
                           onChange={handleFileInputChange}
-                          className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                          className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
                         />
-                        <div className="p-4 bg-white rounded-full shadow-sm text-primary">
-                          <FileUp className="h-10 w-10" />
+                        <div className="grid h-12 w-12 place-items-center rounded-lg bg-field text-text-secondary">
+                          <FileUp size={24} />
                         </div>
                         <div>
-                          <p className="font-semibold text-slate-700">Click or drag file</p>
-                          <p className="text-xs text-slate-400 mt-1">Supports PDF, DOCX, XLSX (Max 50MB)</p>
+                          <p className="text-sm font-semibold text-text-primary">Drop a file here or browse</p>
+                          <p className="mt-1 text-xs text-text-muted">PDF, DOCX or XLSX, up to 50MB</p>
                         </div>
                       </div>
                     ) : (
-                      <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 relative group max-w-full">
-                        <button
-                          onClick={() => setUploadData(prev => ({ ...prev, file: null }))}
-                          className="absolute -top-2 -right-2 p-1.5 bg-red-500 text-white rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity"
-                        >
-                          <X className="h-3 w-3" />
-                        </button>
-                        <div className="flex items-center gap-4 min-w-0">
-                          <div className="p-3 bg-blue-50 text-blue-600 rounded-xl flex-shrink-0">
-                            <FileUp className="h-8 w-8" />
+                      <div className="max-w-full rounded-lg border border-line bg-surface-1 p-4 shadow-card">
+                        <div className="flex min-w-0 items-center gap-3">
+                          <div className="grid h-12 w-12 shrink-0 place-items-center rounded-sm bg-field text-text-secondary">
+                            <FileUp size={24} />
                           </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="font-bold text-slate-800 truncate" title={uploadData.file.name}>
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate text-sm font-semibold text-text-primary" title={uploadData.file.name}>
                               {uploadData.file.name}
                             </p>
-                            <p className="text-xs text-slate-500 truncate">
-                              {(uploadData.file.size / 1024 / 1024).toFixed(2)} MB • {uploadData.file.type.split('/').pop()?.toUpperCase()}
+                            <p className="truncate font-mono text-xs text-text-muted">
+                              {(uploadData.file.size / 1024 / 1024).toFixed(2)} MB · {uploadData.file.type.split('/').pop()?.toUpperCase()}
                             </p>
                           </div>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            aria-label="Remove file"
+                            title="Remove file"
+                            onClick={() => setUploadData(prev => ({ ...prev, file: null }))}
+                          >
+                            <X size={18} />
+                          </Button>
                         </div>
-                        <div className="mt-4 flex items-center gap-2 text-positive text-[10px] font-bold uppercase tracking-wider bg-positive-tint px-3 py-1 rounded-full w-fit">
-                          <CheckCircle2 className="h-3 w-3" /> Ready for upload
-                        </div>
+                        <StatusBadge tone="positive" className="mt-3">Ready to upload</StatusBadge>
                       </div>
                     )}
 
-                    <div className="mt-auto pt-8">
-                      <div className="flex items-center gap-2 text-xs text-slate-400">
-                        <Shield className="h-3 w-3" />
-                        <span>Secure end-to-end encryption available</span>
-                      </div>
-                    </div>
+                    <p className="mt-6 flex items-center gap-2 text-xs text-text-muted">
+                      <Shield size={16} />
+                      You can encrypt the file before it is stored.
+                    </p>
                   </div>
 
                   {/* Right Column: Metadata Form */}
-                  <div className="flex-1 p-8 overflow-y-auto bg-white">
-                    <DialogHeader className="mb-6">
-                      <DialogTitle className="text-2xl font-bold text-slate-900">Metadata & Settings</DialogTitle>
-                      <DialogDescription>Index your document with precision for easy retrieval.</DialogDescription>
+                  <div className="flex-1 p-6 md:overflow-y-auto">
+                    <DialogHeader className="mb-5">
+                      <DialogTitle>Upload document</DialogTitle>
+                      <DialogDescription>Add the details people will use to find this document.</DialogDescription>
                     </DialogHeader>
 
-                    <div className="grid gap-6">
+                    <div className="grid gap-5">
                       {/* Basic Info */}
-                      <div className="space-y-4 pt-2">
-                        <div className="space-y-2">
-                          <Label className="text-slate-700 font-bold">Document Title *</Label>
+                      <div className="space-y-4">
+                        <div className="space-y-1.5">
+                          <Label htmlFor="upload-title">Title (required)</Label>
                           <Input
+                            id="upload-title"
                             value={uploadData.title}
                             onChange={(e) => setUploadData({ ...uploadData, title: e.target.value })}
-                            placeholder="e.g., Annual Financial Audit 2024"
-                            className="h-11 border-slate-200 focus:ring-primary shadow-sm"
+                            placeholder="Annual financial audit 2026"
                           />
                         </div>
 
-                        <div className="space-y-2">
-                          <Label className="text-slate-700 font-bold">Description</Label>
+                        <div className="space-y-1.5">
+                          <Label htmlFor="upload-description">Description</Label>
                           <Textarea
+                            id="upload-description"
                             value={uploadData.description}
                             onChange={(e) => setUploadData({ ...uploadData, description: e.target.value })}
-                            placeholder="Provide deep context for this record..."
+                            placeholder="Audit of the 2026 accounts, prepared for the board"
                             rows={3}
-                            className="resize-none border-slate-200 shadow-sm"
                           />
                         </div>
                       </div>
@@ -740,33 +735,33 @@ export default function DocumentsV2() {
                       <Separator />
 
                       {/* Classification */}
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <Label className="text-slate-700 font-bold text-xs uppercase tracking-wider">Document Type</Label>
+                      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                        <div className="space-y-1.5">
+                          <Label>Document type</Label>
                           <Select value={uploadData.document_type} onValueChange={(v) => setUploadData({ ...uploadData, document_type: v })}>
-                            <SelectTrigger className="h-10 border-slate-200 bg-slate-50/50"><SelectValue /></SelectTrigger>
+                            <SelectTrigger aria-label="Document type"><SelectValue /></SelectTrigger>
                             <SelectContent>
                               <SelectItem value="memo">Memo</SelectItem>
                               <SelectItem value="circular">Circular</SelectItem>
                               <SelectItem value="minutes">Minutes</SelectItem>
                               <SelectItem value="report">Report</SelectItem>
                               <SelectItem value="policy">Policy</SelectItem>
-                              <SelectItem value="bid_document">Bid / Tender Document</SelectItem>
-                              <SelectItem value="contract">Contract / Agreement</SelectItem>
+                              <SelectItem value="bid_document">Bid or tender document</SelectItem>
+                              <SelectItem value="contract">Contract or agreement</SelectItem>
                               <SelectItem value="invoice">Invoice</SelectItem>
-                              <SelectItem value="appointment_letter">Appointment Letter</SelectItem>
-                              <SelectItem value="permit">Permit / Licence</SelectItem>
+                              <SelectItem value="appointment_letter">Appointment letter</SelectItem>
+                              <SelectItem value="permit">Permit or licence</SelectItem>
                             </SelectContent>
                           </Select>
                         </div>
-                        <div className="space-y-2">
-                          <Label className="text-slate-700 font-bold text-xs uppercase tracking-wider">Classification</Label>
+                        <div className="space-y-1.5">
+                          <Label>Classification</Label>
                           <Select value={uploadData.category} onValueChange={(v) => setUploadData({ ...uploadData, category: v })}>
-                            <SelectTrigger className="h-10 border-slate-200 bg-slate-50/50"><SelectValue /></SelectTrigger>
+                            <SelectTrigger aria-label="Classification"><SelectValue /></SelectTrigger>
                             <SelectContent>
                               <SelectItem value="academic">Academic</SelectItem>
                               <SelectItem value="financial">Financial</SelectItem>
-                              <SelectItem value="hr">Human Resources</SelectItem>
+                              <SelectItem value="hr">Human resources</SelectItem>
                               <SelectItem value="administrative">Administrative</SelectItem>
                             </SelectContent>
                           </Select>
@@ -774,13 +769,12 @@ export default function DocumentsV2() {
                       </div>
 
                       {/* Organization & Sensitivity */}
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <Label className="text-slate-700 font-bold text-xs uppercase tracking-wider text-primary flex items-center gap-1">
-                            <Building className="h-3 w-3" /> Departments
-                            <span className="text-slate-400 normal-case font-normal ml-1">— first is primary</span>
+                      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                        <div className="space-y-1.5">
+                          <Label className="flex items-center gap-1.5">
+                            <Building size={16} /> Departments
                           </Label>
-                          <div className="border border-slate-200 rounded-lg bg-slate-50/50 max-h-36 overflow-y-auto p-2 space-y-1">
+                          <div className="max-h-36 space-y-1 overflow-y-auto rounded-md bg-field p-1.5">
                             {departments.filter(d => d.id?.trim()).map(d => {
                               const isSelected = uploadData.department_ids.includes(d.id)
                               const isPrimary = uploadData.department_ids[0] === d.id
@@ -788,98 +782,110 @@ export default function DocumentsV2() {
                                 <button
                                   key={d.id}
                                   type="button"
+                                  aria-pressed={isSelected}
                                   onClick={() => {
                                     const current = uploadData.department_ids
                                     const next = isSelected ? current.filter(id => id !== d.id) : [...current, d.id]
                                     setUploadData(prev => ({ ...prev, department_ids: next }))
                                   }}
-                                  className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-sm transition-colors ${isSelected ? 'bg-primary/10 text-primary font-medium' : 'hover:bg-slate-100 text-slate-600'}`}
+                                  className={cn(
+                                    'flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm transition-colors',
+                                    isSelected ? 'bg-surface-1 font-medium text-text-primary' : 'text-text-secondary hover:bg-field-hover',
+                                  )}
                                 >
-                                  <div className={`h-4 w-4 rounded border flex-shrink-0 flex items-center justify-center ${isSelected ? 'bg-primary border-primary' : 'border-slate-300'}`}>
-                                    {isSelected && <X className="h-2.5 w-2.5 text-white" />}
-                                  </div>
-                                  <span className="flex-1 text-left truncate">{d.name}</span>
-                                  {isPrimary && <span className="text-amber-500 text-xs font-semibold">★ Primary</span>}
+                                  <span className={cn('grid h-4 w-4 shrink-0 place-items-center rounded-xs border', isSelected ? 'border-signal bg-signal text-on-signal' : 'border-line-strong bg-surface-1')}>
+                                    {isSelected && <Check size={12} />}
+                                  </span>
+                                  <span className="flex-1 truncate text-left">{d.name}</span>
+                                  {isPrimary && (
+                                    <span className="flex items-center gap-1 text-xs font-semibold text-signal-text">
+                                      <Star size={14} />Primary
+                                    </span>
+                                  )}
                                 </button>
                               )
                             })}
                           </div>
+                          <p className="text-xs text-text-muted">The first one you select is the primary department.</p>
                         </div>
-                        <div className="space-y-2">
-                          <Label className="text-slate-700 font-bold text-xs uppercase tracking-wider flex items-center gap-1">
-                            <Lock className="h-3 w-3" /> Visibility Level
+                        <div className="space-y-1.5">
+                          <Label className="flex items-center gap-1.5">
+                            <Lock size={16} /> Visibility
                           </Label>
                           <Select value={uploadData.visibility_level} onValueChange={(v: any) => setUploadData({ ...uploadData, visibility_level: v })}>
-                            <SelectTrigger className="h-10 border-slate-200 bg-slate-50/50"><SelectValue /></SelectTrigger>
+                            <SelectTrigger aria-label="Visibility"><SelectValue /></SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="department">Department Internal</SelectItem>
-                              <SelectItem value="public">Institution Public</SelectItem>
-                              <SelectItem value="restricted">Restricted Access</SelectItem>
+                              <SelectItem value="department">Department only</SelectItem>
+                              <SelectItem value="public">Everyone in the organisation</SelectItem>
+                              <SelectItem value="restricted">Restricted</SelectItem>
                             </SelectContent>
                           </Select>
                         </div>
                       </div>
 
                       {/* Tags */}
-                      <div className="space-y-2">
-                        <Label className="text-slate-700 font-bold text-xs uppercase tracking-wider flex items-center gap-1">
-                          <Tag className="h-3 w-3" /> Tags
+                      <div className="space-y-1.5">
+                        <Label htmlFor="upload-tag" className="flex items-center gap-1.5">
+                          <Tag size={16} /> Tags
                         </Label>
-                        <div className="flex gap-2 mb-2 flex-wrap">
-                          {uploadData.tags.map(t => (
-                            <Badge key={t} variant="secondary" className="px-2 py-0.5 rounded-md flex items-center gap-1 bg-slate-100 text-slate-600 hover:bg-slate-200 group">
-                              {t}
-                              <X className="h-3 w-3 cursor-pointer opacity-50 group-hover:opacity-100" onClick={() => removeTag(t)} />
-                            </Badge>
-                          ))}
-                        </div>
-                        <div className="flex gap-2">
+                        {uploadData.tags.length > 0 && (
+                          <div className="flex flex-wrap gap-2">
+                            {uploadData.tags.map(t => (
+                              <StatusBadge key={t} tone="neutral">
+                                {t}
+                                <button type="button" aria-label={`Remove tag ${t}`} className="rounded-pill hover:text-text-primary" onClick={() => removeTag(t)}>
+                                  <X size={12} />
+                                </button>
+                              </StatusBadge>
+                            ))}
+                          </div>
+                        )}
+                        <div className="flex items-center gap-2">
                           <Input
-                            placeholder="Add tag and press Enter..."
+                            id="upload-tag"
+                            placeholder="renewal"
                             value={tagInput}
                             onChange={(e) => setTagInput(e.target.value)}
                             onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addTag())}
-                            className="h-9 border-slate-200 text-sm"
                           />
-                          <Button variant="outline" size="sm" onClick={addTag} disabled={!tagInput.trim()}>Add</Button>
+                          <Button variant="secondary" onClick={addTag} disabled={!tagInput.trim()}>Add tag</Button>
                         </div>
                       </div>
 
                       {/* Vault Encryption */}
-                      <div className="flex items-center justify-between p-4 rounded-2xl bg-blue-50/50 border border-blue-100">
+                      <div className="flex items-center justify-between gap-3 rounded-lg border border-line p-4">
                         <div className="flex gap-3">
-                          <div className="p-2 bg-blue-100 text-blue-600 rounded-lg h-fit">
-                            <Shield className="h-5 w-5" />
+                          <div className="grid h-10 w-10 shrink-0 place-items-center rounded-sm bg-field text-text-secondary">
+                            <Shield size={20} />
                           </div>
                           <div>
-                            <p className="text-sm font-bold text-slate-800">Zero-Trust Encryption</p>
-                            <p className="text-xs text-slate-500">Encrypt this file before storing it in the persistent vault.</p>
+                            <p className="text-sm font-semibold text-text-primary">Encrypt this file</p>
+                            <p className="text-xs text-text-muted">The file is encrypted before it is stored.</p>
                           </div>
                         </div>
                         <Switch
+                          aria-label="Encrypt this file"
                           checked={uploadData.is_encrypted}
                           onCheckedChange={(checked) => setUploadData({ ...uploadData, is_encrypted: checked })}
                         />
                       </div>
                     </div>
 
-                    <div className="mt-10 flex gap-3">
-                      <Button variant="ghost" className="flex-1 h-12 text-slate-500" onClick={() => setIsUploadOpen(false)}>Discard</Button>
+                    <div className="mt-6 flex justify-end gap-2">
+                      <Button variant="secondary" onClick={() => setIsUploadOpen(false)}>Cancel</Button>
                       <Button
-                        variant="tenantPrimary"
-                        className="flex-[2] h-12 shadow-md shadow-primary/20 text-lg font-bold"
                         onClick={handleUpload}
                         disabled={isUploading || !uploadData.file}
                       >
                         {isUploading ? (
                           <>
-                            <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                            Archiving Document...
+                            <Loader2 className="animate-spin" />
+                            Uploading
                           </>
                         ) : (
                           <>
-                            <CheckCircle2 className="mr-2 h-5 w-5" />
-                            Upload
+                            <CheckCircle2 />
+                            Upload document
                           </>
                         )}
                       </Button>
@@ -889,22 +895,19 @@ export default function DocumentsV2() {
               </DialogContent>
             </Dialog>
           )}
-        </div>
+        />
 
         {/* Attention Required Section */}
         {featuredDocs.length > 0 && (
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-risk-tint border border-line rounded-xl p-6"
           >
-            <h2 className="font-display font-semibold text-lg text-gray-900 mb-4">
-              Attention Required
-            </h2>
-            <p className="text-gray-600 text-sm mb-5">
-              {featuredDocs.length} document{featuredDocs.length > 1 ? 's' : ''} pending review or action
-            </p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <SectionCard
+              title="Needs your action"
+              eyebrow={`${featuredDocs.length} document${featuredDocs.length > 1 ? 's' : ''}`}
+            >
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
               {featuredDocs.map((doc) => (
                 <DocumentCardV2
                   key={doc.id}
@@ -922,6 +925,7 @@ export default function DocumentsV2() {
                 />
               ))}
             </div>
+            </SectionCard>
           </motion.div>
         )}
 
@@ -931,7 +935,7 @@ export default function DocumentsV2() {
           <StandardSearchBar
             searchQuery={searchQuery}
             onSearchChange={handleSearchChange}
-            placeholder="Search by title, tags, or description..."
+            placeholder="Search by title, tags or description"
             onFilterClick={() => setShowFilterPanel(!showFilterPanel)}
             showFilterPanel={showFilterPanel}
             filterCount={Object.keys(filters).length}
@@ -946,7 +950,7 @@ export default function DocumentsV2() {
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
-              className="bg-gray-50 border border-gray-200 rounded-lg p-4"
+              className="rounded-lg border border-line bg-surface-1 p-4 shadow-card"
             >
               <DocumentFilters
                 departments={departments}
@@ -969,11 +973,13 @@ export default function DocumentsV2() {
             <DocumentSkeletonTable count={pageSize} />
           )
         ) : paginatedDocs.length === 0 ? (
-          <EmptyState
-            title="No documents found"
-            description="Try adjusting your search or filters"
-            action={canUpload ? { label: 'Upload Document', onAction: () => setIsUploadOpen(true) } : undefined}
-          />
+          <div className="rounded-lg border border-line bg-surface-1 shadow-card">
+            <EmptyState
+              title="No documents found"
+              description="Change your search or filters, or upload a document."
+              action={canUpload ? { label: 'Upload document', onAction: () => setIsUploadOpen(true) } : undefined}
+            />
+          </div>
         ) : (
           <DragDropContext onDragEnd={handleDragEnd}>
             {viewMode === 'grid' ? (
@@ -982,7 +988,7 @@ export default function DocumentsV2() {
                   <motion.div
                     ref={provided.innerRef}
                     {...provided.droppableProps}
-                    className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 transition-colors ${snapshot.isDraggingOver ? 'bg-blue-50 rounded-lg p-4' : ''
+                    className={`grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 transition-colors ${snapshot.isDraggingOver ? 'bg-surface-2 rounded-lg p-4' : ''
                       }`}
                     variants={{
                       hidden: {},
@@ -1040,47 +1046,35 @@ export default function DocumentsV2() {
         )}
 
         {/* Pagination */}
-        <div className="flex items-center justify-between text-sm mt-6">
-          <span className="text-gray-600">
-            Showing {startIdx + 1}–{Math.min(endIdx, sorted.length)} of {sorted.length} documents
-          </span>
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2">
-              <span className="text-gray-600 text-sm">Per page:</span>
-              <select
+        {!loading && sorted.length > 0 && (
+          <div className="flex flex-col overflow-hidden rounded-lg border border-line bg-surface-1 shadow-card sm:flex-row sm:items-stretch">
+            <div className="min-w-0 flex-1">
+              <DataTablePagination
+                page={currentPage}
+                pageSize={pageSize}
+                total={sorted.length}
+                onPageChange={(page) => setCurrentPage(Math.max(1, Math.min(totalPages, page)))}
+              />
+            </div>
+            <div className="flex items-center gap-2 border-t border-line px-4 py-3">
+              <span className="whitespace-nowrap text-xs text-text-muted">Per page</span>
+              <Select
                 value={String(pageSize)}
-                onChange={(e) => {
-                  setPageSize(Number(e.target.value))
+                onValueChange={(value) => {
+                  setPageSize(Number(value))
                   setCurrentPage(1)
                 }}
-                className="px-3 py-1 border border-gray-200 rounded-lg text-sm bg-white"
               >
-                <option value="10">10</option>
-                <option value="25">25</option>
-                <option value="50">50</option>
-              </select>
+                <SelectTrigger aria-label="Documents per page" className="h-8 w-20 font-mono text-xs"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="10">10</SelectItem>
+                  <SelectItem value="25">25</SelectItem>
+                  <SelectItem value="50">50</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-            <span className="text-gray-600 text-sm">
-              Page {currentPage} of {totalPages || 1}
-            </span>
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={currentPage <= 1}
-              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-            >
-              ← Prev
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={currentPage >= totalPages}
-              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-            >
-              Next →
-            </Button>
           </div>
-        </div>
+        )}
 
         {/* Edit Modal */}
         <EditModal

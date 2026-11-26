@@ -1,7 +1,8 @@
 import { motion } from 'framer-motion'
-import { MoreVertical, Download, Eye, Trash2, Edit2, History } from 'lucide-react'
+import { MoreVertical, Download, Trash2, Edit2, History } from '@/components/icons'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
+import { StatusBadge } from '@/components/shared/StatusBadge'
+import { DocumentStatusBadge } from '@/components/documents/DocumentStatusBadge'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -50,25 +51,13 @@ export function DocumentCard({
   const uploadDate = new Date(document.created_at)
   const timeAgo = formatDistanceToNow(uploadDate, { addSuffix: true })
 
-  // Status color mapping (design system semantic colors)
-  const statusColorMap: Record<string, string> = {
-    'active': 'bg-signal-tint text-signal-text',
-    'archived': 'bg-surface-2 text-text-secondary',
-    'pending': 'bg-caution-tint text-caution',
-    'approved': 'bg-positive-tint text-positive',
-    'rejected': 'bg-risk-tint text-risk',
-    'action_required': 'bg-caution-tint text-caution',
-  }
-
-  const statusColor = statusColorMap[document.status] || 'bg-surface-2 text-text-secondary'
-
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       whileHover={{ y: -2 }}
       transition={{ duration: 0.2 }}
-      className="group bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow duration-200 cursor-pointer"
+      className="group cursor-pointer rounded-lg border border-line bg-surface-1 p-4 shadow-card transition-shadow duration-200 hover:shadow-card-hover"
       onClick={() => onView(document)}
     >
       {/* Top row: Icon + Status + Menu */}
@@ -82,9 +71,9 @@ export function DocumentCard({
           />
 
           {/* File type badge */}
-          <Badge variant="outline" className="text-text-xs font-mono flex-shrink-0">
+          <StatusBadge tone="neutral" className="shrink-0">
             {fileTypeLabel}
-          </Badge>
+          </StatusBadge>
         </div>
 
         {/* Action menu (hidden by default, reveal on hover) */}
@@ -92,33 +81,35 @@ export function DocumentCard({
           <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
             <Button
               variant="ghost"
-              size="sm"
-              className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+              size="icon"
+              aria-label="More actions"
+              title="More actions"
+              className="h-8 w-8 opacity-0 transition-opacity focus-visible:opacity-100 group-hover:opacity-100"
             >
-              <MoreVertical className="h-4 w-4" />
+              <MoreVertical />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onDownload(document); }}>
-              <Download className="h-4 w-4 mr-2" />
+              <Download size={16} className="mr-2" />
               Download
             </DropdownMenuItem>
             {canEdit && (
               <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onEdit(document); }}>
-                <Edit2 className="h-4 w-4 mr-2" />
-                Edit Metadata
+                <Edit2 size={16} className="mr-2" />
+                Edit details
               </DropdownMenuItem>
             )}
             <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onVersions(document); }}>
-              <History className="h-4 w-4 mr-2" />
-              Version History
+              <History size={16} className="mr-2" />
+              Version history
             </DropdownMenuItem>
             {canDelete && (
               <DropdownMenuItem
                 onClick={(e) => { e.stopPropagation(); onDelete(document); }}
-                className="text-red-600"
+                className="text-risk focus:text-risk"
               >
-                <Trash2 className="h-4 w-4 mr-2" />
+                <Trash2 size={16} className="mr-2" />
                 Delete
               </DropdownMenuItem>
             )}
@@ -127,55 +118,46 @@ export function DocumentCard({
       </div>
 
       {/* Title (truncated to 2 lines) */}
-      <h3 className="font-display font-semibold text-text-lg text-gray-900 line-clamp-2 mb-2 group-hover:text-tenant-primary transition-colors">
+      <h3 className="mb-2 line-clamp-2 text-base font-semibold text-text-primary">
         {document.title}
       </h3>
 
       {/* Description snippet (1 line) */}
       {document.description && (
-        <p className="font-sans text-text-sm text-gray-500 line-clamp-1 mb-3">
+        <p className="mb-3 line-clamp-1 text-sm text-text-secondary">
           {document.description}
         </p>
       )}
 
       {/* Tags (if any) */}
       {document.tags && document.tags.length > 0 && (
-        <div className="flex flex-wrap gap-1 mb-3">
+        <div className="mb-3 flex flex-wrap gap-1">
           {document.tags.slice(0, 2).map((tag, idx) => (
-            <Badge
-              key={idx}
-              variant="secondary"
-              className="text-text-xs bg-blue-50 text-blue-700"
-            >
+            <StatusBadge key={idx} tone="neutral">
               {tag}
-            </Badge>
+            </StatusBadge>
           ))}
           {document.tags.length > 2 && (
-            <Badge
-              variant="secondary"
-              className="text-text-xs"
-            >
+            <StatusBadge tone="neutral">
               +{document.tags.length - 2}
-            </Badge>
+            </StatusBadge>
           )}
         </div>
       )}
 
       {/* Status badge */}
       <div className="mb-3">
-        <Badge className={`text-text-xs font-medium ${statusColor}`}>
-          {document.status}
-        </Badge>
+        <DocumentStatusBadge status={document.status} />
       </div>
 
       {/* Metadata row: size, date */}
-      <div className="flex items-center justify-between text-text-xs text-gray-500 border-t border-gray-100 pt-3">
+      <div className="flex items-center justify-between border-t border-line pt-3 text-xs text-text-muted">
         <div className="flex items-center gap-2">
           <span className="font-mono">
             {formatFileSize(document.file_size || 0)}
           </span>
         </div>
-        <span className="font-sans">{timeAgo}</span>
+        <span>{timeAgo}</span>
       </div>
     </motion.div>
   )

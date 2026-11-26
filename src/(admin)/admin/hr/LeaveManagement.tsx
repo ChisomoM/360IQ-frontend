@@ -1,7 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
@@ -15,7 +13,7 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow
 } from '@/components/ui/table';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { CalendarDays, Plus, Loader2, CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
+import { CalendarDays, Plus, Loader2, CheckCircle, XCircle } from '@/components/icons';
 import { useAuth } from '@/lib/context/useAuth';
 import { PERMISSIONS, hasPermission } from '@/lib/permissions';
 import {
@@ -24,22 +22,20 @@ import {
 } from '@/lib/api/hr';
 import type { LeaveRequest, CreateLeaveRequestPayload, LeaveType, LeaveStatus } from '@/types/hr';
 import { toast } from 'sonner';
+import { PageHeader } from '@/components/shared/PageHeader';
+import { SectionCard } from '@/components/shared/SectionCard';
+import { StatusBadge } from '@/components/shared/StatusBadge';
+import { EmptyState } from '@/components/shared/EmptyState';
+import { TableSkeleton } from '@/components/shared/TableSkeleton';
+import { formatDate as formatDisplayDate } from '@/lib/format';
 
 const LEAVE_TYPE_LABELS: Record<LeaveType, string> = {
   annual: 'Annual', sick: 'Sick', maternity: 'Maternity',
   paternity: 'Paternity', compassionate: 'Compassionate', unpaid: 'Unpaid',
 };
 
-const STATUS_BADGE: Record<LeaveStatus, string> = {
-  pending: 'bg-caution-tint text-caution',
-  approved: 'bg-positive-tint text-positive',
-  rejected: 'bg-risk-tint text-risk',
-  cancelled: 'bg-gray-100 text-gray-600',
-};
-
 function formatDate(d?: string) {
-  if (!d) return '—';
-  return new Date(d).toLocaleDateString('en-ZM', { year: 'numeric', month: 'short', day: 'numeric' });
+  return formatDisplayDate(d) || 'N/A';
 }
 
 type StatusFilter = 'all' | LeaveStatus;
@@ -89,7 +85,7 @@ export default function LeaveManagement() {
 
   const handleRequest = async () => {
     if (!requestForm.leave_type || !requestForm.start_date || !requestForm.end_date) {
-      toast.error('Please fill in all required fields');
+      toast.error('Choose a leave type, start date and end date.');
       return;
     }
     setRequesting(true);
@@ -128,24 +124,19 @@ export default function LeaveManagement() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Leave Management</h1>
-          <p className="text-gray-600 mt-1">Track and manage staff leave requests</p>
-        </div>
-        {canRequest && (
-          <Button onClick={() => setShowRequest(true)} className="bg-primary hover:bg-signal-hover text-on-signal">
-            <Plus className="mr-2 h-4 w-4" /> Request Leave
+    <div className="flex flex-col gap-5">
+      <PageHeader
+        title="Leave management"
+        description="Track and review staff leave requests."
+        actions={canRequest && (
+          <Button onClick={() => setShowRequest(true)}>
+            <Plus /> Request leave
           </Button>
         )}
-      </div>
+      />
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
-            <CalendarDays className="h-4 w-4" /> Leave Requests
-          </CardTitle>
+      <SectionCard padded={false}>
+        <div className="p-4 border-b border-line">
           <Tabs value={statusFilter} onValueChange={v => setStatusFilter(v as StatusFilter)}>
             <TabsList>
               {STATUS_TABS.map(t => (
@@ -153,97 +144,97 @@ export default function LeaveManagement() {
               ))}
             </TabsList>
           </Tabs>
-        </CardHeader>
-        <CardContent>
-          {loading ? (
-            <div className="flex justify-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            </div>
-          ) : requests.length === 0 ? (
-            <div className="text-center py-12">
-              <AlertTriangle className="h-10 w-10 mx-auto text-gray-300 mb-3" />
-              <p className="text-gray-500">No leave requests found</p>
-            </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Staff</TableHead>
-                  <TableHead>Leave Type</TableHead>
-                  <TableHead>Start Date</TableHead>
-                  <TableHead>End Date</TableHead>
-                  <TableHead>Days</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Reason</TableHead>
-                  {canManage && <TableHead>Actions</TableHead>}
+        </div>
+
+        {loading ? (
+          <TableSkeleton rows={5} columns={7} />
+        ) : requests.length === 0 ? (
+          <EmptyState
+            icon={<CalendarDays size={24} />}
+            title="No leave requests found"
+            description="Requests appear here once they are submitted. Try another status."
+          />
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead scope="col">Staff</TableHead>
+                <TableHead scope="col">Leave type</TableHead>
+                <TableHead scope="col">Start date</TableHead>
+                <TableHead scope="col">End date</TableHead>
+                <TableHead scope="col" className="text-right">Days</TableHead>
+                <TableHead scope="col">Status</TableHead>
+                <TableHead scope="col">Reason</TableHead>
+                {canManage && <TableHead scope="col" className="text-right">Actions</TableHead>}
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {requests.map(req => (
+                <TableRow key={req.id}>
+                  <TableCell>
+                    <p className="font-semibold text-text-primary">
+                      {req.staff?.first_name} {req.staff?.last_name}
+                    </p>
+                    <p className="text-xs text-text-muted">{req.staff?.email}</p>
+                  </TableCell>
+                  <TableCell className="text-text-secondary">
+                    {LEAVE_TYPE_LABELS[req.leave_type] ?? req.leave_type}
+                  </TableCell>
+                  <TableCell className="whitespace-nowrap font-mono text-xs text-text-secondary">{formatDate(req.start_date)}</TableCell>
+                  <TableCell className="whitespace-nowrap font-mono text-xs text-text-secondary">{formatDate(req.end_date)}</TableCell>
+                  <TableCell className="text-right font-mono text-xs text-text-secondary">{req.total_days}</TableCell>
+                  <TableCell>
+                    <StatusBadge status={req.status} />
+                  </TableCell>
+                  <TableCell className="max-w-[180px] truncate text-text-secondary">
+                    {req.reason ?? 'N/A'}
+                  </TableCell>
+                  {canManage && (
+                    <TableCell>
+                      {req.status === 'pending' && (
+                        <div className="flex justify-end gap-1">
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="h-8 w-8 text-positive hover:text-positive hover:bg-positive-tint"
+                            title="Approve"
+                            aria-label="Approve"
+                            onClick={() => setActionTarget({ request: req, mode: 'approve' })}>
+                            <CheckCircle />
+                          </Button>
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="h-8 w-8 text-risk hover:text-risk hover:bg-risk-tint"
+                            title="Reject"
+                            aria-label="Reject"
+                            onClick={() => setActionTarget({ request: req, mode: 'reject' })}>
+                            <XCircle />
+                          </Button>
+                        </div>
+                      )}
+                    </TableCell>
+                  )}
                 </TableRow>
-              </TableHeader>
-              <TableBody>
-                {requests.map(req => (
-                  <TableRow key={req.id}>
-                    <TableCell>
-                      <p className="font-medium text-gray-900">
-                        {req.staff?.first_name} {req.staff?.last_name}
-                      </p>
-                      <p className="text-xs text-gray-500">{req.staff?.email}</p>
-                    </TableCell>
-                    <TableCell>
-                      {LEAVE_TYPE_LABELS[req.leave_type] ?? req.leave_type}
-                    </TableCell>
-                    <TableCell>{formatDate(req.start_date)}</TableCell>
-                    <TableCell>{formatDate(req.end_date)}</TableCell>
-                    <TableCell>{req.total_days}</TableCell>
-                    <TableCell>
-                      <Badge className={STATUS_BADGE[req.status]}>
-                        {req.status.charAt(0).toUpperCase() + req.status.slice(1)}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="max-w-[180px] truncate text-sm text-gray-600">
-                      {req.reason ?? '—'}
-                    </TableCell>
-                    {canManage && (
-                      <TableCell>
-                        {req.status === 'pending' && (
-                          <div className="flex gap-2">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="text-positive border-line hover:bg-positive-tint"
-                              onClick={() => setActionTarget({ request: req, mode: 'approve' })}>
-                              <CheckCircle className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="text-risk border-line hover:bg-risk-tint"
-                              onClick={() => setActionTarget({ request: req, mode: 'reject' })}>
-                              <XCircle className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        )}
-                      </TableCell>
-                    )}
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
+              ))}
+            </TableBody>
+          </Table>
+        )}
+      </SectionCard>
 
       {/* Request Leave Dialog */}
       <Dialog open={showRequest} onOpenChange={setShowRequest}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Request Leave</DialogTitle>
+            <DialogTitle>Request leave</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 py-2">
-            <div className="space-y-1">
-              <Label>Leave Type <span className="text-red-500">*</span></Label>
+          <div className="space-y-4">
+            <div className="space-y-1.5">
+              <Label>Leave type</Label>
               <Select
                 value={requestForm.leave_type}
                 onValueChange={v => setRequestForm(f => ({ ...f, leave_type: v as LeaveType }))}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectTrigger aria-label="Leave type"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {(Object.entries(LEAVE_TYPE_LABELS) as [LeaveType, string][]).map(([k, v]) => (
                     <SelectItem key={k} value={k}>{v}</SelectItem>
@@ -251,34 +242,35 @@ export default function LeaveManagement() {
                 </SelectContent>
               </Select>
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1">
-                <Label>Start Date <span className="text-red-500">*</span></Label>
-                <Input type="date"
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <Label>Start date</Label>
+                <Input type="date" aria-label="Start date"
                   value={requestForm.start_date ?? ''}
                   onChange={e => setRequestForm(f => ({ ...f, start_date: e.target.value }))} />
               </div>
-              <div className="space-y-1">
-                <Label>End Date <span className="text-red-500">*</span></Label>
-                <Input type="date"
+              <div className="space-y-1.5">
+                <Label>End date</Label>
+                <Input type="date" aria-label="End date"
                   value={requestForm.end_date ?? ''}
                   min={requestForm.start_date}
                   onChange={e => setRequestForm(f => ({ ...f, end_date: e.target.value }))} />
               </div>
             </div>
-            <div className="space-y-1">
-              <Label>Reason</Label>
+            <div className="space-y-1.5">
+              <Label>Reason (optional)</Label>
               <Textarea
                 rows={3}
-                placeholder="Optional reason for leave request"
+                aria-label="Reason"
                 value={requestForm.reason ?? ''}
                 onChange={e => setRequestForm(f => ({ ...f, reason: e.target.value }))} />
             </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowRequest(false)}>Cancel</Button>
-            <Button onClick={handleRequest} disabled={requesting} className="bg-primary hover:bg-signal-hover text-on-signal">
-              {requesting ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Submit Request'}
+          <DialogFooter className="gap-3">
+            <Button variant="secondary" onClick={() => setShowRequest(false)}>Cancel</Button>
+            <Button onClick={handleRequest} disabled={requesting}>
+              {requesting && <Loader2 className="animate-spin" />}
+              Submit request
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -286,43 +278,40 @@ export default function LeaveManagement() {
 
       {/* Approve / Reject Dialog */}
       <Dialog open={!!actionTarget} onOpenChange={o => !o && setActionTarget(null)}>
-        <DialogContent className="sm:max-w-sm">
+        <DialogContent className="max-w-sm">
           <DialogHeader>
-            <DialogTitle className="capitalize">
-              {actionTarget?.mode} Leave Request
+            <DialogTitle>
+              {actionTarget?.mode === 'approve' ? 'Approve' : 'Reject'} leave request
             </DialogTitle>
           </DialogHeader>
           {actionTarget && (
-            <div className="space-y-3 py-2 text-sm">
-              <p>
-                <span className="font-medium">
+            <div className="space-y-3 text-sm">
+              <p className="text-text-secondary">
+                <span className="font-semibold text-text-primary">
                   {actionTarget.request.staff?.first_name} {actionTarget.request.staff?.last_name}
-                </span>{' '}
-                — {LEAVE_TYPE_LABELS[actionTarget.request.leave_type]}{' '}
-                ({actionTarget.request.total_days} days,{' '}
-                {formatDate(actionTarget.request.start_date)} – {formatDate(actionTarget.request.end_date)})
+                </span>
+                , {LEAVE_TYPE_LABELS[actionTarget.request.leave_type]} leave,{' '}
+                {actionTarget.request.total_days} days,{' '}
+                {formatDate(actionTarget.request.start_date)} to {formatDate(actionTarget.request.end_date)}.
               </p>
-              <div className="space-y-1">
+              <div className="space-y-1.5">
                 <Label>Comment (optional)</Label>
                 <Textarea
                   rows={3}
-                  placeholder="Add a comment..."
+                  aria-label="Comment"
                   value={actionComment}
                   onChange={e => setActionComment(e.target.value)} />
               </div>
             </div>
           )}
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setActionTarget(null)}>Cancel</Button>
+          <DialogFooter className="gap-3">
+            <Button variant="secondary" onClick={() => setActionTarget(null)}>Cancel</Button>
             <Button
               onClick={handleAction}
               disabled={actioning}
-              className={actionTarget?.mode === 'approve'
-                ? 'bg-positive hover:opacity-90 text-white'
-                : 'bg-risk hover:opacity-90 text-white'}>
-              {actioning
-                ? <Loader2 className="h-4 w-4 animate-spin" />
-                : actionTarget?.mode === 'approve' ? 'Approve' : 'Reject'}
+              variant={actionTarget?.mode === 'reject' ? 'destructive' : 'default'}>
+              {actioning && <Loader2 className="animate-spin" />}
+              {actionTarget?.mode === 'approve' ? 'Approve leave' : 'Reject leave'}
             </Button>
           </DialogFooter>
         </DialogContent>

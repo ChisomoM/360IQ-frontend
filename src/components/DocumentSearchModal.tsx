@@ -8,17 +8,20 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { StatusBadge } from '@/components/shared/StatusBadge';
+import { EmptyState } from '@/components/shared/EmptyState';
 import {
   Search,
   Loader2,
   FileText,
   Building,
   Calendar,
-  XCircle,
-} from 'lucide-react';
+  AlertCircle,
+} from '@/components/icons';
 import { toast } from 'sonner';
 import type { Document } from '@/types/dms';
 import { post } from '@/lib/api/crud';
+import { formatDate } from '@/lib/format';
 
 interface DocumentSearchModalProps {
   isOpen: boolean;
@@ -49,7 +52,7 @@ export function DocumentSearchModal({
       const data = await post('DOCUMENT_SEARCH', { query });
       setResults(data?.results || []);
       if (!data?.results || data.results.length === 0) {
-        setError('No documents found matching your search.');
+        setError('No documents match your search.');
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Search failed';
@@ -74,56 +77,48 @@ export function DocumentSearchModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="max-w-2xl max-h-[80vh] bg-white overflow-hidden flex flex-col">
+      <DialogContent className="flex max-h-[80vh] max-w-2xl flex-col overflow-hidden">
         <DialogHeader>
-          <DialogTitle className="text-xl font-bold flex items-center gap-2">
-            <Search className="h-5 w-5 text-blue-600" />
-            Search Documents
-          </DialogTitle>
+          <DialogTitle>Search documents</DialogTitle>
           <DialogDescription>
-            Find documents using keywords. Results will be sorted by relevance.
+            Search by keyword. The most relevant results come first.
           </DialogDescription>
         </DialogHeader>
 
-        {/* Search Input */}
-        <div className="relative">
-          <Input
-            placeholder="Enter keyword to search (e.g., 'budget', 'contract', 'meeting')..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                handleSearch(searchQuery);
-              }
-            }}
-            className="pl-10 h-11 border-blue-200 focus:ring-blue-500"
-            autoFocus
-          />
-          <Search className="absolute left-3 top-3.5 h-4 w-4 text-gray-400" />
-        </div>
-
-        {/* Search Button */}
+        {/* Search input and actions */}
         <div className="flex gap-2">
+          <div className="relative flex-1">
+            <Search size={18} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
+            <Input
+              aria-label="Search documents"
+              placeholder="Zambezi Logistics contract"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  handleSearch(searchQuery);
+                }
+              }}
+              className="pl-10"
+              autoFocus
+            />
+          </div>
           <Button
             onClick={() => handleSearch(searchQuery)}
             disabled={isSearching || !searchQuery.trim()}
-            className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
           >
             {isSearching ? (
               <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Searching...
+                <Loader2 className="animate-spin" />
+                Searching
               </>
             ) : (
-              <>
-                <Search className="h-4 w-4 mr-2" />
-                Search
-              </>
+              'Search'
             )}
           </Button>
           {searchQuery && (
             <Button
-              variant="outline"
+              variant="ghost"
               onClick={() => {
                 setSearchQuery('');
                 setResults([]);
@@ -136,55 +131,53 @@ export function DocumentSearchModal({
         </div>
 
         {/* Results */}
-        <div className="flex-1 overflow-y-auto space-y-2 min-h-[200px]">
+        <div className="min-h-[200px] flex-1 space-y-2 overflow-y-auto">
           {error && !results.length && (
-            <div className="flex items-center gap-2 p-4 bg-amber-50 border border-amber-200 rounded-lg text-amber-700">
-              <XCircle className="h-4 w-4 flex-shrink-0" />
+            <div role="status" className="flex items-center gap-2 rounded-md bg-field p-4 text-text-secondary">
+              <AlertCircle size={16} className="shrink-0" />
               <span className="text-sm">{error}</span>
             </div>
           )}
 
           {results.length > 0 && (
             <div className="space-y-2">
-              <p className="text-xs text-gray-500 font-semibold px-2">
-                {results.length} document{results.length !== 1 ? 's' : ''} found
+              <p className="px-1 text-xs text-text-muted">
+                <span className="font-mono">{results.length}</span> document{results.length !== 1 ? 's' : ''} found
               </p>
               {results.map((doc) => (
                 <button
                   key={doc.id}
                   onClick={() => handleSelectDocument(doc)}
-                  className="w-full text-left p-4 bg-white border border-gray-200 rounded-lg hover:bg-blue-50 hover:border-blue-300 transition-all group"
+                  className="w-full rounded-md border border-line p-4 text-left transition-colors hover:bg-surface-2"
                 >
                   <div className="flex items-start gap-3">
-                    <div className="p-2 bg-blue-100 text-blue-600 rounded flex-shrink-0 group-hover:bg-blue-200">
-                      <FileText className="h-4 w-4" />
+                    <div className="grid h-8 w-8 shrink-0 place-items-center rounded-sm bg-field text-text-secondary">
+                      <FileText size={16} />
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-gray-900 truncate group-hover:text-blue-700">
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-semibold text-text-primary">
                         {doc.title}
                       </p>
                       {doc.preview && (
-                        <p className="text-xs text-gray-600 line-clamp-2 mt-1">
+                        <p className="mt-1 line-clamp-2 text-xs text-text-secondary">
                           {doc.preview}
                         </p>
                       )}
-                      <div className="flex gap-3 mt-2 flex-wrap">
+                      <div className="mt-2 flex flex-wrap gap-2">
                         {doc.type && (
-                          <span className="inline-flex items-center gap-1 text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">
-                            {doc.type}
-                          </span>
+                          <StatusBadge tone="neutral">{doc.type}</StatusBadge>
                         )}
                         {doc.owner && (
-                          <span className="inline-flex items-center gap-1 text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">
-                            <Building className="h-3 w-3" />
+                          <StatusBadge tone="neutral">
+                            <Building size={14} />
                             {doc.owner}
-                          </span>
+                          </StatusBadge>
                         )}
                         {doc.created_at && (
-                          <span className="inline-flex items-center gap-1 text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">
-                            <Calendar className="h-3 w-3" />
-                            {new Date(doc.created_at).toLocaleDateString()}
-                          </span>
+                          <StatusBadge tone="neutral">
+                            <Calendar size={14} />
+                            <span className="font-mono">{formatDate(doc.created_at)}</span>
+                          </StatusBadge>
                         )}
                       </div>
                     </div>
@@ -196,18 +189,17 @@ export function DocumentSearchModal({
 
           {!results.length && !error && searchQuery && !isSearching && (
             <div className="flex justify-center py-10">
-              <p className="text-gray-500 text-sm">No results yet. Try adjusting your search.</p>
+              <p className="text-sm text-text-muted">Press Enter to search.</p>
             </div>
           )}
 
           {!results.length && !searchQuery && !isSearching && (
-            <div className="flex flex-col items-center justify-center py-10 text-center">
-              <Search className="h-12 w-12 text-gray-300 mb-3" />
-              <p className="text-gray-600 font-medium">Start searching for documents</p>
-              <p className="text-gray-400 text-sm mt-1">
-                Enter a keyword above to find documents
-              </p>
-            </div>
+            <EmptyState
+              className="py-8"
+              icon={<Search size={24} />}
+              title="Find a document"
+              description="Enter a keyword above to search your documents."
+            />
           )}
         </div>
       </DialogContent>

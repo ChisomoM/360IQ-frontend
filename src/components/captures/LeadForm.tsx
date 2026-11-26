@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { CheckCircle2, ChevronDown, Loader2 } from "lucide-react";
+import { CheckCircle2, ChevronDown, Loader2 } from "@/components/icons";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -102,25 +102,25 @@ export function LeadForm({ eventName }: { eventName: string }) {
 
   if (done) {
     return (
-      <div className="space-y-4 rounded-xl border border-positive bg-positive-tint p-4" role="status">
-        <div className="flex items-start gap-2 text-positive">
-          <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0" />
-          <div>
-            <p className="font-semibold">Lead saved</p>
-            <p className="text-sm">
-              {done.person_outcome === "CREATED" ? "New person created. " : done.person_outcome === "LINKED" ? "Added to an existing person. " : ""}
-              {done.company_outcome === "CREATED" ? "New company created. " : done.company_outcome === "LINKED" ? "Linked to an existing company. " : ""}
-            </p>
-          </div>
+      <div className="flex flex-col items-center gap-4 py-6 text-center" role="status">
+        <div className="grid h-12 w-12 place-items-center rounded-lg bg-positive-tint text-positive">
+          <CheckCircle2 size={24} />
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div>
+          <p className="text-xl font-semibold text-text-primary">Lead saved</p>
+          <p className="mt-1 text-sm text-text-secondary">
+            {done.person_outcome === "CREATED" ? "New person created. " : done.person_outcome === "LINKED" ? "Added to an existing person. " : ""}
+            {done.company_outcome === "CREATED" ? "New company created. " : done.company_outcome === "LINKED" ? "Linked to an existing company. " : ""}
+          </p>
+        </div>
+        <div className="flex flex-wrap justify-center gap-2">
           {done.person_id && (
-            <Button asChild variant="outline">
+            <Button asChild variant="secondary">
               <Link to={`/admin/people/${done.person_id}`}>Open person</Link>
             </Button>
           )}
           {done.company_id && (
-            <Button asChild variant="outline">
+            <Button asChild variant="secondary">
               <Link to={`/admin/companies/${done.company_id}`}>Open company</Link>
             </Button>
           )}
@@ -143,7 +143,7 @@ export function LeadForm({ eventName }: { eventName: string }) {
       }}
     >
       <fieldset className="space-y-3">
-        <legend className="mb-1 font-display text-sm font-semibold text-text-primary">Person</legend>
+        <legend className="mb-2 text-base font-semibold text-text-primary">Person</legend>
         <div className="grid gap-3 sm:grid-cols-2">
           <Field label="First name" htmlFor="lf-first">
             <Input id="lf-first" autoComplete="off" value={f.first_name} onChange={set("first_name")} />
@@ -165,7 +165,7 @@ export function LeadForm({ eventName }: { eventName: string }) {
       </fieldset>
 
       <fieldset className="space-y-3">
-        <legend className="mb-1 font-display text-sm font-semibold text-text-primary">Company</legend>
+        <legend className="mb-2 text-base font-semibold text-text-primary">Company</legend>
         <div className="grid gap-3 sm:grid-cols-2">
           <Field label="Company name" htmlFor="lf-company" className="sm:col-span-2">
             <Input id="lf-company" autoComplete="off" value={f.company} onChange={set("company")} />
@@ -180,15 +180,15 @@ export function LeadForm({ eventName }: { eventName: string }) {
         <MatchChoice entity="company" match={decision.company} choice={companyChoice} onChange={setCompanyChoice} />
       </fieldset>
 
-      <div className="rounded-lg border border-line">
+      <div className="rounded-md border border-line">
         <button
           type="button"
-          className="flex min-h-11 w-full items-center justify-between gap-2 px-3 text-left text-sm font-semibold text-text-primary"
+          className="flex min-h-11 w-full items-center justify-between gap-2 rounded-md px-3 text-left text-sm font-semibold text-text-primary hover:bg-surface-2"
           aria-expanded={more}
           onClick={() => setMore((m) => !m)}
         >
           <span>Need, budget, timeline and notes (optional)</span>
-          <ChevronDown className={`h-4 w-4 shrink-0 transition-transform ${more ? "rotate-180" : ""}`} />
+          <ChevronDown size={16} className={`shrink-0 transition-transform ${more ? "rotate-180" : ""}`} />
         </button>
         {more && (
           <div className="grid gap-3 border-t border-line p-3 sm:grid-cols-2">
@@ -212,7 +212,7 @@ export function LeadForm({ eventName }: { eventName: string }) {
       {blocked && <ErrorBanner tone="caution">Choose link or create new above, then save again. Nothing has been saved yet.</ErrorBanner>}
 
       <Button type="submit" size="lg" className="w-full sm:w-auto" disabled={busy || !hasIdentity || Boolean(blocked)}>
-        {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : null} Save lead
+        {busy ? <Loader2 className="animate-spin" /> : null} Save lead
       </Button>
     </form>
   );

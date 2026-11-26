@@ -1,7 +1,10 @@
 import { useState, useEffect } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Loader2, ShieldCheck, Edit2 } from 'lucide-react';
+import { ShieldCheck, Edit2 } from '@/components/icons';
+import { PageHeader } from '@/components/shared/PageHeader';
+import { SectionCard } from '@/components/shared/SectionCard';
+import { EmptyState } from '@/components/shared/EmptyState';
+import { TableSkeleton } from '@/components/shared/TableSkeleton';
 import { toast } from 'sonner';
 import { list } from '@/lib/api/crud';
 import { useRbac } from '@/lib/context/RbacContext';
@@ -62,83 +65,67 @@ export default function RolesManagement() {
     };
 
     const ROLE_DESCRIPTIONS: Record<string, string> = {
-        super_admin: 'Full access to all system features and settings',
-        admin: 'Manage users, departments and most system features',
-        user: 'Standard access to documents and personal features',
-    };
-
-    const ROLE_COLORS: Record<string, string> = {
-        super_admin: 'bg-signal-tint text-signal-text',
-        admin: 'bg-positive-tint text-positive',
-        user: 'bg-surface-2 text-text-secondary',
+        super_admin: 'Full access to all system features and settings.',
+        admin: 'Manage users, departments and most system features.',
+        user: 'Standard access to documents and personal features.',
     };
 
     return (
-        <div className="w-full space-y-6">
-            {/* Header */}
-            <div className="flex items-center justify-between">
-                <div>
-                    <h1 className="text-3xl font-bold text-gray-900">Roles Management</h1>
-                    <p className="text-gray-600 mt-1">
-                        Configure permissions for each role in the system
-                    </p>
-                </div>
-            </div>
+        <div className="w-full flex flex-col gap-5">
+            <PageHeader
+                title="Roles"
+                description="Set the permissions for each role."
+            />
 
             {isLoading ? (
-                <div className="flex items-center justify-center py-20">
-                    <Loader2 className="h-10 w-10 animate-spin text-primary" />
-                    <p className="ml-4 text-gray-500">Loading roles...</p>
-                </div>
+                <SectionCard padded={false}>
+                    <TableSkeleton rows={4} columns={3} />
+                </SectionCard>
             ) : roles.length === 0 ? (
-                <Card>
-                    <CardContent className="text-center py-20 text-gray-500">
-                        <ShieldCheck className="h-12 w-12 mx-auto mb-4 opacity-20" />
-                        <p>No roles found.</p>
-                    </CardContent>
-                </Card>
+                <SectionCard padded={false}>
+                    <EmptyState
+                        icon={<ShieldCheck size={24} />}
+                        title="No roles yet"
+                        description="Roles appear here once they are set up for your organisation."
+                    />
+                </SectionCard>
             ) : (
                 <>
                     {/* Role Cards */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         {roles.map((role) => (
-                            <Card
+                            <section
                                 key={String(role.id)}
-                                className="border-2 border-gray-200 hover:border-gray-300 transition-all"
+                                className="flex min-w-0 flex-col gap-4 rounded-lg border border-line bg-surface-1 p-6 shadow-card"
                             >
-                                <CardContent className="p-6 space-y-4">
-                                    <div className="flex items-start justify-between">
-                                        <ShieldCheck className="h-8 w-8 text-primary" />
-                                        <span
-                                            className={`text-xs px-2 py-1 rounded-full font-medium ${ROLE_COLORS[role.slug] ?? 'bg-gray-100 text-gray-700'
-                                                }`}
-                                        >
-                                            {role.slug}
-                                        </span>
-                                    </div>
+                                <div className="flex items-start justify-between gap-2">
+                                    <ShieldCheck size={24} className="text-text-muted" />
+                                    <code className="rounded-pill bg-field px-2 py-0.5 font-mono text-xs text-text-secondary">
+                                        {role.slug}
+                                    </code>
+                                </div>
 
-                                    <div>
-                                        <h3 className="font-bold text-gray-900 text-lg">{role.name}</h3>
-                                        <p className="text-sm text-gray-500 mt-1">
-                                            {ROLE_DESCRIPTIONS[role.slug] ?? role.description ?? ''}
-                                        </p>
-                                    </div>
+                                <div className="flex-1">
+                                    <h2 className="font-semibold text-base text-text-primary">{role.name}</h2>
+                                    <p className="text-sm text-text-secondary mt-1">
+                                        {ROLE_DESCRIPTIONS[role.slug] ?? role.description ?? ''}
+                                    </p>
+                                </div>
 
-                                    <div className="flex items-center justify-between">
-                                        <span className="text-sm text-gray-500">
-                                            {role.permissions.length} permissions
-                                        </span>
-                                        <Button
-                                            size="sm"
-                                            onClick={() => openPanel(role)}
-                                            variant="tenantPrimary"
-                                        >
-                                            <Edit2 className="h-3 w-3 mr-1" />
-                                            Edit Permissions
-                                        </Button>
-                                    </div>
-                                </CardContent>
-                            </Card>
+                                <div className="flex flex-wrap items-center justify-between gap-2 border-t border-line pt-4">
+                                    <span className="text-xs text-text-muted">
+                                        <span className="font-mono">{role.permissions.length}</span> permissions
+                                    </span>
+                                    <Button
+                                        size="sm"
+                                        onClick={() => openPanel(role)}
+                                        variant="secondary"
+                                    >
+                                        <Edit2 />
+                                        Edit permissions
+                                    </Button>
+                                </div>
+                            </section>
                         ))}
                     </div>
 

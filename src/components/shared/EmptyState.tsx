@@ -1,5 +1,6 @@
-import { FileText } from 'lucide-react'
+import { FileText } from '@/components/icons'
 import { Button } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
 
 interface EmptyStateProps {
   title?: string
@@ -9,40 +10,25 @@ interface EmptyStateProps {
     label: string
     onAction: () => void
   }
+  className?: string
 }
 
-/**
- * EmptyState — Reusable component for empty lists/tables
- * Used in Documents, and other list/grid views across the app
- */
+/** What this place is for, plus one action. An invitation, not an apology. */
 export function EmptyState({
-  title = 'No items found',
-  description = 'Try adjusting your search or filters',
+  title = 'Nothing here yet',
+  description = 'Change your search or filters to see more.',
   icon,
   action,
+  className,
 }: EmptyStateProps) {
   return (
-    <div className="bg-gray-50 rounded-lg border border-gray-200 border-dashed p-12 text-center">
-      <div className="flex justify-center mb-4">
-        {icon || <FileText className="h-16 w-16 text-gray-300" />}
+    <div className={cn('flex flex-col items-center gap-3 py-12 px-6 text-center', className)}>
+      <div className="grid h-12 w-12 place-items-center rounded-lg bg-signal-tint text-signal-text" aria-hidden="true">
+        {icon || <FileText size={24} />}
       </div>
-      
-      <h3 className="font-display font-semibold text-text-lg text-gray-900 mb-2">
-        {title}
-      </h3>
-      
-      <p className="font-sans text-text-sm text-gray-600 mb-6 max-w-sm mx-auto">
-        {description}
-      </p>
-
-      {action && (
-        <Button 
-          onClick={action.onAction}
-          className="gap-2"
-        >
-          {action.label}
-        </Button>
-      )}
+      <h3 className="text-xl font-semibold text-text-primary">{title}</h3>
+      <p className="max-w-[44ch] text-sm text-text-secondary">{description}</p>
+      {action && <Button onClick={action.onAction}>{action.label}</Button>}
     </div>
   )
 }

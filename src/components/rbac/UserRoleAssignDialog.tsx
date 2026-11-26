@@ -3,7 +3,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Loader2 } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Loader2 } from '@/components/icons';
 import { toast } from 'sonner';
 import { update } from '@/lib/api/crud';
 import type { RoleSlug } from '@/types/rbac';
@@ -18,7 +19,7 @@ interface UserRoleAssignDialogProps {
 }
 
 const ROLE_OPTIONS: { value: RoleSlug; label: string }[] = [
-  { value: 'super_admin', label: 'Super Admin' },
+  { value: 'super_admin', label: 'Super admin' },
   { value: 'admin', label: 'Admin' },
   { value: 'user', label: 'User' },
 ];
@@ -44,10 +45,10 @@ export function UserRoleAssignDialog({
   const validate = () => {
     const newErrors: Record<string, string> = {};
     if (roleSlug === 'admin' && !title) {
-      newErrors.title = 'Title is required for admin';
+      newErrors.title = 'Enter a job title for this admin.';
     }
     if (title && title.length > 60) {
-      newErrors.title = 'Title must be under 60 characters';
+      newErrors.title = 'Use 60 characters or fewer.';
     }
     return newErrors;
   };
@@ -62,7 +63,7 @@ export function UserRoleAssignDialog({
     setIsSubmitting(true);
     try {
       await update('USER_ROLE', { roleSlug, title }, { id: userId });
-      toast.success('Role updated successfully');
+      toast.success('Role updated');
       onSave(roleSlug, title);
       onClose();
     } catch (err) {
@@ -74,51 +75,56 @@ export function UserRoleAssignDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md bg-white">
+      <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Assign Role</DialogTitle>
+          <DialogTitle>Assign role</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
+          <div className="space-y-1.5">
             <Label htmlFor="assign-role">Role</Label>
-            <select
-              id="assign-role"
-              title="Assign role"
+            <Select
               value={roleSlug}
-              onChange={(e) => setRoleSlug(e.target.value as RoleSlug)}
+              onValueChange={(value) => value && setRoleSlug(value as RoleSlug)}
               disabled={isSubmitting}
-              className="w-full h-10 border border-gray-300 rounded-md px-3 text-sm"
             >
-              {ROLE_OPTIONS.map((r) => (
-                <option key={r.value} value={r.value}>{r.label}</option>
-              ))}
-            </select>
+              <SelectTrigger id="assign-role">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {ROLE_OPTIONS.map((r) => (
+                  <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           {roleSlug === 'admin' && (
-            <div>
-              <Label htmlFor="assign-title">Title</Label>
+            <div className="space-y-1.5">
+              <Label htmlFor="assign-title">Job title</Label>
               <Input
                 id="assign-title"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                placeholder="e.g. Department Manager (max 60 chars)"
+                placeholder="Sales manager"
                 disabled={isSubmitting}
                 maxLength={60}
+                aria-invalid={!!errors.title}
               />
-              {errors.title && (
-                <p className="text-red-500 text-xs mt-1">{errors.title}</p>
+              {errors.title ? (
+                <p className="text-risk text-xs">{errors.title}</p>
+              ) : (
+                <p className="text-text-muted text-xs">Up to 60 characters.</p>
               )}
             </div>
           )}
 
-          <div className="flex gap-2 justify-end">
-            <Button type="button" variant="outline" onClick={onClose} disabled={isSubmitting}>
+          <div className="flex gap-3 justify-end pt-2">
+            <Button type="button" variant="secondary" onClick={onClose} disabled={isSubmitting}>
               Cancel
             </Button>
             <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Save
+              {isSubmitting && <Loader2 className="animate-spin" />}
+              Save role
             </Button>
           </div>
         </form>

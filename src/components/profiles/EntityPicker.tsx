@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react";
-import { Loader2, Search } from "lucide-react";
+import { Loader2, Search } from "@/components/icons";
 import { Input } from "@/components/ui/input";
 import { listCompanies, listPeople } from "@/lib/api/profiles";
-import { cn } from "@/lib/utils";
 
 export interface PickedEntity {
   id: string;
@@ -59,7 +58,7 @@ export function EntityPicker({
   return (
     <div className="space-y-2">
       <div className="relative">
-        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted" />
+        <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
         <Input
           value={q}
           autoFocus={autoFocus}
@@ -68,18 +67,14 @@ export function EntityPicker({
           className="pl-9"
           aria-label={kind === "company" ? "Search companies" : "Search people"}
         />
-        {loading && <Loader2 className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-text-muted" />}
+        {loading && <Loader2 size={16} className="absolute right-3 top-1/2 -translate-y-1/2 animate-spin text-text-muted" />}
       </div>
-      <ul className="max-h-56 divide-y divide-line overflow-y-auto rounded-lg border border-line">
+      <ul className="max-h-56 divide-y divide-line overflow-y-auto rounded-md border border-line">
         {shown.length === 0 && !loading && <li className="px-3 py-3 text-sm text-text-muted">No matches</li>}
         {shown.map((r) => (
           <li key={r.id}>
-            <button
-              type="button"
-              onClick={() => onPick(r)}
-              className={cn("block w-full min-w-0 px-3 py-2 text-left hover:bg-surface-2 focus-visible:bg-surface-2 focus-visible:outline-none")}
-            >
-              <span className="block truncate text-sm font-medium text-text-primary">{r.name}</span>
+            <button type="button" onClick={() => onPick(r)} className="block w-full min-w-0 px-3 py-2 text-left hover:bg-surface-2 focus-visible:bg-surface-2">
+              <span className="block truncate text-sm font-semibold text-text-primary">{r.name}</span>
               {r.detail && <span className="block truncate text-xs text-text-muted">{r.detail}</span>}
             </button>
           </li>

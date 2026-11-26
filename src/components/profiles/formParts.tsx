@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from "react";
-import { EyeOff } from "lucide-react";
+import { AlertTriangle, Lock } from "@/components/icons";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -12,12 +12,22 @@ const NONE = "__none";
 export function Field({ label, htmlFor, children, className, hint }: { label: string; htmlFor?: string; children: ReactNode; className?: string; hint?: string }) {
   return (
     <div className={`min-w-0 space-y-1.5 ${className ?? ""}`}>
-      <Label htmlFor={htmlFor} className="text-sm">
+      <Label htmlFor={htmlFor} className="text-[13px] font-medium text-text-secondary">
         {label}
       </Label>
       {children}
       {hint && <p className="text-xs text-text-muted">{hint}</p>}
     </div>
+  );
+}
+
+/** A form-level error: what happened, next to the actions. */
+export function FormError({ children }: { children: ReactNode }) {
+  return (
+    <p role="alert" className="flex items-start gap-2 rounded-md bg-risk-tint px-3 py-2 text-sm text-risk">
+      <AlertTriangle size={16} className="mt-0.5 shrink-0" />
+      <span className="min-w-0 break-words">{children}</span>
+    </p>
   );
 }
 
@@ -86,16 +96,16 @@ export function SensitiveField({
   const [replacing, setReplacing] = useState(false);
   const locked = masked && hasSavedValue && !replacing;
   return (
-    <Field label={label} htmlFor={id}>
+    <Field label={label} htmlFor={id} hint={locked ? "Hidden by your access level" : undefined}>
       {locked ? (
-        <div className="flex items-center gap-2 rounded-md border border-line bg-surface-2 px-3 py-2 text-sm text-text-muted">
-          <EyeOff className="h-4 w-4 shrink-0" />
+        <div className="flex min-h-10 items-center gap-2 rounded-md bg-field py-1 pl-3 pr-1 text-sm text-text-muted">
+          <Lock size={16} className="shrink-0" />
           <span className="min-w-0 flex-1 truncate">{value}</span>
           <Button
             type="button"
             variant="ghost"
             size="sm"
-            className="h-7 shrink-0 px-2"
+            className="shrink-0"
             onClick={() => {
               setReplacing(true);
               onChange("");

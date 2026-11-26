@@ -1,6 +1,12 @@
 import { useState, useRef, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
-import { X, Sparkles, FileSearch, MessageSquare, Loader2, Send, Search, ChevronRight, RotateCcw, TrendingUp, Tag, Users, Smile, ListTodo, Globe, FileType, Bot } from 'lucide-react';
+import { X, Sparkles, FileSearch, MessageSquare, Loader2, Send, Search, ChevronRight, ChevronLeft, RotateCcw, TrendingUp, Tag, Users, ListTodo, Globe, FileType } from '@/components/icons';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { StatusBadge } from '@/components/shared/StatusBadge';
+import type { Tone } from '@/lib/status';
 import { cn } from '@/lib/utils';
 import { list, post } from '@/lib/api/crud';
 import { sendChatMessage } from '@/lib/api/ai';
@@ -29,11 +35,16 @@ const WELCOME_MESSAGE: Message = {
   id: 'welcome',
   role: 'assistant',
   content:
-    "Hello! I'm your AI document assistant. I can help you summarize documents, extract key insights, and answer questions about your data. How can I help you today?",
+    'Ask about your documents. 360IQ can summarise one, pull out key points or answer a question about your data.',
   timestamp: new Date(),
 };
 
 type AnalysisMode = 'summarize' | 'analyze';
+
+const SECTION_LABEL = 'text-xs font-semibold uppercase tracking-[.04em] text-text-muted';
+const PICKER_ROW = 'flex w-full items-center gap-3 rounded-md border border-line px-3 py-2 text-left transition-colors hover:bg-surface-2';
+const AI_PANEL = 'rounded-lg bg-signal-tint iq-grad-border [--surface-1:var(--signal-tint)] p-4';
+const AI_PANEL_LABEL = 'mb-1.5 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[.04em] text-signal-text';
 
 export function AIChatSidebar({
   isOpen,
@@ -132,7 +143,7 @@ export function AIChatSidebar({
     setAnalysis(null);
     post('DOCUMENT_SUMMARIZE', {}, { id: selectedDoc.id })
       .then(result => setSummary(result as AISummary))
-      .catch((err: any) => setAnalysisError(err?.message || 'AI analysis failed. Please try again.'))
+      .catch((err: any) => setAnalysisError(err?.message || "Couldn't analyse this document. Try again."))
       .finally(() => setAnalysisLoading(false));
   }, [selectedDoc]);
 
@@ -155,16 +166,14 @@ export function AIChatSidebar({
       if (analysisMode === 'summarize') setSummary(result as AISummary);
       else setAnalysis(result as AIAnalysis);
     } catch (err: any) {
-      setAnalysisError(err?.message || 'AI analysis failed. Please try again.');
+      setAnalysisError(err?.message || "Couldn't analyse this document. Try again.");
     } finally {
       setAnalysisLoading(false);
     }
   };
 
-  const sentimentColor = (s: string) =>
-    s === 'positive' ? 'text-emerald-600 bg-emerald-50' :
-      s === 'negative' ? 'text-red-600 bg-red-50' :
-        'text-gray-600 bg-gray-100';
+  const sentimentTone = (s: string): Tone =>
+    s === 'positive' ? 'positive' : s === 'negative' ? 'risk' : 'neutral';
 
   const filteredDocs = documents.filter(d =>
     d.title.toLowerCase().includes(docSearch.toLowerCase()) ||
@@ -205,7 +214,7 @@ export function AIChatSidebar({
       setMessages(prev => [...prev, {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: 'Something went wrong. Please try again.',
+        content: "Couldn't get an answer. Send your question again.",
         timestamp: new Date(),
       }]);
     } finally {
@@ -221,121 +230,107 @@ export function AIChatSidebar({
   };
 
   const formatTime = (date: Date) =>
-    date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false });
 
   return (
     <div className={cn(
-      'fixed top-0 right-0 h-screen w-[380px] z-50',
-      'flex flex-col bg-white',
-      'shadow-[-12px_0_40px_rgba(0,0,0,0.12)]',
-      'transition-transform duration-300 ease-in-out',
-      isOpen ? 'translate-x-0' : 'translate-x-full'
+      'fixed top-0 right-0 h-screen w-[380px] max-w-full z-50',
+      'flex flex-col bg-surface-1 text-text-primary border-l border-line',
+      'transition-transform duration-300 ease-spring',
+      isOpen ? 'translate-x-0 shadow-overlay' : 'translate-x-full'
     )}>
-      {/* Header — uses tenant primary colour via CSS var */}
-      <div className="flex items-center justify-between px-4 py-3 bg-primary flex-shrink-0">
+      {/* Header */}
+      <div className="flex items-center justify-between gap-3 border-b border-line px-4 py-3 flex-shrink-0">
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-xl bg-white/15 flex items-center justify-center">
-            <Sparkles className="h-4 w-4 text-primary-foreground" />
-          </div>
+          <span className="grid h-9 w-9 place-items-center rounded-sm bg-signal-tint iq-grad-border [--surface-1:var(--signal-tint)] text-signal-text">
+            <Sparkles size={18} />
+          </span>
           <div>
-            <p className="text-primary-foreground font-semibold text-sm leading-none">AI Assistant</p>
-            <p className="text-primary-foreground/60 text-xs mt-0.5">Document Intelligence</p>
+            <p className="text-sm font-semibold leading-tight text-signal-text">Ask 360IQ</p>
+            <p className="text-xs text-text-muted">Document intelligence</p>
           </div>
         </div>
-        <button
-          onClick={onClose}
-          className="text-primary-foreground/60 hover:text-primary-foreground transition-colors p-1.5 rounded-lg hover:bg-white/10"
-          aria-label="Close AI Assistant"
-        >
-          <X className="h-4 w-4" />
-        </button>
+        <Button variant="ghost" size="icon" onClick={onClose} aria-label="Close Ask 360IQ">
+          <X size={18} />
+        </Button>
       </div>
 
-      {/* Tabs — active tab uses tenant primary colour */}
-      <div className="flex border-b border-gray-100 flex-shrink-0">
-        {(['chat', 'analyze'] as const).map(tab => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            className={cn(
-              'flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-medium transition-colors',
-              activeTab === tab
-                ? 'text-primary border-b-2 border-primary bg-primary/5'
-                : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'
-            )}
-          >
-            {tab === 'chat'
-              ? <><MessageSquare className="h-3.5 w-3.5" />Chat</>
-              : <><FileSearch className="h-3.5 w-3.5" />Doc Analysis</>
-            }
-          </button>
-        ))}
-      </div>
+      <Tabs
+        value={activeTab}
+        onValueChange={(v) => setActiveTab(v as 'chat' | 'analyze')}
+        className="flex min-h-0 flex-1 flex-col"
+      >
+        <div className="px-4 pt-3 flex-shrink-0">
+          <TabsList className="w-full">
+            <TabsTrigger value="chat" className="flex-1 gap-1.5">
+              <MessageSquare size={16} />Chat
+            </TabsTrigger>
+            <TabsTrigger value="analyze" className="flex-1 gap-1.5">
+              <FileSearch size={16} />Document analysis
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
-      {/* ── Chat Tab ── */}
-      {activeTab === 'chat' && (
-        <>
+        {/* ── Chat tab ── */}
+        <TabsContent value="chat" className="flex min-h-0 flex-1 flex-col data-[state=inactive]:hidden">
           {/* Selected doc context bar */}
           {selectedChatDoc && (
-            <div className="px-4 py-2.5 bg-primary/5 border-b border-primary/10 flex items-center gap-2 flex-shrink-0">
-              <FileSearch className="h-3.5 w-3.5 text-primary flex-shrink-0" />
-              <div className="flex-1 min-w-0">
-                <p className="text-xs font-medium text-primary truncate">Analyzing: {selectedChatDoc.title}</p>
-              </div>
-              <button onClick={() => setSelectedChatDoc(null)} className="text-primary/50 hover:text-primary transition-colors p-1">
-                <X className="h-3.5 w-3.5" />
-              </button>
+            <div className="flex flex-shrink-0 items-center gap-2 border-b border-line bg-field px-4 py-2">
+              <FileSearch size={16} className="flex-shrink-0 text-text-secondary" />
+              <p className="min-w-0 flex-1 truncate text-xs font-medium text-text-primary">Asking about {selectedChatDoc.title}</p>
+              <Button variant="ghost" size="sm" onClick={() => setSelectedChatDoc(null)} aria-label="Remove document">
+                <X size={14} />
+              </Button>
             </div>
           )}
 
           {/* Add document context button */}
           {!selectedChatDoc && !showChatDocPicker && (
-            <div className="px-4 py-2 bg-gray-50 border-b border-gray-100 flex-shrink-0">
-              <button
-                onClick={() => setShowChatDocPicker(true)}
-                className="w-full flex items-center justify-center gap-1.5 py-1.5 rounded-lg border border-gray-200 text-xs font-medium text-gray-600 hover:bg-white hover:border-gray-300 transition-all"
-              >
-                <FileSearch className="h-3 w-3" />
-                Add Document Context
-              </button>
+            <div className="flex-shrink-0 border-b border-line px-4 py-3">
+              <Button variant="secondary" size="sm" className="w-full" onClick={() => setShowChatDocPicker(true)}>
+                <FileSearch size={14} />
+                Add a document
+              </Button>
             </div>
           )}
 
           {/* Document picker */}
           {showChatDocPicker && (
-            <div className="px-4 py-3 border-b border-gray-100 bg-gray-50/60 flex-shrink-0 space-y-2.5">
+            <div className="flex-shrink-0 space-y-2.5 border-b border-line px-4 py-3">
               <div className="flex items-center justify-between">
-                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Pick a document</p>
-                <button onClick={() => setShowChatDocPicker(false)} className="text-gray-400 hover:text-gray-600 p-1">
-                  <X className="h-3.5 w-3.5" />
-                </button>
+                <p className={SECTION_LABEL}>Pick a document</p>
+                <Button variant="ghost" size="sm" onClick={() => setShowChatDocPicker(false)} aria-label="Close document list">
+                  <X size={14} />
+                </Button>
               </div>
               <div className="relative">
-                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400 pointer-events-none" />
-                <input
+                <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
+                <Input
                   type="text"
-                  placeholder="Search documents…"
+                  aria-label="Search documents"
+                  placeholder="Search documents"
                   value={chatDocSearch}
                   onChange={e => setChatDocSearch(e.target.value)}
-                  className="w-full pl-8 pr-3 py-1.5 text-xs rounded-lg border border-gray-200 bg-white focus:outline-none focus:ring-2 focus:ring-primary/25 focus:border-primary transition-all"
+                  className="pl-9"
                 />
               </div>
-              <div className="max-h-48 overflow-y-auto space-y-1">
-                {chatDocsLoading && <div className="flex items-center justify-center py-6"><Loader2 className="h-4 w-4 animate-spin text-primary" /></div>}
-                {!chatDocsLoading && chatDocuments.length === 0 && <div className="text-center py-4 text-xs text-gray-400">No documents found.</div>}
+              <div className="max-h-48 space-y-1 overflow-y-auto">
+                {chatDocsLoading && <div role="status" aria-label="Loading" className="flex items-center justify-center py-6"><Loader2 size={18} className="animate-spin text-signal-text" /></div>}
+                {!chatDocsLoading && chatDocuments.length === 0 && <p className="py-4 text-center text-xs text-text-muted">No documents found.</p>}
                 {!chatDocsLoading && chatDocuments
                   .filter(d => d.title.toLowerCase().includes(chatDocSearch.toLowerCase()) || d.document_type?.toLowerCase().includes(chatDocSearch.toLowerCase()))
                   .map(doc => (
                     <button
+                      type="button"
                       key={doc.id}
                       onClick={() => { setSelectedChatDoc(doc); setShowChatDocPicker(false); }}
-                      className="w-full text-left flex items-center gap-2 px-2 py-1.5 rounded-lg border border-gray-100 hover:border-primary/30 hover:bg-primary/5 transition-all group text-xs"
+                      className={PICKER_ROW}
                     >
-                      <FileSearch className="h-3 w-3 text-gray-400 group-hover:text-primary flex-shrink-0 transition-colors" />
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium text-gray-800 truncate">{doc.title}</p>
-                        <p className="text-[10px] text-gray-400 truncate">{doc.document_type || doc.file_type}</p>
-                      </div>
+                      <FileSearch size={14} className="flex-shrink-0 text-text-muted" />
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate text-xs font-semibold text-text-primary">{doc.title}</span>
+                        <span className="block truncate text-xs text-text-muted">{doc.document_type || doc.file_type}</span>
+                      </span>
                     </button>
                   ))}
               </div>
@@ -343,31 +338,29 @@ export function AIChatSidebar({
           )}
 
           {/* Message list */}
-          <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4 scroll-smooth">
+          <div className="flex-1 space-y-4 overflow-y-auto scroll-smooth px-4 py-4" aria-live="polite">
             {messages.map(msg => (
               <div key={msg.id} className={cn('flex gap-2', msg.role === 'user' ? 'flex-row-reverse' : 'flex-row')}>
                 {msg.role === 'assistant' && (
-                  <div className="w-7 h-7 rounded-full bg-primary flex items-center justify-center flex-shrink-0 mt-0.5 shadow-sm">
-                    <Bot className="h-3.5 w-3.5 text-primary-foreground" />
-                  </div>
+                  <span className="mt-0.5 grid h-7 w-7 flex-shrink-0 place-items-center rounded-pill bg-signal-tint text-signal-text">
+                    <Sparkles size={14} />
+                  </span>
                 )}
-                <div className="flex flex-col gap-1 max-w-[82%]">
+                <div className="flex max-w-[82%] flex-col gap-1">
                   <div className={cn(
-                    'rounded-2xl px-3 py-2 text-sm leading-relaxed',
-                    msg.role === 'user'
-                      ? 'bg-primary text-primary-foreground rounded-tr-sm'
-                      : 'bg-gray-100 text-gray-800 rounded-tl-sm'
+                    'rounded-lg px-3 py-2 text-sm leading-relaxed text-text-primary',
+                    msg.role === 'user' ? 'bg-field' : 'bg-signal-tint'
                   )}>
                     {msg.role === 'assistant' ? (
                       // Render markdown for assistant messages
-                      <div className="prose prose-xs max-w-none prose-p:my-1 prose-headings:my-1 prose-ul:my-1 prose-ol:my-1 prose-li:my-0 prose-code:bg-white/20 prose-code:px-1 prose-code:rounded prose-pre:bg-gray-800 prose-pre:text-gray-100">
+                      <div className="prose prose-xs max-w-none break-words prose-p:my-1 prose-headings:my-1 prose-ul:my-1 prose-ol:my-1 prose-li:my-0">
                         <ReactMarkdown>{msg.content}</ReactMarkdown>
                       </div>
                     ) : (
-                      <p className="whitespace-pre-wrap break-words">{msg.content}</p>
+                      <p className="whitespace-pre-wrap break-words text-sm">{msg.content}</p>
                     )}
                   </div>
-                  <p className={cn('text-[10px] text-gray-400', msg.role === 'user' ? 'text-right' : 'text-left')}>
+                  <p className={cn('font-mono text-xs text-text-muted', msg.role === 'user' ? 'text-right' : 'text-left')}>
                     {formatTime(msg.timestamp)}
                   </p>
                 </div>
@@ -375,131 +368,126 @@ export function AIChatSidebar({
             ))}
 
             {isLoading && (
-              <div className="flex gap-2">
-                <div className="w-7 h-7 rounded-full bg-primary flex items-center justify-center flex-shrink-0 shadow-sm">
-                  <Bot className="h-3.5 w-3.5 text-primary-foreground" />
-                </div>
-                <div className="bg-gray-100 rounded-2xl rounded-tl-sm px-3 py-2.5 flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce [animation-delay:0ms]" />
-                  <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce [animation-delay:150ms]" />
-                  <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce [animation-delay:300ms]" />
-                </div>
+              <div role="status" className="flex items-center gap-2">
+                <span className="grid h-7 w-7 flex-shrink-0 place-items-center rounded-pill bg-signal-tint text-signal-text">
+                  <Sparkles size={14} />
+                </span>
+                <p className="rounded-lg bg-signal-tint px-3 py-2 text-sm text-signal-text">360IQ is reading your question…</p>
               </div>
             )}
             <div ref={messagesEndRef} />
           </div>
 
           {/* Input area */}
-          <div className="p-4 border-t border-gray-100 bg-gray-50/60 flex-shrink-0">
+          <div className="flex-shrink-0 border-t border-line p-4">
             <div className="flex items-end gap-2">
-              <textarea
+              <Textarea
                 ref={textareaRef}
                 value={input}
                 onChange={handleInputChange}
                 onKeyDown={handleKeyDown}
-                placeholder={selectedChatDoc ? `Ask about ${selectedChatDoc.title}…` : 'Ask anything about your documents…'}
+                aria-label="Ask 360IQ"
+                placeholder={selectedChatDoc ? `Ask about ${selectedChatDoc.title}` : 'Ask about your documents'}
                 rows={1}
                 disabled={isLoading}
-                className="flex-1 resize-none rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/25 focus:border-primary transition-all min-h-[38px] max-h-[120px] overflow-y-auto leading-relaxed disabled:opacity-50"
+                className="min-h-[2.857rem] max-h-[120px] flex-1 resize-none overflow-y-auto leading-relaxed"
               />
-              <button
+              <Button
+                size="icon"
                 onClick={handleSend}
                 disabled={!input.trim() || isLoading}
-                className="w-9 h-9 flex-shrink-0 rounded-xl bg-primary text-primary-foreground flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed hover:opacity-90 active:scale-95 transition-all shadow-sm"
+                aria-label="Send question"
+                className="flex-shrink-0"
               >
-                {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-              </button>
+                {isLoading ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
+              </Button>
             </div>
-            <p className="text-[10px] text-gray-400 mt-1.5 text-center">Enter to send · Shift+Enter for new line</p>
+            <p className="mt-1.5 text-center text-xs text-text-muted">Enter to send, Shift+Enter for a new line</p>
           </div>
-        </>
-      )}
+        </TabsContent>
 
-      {/* ── Doc Analysis Tab ── */}
-      {activeTab === 'analyze' && (
-        <div className="flex-1 flex flex-col overflow-hidden">
+        {/* ── Document analysis tab ── */}
+        <TabsContent value="analyze" className="flex min-h-0 flex-1 flex-col overflow-hidden data-[state=inactive]:hidden">
           {!selectedDoc ? (
-            <div className="flex-1 flex flex-col overflow-hidden p-4 gap-3">
-              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Select a document</p>
+            <div className="flex flex-1 flex-col gap-3 overflow-hidden p-4">
+              <p className={SECTION_LABEL}>Select a document</p>
               <div className="relative">
-                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400 pointer-events-none" />
-                <input
+                <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
+                <Input
                   type="text"
-                  placeholder="Search documents…"
+                  aria-label="Search documents"
+                  placeholder="Search documents"
                   value={docSearch}
                   onChange={e => setDocSearch(e.target.value)}
-                  className="w-full pl-8 pr-3 py-2 text-sm rounded-xl border border-gray-200 bg-white focus:outline-none focus:ring-2 focus:ring-primary/25 focus:border-primary transition-all"
+                  className="pl-9"
                 />
               </div>
-              <div className="flex-1 overflow-y-auto space-y-1.5">
-                {docsLoading && <div className="flex items-center justify-center py-12"><Loader2 className="h-5 w-5 animate-spin text-primary" /></div>}
+              <div className="flex-1 space-y-1.5 overflow-y-auto">
+                {docsLoading && <div role="status" aria-label="Loading" className="flex items-center justify-center py-12"><Loader2 size={20} className="animate-spin text-signal-text" /></div>}
                 {!docsLoading && filteredDocs.length === 0 && (
-                  <div className="text-center py-10 text-sm text-gray-400">
+                  <p className="py-10 text-center text-sm text-text-muted">
                     {documents.length === 0 ? 'No documents found.' : 'No results match your search.'}
-                  </div>
+                  </p>
                 )}
                 {!docsLoading && filteredDocs.map(doc => (
                   <button
+                    type="button"
                     key={doc.id}
                     onClick={() => handleDocSelect(doc)}
-                    className="w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-xl border border-gray-100 hover:border-primary/30 hover:bg-primary/5 transition-all group"
+                    className={PICKER_ROW}
                   >
-                    <div className="w-8 h-8 rounded-lg bg-gray-100 group-hover:bg-primary/10 flex items-center justify-center flex-shrink-0 transition-colors">
-                      <FileSearch className="h-4 w-4 text-gray-500 group-hover:text-primary transition-colors" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-800 truncate">{doc.title}</p>
-                      <p className="text-xs text-gray-400 truncate">{doc.document_type || doc.file_type}</p>
-                    </div>
-                    <ChevronRight className="h-3.5 w-3.5 text-gray-300 group-hover:text-primary flex-shrink-0 transition-colors" />
+                    <span className="grid h-8 w-8 flex-shrink-0 place-items-center rounded-sm bg-field text-text-secondary">
+                      <FileSearch size={16} />
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-sm font-semibold text-text-primary">{doc.title}</span>
+                      <span className="block truncate text-xs text-text-muted">{doc.document_type || doc.file_type}</span>
+                    </span>
+                    <ChevronRight size={14} className="flex-shrink-0 text-text-muted" />
                   </button>
                 ))}
               </div>
             </div>
           ) : (
-            <div className="flex-1 flex flex-col overflow-hidden">
+            <div className="flex flex-1 flex-col overflow-hidden">
               {/* Selected doc header */}
-              <div className="flex items-center gap-2 px-4 py-3 border-b border-gray-100 bg-gray-50/60 flex-shrink-0">
-                <button
+              <div className="flex flex-shrink-0 items-center gap-2 border-b border-line px-4 py-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  aria-label="Back to document list"
                   onClick={() => { setSelectedDoc(null); setSummary(null); setAnalysis(null); setAnalysisError(null); }}
-                  className="text-gray-400 hover:text-gray-700 transition-colors"
                 >
-                  <ChevronRight className="h-4 w-4 rotate-180" />
-                </button>
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs font-semibold text-gray-800 truncate">{selectedDoc.title}</p>
-                  <p className="text-[10px] text-gray-400">{selectedDoc.document_type || selectedDoc.file_type}</p>
+                  <ChevronLeft size={16} />
+                </Button>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-xs font-semibold text-text-primary">{selectedDoc.title}</p>
+                  <p className="text-xs text-text-muted">{selectedDoc.document_type || selectedDoc.file_type}</p>
                 </div>
               </div>
 
-              {/* Mode toggle — uses tenant primary */}
-              <div className="flex gap-2 px-4 pt-3 pb-2 flex-shrink-0">
-                {(['summarize', 'analyze'] as AnalysisMode[]).map(mode => (
-                  <button
-                    key={mode}
-                    onClick={() => { setAnalysisMode(mode); setSummary(null); setAnalysis(null); setAnalysisError(null); }}
-                    className={cn(
-                      'flex-1 py-1.5 rounded-lg text-xs font-medium transition-all',
-                      analysisMode === mode ? 'bg-primary text-primary-foreground shadow-sm' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
-                    )}
-                  >
-                    {mode === 'summarize' ? 'Summarize' : 'Deep Analysis'}
-                  </button>
-                ))}
+              {/* Mode toggle */}
+              <div className="flex-shrink-0 px-4 pb-2 pt-3">
+                <Tabs
+                  value={analysisMode}
+                  onValueChange={(v) => { setAnalysisMode(v as AnalysisMode); setSummary(null); setAnalysis(null); setAnalysisError(null); }}
+                >
+                  <TabsList className="w-full" aria-label="Analysis type">
+                    <TabsTrigger value="summarize" className="flex-1">Summary</TabsTrigger>
+                    <TabsTrigger value="analyze" className="flex-1">Deep analysis</TabsTrigger>
+                  </TabsList>
+                </Tabs>
               </div>
 
               {/* Action buttons */}
-              <div className="px-4 pb-3 flex-shrink-0 space-y-2">
+              <div className="flex-shrink-0 space-y-2 px-4 pb-3">
                 {!summary && !analysis && !analysisLoading && (
                   <>
-                    <button
-                      onClick={handleRunAnalysis}
-                      className="w-full flex items-center justify-center gap-2 py-2 rounded-xl bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-opacity shadow-sm"
-                    >
-                      <Sparkles className="h-3.5 w-3.5" />
-                      {analysisMode === 'summarize' ? 'Generate Summary' : 'Run Deep Analysis'}
-                    </button>
-                    {analysisError && <p className="text-xs text-red-500 text-center">{analysisError}</p>}
+                    <Button className="w-full" onClick={handleRunAnalysis}>
+                      <Sparkles size={16} />
+                      {analysisMode === 'summarize' ? 'Summarise document' : 'Run deep analysis'}
+                    </Button>
+                    {analysisError && <p role="alert" className="text-center text-xs text-risk">{analysisError}</p>}
                   </>
                 )}
                 {(summary || analysis) && <AddToCalendarButton document={selectedDoc} />}
@@ -507,120 +495,123 @@ export function AIChatSidebar({
 
               {/* Loading */}
               {analysisLoading && (
-                <div className="flex-1 flex flex-col items-center justify-center gap-3">
-                  <Loader2 className="h-6 w-6 animate-spin text-primary" />
-                  <p className="text-xs text-gray-500">
-                    {analysisMode === 'summarize' ? 'Generating summary…' : 'Analysing document…'}
+                <div role="status" className="flex flex-1 flex-col items-center justify-center gap-3">
+                  <Loader2 size={24} className="animate-spin text-signal-text" />
+                  <p className="text-xs text-text-secondary">
+                    360IQ is reading {selectedDoc.title}…
                   </p>
                 </div>
               )}
 
-              {/* Summary Results */}
+              {/* Summary results */}
               {summary && !analysisLoading && (
-                <div className="flex-1 overflow-y-auto px-4 pb-4 space-y-3">
-                  <div className="bg-primary/5 rounded-xl p-3">
-                    <p className="text-xs font-semibold text-primary mb-1.5">Summary</p>
-                    <p className="text-sm text-gray-700 leading-relaxed">{summary.summary}</p>
+                <div className="flex-1 space-y-3 overflow-y-auto px-4 pb-4">
+                  <div className={AI_PANEL}>
+                    <p className={AI_PANEL_LABEL}><Sparkles size={14} />Summary</p>
+                    <p className="text-sm leading-relaxed text-text-primary">{summary.summary}</p>
+                    <p className="mt-2 flex items-center gap-1.5 text-xs text-signal-text">
+                      <FileSearch size={14} />Based on {selectedDoc.title}
+                    </p>
                   </div>
                   {summary.key_points?.length > 0 && (
                     <div>
-                      <p className="text-xs font-semibold text-gray-500 mb-1.5 flex items-center gap-1">
-                        <ListTodo className="h-3 w-3" /> Key Points
+                      <p className={cn(SECTION_LABEL, 'mb-1.5 flex items-center gap-1')}>
+                        <ListTodo size={14} /> Key points
                       </p>
-                      <ul className="space-y-1">
+                      <ul className="list-disc space-y-1 pl-4">
                         {summary.key_points.map((pt, i) => (
-                          <li key={i} className="flex gap-2 text-xs text-gray-700">
-                            <span className="w-1.5 h-1.5 rounded-full bg-primary/50 flex-shrink-0 mt-1.5" />
-                            {pt}
-                          </li>
+                          <li key={i} className="text-xs text-text-secondary">{pt}</li>
                         ))}
                       </ul>
                     </div>
                   )}
-                  <div className="flex gap-2 flex-wrap">
+                  <div className="flex flex-wrap gap-2">
                     {summary.doc_type && (
-                      <span className="flex items-center gap-1 text-[10px] bg-gray-100 text-gray-600 px-2 py-1 rounded-full">
-                        <FileType className="h-3 w-3" />{summary.doc_type}
+                      <span className="inline-flex items-center gap-1 rounded-pill bg-field px-2.5 py-1 text-xs text-text-secondary">
+                        <FileType size={14} />{summary.doc_type}
                       </span>
                     )}
                     {summary.language && (
-                      <span className="flex items-center gap-1 text-[10px] bg-gray-100 text-gray-600 px-2 py-1 rounded-full">
-                        <Globe className="h-3 w-3" />{summary.language}
+                      <span className="inline-flex items-center gap-1 rounded-pill bg-field px-2.5 py-1 text-xs text-text-secondary">
+                        <Globe size={14} />{summary.language}
                       </span>
                     )}
                   </div>
-                  <button
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    className="w-full"
                     onClick={() => { setSummary(null); setAnalysisError(null); }}
-                    className="w-full flex items-center justify-center gap-1.5 py-2 rounded-xl border border-gray-200 text-xs text-gray-500 hover:bg-gray-50 transition-colors"
                   >
-                    <RotateCcw className="h-3 w-3" /> Re-run
-                  </button>
+                    <RotateCcw size={14} /> Run again
+                  </Button>
                 </div>
               )}
 
-              {/* Deep Analysis Results */}
+              {/* Deep analysis results */}
               {analysis && !analysisLoading && (
-                <div className="flex-1 overflow-y-auto px-4 pb-4 space-y-3">
-                  <div className="flex items-center gap-2">
-                    <span className={cn('flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full capitalize', sentimentColor(analysis.sentiment))}>
-                      <Smile className="h-3 w-3" /> {analysis.sentiment}
-                    </span>
+                <div className="flex-1 space-y-3 overflow-y-auto px-4 pb-4">
+                  <div className="flex items-center gap-2 text-xs text-text-muted">
+                    Sentiment
+                    <StatusBadge tone={sentimentTone(analysis.sentiment)} className="capitalize">{analysis.sentiment}</StatusBadge>
                   </div>
-                  <div className="bg-primary/5 rounded-xl p-3">
-                    <p className="text-xs font-semibold text-primary mb-1.5">Insights</p>
-                    <p className="text-sm text-gray-700 leading-relaxed">{analysis.insights}</p>
+                  <div className={AI_PANEL}>
+                    <p className={AI_PANEL_LABEL}><Sparkles size={14} />Insights</p>
+                    <p className="text-sm leading-relaxed text-text-primary">{analysis.insights}</p>
+                    <p className="mt-2 flex items-center gap-1.5 text-xs text-signal-text">
+                      <FileSearch size={14} />Based on {selectedDoc.title}
+                    </p>
                   </div>
                   {analysis.themes?.length > 0 && (
                     <div>
-                      <p className="text-xs font-semibold text-gray-500 mb-1.5 flex items-center gap-1">
-                        <TrendingUp className="h-3 w-3" /> Themes
+                      <p className={cn(SECTION_LABEL, 'mb-1.5 flex items-center gap-1')}>
+                        <TrendingUp size={14} /> Themes
                       </p>
                       <div className="flex flex-wrap gap-1.5">
                         {analysis.themes.map((t, i) => (
-                          <span key={i} className="text-[11px] bg-signal-tint text-signal-text px-2 py-0.5 rounded-full">{t}</span>
+                          <span key={i} className="rounded-pill bg-field px-2.5 py-0.5 text-xs text-text-secondary">{t}</span>
                         ))}
                       </div>
                     </div>
                   )}
                   {analysis.entities?.length > 0 && (
                     <div>
-                      <p className="text-xs font-semibold text-gray-500 mb-1.5 flex items-center gap-1">
-                        <Users className="h-3 w-3" /> Entities
+                      <p className={cn(SECTION_LABEL, 'mb-1.5 flex items-center gap-1')}>
+                        <Users size={14} /> Entities
                       </p>
                       <div className="flex flex-wrap gap-1.5">
                         {analysis.entities.map((e, i) => (
-                          <span key={i} className="text-[11px] bg-amber-50 text-amber-700 px-2 py-0.5 rounded-full">{e}</span>
+                          <span key={i} className="rounded-pill bg-field px-2.5 py-0.5 text-xs text-text-secondary">{e}</span>
                         ))}
                       </div>
                     </div>
                   )}
                   {analysis.action_items?.length > 0 && (
                     <div>
-                      <p className="text-xs font-semibold text-gray-500 mb-1.5 flex items-center gap-1">
-                        <Tag className="h-3 w-3" /> Action Items
+                      <p className={cn(SECTION_LABEL, 'mb-1.5 flex items-center gap-1')}>
+                        <Tag size={14} /> Action items
                       </p>
-                      <ul className="space-y-1">
+                      <ul className="list-disc space-y-1 pl-4">
                         {analysis.action_items.map((a, i) => (
-                          <li key={i} className="flex gap-2 text-xs text-gray-700">
-                            <span className="w-1.5 h-1.5 rounded-full bg-orange-400 flex-shrink-0 mt-1.5" />
-                            {a}
-                          </li>
+                          <li key={i} className="text-xs text-text-secondary">{a}</li>
                         ))}
                       </ul>
                     </div>
                   )}
-                  <button
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    className="w-full"
                     onClick={() => { setAnalysis(null); setAnalysisError(null); }}
-                    className="w-full flex items-center justify-center gap-1.5 py-2 rounded-xl border border-gray-200 text-xs text-gray-500 hover:bg-gray-50 transition-colors"
                   >
-                    <RotateCcw className="h-3 w-3" /> Re-run
-                  </button>
+                    <RotateCcw size={14} /> Run again
+                  </Button>
                 </div>
               )}
             </div>
           )}
-        </div>
-      )}
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

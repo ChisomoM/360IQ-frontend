@@ -1,8 +1,8 @@
 // src/(admin)/admin/DocumentDetail.tsx
-// Document detail page — shows preview, metadata, comments, audit trail,
-// workflow stage, related documents, print/share controls, and owner info.
+// Document detail page: preview, metadata, comments, audit trail,
+// workflow stage, related documents, share controls, and owner info.
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate, useOutletContext } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { fetchData, file as downloadFile, fetchFileBuffer } from '@/lib/api/crud';
@@ -14,9 +14,7 @@ import relativeTime from 'dayjs/plugin/relativeTime';
 
 dayjs.extend(relativeTime);
 
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button, buttonVariants } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -57,31 +55,31 @@ import {
   History,
   Sparkles,
   Loader2,
-  Building,
   Globe,
   Lock,
   Shield,
   XCircle,
   Plus,
   X,
-  CalendarDays,
-  Clock,
-  Tag,
   Activity,
   PenLine,
   CheckCircle,
-  Printer,
   Share2,
   Copy,
   Check,
   MessageSquare,
   CornerDownRight,
   Send,
-  User,
-  GitBranch,
   Eye,
   ChevronRight,
-} from 'lucide-react';
+} from '@/components/icons';
+import { PageHeader } from '@/components/shared/PageHeader';
+import { SectionCard } from '@/components/shared/SectionCard';
+import { StatusBadge } from '@/components/shared/StatusBadge';
+import { EmptyState } from '@/components/shared/EmptyState';
+import { TableSkeleton } from '@/components/shared/TableSkeleton';
+import { DocumentStatusBadge } from '@/components/documents/DocumentStatusBadge';
+import { formatDateTime } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import RequestSignatureModal from '@/components/signature/RequestSignatureModal';
 import DocumentPreview from '@/components/signature/DocumentPreview';
@@ -141,46 +139,27 @@ const formatBytes = (bytes: number) => {
 };
 
 const visibilityConfig = (level: string) => {
-  if (level === 'public') return { icon: <Globe className="h-3.5 w-3.5" />, label: 'Public', cls: 'bg-blue-50 text-blue-700 border-blue-200' };
-  if (level === 'restricted') return { icon: <Lock className="h-3.5 w-3.5" />, label: 'Restricted', cls: 'bg-red-50 text-red-700 border-red-200' };
-  return { icon: <Shield className="h-3.5 w-3.5" />, label: 'Department', cls: 'bg-signal-tint text-signal-text border-line' };
+  if (level === 'public') return { icon: <Globe size={14} />, label: 'Public' };
+  if (level === 'restricted') return { icon: <Lock size={14} />, label: 'Restricted' };
+  return { icon: <Shield size={14} />, label: 'Department' };
 };
 
-const statusConfig = (status: string) => {
-  const map: Record<string, { cls: string; label: string }> = {
-    active: { cls: 'bg-positive-tint text-positive border-line', label: 'Active' },
-    archived: { cls: 'bg-gray-100 text-gray-600 border-gray-200', label: 'Archived' },
-    approved: { cls: 'bg-blue-50 text-blue-700 border-blue-200', label: 'Approved' },
-    rejected: { cls: 'bg-red-50 text-red-700 border-red-200', label: 'Rejected' },
-    pending: { cls: 'bg-yellow-50 text-yellow-700 border-yellow-200', label: 'Pending' },
-    in_review: { cls: 'bg-orange-50 text-orange-700 border-orange-200', label: 'In Review' },
-    changes_requested: { cls: 'bg-amber-50 text-amber-700 border-amber-200', label: 'Changes Requested' },
-    signed: { cls: 'bg-signal-tint text-signal-text border-line', label: 'Signed' },
-  };
-  return map[status] ?? { cls: 'bg-gray-100 text-gray-600 border-gray-200', label: status };
+/** "bid_document" reads as "Bid document". */
+const sentenceCase = (value: string) => {
+  const words = value.replace(/_/g, ' ');
+  return words.charAt(0).toUpperCase() + words.slice(1);
 };
 
-const docTypeColor = (type: string) => {
-  const map: Record<string, string> = {
-    policy: 'bg-surface-2 text-sky-text',
-    minutes: 'bg-signal-tint text-signal-text',
-    report: 'bg-caution-tint text-caution',
-    form: 'bg-surface-2 text-text-secondary',
-    memo: 'bg-positive-tint text-positive',
-  };
-  return map[type] ?? 'bg-gray-100 text-gray-600';
-};
-
-// Color + icon for each audit action type
+// Tone + icon for each audit action type
 const actionConfig = (action: string) => {
   const map: Record<string, { cls: string; icon: React.ReactNode; label: string }> = {
-    viewed: { cls: 'bg-blue-50 text-blue-600', icon: <Eye className="h-3 w-3" />, label: 'Viewed' },
-    downloaded: { cls: 'bg-signal-tint text-signal-text', icon: <Download className="h-3 w-3" />, label: 'Downloaded' },
-    edited: { cls: 'bg-amber-50 text-amber-600', icon: <Pencil className="h-3 w-3" />, label: 'Edited' },
-    approved: { cls: 'bg-positive-tint text-positive', icon: <CheckCircle className="h-3 w-3" />, label: 'Approved' },
-    rejected: { cls: 'bg-red-50 text-red-600', icon: <XCircle className="h-3 w-3" />, label: 'Rejected' },
+    viewed: { cls: 'bg-surface-2 text-text-secondary', icon: <Eye size={14} />, label: 'Viewed' },
+    downloaded: { cls: 'bg-surface-2 text-text-secondary', icon: <Download size={14} />, label: 'Downloaded' },
+    edited: { cls: 'bg-surface-2 text-text-secondary', icon: <Pencil size={14} />, label: 'Edited' },
+    approved: { cls: 'bg-positive-tint text-positive', icon: <CheckCircle size={14} />, label: 'Approved' },
+    rejected: { cls: 'bg-risk-tint text-risk', icon: <XCircle size={14} />, label: 'Rejected' },
   };
-  return map[action] ?? { cls: 'bg-gray-50 text-gray-500', icon: <Activity className="h-3 w-3" />, label: action };
+  return map[action] ?? { cls: 'bg-surface-2 text-text-muted', icon: <Activity size={14} />, label: action };
 };
 
 // Initials from first + last name for avatar fallbacks
@@ -266,14 +245,14 @@ export default function DocumentDetail() {
       .catch((err) => {
         // Check if the backend said "forbidden" / "unauthorized" vs just not found
         const msg = err instanceof Error ? err.message.toLowerCase() : String(err).toLowerCase();
-        
+
         // Missing tenant context = session expired, force re-login
         if (msg.includes('no tenant context') || msg.includes('missing tenant')) {
           toast.error('Session expired. Please log in again.');
           navigate('/admin/login');
           return;
         }
-        
+
         if (msg.includes('403') || msg.includes('forbidden') || msg.includes('unauthorized')) {
           setAccessDenied(true);
         } else {
@@ -334,14 +313,14 @@ export default function DocumentDetail() {
   const handlePrint = async () => {
     if (!doc) { toast.error('No document available'); return; }
     try {
-      toast.info('Opening document for printing...');
+      toast.info('Opening document for printing');
       // fetchFileBuffer handles auth — returns an ArrayBuffer
       const { buffer } = await fetchFileBuffer('DOCUMENT_DOWNLOAD', { id: doc.id });
       const blob = new Blob([buffer], { type: 'application/pdf' });
       const blobUrl = URL.createObjectURL(blob);
       const printWindow = window.open(blobUrl, '_blank');
       if (!printWindow) {
-        toast.error('Popup blocked — please allow popups for this site.');
+        toast.error('Popup blocked. Allow popups for this site, then try again.');
       }
       // Clean up the blob URL after the tab has had time to load it
       setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);
@@ -440,7 +419,7 @@ export default function DocumentDetail() {
   };
 
   const handleUploadVersion = async () => {
-    if (!doc || !newVersionFile) { toast.error('Please select a file'); return; }
+    if (!doc || !newVersionFile) { toast.error('Choose a file first.'); return; }
     try {
       setIsUploadingVersion(true);
       const form = new FormData();
@@ -519,8 +498,15 @@ export default function DocumentDetail() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <Loader2 className="h-10 w-10 animate-spin text-ch-primary" />
+      <div role="status" aria-busy="true" aria-label="Loading document" className="flex w-full flex-col gap-5">
+        <div className="skeleton h-9 w-72 rounded-md" />
+        <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-[1.35fr_1fr]">
+          <div className="skeleton h-[480px] rounded-lg" />
+          <div className="grid gap-5">
+            <div className="skeleton h-40 rounded-lg" />
+            <div className="skeleton h-40 rounded-lg" />
+          </div>
+        </div>
       </div>
     );
   }
@@ -528,124 +514,77 @@ export default function DocumentDetail() {
   // Shown when the backend returns 403 — the user is logged in but lacks permission
   if (accessDenied) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4 text-center px-6">
-        <div className="w-16 h-16 rounded-full bg-red-50 flex items-center justify-center">
-          <Shield className="h-8 w-8 text-red-400" />
-        </div>
-        <div>
-          <h2 className="text-xl font-display font-bold text-gray-900">Access Denied</h2>
-          <p className="text-gray-500 font-sans text-sm mt-1 max-w-sm">
-            You don't have permission to view this document.
-            If you think this is a mistake, contact your administrator.
-          </p>
-        </div>
-        <Button variant="outline" onClick={() => navigate('/admin/documents')}>
-          <ArrowLeft className="h-4 w-4 mr-2" /> Back to Documents
-        </Button>
-      </div>
+      <EmptyState
+        className="min-h-[60vh] justify-center"
+        icon={<Lock size={24} />}
+        title="Hidden by your access level"
+        description="You don't have permission to view this document. If you think this is a mistake, contact your administrator."
+        action={{ label: 'Back to documents', onAction: () => navigate('/admin/documents') }}
+      />
     );
   }
 
   if (notFound || !doc) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
-        <XCircle className="h-16 w-16 text-gray-300" />
-        <h2 className="text-xl font-semibold text-gray-500">Document Not Found</h2>
-        <Button variant="outline" onClick={() => navigate('/admin/documents')}>
-          <ArrowLeft className="h-4 w-4 mr-2" /> Back to Documents
-        </Button>
-      </div>
+      <EmptyState
+        className="min-h-[60vh] justify-center"
+        title="Document not found"
+        description="It may have been deleted, or the link may be incomplete."
+        action={{ label: 'Back to documents', onAction: () => navigate('/admin/documents') }}
+      />
     );
   }
 
   const vis = visibilityConfig(doc.visibility_level);
-  const stat = statusConfig(doc.status);
 
   // ── Render ─────────────────────────────────────────────────────────────────
 
   return (
-    <div className="w-full space-y-6">
+    <div className="flex w-full flex-col gap-5">
 
-      {/* ── Page Header ── */}
-      {/* Two-row layout: top row has back button + actions, bottom row has title + description.
-          This prevents long titles from fighting the buttons for horizontal space. */}
-      <div className="space-y-3">
-        {/* Row 1: Navigation + Actions */}
-        <div className="flex items-center justify-between gap-4">
-          <Button
-            variant="ghost"
-            size="sm"
+      {/* ── Page header ── */}
+      <PageHeader
+        crumb={
+          <button
+            type="button"
             onClick={() => navigate('/admin/documents')}
-            className="text-gray-500 hover:text-gray-900 flex-shrink-0"
+            className="inline-flex items-center gap-1 rounded-xs hover:text-text-primary"
           >
-            <ArrowLeft className="h-4 w-4 mr-1.5" />
+            <ArrowLeft size={14} />
             Documents
-          </Button>
-
-          {/* Action buttons — Print removed per Chisomo */}
-          <div className="flex items-center gap-2 flex-shrink-0">
-            {[
-              { label: 'Download', icon: <Download className="h-4 w-4 mr-1.5" />, onClick: handleDownload },
-              { label: 'Share', icon: <Share2 className="h-4 w-4 mr-1.5" />, onClick: () => setIsShareOpen(true) },
-              { label: 'Versions', icon: <History className="h-4 w-4 mr-1.5" />, onClick: openVersions },
-              { label: 'Edit', icon: <Pencil className="h-4 w-4 mr-1.5" />, onClick: openEdit },
-            ].map(({ label, icon, onClick }) => (
-              <motion.div key={label}
-                whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.94 }}
-                transition={{ type: 'spring', stiffness: 500, damping: 30 }}>
-                <Button variant="outline" size="sm" onClick={onClick} className="border-gray-200">
-                  {icon}{label}
-                </Button>
-              </motion.div>
-            ))}
-            <motion.div
-              whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.94 }}
-              transition={{ type: 'spring', stiffness: 500, damping: 30 }}>
-              <Button size="sm" onClick={handleAnalyzeWithAI}
-                className="bg-primary text-white hover:opacity-90 gap-1.5 shadow-sm">
-                <Sparkles className="h-4 w-4" />
-                Analyze with AI
-              </Button>
-            </motion.div>
-          </div>
-        </div>
-
-        {/* Row 2: Title + description — full width, wraps freely */}
-        <div>
-          <h1 className="text-2xl font-display font-bold text-gray-900 leading-tight">
-            {doc.title}
-          </h1>
-          {/* No truncation here — description can wrap to as many lines as needed */}
-          <p className="text-gray-500 font-sans text-sm mt-1 max-w-2xl">
-            {doc.description || 'No description provided.'}
-          </p>
-        </div>
-      </div>
+          </button>
+        }
+        title={doc.title}
+        description={doc.description || 'No description provided.'}
+        actions={
+          <>
+            <Button variant="ghost" onClick={openEdit}><Pencil />Edit</Button>
+            <Button variant="ghost" onClick={openVersions}><History />Versions</Button>
+            <Button variant="secondary" onClick={() => setIsShareOpen(true)}><Share2 />Share</Button>
+            <Button variant="secondary" onClick={handleDownload}><Download />Download</Button>
+            <Button onClick={handleAnalyzeWithAI}><Sparkles />Analyse document</Button>
+          </>
+        }
+      />
 
       {/* ── Status strip ── */}
-      <div className="flex items-center gap-2 flex-wrap">
-        <Badge className={cn('border text-xs font-medium', stat.cls)}>{stat.label}</Badge>
-        <Badge className={cn('border text-xs font-medium flex items-center gap-1', vis.cls)}>
-          {vis.icon}{vis.label}
-        </Badge>
+      <div className="flex flex-wrap items-center gap-2">
+        <DocumentStatusBadge status={doc.status} />
+        <StatusBadge tone="neutral">{vis.icon}{vis.label}</StatusBadge>
         {doc.document_type && (
-          <Badge className={cn('text-xs font-medium border-0', docTypeColor(doc.document_type))}>
-            {doc.document_type.charAt(0).toUpperCase() + doc.document_type.slice(1)}
-          </Badge>
+          <StatusBadge tone="neutral">{sentenceCase(doc.document_type)}</StatusBadge>
         )}
         {doc.is_encrypted && (
-          <Badge className="text-xs font-medium bg-slate-100 text-slate-600 border-0">
-            🔒 Encrypted
-          </Badge>
+          <StatusBadge tone="neutral"><Lock size={14} />Encrypted</StatusBadge>
         )}
-        <span className="text-xs text-gray-400 ml-1">v{doc.version}</span>
+        <span className="ml-1 font-mono text-xs text-text-muted">v{doc.version}</span>
       </div>
 
       {/* ── Two-column layout ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-[1.35fr_1fr]">
 
         {/* ── Left column: main content ── */}
-        <div className="lg:col-span-8 space-y-6">
+        <div className="flex min-w-0 flex-col gap-5">
 
           <DocumentPreview
             document={doc}
@@ -653,620 +592,509 @@ export default function DocumentDetail() {
             loadingSignatures={loadingSigs}
           />
 
-          {/* Document Details card — includes owner */}
-          <Card className="border-none shadow-md">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base font-semibold flex items-center gap-2 text-gray-700">
-                <FileText className="h-4 w-4" />
-                Document Details
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4">
-                {[
-                  {
-                    icon: <FileText className="h-4 w-4 text-gray-400" />,
-                    label: 'Document Type',
-                    value: doc.document_type
-                      ? doc.document_type.charAt(0).toUpperCase() + doc.document_type.slice(1)
-                      : '—',
-                  },
-                  {
-                    icon: <Tag className="h-4 w-4 text-gray-400" />,
-                    label: 'Category',
-                    value: doc.category
-                      ? doc.category.charAt(0).toUpperCase() + doc.category.slice(1)
-                      : '—',
-                  },
-                  {
-                    icon: <Building className="h-4 w-4 text-gray-400" />,
-                    label: 'Department',
-                    value: deptLabel(doc),
-                  },
-                  {
-                    icon: vis.icon,
-                    label: 'Visibility',
-                    value: vis.label,
-                  },
-                  {
-                    icon: <CalendarDays className="h-4 w-4 text-gray-400" />,
-                    label: 'Uploaded',
-                    value: dayjs(doc.created_at).format('DD MMM YYYY, HH:mm'),
-                  },
-                  {
-                    icon: <Clock className="h-4 w-4 text-gray-400" />,
-                    label: 'Last Modified',
-                    value: dayjs(doc.updated_at).format('DD MMM YYYY, HH:mm'),
-                  },
-                ].map(({ icon, label, value }) => (
-                  <div key={label} className="flex items-start gap-3">
-                    <div className="mt-0.5 flex-shrink-0">{icon}</div>
-                    <div>
-                      <p className="text-xs text-gray-400 font-medium uppercase tracking-wide">{label}</p>
-                      <p className="text-sm font-medium text-gray-800 mt-0.5">{value}</p>
-                    </div>
-                  </div>
-                ))}
-
-                {/* Owner — displayed as a truncated ID with a copy button
-                    since owner_id is a raw UUID string with no nested user object */}
-                {doc.owner_id && (
-                  <div className="flex items-start gap-3">
-                    <div className="mt-0.5 flex-shrink-0">
-                      <User className="h-4 w-4 text-gray-400" />
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-400 font-medium uppercase tracking-wide">Owner</p>
-                      <div className="flex items-center gap-1.5 mt-0.5">
-                        <p className="text-sm font-mono text-gray-600 truncate max-w-[120px]">
-                          {doc.owner_id.slice(0, 8)}…
-                        </p>
-                        {/* Copy button lets users grab the full UUID */}
-                        <button
-                          onClick={handleCopyOwnerId}
-                          title="Copy owner ID"
-                          className="text-gray-400 hover:text-gray-700 transition-colors"
-                        >
-                          {ownerIdCopied
-                            ? <Check className="h-3.5 w-3.5 text-positive" />
-                            : <Copy className="h-3.5 w-3.5" />
-                          }
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Tags */}
-              {doc.tags && doc.tags.length > 0 && (
-                <>
-                  <Separator className="my-4" />
-                  <div>
-                    <p className="text-xs text-gray-400 font-medium uppercase tracking-wide mb-2">Tags</p>
-                    <div className="flex flex-wrap gap-1.5">
-                      {doc.tags.map(tag => (
-                        <Badge key={tag} variant="outline" className="text-xs">{tag}</Badge>
-                      ))}
-                    </div>
-                  </div>
-                </>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* ── Approval History / Audit Trail ── */}
-          <Card className="border-none shadow-md">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base font-semibold flex items-center gap-2 text-gray-700">
-                <Activity className="h-4 w-4" />
-                Approval History
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {auditLogs.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-10 gap-2">
-                  <Activity className="h-8 w-8 text-gray-300" />
-                  <p className="text-sm text-gray-400">No activity recorded yet.</p>
+          {/* Document details card, includes owner */}
+          <SectionCard title="Document details">
+            <dl className="grid grid-cols-1 gap-x-8 gap-y-4 sm:grid-cols-2">
+              {[
+                {
+                  label: 'Document type',
+                  value: doc.document_type ? sentenceCase(doc.document_type) : 'Not set',
+                },
+                {
+                  label: 'Category',
+                  value: doc.category ? sentenceCase(doc.category) : 'Not set',
+                },
+                {
+                  label: 'Department',
+                  value: deptLabel(doc),
+                },
+                {
+                  label: 'Visibility',
+                  value: vis.label,
+                },
+                {
+                  label: 'Uploaded',
+                  value: formatDateTime(doc.created_at),
+                  mono: true,
+                },
+                {
+                  label: 'Last modified',
+                  value: formatDateTime(doc.updated_at),
+                  mono: true,
+                },
+              ].map(({ label, value, mono }) => (
+                <div key={label} className="min-w-0">
+                  <dt className="text-xs text-text-muted">{label}</dt>
+                  <dd className={cn('mt-0.5 text-sm font-medium text-text-primary', mono && 'font-mono text-xs')}>{value}</dd>
                 </div>
-              ) : (
-                // Timeline — each log entry is a row with a coloured action badge
-                <div className="relative space-y-0">
-                  {auditLogs.map((log, idx) => {
-                    const ac = actionConfig(log.action);
-                    const isLast = idx === auditLogs.length - 1;
-                    return (
-                      <div key={log.id} className="flex gap-3">
-                        {/* Vertical line connecting entries */}
-                        <div className="flex flex-col items-center">
-                          <div className={cn('w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5', ac.cls)}>
-                            {ac.icon}
-                          </div>
-                          {/* Line below icon — hidden for the last item */}
-                          {!isLast && <div className="w-px flex-1 bg-border mt-1 mb-1" />}
-                        </div>
-                        <div className={cn('pb-4 flex-1', isLast && 'pb-0')}>
-                          <div className="flex items-center justify-between gap-2">
-                            <p className="text-sm font-medium text-gray-800">
-                              {log.user.first_name} {log.user.last_name}
-                              <span className="text-gray-400 font-normal ml-1">{ac.label.toLowerCase()} this document</span>
-                            </p>
-                            <span className="text-xs text-gray-400 whitespace-nowrap flex-shrink-0">
-                              {dayjs(log.created_at).fromNow()}
-                            </span>
-                          </div>
-                          {log.details && (
-                            <p className="text-xs text-gray-400 mt-0.5 italic">{log.details}</p>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
+              ))}
+
+              {/* Owner: displayed as a truncated ID with a copy button
+                  since owner_id is a raw UUID string with no nested user object */}
+              {doc.owner_id && (
+                <div className="min-w-0">
+                  <dt className="text-xs text-text-muted">Owner ID</dt>
+                  <dd className="mt-0.5 flex items-center gap-1.5">
+                    <span className="truncate font-mono text-xs text-text-primary">
+                      {doc.owner_id.slice(0, 8)}…
+                    </span>
+                    {/* Copy button lets users grab the full UUID */}
+                    <button
+                      type="button"
+                      onClick={handleCopyOwnerId}
+                      title="Copy owner ID"
+                      aria-label="Copy owner ID"
+                      className="rounded-xs text-text-muted transition-colors hover:text-text-primary"
+                    >
+                      {ownerIdCopied
+                        ? <Check size={16} className="text-positive" />
+                        : <Copy size={16} />
+                      }
+                    </button>
+                  </dd>
                 </div>
               )}
-            </CardContent>
-          </Card>
+            </dl>
 
-          {/* ── Comments / Notes ── */}
-          <Card className="border-none shadow-md">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base font-semibold flex items-center gap-2 text-gray-700">
-                <MessageSquare className="h-4 w-4" />
+            {/* Tags */}
+            {doc.tags && doc.tags.length > 0 && (
+              <>
+                <Separator className="my-4" />
+                <div>
+                  <p className="mb-2 text-xs text-text-muted">Tags</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {doc.tags.map(tag => (
+                      <StatusBadge key={tag} tone="neutral">{tag}</StatusBadge>
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
+          </SectionCard>
+
+          {/* ── Approval history / audit trail ── */}
+          <SectionCard title="Approval history">
+            {auditLogs.length === 0 ? (
+              <EmptyState
+                className="py-4"
+                icon={<Activity size={24} />}
+                title="No activity yet"
+                description="Views, downloads, edits and approvals of this document are listed here."
+              />
+            ) : (
+              // Timeline: each log entry is a row with a toned action icon
+              <ol>
+                {auditLogs.map((log, idx) => {
+                  const ac = actionConfig(log.action);
+                  const isLast = idx === auditLogs.length - 1;
+                  return (
+                    <li key={log.id} className="flex gap-3">
+                      {/* Vertical line connecting entries */}
+                      <div className="flex flex-col items-center">
+                        <div className={cn('mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-pill', ac.cls)}>
+                          {ac.icon}
+                        </div>
+                        {/* Line below icon, hidden for the last item */}
+                        {!isLast && <div className="my-1 w-px flex-1 bg-line" />}
+                      </div>
+                      <div className={cn('flex-1 pb-4', isLast && 'pb-0')}>
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="text-sm font-medium text-text-primary">
+                            {log.user.first_name} {log.user.last_name}
+                            <span className="ml-1 font-normal text-text-secondary">{ac.label.toLowerCase()} this document</span>
+                          </p>
+                          <span className="shrink-0 whitespace-nowrap font-mono text-xs text-text-muted" title={formatDateTime(log.created_at)}>
+                            {dayjs(log.created_at).fromNow()}
+                          </span>
+                        </div>
+                        {log.details && (
+                          <p className="mt-0.5 text-xs text-text-muted">{log.details}</p>
+                        )}
+                      </div>
+                    </li>
+                  );
+                })}
+              </ol>
+            )}
+          </SectionCard>
+
+          {/* ── Comments ── */}
+          <SectionCard
+            title={
+              <span className="flex items-center gap-2">
                 Comments
                 {comments.length > 0 && (
-                  <span className="ml-1 px-1.5 py-0.5 rounded-full bg-ch-primary/10 text-ch-primary text-xs font-semibold">
+                  <span className="rounded-pill bg-surface-2 px-1.5 font-mono text-xs font-medium text-text-secondary">
                     {comments.length}
                   </span>
                 )}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-5">
-              {/* Comment list */}
-              {topLevelComments.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-8 gap-2">
-                  <MessageSquare className="h-8 w-8 text-gray-300" />
-                  <p className="text-sm text-gray-400">No comments yet. Be the first to leave a note.</p>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {topLevelComments.map(comment => (
-                    <div key={comment.id}>
-                      {/* Top-level comment */}
-                      <div className="flex gap-3">
-                        <Avatar className="h-8 w-8 flex-shrink-0">
-                          <AvatarFallback className="text-xs bg-ch-primary/10 text-ch-primary font-semibold">
-                            {initials(comment.user.first_name, comment.user.last_name || '?')}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-baseline gap-2">
-                            <span className="text-sm font-semibold text-gray-800">
-                              {comment.user.first_name} {comment.user.last_name}
-                            </span>
-                            <span className="text-xs text-gray-400">{dayjs(comment.created_at).fromNow()}</span>
-                          </div>
-                          <p className="text-sm text-gray-600 mt-0.5 leading-relaxed">{comment.content}</p>
-                          {/* Reply toggle */}
-                          <button
-                            onClick={() => setReplyingTo(replyingTo === comment.id ? null : comment.id)}
-                            className="text-xs text-gray-400 hover:text-ch-primary mt-1 transition-colors"
-                          >
-                            Reply
-                          </button>
+              </span>
+            }
+            bodyClassName="space-y-4"
+          >
+            {/* Comment list */}
+            {topLevelComments.length === 0 ? (
+              <EmptyState
+                className="py-4"
+                icon={<MessageSquare size={24} />}
+                title="No comments yet"
+                description="Leave a note about this document below."
+              />
+            ) : (
+              <div className="space-y-4">
+                {topLevelComments.map(comment => (
+                  <div key={comment.id}>
+                    {/* Top-level comment */}
+                    <div className="flex gap-3">
+                      <Avatar className="h-8 w-8 shrink-0">
+                        <AvatarFallback className="bg-field text-xs font-semibold text-text-secondary">
+                          {initials(comment.user.first_name, comment.user.last_name || '?')}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-baseline gap-2">
+                          <span className="text-sm font-semibold text-text-primary">
+                            {comment.user.first_name} {comment.user.last_name}
+                          </span>
+                          <span className="text-xs text-text-muted" title={formatDateTime(comment.created_at)}>{dayjs(comment.created_at).fromNow()}</span>
                         </div>
+                        <p className="mt-0.5 text-sm leading-relaxed text-text-secondary">{comment.content}</p>
+                        {/* Reply toggle */}
+                        <button
+                          type="button"
+                          onClick={() => setReplyingTo(replyingTo === comment.id ? null : comment.id)}
+                          className="mt-1 rounded-xs text-xs font-medium text-signal-text hover:underline"
+                        >
+                          Reply
+                        </button>
                       </div>
-
-                      {/* Replies — indented under parent */}
-                      {repliesFor(comment.id).length > 0 && (
-                        <div className="ml-11 mt-3 space-y-3 border-l-2 border-border pl-4">
-                          {repliesFor(comment.id).map(reply => (
-                            <div key={reply.id} className="flex gap-3">
-                              <CornerDownRight className="h-3.5 w-3.5 text-gray-300 flex-shrink-0 mt-1" />
-                              <Avatar className="h-7 w-7 flex-shrink-0">
-                                <AvatarFallback className="text-xs bg-gray-100 text-gray-500 font-semibold">
-                                  {initials(reply.user.first_name, reply.user.last_name || '?')}
-                                </AvatarFallback>
-                              </Avatar>
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-baseline gap-2">
-                                  <span className="text-sm font-semibold text-gray-800">
-                                    {reply.user.first_name} {reply.user.last_name}
-                                  </span>
-                                  <span className="text-xs text-gray-400">{dayjs(reply.created_at).fromNow()}</span>
-                                </div>
-                                <p className="text-sm text-gray-600 mt-0.5 leading-relaxed">{reply.content}</p>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-
-                      {/* Inline reply box — shown when user clicks "Reply" on this comment */}
-                      {replyingTo === comment.id && (
-                        <div className="ml-11 mt-3 flex gap-2">
-                          <Input
-                            placeholder="Write a reply..."
-                            value={replyText}
-                            onChange={e => setReplyText(e.target.value)}
-                            onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handlePostReply(comment.id); } }}
-                            className="flex-1 text-sm h-9"
-                          />
-                          <Button size="sm" onClick={() => handlePostReply(comment.id)} className="h-9 bg-ch-primary hover:bg-ch-primary-700 text-white">
-                            <Send className="h-3.5 w-3.5" />
-                          </Button>
-                          <Button size="sm" variant="ghost" onClick={() => setReplyingTo(null)} className="h-9">
-                            <X className="h-3.5 w-3.5" />
-                          </Button>
-                        </div>
-                      )}
                     </div>
-                  ))}
-                </div>
-              )}
 
-              {/* New comment input */}
-              <Separator />
-              <div className="flex gap-3">
-                <Avatar className="h-8 w-8 flex-shrink-0">
-                  <AvatarFallback className="text-xs bg-ch-primary/10 text-ch-primary font-semibold">
-                    ME
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex-1 flex gap-2">
-                  <Input
-                    placeholder="Leave a comment or note..."
-                    value={newComment}
-                    onChange={e => setNewComment(e.target.value)}
-                    // Enter submits, Shift+Enter would add a newline if it were a textarea
-                    onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handlePostComment(); } }}
-                    className="flex-1 text-sm"
-                  />
-                  <Button
-                    size="sm"
-                    onClick={handlePostComment}
-                    disabled={!newComment.trim()}
-                    className="bg-ch-primary hover:bg-ch-primary-700 text-white"
-                  >
-                    <Send className="h-3.5 w-3.5 mr-1.5" />
-                    Post
-                  </Button>
-                </div>
+                    {/* Replies, indented under parent */}
+                    {repliesFor(comment.id).length > 0 && (
+                      <div className="ml-11 mt-3 space-y-3 border-l border-line pl-4">
+                        {repliesFor(comment.id).map(reply => (
+                          <div key={reply.id} className="flex gap-3">
+                            <CornerDownRight size={14} className="mt-1 shrink-0 text-text-muted" />
+                            <Avatar className="h-7 w-7 shrink-0">
+                              <AvatarFallback className="bg-field text-xs font-semibold text-text-secondary">
+                                {initials(reply.user.first_name, reply.user.last_name || '?')}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-baseline gap-2">
+                                <span className="text-sm font-semibold text-text-primary">
+                                  {reply.user.first_name} {reply.user.last_name}
+                                </span>
+                                <span className="text-xs text-text-muted" title={formatDateTime(reply.created_at)}>{dayjs(reply.created_at).fromNow()}</span>
+                              </div>
+                              <p className="mt-0.5 text-sm leading-relaxed text-text-secondary">{reply.content}</p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Inline reply box, shown when user clicks "Reply" on this comment */}
+                    {replyingTo === comment.id && (
+                      <div className="ml-11 mt-3 flex gap-2">
+                        <Input
+                          aria-label="Reply"
+                          placeholder="I will check the clause today"
+                          value={replyText}
+                          onChange={e => setReplyText(e.target.value)}
+                          onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handlePostReply(comment.id); } }}
+                          className="flex-1"
+                        />
+                        <Button variant="secondary" size="icon" aria-label="Send reply" title="Send reply" onClick={() => handlePostReply(comment.id)}>
+                          <Send />
+                        </Button>
+                        <Button size="icon" variant="ghost" aria-label="Cancel reply" title="Cancel reply" onClick={() => setReplyingTo(null)}>
+                          <X />
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                ))}
               </div>
-            </CardContent>
-          </Card>
+            )}
 
-          {/* ── Related Documents ── */}
-          <Card className="border-none shadow-md">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base font-semibold flex items-center gap-2 text-gray-700">
-                <FileText className="h-4 w-4" />
-                Related Documents
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {relatedDocs.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-8 gap-2">
-                  <FileText className="h-8 w-8 text-gray-300" />
-                  <p className="text-sm text-gray-400">No related documents found.</p>
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  {relatedDocs.map(related => {
-                    const relStat = statusConfig(related.status ?? '');
-                    return (
-                      <motion.div
-                        key={related.id}
-                        whileHover={{ x: 2 }}
-                        transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-                        onClick={() => navigate(`/admin/documents/${related.id}`)}
-                        className="flex items-center justify-between gap-3 p-3 rounded-lg border border-gray-200 hover:bg-slate-50/60 cursor-pointer transition-colors group"
-                      >
-                        <div className="flex items-center gap-3 min-w-0">
-                          {/* Document type colour dot */}
-                          <div className={cn('w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0', docTypeColor(related.document_type ?? ''))}>
-                            <FileText className="h-4 w-4" />
-                          </div>
-                          <div className="min-w-0">
-                            <p className="text-sm font-medium text-gray-800 truncate group-hover:text-ch-primary transition-colors">
-                              {related.title}
-                            </p>
-                            <p className="text-xs text-gray-400 font-mono truncate">{related.file_name}</p>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2 flex-shrink-0">
-                          <Badge className={cn('border text-xs', relStat.cls)}>{relStat.label}</Badge>
-                          <ChevronRight className="h-4 w-4 text-gray-300 group-hover:text-gray-500 transition-colors" />
-                        </div>
-                      </motion.div>
-                    );
-                  })}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+            {/* New comment input */}
+            <Separator />
+            <div className="flex gap-2">
+              <Input
+                aria-label="Comment"
+                placeholder="Notice period confirmed with Legal"
+                value={newComment}
+                onChange={e => setNewComment(e.target.value)}
+                // Enter submits, Shift+Enter would add a newline if it were a textarea
+                onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handlePostComment(); } }}
+                className="flex-1"
+              />
+              <Button
+                variant="secondary"
+                onClick={handlePostComment}
+                disabled={!newComment.trim()}
+              >
+                <Send />
+                Post comment
+              </Button>
+            </div>
+          </SectionCard>
+
+          {/* ── Related documents ── */}
+          <SectionCard title="Related documents">
+            {relatedDocs.length === 0 ? (
+              <EmptyState
+                className="py-4"
+                title="No related documents"
+                description="Documents linked to this one are listed here."
+              />
+            ) : (
+              <div className="space-y-2">
+                {relatedDocs.map(related => (
+                  <motion.div
+                    key={related.id}
+                    whileHover={{ x: 2 }}
+                    transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+                    onClick={() => navigate(`/admin/documents/${related.id}`)}
+                    className="group flex cursor-pointer items-center justify-between gap-3 rounded-md border border-line p-3 transition-colors hover:bg-surface-2"
+                  >
+                    <div className="flex min-w-0 items-center gap-3">
+                      <div className="grid h-8 w-8 shrink-0 place-items-center rounded-sm bg-field text-text-secondary">
+                        <FileText size={16} />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-medium text-text-primary">
+                          {related.title}
+                        </p>
+                        <p className="truncate font-mono text-xs text-text-muted">{related.file_name}</p>
+                      </div>
+                    </div>
+                    <div className="flex shrink-0 items-center gap-2">
+                      <DocumentStatusBadge status={related.status} />
+                      <ChevronRight size={16} className="text-text-muted" />
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            )}
+          </SectionCard>
         </div>
 
-        {/* ── Right sidebar ── */}
-        <div className="lg:col-span-4 space-y-4">
+        {/* ── Right column ── */}
+        <div className="flex min-w-0 flex-col gap-5">
 
-          {/* Workflow Stage card */}
+          {/* AI card */}
+          <SectionCard
+            tone="ai"
+            eyebrow={<span className="flex items-center gap-1.5 text-signal-text"><Sparkles size={16} />360IQ analysis</span>}
+            title="Read this document with 360IQ"
+            bodyClassName="space-y-3"
+          >
+            <p className="text-sm leading-relaxed text-text-secondary">
+              Get a summary, key insights, themes and action items. Check each one against the file before you rely on it.
+            </p>
+            <p className="flex items-center gap-1.5 text-xs text-signal-text">
+              <FileText size={14} className="shrink-0" />
+              <span className="min-w-0 truncate">Source: <span className="font-mono">{doc.file_name}</span></span>
+            </p>
+            <Button size="sm" variant="secondary" onClick={handleAnalyzeWithAI}>
+              <Sparkles />
+              Analyse document
+            </Button>
+          </SectionCard>
+
+          {/* Workflow stage card */}
           {workflow && (
-            <Card className="border-none shadow-md">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base font-semibold flex items-center gap-2 text-gray-700">
-                  <GitBranch className="h-4 w-4" />
-                  Workflow
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {/* Progress bar showing how far through the workflow we are */}
-                <div className="space-y-1">
-                  <div className="flex justify-between text-xs text-gray-400">
-                    <span>Step {workflow.current_step_index + 1} of {workflow.total_steps}</span>
-                    <span className="capitalize font-medium text-gray-600">{workflow.status.replace('_', ' ')}</span>
-                  </div>
-                  <div className="h-1.5 bg-muted rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-ch-primary rounded-full transition-all duration-500"
-                      style={{ width: `${((workflow.current_step_index) / workflow.total_steps) * 100}%` }}
-                    />
-                  </div>
+            <SectionCard
+              title="Workflow"
+              actions={<DocumentStatusBadge status={workflow.status} />}
+              bodyClassName="space-y-4"
+            >
+              {/* Progress bar showing how far through the workflow we are */}
+              <div className="space-y-1.5">
+                <p className="text-xs text-text-muted">
+                  Step <span className="font-mono">{workflow.current_step_index + 1}</span> of <span className="font-mono">{workflow.total_steps}</span>
+                </p>
+                <div className="h-1.5 overflow-hidden rounded-pill bg-surface-2">
+                  <div
+                    className="h-full rounded-pill bg-signal transition-all duration-300"
+                    style={{ width: `${((workflow.current_step_index) / workflow.total_steps) * 100}%` }}
+                  />
                 </div>
+              </div>
 
-                {/* Step list */}
-                <div className="space-y-2 pt-1">
-                  {workflow.steps.map((step, idx) => {
-                    // Determine visual state: done, active, or upcoming
-                    const isDone = step.status === 'approved';
-                    const isActive = idx === workflow.current_step_index;
-                    const isRejected = step.status === 'rejected';
+              {/* Step list */}
+              <ol className="space-y-3">
+                {workflow.steps.map((step, idx) => {
+                  // Determine visual state: done, active, or upcoming
+                  const isDone = step.status === 'approved';
+                  const isActive = idx === workflow.current_step_index;
+                  const isRejected = step.status === 'rejected';
 
-                    return (
-                      <div key={step.id} className="flex items-start gap-2.5">
-                        {/* Step status icon */}
-                        <div className={cn(
-                          'w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 text-white text-xs font-bold',
-                          isDone && 'bg-positive',
-                          isActive && 'bg-ch-primary',
-                          isRejected && 'bg-red-500',
-                          !isDone && !isActive && !isRejected && 'bg-muted border border-border text-muted-foreground',
-                        )}>
-                          {isDone ? <Check className="h-3 w-3" /> :
-                            isRejected ? <X className="h-3 w-3" /> :
-                              <span className={cn('text-xs', !isActive && 'text-muted-foreground')}>{step.step_number}</span>}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className={cn('text-xs font-medium truncate', isActive ? 'text-foreground' : 'text-muted-foreground')}>
-                            {step.approver_user
-                              ? `${step.approver_user.first_name} ${step.approver_user.last_name}`
-                              : (step.approver_role?.name ?? 'Role Approver')}
-                          </p>
-                          {/* Show approval time if approved, or "Awaiting" if active */}
-                          <p className="text-xs text-muted-foreground">
-                            {isDone && step.approved_at
-                              ? `Approved ${dayjs(step.approved_at).fromNow()}`
+                  return (
+                    <li key={step.id} className="flex items-start gap-2.5">
+                      {/* Step status icon */}
+                      <div className={cn(
+                        'mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-pill font-mono text-xs',
+                        isDone && 'bg-positive text-surface-1',
+                        isActive && 'bg-signal text-on-signal',
+                        isRejected && 'bg-risk text-surface-1',
+                        !isDone && !isActive && !isRejected && 'border border-line bg-field text-text-muted',
+                      )}>
+                        {isDone ? <Check size={12} /> :
+                          isRejected ? <X size={12} /> :
+                            <span>{step.step_number}</span>}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className={cn('truncate text-[13px] font-medium', isActive ? 'text-text-primary' : 'text-text-secondary')}>
+                          {step.approver_user
+                            ? `${step.approver_user.first_name} ${step.approver_user.last_name}`
+                            : (step.approver_role?.name ?? 'Role approver')}
+                        </p>
+                        {/* Show approval time if approved, or "Awaiting" if active */}
+                        <p className="text-xs text-text-muted" title={step.approved_at ? formatDateTime(step.approved_at) : undefined}>
+                          {isDone && step.approved_at
+                            ? `Approved ${dayjs(step.approved_at).fromNow()}`
+                            : isRejected
+                              ? 'Rejected'
                               : isActive
                                 ? 'Awaiting approval'
                                 : 'Pending'}
-                          </p>
-                          {step.comments && (
-                            <p className="text-xs text-gray-400 italic mt-0.5 line-clamp-1">"{step.comments}"</p>
-                          )}
-                        </div>
+                        </p>
+                        {step.comments && (
+                          <p className="mt-0.5 line-clamp-1 text-xs text-text-muted">"{step.comments}"</p>
+                        )}
                       </div>
-                    );
-                  })}
-                </div>
-              </CardContent>
-            </Card>
+                    </li>
+                  );
+                })}
+              </ol>
+            </SectionCard>
           )}
 
           {/* Signatures card */}
-          <Card className="border-none shadow-md">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base font-semibold flex items-center gap-2 text-gray-700">
-                <PenLine className="h-4 w-4" />
-                Signatures
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {loadingSigs ? (
-                <div className="flex justify-center py-4">
-                  <Loader2 className="h-5 w-5 animate-spin text-gray-400" />
-                </div>
-              ) : sigRequests.length === 0 ? (
-                <p className="text-xs text-gray-400 text-center py-2">No signature requests yet.</p>
-              ) : (
-                <div className="space-y-2">
-                  {sigRequests.map((req) => {
-                    const name = req.signer
-                      ? `${req.signer.first_name} ${req.signer.last_name}`
-                      : 'Unknown';
-                    const statusMap: Record<string, { cls: string; icon: React.ReactNode }> = {
-                      pending: { cls: 'bg-amber-50 text-amber-700 border-amber-300', icon: <Clock className="h-3 w-3" /> },
-                      signed: { cls: 'bg-positive-tint text-positive border-line', icon: <CheckCircle className="h-3 w-3" /> },
-                      declined: { cls: 'bg-red-50 text-red-700 border-red-300', icon: <XCircle className="h-3 w-3" /> },
-                      expired: { cls: 'bg-gray-100 text-gray-500 border-gray-300', icon: <X className="h-3 w-3" /> },
-                    };
-                    const s = statusMap[req.status] ?? statusMap.pending;
-                    return (
-                      <div key={req.id} className="flex items-center justify-between gap-2">
-                        <div className="flex items-center gap-2 min-w-0">
-                          <span className="text-xs font-medium text-gray-600 truncate">{name}</span>
-                          {req.sign_order > 1 && (
-                            <span className="text-xs text-gray-400">#{req.sign_order}</span>
-                          )}
-                        </div>
-                        <Badge variant="outline" className={cn('border text-xs flex items-center gap-1 flex-shrink-0', s.cls)}>
-                          {s.icon}
-                          <span className="capitalize">{req.status}</span>
-                        </Badge>
+          <SectionCard title="Signatures" bodyClassName="space-y-3">
+            {loadingSigs ? (
+              <TableSkeleton rows={2} columns={2} />
+            ) : sigRequests.length === 0 ? (
+              <p className="text-sm text-text-muted">No signature requests yet.</p>
+            ) : (
+              <ul className="space-y-2">
+                {sigRequests.map((req) => {
+                  const name = req.signer
+                    ? `${req.signer.first_name} ${req.signer.last_name}`
+                    : 'Unknown';
+                  return (
+                    <li key={req.id} className="flex items-center justify-between gap-2">
+                      <div className="flex min-w-0 items-center gap-2">
+                        <span className="truncate text-[13px] font-medium text-text-primary">{name}</span>
+                        {req.sign_order > 1 && (
+                          <span className="font-mono text-xs text-text-muted">#{req.sign_order}</span>
+                        )}
                       </div>
-                    );
-                  })}
-                </div>
-              )}
-              <Button
-                variant="outline"
-                className="w-full justify-start"
-                size="sm"
-                onClick={() => setIsRequestSigOpen(true)}
-              >
-                <PenLine className="h-4 w-4 mr-2 text-gray-500" />
-                Request Signature
-              </Button>
-            </CardContent>
-          </Card>
+                      <DocumentStatusBadge status={req.status} className="shrink-0" />
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => setIsRequestSigOpen(true)}
+            >
+              <PenLine />
+              Request signature
+            </Button>
+          </SectionCard>
 
-          {/* File Info card */}
-          <Card className="border-none shadow-md">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base font-semibold flex items-center gap-2 text-gray-700">
-                <FileText className="h-4 w-4" />
-                File Info
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
+          {/* File info card */}
+          <SectionCard title="File">
+            <dl className="space-y-3">
               {[
-                { label: 'File Name', value: doc.file_name, mono: true },
-                { label: 'File Type', value: doc.file_type || doc.document_type || '—' },
-                { label: 'File Size', value: formatBytes(doc.file_size) },
+                { label: 'File name', value: doc.file_name },
+                { label: 'File type', value: doc.file_type || doc.document_type || 'Unknown' },
+                { label: 'File size', value: formatBytes(doc.file_size) },
                 { label: 'Version', value: `v${doc.version}` },
                 ...(doc.file_hash
-                  ? [{ label: 'Hash', value: doc.file_hash.slice(0, 16) + '…', mono: true }]
+                  ? [{ label: 'Hash', value: doc.file_hash.slice(0, 16) + '…' }]
                   : []),
-              ].map(({ label, value, mono }) => (
-                <div key={label} className="flex justify-between items-start gap-2">
-                  <span className="text-xs text-gray-400 font-medium whitespace-nowrap">{label}</span>
-                  <span className={cn('text-xs text-right text-gray-700 font-medium max-w-[160px] truncate', mono && 'font-mono')}>
+              ].map(({ label, value }) => (
+                <div key={label} className="flex items-start justify-between gap-3">
+                  <dt className="whitespace-nowrap text-xs text-text-muted">{label}</dt>
+                  <dd className="min-w-0 truncate text-right font-mono text-xs text-text-primary" title={String(value)}>
                     {value}
-                  </span>
+                  </dd>
                 </div>
               ))}
-            </CardContent>
-          </Card>
+            </dl>
+          </SectionCard>
 
-          {/* Quick Actions card */}
-          <Card className="border-none shadow-md">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base font-semibold flex items-center gap-2 text-gray-700">
-                Quick Actions
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              {[
-                { label: 'Download File', icon: <Download className="h-4 w-4 mr-2 text-gray-500" />, onClick: handleDownload },
-                { label: 'Share Link', icon: <Share2 className="h-4 w-4 mr-2 text-gray-500" />, onClick: () => setIsShareOpen(true) },
-                { label: 'Version History', icon: <History className="h-4 w-4 mr-2 text-gray-500" />, onClick: openVersions },
-                { label: 'Edit Metadata', icon: <Pencil className="h-4 w-4 mr-2 text-gray-500" />, onClick: openEdit },
-              ].map(({ label, icon, onClick }) => (
-                <motion.div
-                  key={label}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.97 }}
-                  transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-                >
-                  <Button variant="outline" className="w-full justify-start border-gray-200 hover:border-gray-300" size="sm" onClick={onClick}>
-                    {icon}{label}
-                  </Button>
-                </motion.div>
-              ))}
-              <Separator />
-              <motion.div
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.97 }}
-                transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-              >
-                <Button
-                  variant="outline"
-                  className="w-full justify-start text-red-500 hover:text-red-600 hover:bg-red-50 border-gray-200 hover:border-red-200"
-                  size="sm"
-                  onClick={() => setIsDeleteOpen(true)}
-                >
-                  <Trash2 className="h-4 w-4 mr-2" />
-                  Delete Document
-                </Button>
-              </motion.div>
-            </CardContent>
-          </Card>
-
-          {/* AI card */}
-          <Card className="border border-line shadow-none bg-signal-tint">
-            <CardContent className="py-5">
-              <div className="flex items-start gap-3">
-                <div className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <Sparkles className="h-4 w-4 text-white" />
-                </div>
-                <div className="flex-1">
-                  <p className="text-sm font-semibold text-primary">AI Analysis</p>
-                  <p className="text-xs text-gray-500 mt-0.5 leading-relaxed">
-                    Extract summaries, key insights, themes, and action items from this document.
-                  </p>
-                  <Button
-                    size="sm"
-                    className="mt-3 bg-primary hover:bg-signal-hover text-white text-xs"
-                    onClick={handleAnalyzeWithAI}
-                  >
-                    <Sparkles className="h-3.5 w-3.5 mr-1.5" />
-                    Analyze with AI
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          {/* Delete */}
+          <SectionCard title="Delete document" bodyClassName="space-y-3">
+            <p className="text-sm text-text-secondary">It leaves the document list. The audit trail is kept.</p>
+            <Button variant="destructive" size="sm" onClick={() => setIsDeleteOpen(true)}>
+              <Trash2 />
+              Delete document
+            </Button>
+          </SectionCard>
         </div>
       </div>
 
-      {/* ── Share Modal ── */}
+      {/* ── Share modal ── */}
       <Dialog open={isShareOpen} onOpenChange={setIsShareOpen}>
-        <DialogContent className="max-w-sm bg-white">
+        <DialogContent className="max-w-[480px]">
           <DialogHeader>
-            <DialogTitle className="font-display font-bold text-foreground">Share Document</DialogTitle>
-            <DialogDescription className="font-sans text-sm text-muted-foreground">
-              Copy the link below and paste it directly into a browser address bar to open this document.
+            <DialogTitle>Share document</DialogTitle>
+            <DialogDescription>
+              Copy this link and paste it into a browser address bar to open the document.
             </DialogDescription>
           </DialogHeader>
-          <div className="flex gap-2 py-2">
-            {/* Full URL — recipient pastes this into their browser address bar */}
-            <Input
-              readOnly
-              value={window.location.href}
-              className="text-xs font-mono text-gray-500 bg-muted border-gray-200"
-            />
-            <Button size="sm" onClick={handleCopyUrl} className="flex-shrink-0 bg-ch-primary hover:bg-ch-primary-700 text-white">
-              {urlCopied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-            </Button>
-          </div>
+          {/* Full URL: recipient pastes this into their browser address bar */}
+          <Input
+            readOnly
+            aria-label="Document link"
+            value={window.location.href}
+            className="font-mono text-xs"
+          />
           {urlCopied && (
-            <p className="text-xs text-positive font-medium -mt-1">✓ Link copied — paste it in the browser address bar.</p>
+            <p role="status" className="flex items-center gap-1.5 text-xs font-medium text-positive">
+              <CheckCircle size={14} />Link copied
+            </p>
           )}
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsShareOpen(false)}>Close</Button>
+            <Button variant="secondary" onClick={() => setIsShareOpen(false)}>Close</Button>
+            <Button onClick={handleCopyUrl}>
+              {urlCopied ? <Check /> : <Copy />}
+              Copy link
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* ── Edit Dialog ── */}
+      {/* ── Edit dialog ── */}
       <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
-        <DialogContent className="max-w-lg bg-white">
+        <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>Edit Document Metadata</DialogTitle>
+            <DialogTitle>Edit document details</DialogTitle>
             <DialogDescription>Update the document's information. The file itself is not changed.</DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="space-y-2">
-              <Label>Title</Label>
-              <Input value={editData.title ?? ''} onChange={(e) => setEditData({ ...editData, title: e.target.value })} />
+          <div className="grid gap-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="detail-title">Title</Label>
+              <Input id="detail-title" value={editData.title ?? ''} onChange={(e) => setEditData({ ...editData, title: e.target.value })} />
             </div>
-            <div className="space-y-2">
-              <Label>Description</Label>
-              <Textarea value={editData.description ?? ''} onChange={(e) => setEditData({ ...editData, description: e.target.value })} rows={3} />
+            <div className="space-y-1.5">
+              <Label htmlFor="detail-description">Description</Label>
+              <Textarea id="detail-description" value={editData.description ?? ''} onChange={(e) => setEditData({ ...editData, description: e.target.value })} rows={3} />
             </div>
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 <Label>Type</Label>
                 <Select value={editData.document_type ?? ''} onValueChange={(v) => setEditData({ ...editData, document_type: v })}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectTrigger aria-label="Type"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="policy">Policy</SelectItem>
                     <SelectItem value="minutes">Minutes</SelectItem>
@@ -1276,45 +1104,45 @@ export default function DocumentDetail() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 <Label>Category</Label>
                 <Select value={editData.category ?? ''} onValueChange={(v) => setEditData({ ...editData, category: v })}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectTrigger aria-label="Category"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="academic">Academic</SelectItem>
                     <SelectItem value="financial">Financial</SelectItem>
-                    <SelectItem value="hr">Human Resources</SelectItem>
+                    <SelectItem value="hr">Human resources</SelectItem>
                     <SelectItem value="administrative">Administrative</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 <Label>Visibility</Label>
                 <Select
                   value={editData.visibility_level ?? ''}
-                  onValueChange={(value: DocumentUpdatePayload['visibility_level']) =>
-                    setEditData({ ...editData, visibility_level: value })
+                  onValueChange={(value) =>
+                    setEditData({ ...editData, visibility_level: value as DocumentUpdatePayload['visibility_level'] })
                   }
                 >
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectTrigger aria-label="Visibility"><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="department">Department Only</SelectItem>
+                    <SelectItem value="department">Department only</SelectItem>
                     <SelectItem value="public">Public</SelectItem>
                     <SelectItem value="restricted">Restricted</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 <Label>Status</Label>
                 <Select
                   value={editData.status ?? ''}
-                  onValueChange={(value: DocumentUpdatePayload['status']) =>
-                    setEditData({ ...editData, status: value })
+                  onValueChange={(value) =>
+                    setEditData({ ...editData, status: value as DocumentUpdatePayload['status'] })
                   }
                 >
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectTrigger aria-label="Status"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="active">Active</SelectItem>
                     <SelectItem value="archived">Archived</SelectItem>
@@ -1324,22 +1152,22 @@ export default function DocumentDetail() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsEditOpen(false)}>Cancel</Button>
-            <Button onClick={handleUpdate} disabled={isUpdating} className="bg-ch-primary hover:bg-ch-primary-700 text-white font-semibold">
-              {isUpdating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Save Changes
+            <Button variant="secondary" onClick={() => setIsEditOpen(false)}>Cancel</Button>
+            <Button onClick={handleUpdate} disabled={isUpdating}>
+              {isUpdating && <Loader2 className="animate-spin" />}
+              Save changes
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* ── Delete Confirmation ── */}
+      {/* ── Delete confirmation ── */}
       <AlertDialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
-        <AlertDialogContent className="bg-white">
+        <AlertDialogContent className="max-w-[480px]">
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Document</AlertDialogTitle>
+            <AlertDialogTitle>Delete this document?</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete <strong>"{doc.title}"</strong>? This will soft-delete the document and preserve the audit trail, but it will no longer appear in the explorer.
+              <strong>"{doc.title}"</strong> will no longer appear in the document list. The audit trail is kept.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -1347,101 +1175,96 @@ export default function DocumentDetail() {
             <AlertDialogAction
               onClick={handleDelete}
               disabled={isDeleting}
-              className="bg-red-600 hover:bg-red-700 text-white"
+              className={buttonVariants({ variant: 'destructive' })}
             >
-              {isDeleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Delete
+              {isDeleting && <Loader2 className="animate-spin" />}
+              Delete document
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* ── Version History Dialog ── */}
+      {/* ── Version history dialog ── */}
       <Dialog open={isVersionsOpen} onOpenChange={(open) => { setIsVersionsOpen(open); if (!open) setIsNewVersionOpen(false); }}>
-        <DialogContent className="max-w-2xl bg-white">
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <History className="h-5 w-5" />
-              Version History — {doc.title}
-            </DialogTitle>
-            <DialogDescription>All versions of this document, newest first.</DialogDescription>
+            <DialogTitle>Version history</DialogTitle>
+            <DialogDescription>All versions of "{doc.title}", newest first.</DialogDescription>
           </DialogHeader>
-          <div className="space-y-3 max-h-[50vh] overflow-y-auto py-2">
+          <div className="max-h-[50vh] space-y-3 overflow-y-auto">
             {loadingVersions ? (
-              <div className="flex justify-center py-10">
-                <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
-              </div>
+              <TableSkeleton rows={3} columns={3} />
             ) : versions.length === 0 ? (
-              <p className="text-center text-gray-500 py-8 text-sm">No version history found.</p>
+              <p className="py-8 text-center text-sm text-text-muted">No version history yet.</p>
             ) : (
               versions.map((v, idx) => (
-                <div key={v.id} className="p-4 bg-gray-50 rounded-lg border border-gray-100 hover:border-gray-200 transition-colors">
-                  <div className="flex items-start justify-between mb-2">
-                    <div className="flex items-center gap-3 flex-1">
-                      <div className="p-2 bg-white rounded-lg border text-gray-600">
-                        <FileText className="h-4 w-4" />
+                <div key={v.id} className="rounded-md border border-line p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex min-w-0 flex-1 items-center gap-3">
+                      <div className="grid h-8 w-8 shrink-0 place-items-center rounded-sm bg-field text-text-secondary">
+                        <FileText size={16} />
                       </div>
-                      <div className="flex-1">
+                      <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2">
-                          <p className="text-sm font-semibold text-gray-900">Version {v.version_number}</p>
-                          {idx === 0 && <Badge className="bg-blue-100 text-blue-700 text-xs">Latest</Badge>}
+                          <p className="text-sm font-semibold text-text-primary">Version <span className="font-mono">{v.version_number}</span></p>
+                          {idx === 0 && <StatusBadge tone="neutral">Latest</StatusBadge>}
                         </div>
-                        <p className="text-xs text-gray-600 mt-0.5">{v.file_name}</p>
+                        <p className="mt-0.5 truncate font-mono text-xs text-text-secondary">{v.file_name}</p>
                       </div>
                     </div>
-                    <Button variant="ghost" size="sm" onClick={() => handleVersionDownload(v)} className="text-blue-600 hover:text-blue-700">
-                      <Download className="h-3.5 w-3.5 mr-1" /> Download
+                    <Button variant="ghost" size="sm" onClick={() => handleVersionDownload(v)}>
+                      <Download />Download
                     </Button>
                   </div>
-                  
-                  <div className="flex items-center gap-4 text-xs text-gray-500 mt-2 ml-11">
-                    <span>{formatBytes(v.file_size)}</span>
-                    <span>•</span>
-                    <span>{dayjs(v.created_at).format('MMM DD, YYYY HH:mm')}</span>
+
+                  <div className="ml-11 mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-text-muted">
+                    <span className="font-mono">{formatBytes(v.file_size)}</span>
+                    <span aria-hidden="true">·</span>
+                    <span className="font-mono">{formatDateTime(v.created_at)}</span>
                     {v.uploaded_by && (
                       <>
-                        <span>•</span>
+                        <span aria-hidden="true">·</span>
                         <span>Uploaded by {v.uploaded_by.first_name} {v.uploaded_by.last_name}</span>
                       </>
                     )}
                   </div>
 
                   {v.change_notes && (
-                    <div className="mt-2 ml-11 p-2 bg-white rounded border border-gray-200">
-                      <p className="text-xs text-gray-600"><span className="font-semibold">Changes:</span> {v.change_notes}</p>
-                    </div>
+                    <p className="ml-11 mt-2 rounded-sm bg-field px-3 py-2 text-xs text-text-secondary">
+                      <span className="font-semibold">Changes:</span> {v.change_notes}
+                    </p>
                   )}
                 </div>
               ))
             )}
           </div>
           {!isNewVersionOpen ? (
-            <DialogFooter className="border-t pt-4">
-              <Button variant="outline" className="w-full" onClick={() => setIsNewVersionOpen(true)}>
-                <Plus className="h-4 w-4 mr-2" /> Upload New Version
+            <DialogFooter className="border-t border-line pt-4">
+              <Button variant="secondary" onClick={() => setIsNewVersionOpen(true)}>
+                <Plus />Upload new version
               </Button>
             </DialogFooter>
           ) : (
-            <div className="border-t pt-4 space-y-3">
-              <p className="text-sm font-medium">Upload New Version</p>
-              <Input type="file" onChange={(e) => setNewVersionFile(e.target.files?.[0] ?? null)} />
+            <div className="space-y-3 border-t border-line pt-4">
+              <p className="text-sm font-semibold text-text-primary">Upload new version</p>
+              <Input type="file" aria-label="New version file" onChange={(e) => setNewVersionFile(e.target.files?.[0] ?? null)} />
               <Textarea
-                placeholder="Change notes (optional)..."
+                aria-label="Change notes"
+                placeholder="Updated the payment schedule (optional)"
                 value={newVersionNotes}
                 onChange={(e) => setNewVersionNotes(e.target.value)}
                 rows={2}
               />
-              <div className="flex gap-2">
-                <Button variant="outline" className="flex-1" onClick={() => setIsNewVersionOpen(false)}>
-                  <X className="h-4 w-4 mr-1" /> Cancel
+              <div className="flex justify-end gap-2">
+                <Button variant="secondary" onClick={() => setIsNewVersionOpen(false)}>
+                  Cancel
                 </Button>
                 <Button
-                  className="flex-1 bg-ch-primary hover:bg-ch-primary-700 text-white font-semibold"
                   onClick={handleUploadVersion}
                   disabled={isUploadingVersion}
                 >
-                  {isUploadingVersion && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  Upload
+                  {isUploadingVersion && <Loader2 className="animate-spin" />}
+                  Upload version
                 </Button>
               </div>
             </div>
@@ -1449,7 +1272,7 @@ export default function DocumentDetail() {
         </DialogContent>
       </Dialog>
 
-      {/* ── Request Signature Modal ── */}
+      {/* ── Request signature modal ── */}
       {doc && (
         <RequestSignatureModal
           documentId={doc.id}

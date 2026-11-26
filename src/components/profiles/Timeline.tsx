@@ -1,26 +1,29 @@
 import { useCallback, useEffect, useState, type ReactElement } from "react";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
-import dayjs from "dayjs";
-import { ArrowRightLeft, Briefcase, CalendarClock, ClipboardList, Loader2, Mail, MessageSquare, Mic, Phone, ScanLine, GitMerge, Sparkles } from "lucide-react";
+import { Activity, ArrowRightLeft, Briefcase, CalendarClock, ClipboardList, Loader2, Mail, MessageSquare, Mic, Phone, ScanLine, GitMerge } from "@/components/icons";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { EmptyState } from "@/components/shared/EmptyState";
+import { SectionBody } from "@/components/shared/SectionBody";
+import { SectionCard } from "@/components/shared/SectionCard";
 import { addTimelineEntry, listTimeline } from "@/lib/api/profiles";
+import { formatDateTime } from "@/lib/format";
 import type { Interaction } from "@/types/profile";
-import { EmptyPanel, Pager, labelOf } from "./ui";
+import { Pager, labelOf } from "./ui";
 import { Field, SelectField } from "./formParts";
 
 const KIND_ICON: Record<string, ReactElement> = {
-  NOTE: <MessageSquare className="h-4 w-4" />,
-  CALL: <Phone className="h-4 w-4" />,
-  MEETING: <CalendarClock className="h-4 w-4" />,
-  EMAIL: <Mail className="h-4 w-4" />,
-  LEAD_FORM: <ClipboardList className="h-4 w-4" />,
-  CARD_SCAN: <ScanLine className="h-4 w-4" />,
-  VOICE_NOTE: <Mic className="h-4 w-4" />,
-  JOB_CHANGE: <Briefcase className="h-4 w-4" />,
-  MERGE: <GitMerge className="h-4 w-4" />,
-  SYSTEM: <Sparkles className="h-4 w-4" />,
+  NOTE: <MessageSquare size={16} />,
+  CALL: <Phone size={16} />,
+  MEETING: <CalendarClock size={16} />,
+  EMAIL: <Mail size={16} />,
+  LEAD_FORM: <ClipboardList size={16} />,
+  CARD_SCAN: <ScanLine size={16} />,
+  VOICE_NOTE: <Mic size={16} />,
+  JOB_CHANGE: <Briefcase size={16} />,
+  MERGE: <GitMerge size={16} />,
+  SYSTEM: <Activity size={16} />,
 };
 
 /** Every interaction on a person or company, newest first, with a form to add a note when allowed. */
@@ -83,68 +86,68 @@ export function Timeline({
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       {canManage && (
-        <div className="space-y-3 rounded-xl border border-line bg-surface-1 p-4">
+        <SectionCard title="Add an entry">
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-[12rem_1fr]">
             <SelectField label="Type" value={kind} onChange={(v) => setKind(v || "NOTE")} options={kinds} placeholder="Note" />
             <Field label="What happened" htmlFor="tl-summary">
-              <Textarea id="tl-summary" rows={2} value={summary} onChange={(e) => setSummary(e.target.value)} placeholder="Call, meeting or note" />
+              <Textarea id="tl-summary" rows={2} value={summary} onChange={(e) => setSummary(e.target.value)} placeholder="Called about the renewal date" />
             </Field>
           </div>
-          <div className="flex justify-end">
+          <div className="mt-3 flex justify-end">
             <Button onClick={add} disabled={saving || !summary.trim()}>
-              {saving && <Loader2 className="h-4 w-4 animate-spin" />} Add to timeline
+              {saving && <Loader2 className="animate-spin" />} Add to timeline
             </Button>
           </div>
-        </div>
+        </SectionCard>
       )}
 
-      {loading ? (
-        <div className="flex justify-center py-10">
-          <Loader2 className="h-5 w-5 animate-spin text-text-muted" />
-        </div>
-      ) : items.length === 0 ? (
-        <EmptyPanel icon={<ArrowRightLeft className="h-8 w-8" />} title="Nothing on the timeline yet">
-          Calls, meetings, notes, job changes and merges will appear here.
-        </EmptyPanel>
-      ) : (
-        <ol className="space-y-0">
-          {items.map((it, i) => (
-            <li key={it.id} className="flex gap-3">
-              <div className="flex flex-col items-center">
-                <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-surface-2 text-text-secondary">{KIND_ICON[it.kind] ?? KIND_ICON.SYSTEM}</span>
-                {i < items.length - 1 && <span className="my-1 w-px flex-1 bg-line" />}
-              </div>
-              <div className="min-w-0 flex-1 pb-4">
-                <p className="break-words text-sm text-text-primary">{it.summary}</p>
-                <p className="mt-0.5 flex flex-wrap items-center gap-x-1.5 text-xs text-text-muted">
-                  <span className="font-medium">{labelOf(it.kind)}</span>
-                  <span>· {dayjs(it.occurred_at).format("D MMM YYYY, HH:mm")}</span>
-                  {it.created_by && <span>· {it.created_by}</span>}
-                  {entity === "company" && it.person_id && it.person_name && (
+      <SectionCard title="Timeline" padded={false}>
+        <SectionBody
+          loading={loading}
+          isEmpty={items.length === 0}
+          empty={<EmptyState icon={<ArrowRightLeft size={24} />} title="Nothing on the timeline yet" description="Calls, meetings, notes, job changes and merges will appear here." />}
+        >
+          <ol className="px-6 pb-2">
+            {items.map((it, i) => (
+              <li key={it.id} className="flex gap-3">
+                <div className="flex flex-col items-center">
+                  <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-pill bg-surface-2 text-text-secondary">{KIND_ICON[it.kind] ?? KIND_ICON.SYSTEM}</span>
+                  {i < items.length - 1 && <span className="my-1 w-px flex-1 bg-line" />}
+                </div>
+                <div className="min-w-0 flex-1 pb-4">
+                  <p className="break-words text-sm text-text-primary">{it.summary}</p>
+                  <p className="mt-0.5 flex flex-wrap items-center gap-x-1.5 text-xs text-text-muted">
+                    <span className="font-semibold">{labelOf(it.kind)}</span>
                     <span>
-                      ·{" "}
-                      <Link className="text-signal-text hover:underline" to={`/admin/people/${it.person_id}`}>
-                        {it.person_name}
-                      </Link>
+                      · <span className="font-mono">{formatDateTime(it.occurred_at)}</span>
                     </span>
-                  )}
-                  {entity === "person" && it.company_id && it.company_name && (
-                    <span>
-                      ·{" "}
-                      <Link className="text-signal-text hover:underline" to={`/admin/companies/${it.company_id}`}>
-                        {it.company_name}
-                      </Link>
-                    </span>
-                  )}
-                </p>
-              </div>
-            </li>
-          ))}
-        </ol>
-      )}
-      <Pager page={page} pageSize={pageSize} total={total} onPage={(p) => void load(p)} />
+                    {it.created_by && <span>· {it.created_by}</span>}
+                    {entity === "company" && it.person_id && it.person_name && (
+                      <span>
+                        ·{" "}
+                        <Link className="text-signal-text hover:underline" to={`/admin/people/${it.person_id}`}>
+                          {it.person_name}
+                        </Link>
+                      </span>
+                    )}
+                    {entity === "person" && it.company_id && it.company_name && (
+                      <span>
+                        ·{" "}
+                        <Link className="text-signal-text hover:underline" to={`/admin/companies/${it.company_id}`}>
+                          {it.company_name}
+                        </Link>
+                      </span>
+                    )}
+                  </p>
+                </div>
+              </li>
+            ))}
+          </ol>
+        </SectionBody>
+        <Pager page={page} pageSize={pageSize} total={total} onPage={(p) => void load(p)} />
+      </SectionCard>
     </div>
   );
 }

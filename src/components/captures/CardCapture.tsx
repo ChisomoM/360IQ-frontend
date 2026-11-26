@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Camera, ImageUp, Loader2 } from "lucide-react";
+import { Camera, ImageUp, Loader2 } from "@/components/icons";
 import { Button } from "@/components/ui/button";
 import { newClientKey, tzOffsetMinutes } from "@/lib/capture/pending";
 import { prepareCardImage } from "@/lib/capture/media";
@@ -61,10 +61,10 @@ export function CardCapture({ eventName, meta, onDone }: { eventName: string; me
       {!photo && (
         <div className="grid gap-2 sm:grid-cols-2">
           <Button type="button" size="lg" className="h-14" onClick={() => camera.current?.click()} disabled={preparing}>
-            {preparing ? <Loader2 className="h-5 w-5 animate-spin" /> : <Camera className="h-5 w-5" />} Take a photo
+            {preparing ? <Loader2 className="animate-spin" /> : <Camera />} Take a photo
           </Button>
-          <Button type="button" size="lg" variant="outline" className="h-14" onClick={() => gallery.current?.click()} disabled={preparing}>
-            <ImageUp className="h-5 w-5" /> Choose a file
+          <Button type="button" size="lg" variant="secondary" className="h-14" onClick={() => gallery.current?.click()} disabled={preparing}>
+            <ImageUp /> Choose a file
           </Button>
         </div>
       )}
@@ -73,12 +73,12 @@ export function CardCapture({ eventName, meta, onDone }: { eventName: string; me
 
       {photo && (
         <div className="space-y-3">
-          <img src={photo.url} alt="Business card to read" className="max-h-72 w-full rounded-lg border border-line bg-surface-2 object-contain" />
+          <img src={photo.url} alt="Business card to read" className="max-h-72 w-full rounded-md border border-line bg-surface-2 object-contain" />
           <div className="flex flex-wrap gap-2">
             <Button type="button" size="lg" onClick={send} disabled={sender.busy}>
-              {sender.busy ? <Loader2 className="h-4 w-4 animate-spin" /> : null} Read this card
+              {sender.busy ? <Loader2 className="animate-spin" /> : null} Read this card
             </Button>
-            <Button type="button" size="lg" variant="outline" onClick={() => { void sender.discard(); setPhoto(null); }} disabled={sender.busy}>
+            <Button type="button" size="lg" variant="secondary" onClick={() => { void sender.discard(); setPhoto(null); }} disabled={sender.busy}>
               Retake
             </Button>
           </div>

@@ -1,4 +1,4 @@
-import { X } from 'lucide-react'
+import { X } from '@/components/icons'
 import { Button } from '@/components/ui/button'
 import {
   Select,
@@ -8,7 +8,8 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Input } from '@/components/ui/input'
-import { Badge } from '@/components/ui/badge'
+import { Label } from '@/components/ui/label'
+import { StatusBadge } from '@/components/shared/StatusBadge'
 import type { Department } from '@/types/dms'
 
 interface DocumentFiltersProps {
@@ -37,10 +38,10 @@ interface DocumentFiltersProps {
 const STATUS_OPTIONS = [
   { value: 'active', label: 'Active' },
   { value: 'archived', label: 'Archived' },
-  { value: 'pending', label: 'Pending Review' },
+  { value: 'pending', label: 'Pending review' },
   { value: 'approved', label: 'Approved' },
   { value: 'rejected', label: 'Rejected' },
-  { value: 'action_required', label: 'Action Required' },
+  { value: 'action_required', label: 'Action required' },
 ]
 
 // Document type options
@@ -50,11 +51,11 @@ const DOCUMENT_TYPE_OPTIONS = [
   { value: 'minutes', label: 'Minutes' },
   { value: 'report', label: 'Report' },
   { value: 'policy', label: 'Policy' },
-  { value: 'bid_document', label: 'Bid / Tender Document' },
-  { value: 'contract', label: 'Contract / Agreement' },
+  { value: 'bid_document', label: 'Bid or tender document' },
+  { value: 'contract', label: 'Contract or agreement' },
   { value: 'invoice', label: 'Invoice' },
-  { value: 'appointment_letter', label: 'Appointment Letter' },
-  { value: 'permit', label: 'Permit / Licence' },
+  { value: 'appointment_letter', label: 'Appointment letter' },
+  { value: 'permit', label: 'Permit or licence' },
   
                               
 ]
@@ -147,87 +148,47 @@ export function DocumentFilters({
   // Check if any filters are active
   const hasActiveFilters = filters.department_id || filters.status || filters.document_type || filters.date_from || filters.date_to
 
+  const modifierPill = (modifier: string, value: string) => (
+    <StatusBadge key={`${modifier}-${value}`} tone="neutral">
+      {modifier}: <span className="font-mono">{value}</span>
+      <button
+        type="button"
+        aria-label={`Remove ${modifier} ${value}`}
+        className="rounded-pill hover:text-text-primary"
+        onClick={() => {
+          const newQuery = removeSearchModifier(searchQuery, modifier, value)
+          onSearchChange(newQuery)
+        }}
+      >
+        <X size={12} />
+      </button>
+    </StatusBadge>
+  )
+
   return (
     <div className="space-y-4">
       {/* Parsed search filters (pills) */}
       {parsedSearchFilters && (
-        <div className="flex flex-wrap gap-2">
-          {parsedSearchFilters.types?.map(type => (
-            <Badge key={`type-${type}`} variant="secondary" className="bg-blue-100 text-blue-800 flex items-center gap-1 cursor-pointer hover:bg-blue-200 transition-colors">
-              type: {type}
-              <X 
-                className="h-3 w-3 hover:text-blue-900" 
-                onClick={() => {
-                  const newQuery = removeSearchModifier(searchQuery, 'type', type)
-                  onSearchChange(newQuery)
-                }} 
-              />
-            </Badge>
-          ))}
-          {parsedSearchFilters.statuses?.map(status => (
-            <Badge key={`status-${status}`} variant="secondary" className="bg-signal-tint text-signal-text flex items-center gap-1 cursor-pointer hover:bg-surface-2 transition-colors">
-              status: {status}
-              <X 
-                className="h-3 w-3 hover:text-text-primary"
-                onClick={() => {
-                  const newQuery = removeSearchModifier(searchQuery, 'status', status)
-                  onSearchChange(newQuery)
-                }} 
-              />
-            </Badge>
-          ))}
-          {parsedSearchFilters.tags?.map(tag => (
-            <Badge key={`tag-${tag}`} variant="secondary" className="bg-green-100 text-green-800 flex items-center gap-1 cursor-pointer hover:bg-green-200 transition-colors">
-              tag: {tag}
-              <X 
-                className="h-3 w-3 hover:text-green-900" 
-                onClick={() => {
-                  const newQuery = removeSearchModifier(searchQuery, 'tag', tag)
-                  onSearchChange(newQuery)
-                }} 
-              />
-            </Badge>
-          ))}
-          {parsedSearchFilters.dateFrom && (
-            <Badge variant="secondary" className="bg-amber-100 text-amber-800 flex items-center gap-1 cursor-pointer hover:bg-amber-200 transition-colors">
-              since: {parsedSearchFilters.dateFrom}
-              <X 
-                className="h-3 w-3 hover:text-amber-900" 
-                onClick={() => {
-                  const newQuery = removeSearchModifier(searchQuery, 'since', parsedSearchFilters.dateFrom!)
-                  onSearchChange(newQuery)
-                }} 
-              />
-            </Badge>
-          )}
-          {parsedSearchFilters.dateUntil && (
-            <Badge variant="secondary" className="bg-amber-100 text-amber-800 flex items-center gap-1 cursor-pointer hover:bg-amber-200 transition-colors">
-              until: {parsedSearchFilters.dateUntil}
-              <X 
-                className="h-3 w-3 hover:text-amber-900" 
-                onClick={() => {
-                  const newQuery = removeSearchModifier(searchQuery, 'until', parsedSearchFilters.dateUntil!)
-                  onSearchChange(newQuery)
-                }} 
-              />
-            </Badge>
-          )}
+        <div className="flex flex-wrap gap-2 empty:hidden">
+          {parsedSearchFilters.types?.map(type => modifierPill('type', type))}
+          {parsedSearchFilters.statuses?.map(status => modifierPill('status', status))}
+          {parsedSearchFilters.tags?.map(tag => modifierPill('tag', tag))}
+          {parsedSearchFilters.dateFrom && modifierPill('since', parsedSearchFilters.dateFrom)}
+          {parsedSearchFilters.dateUntil && modifierPill('until', parsedSearchFilters.dateUntil)}
         </div>
       )}
 
       {/* Filter inputs grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
         {/* Department */}
-        <div>
-          <label className="block font-sans text-text-xs font-medium text-gray-700 mb-1">
-            Department
-          </label>
+        <div className="space-y-1.5">
+          <Label htmlFor="filter-department">Department</Label>
           <Select value={filters.department_id || 'all'} onValueChange={handleDepartmentChange}>
-            <SelectTrigger className="h-9">
+            <SelectTrigger id="filter-department">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Departments</SelectItem>
+              <SelectItem value="all">All departments</SelectItem>
               {departments.map(dept => (
                 <SelectItem key={dept.id} value={dept.id}>
                   {dept.name}
@@ -238,16 +199,14 @@ export function DocumentFilters({
         </div>
 
         {/* Status */}
-        <div>
-          <label className="block font-sans text-text-xs font-medium text-gray-700 mb-1">
-            Status
-          </label>
+        <div className="space-y-1.5">
+          <Label htmlFor="filter-status">Status</Label>
           <Select value={filters.status || 'all'} onValueChange={handleStatusChange}>
-            <SelectTrigger className="h-9">
+            <SelectTrigger id="filter-status">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Statuses</SelectItem>
+              <SelectItem value="all">All statuses</SelectItem>
               {STATUS_OPTIONS.map(option => (
                 <SelectItem key={option.value} value={option.value}>
                   {option.label}
@@ -258,16 +217,14 @@ export function DocumentFilters({
         </div>
 
         {/* Document Type */}
-        <div>
-          <label className="block font-sans text-text-xs font-medium text-gray-700 mb-1">
-            Document Type
-          </label>
+        <div className="space-y-1.5">
+          <Label htmlFor="filter-type">Document type</Label>
           <Select value={filters.document_type || 'all'} onValueChange={handleDocTypeChange}>
-            <SelectTrigger className="h-9">
+            <SelectTrigger id="filter-type">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Types</SelectItem>
+              <SelectItem value="all">All types</SelectItem>
               {DOCUMENT_TYPE_OPTIONS.map(option => (
                 <SelectItem key={option.value} value={option.value}>
                   {option.label}
@@ -278,60 +235,52 @@ export function DocumentFilters({
         </div>
 
         {/* Uploaded Date: From */}
-        <div>
-          <label className="block font-sans text-text-xs font-medium text-gray-700 mb-1">
-            Uploaded From
-          </label>
+        <div className="space-y-1.5">
+          <Label htmlFor="filter-from">Uploaded from</Label>
           <Input
+            id="filter-from"
             type="date"
             value={filters.date_from || ''}
             onChange={(e) => handleDateFromChange(e.target.value)}
-            className="h-9"
           />
         </div>
 
         {/* Uploaded Date: To */}
-        <div>
-          <label className="block font-sans text-text-xs font-medium text-gray-700 mb-1">
-            Uploaded To
-          </label>
+        <div className="space-y-1.5">
+          <Label htmlFor="filter-to">Uploaded to</Label>
           <Input
+            id="filter-to"
             type="date"
             value={filters.date_to || ''}
             onChange={(e) => handleDateToChange(e.target.value)}
-            className="h-9"
           />
         </div>
       </div>
 
       {/* Action buttons */}
-      <div className="flex items-center gap-2 pt-2">
+      <div className="flex items-center gap-2">
         {hasActiveFilters && (
           <Button
-            variant="outline"
+            variant="ghost"
             size="sm"
             onClick={onReset}
-            className="text-red-600 hover:text-red-700"
           >
-            Clear Filters
+            Clear filters
           </Button>
         )}
         <div className="flex-1" />
-        <p className="text-text-xs text-gray-500 font-sans">
+        <p className="text-xs text-text-muted">
           {hasActiveFilters ? 'Filters applied' : 'No filters applied'}
         </p>
       </div>
 
       {/* Search hints */}
-      <div className="bg-blue-50 border border-blue-200 rounded p-3 mt-3">
-        <p className="font-sans text-text-xs text-blue-800">
-          <strong>Search Tips:</strong> Use modifiers in the search bar:{' '}
-          <code className="bg-white px-1 rounded mx-1">type:pdf</code>{' '}
-          <code className="bg-white px-1 rounded mx-1">status:pending</code>{' '}
-          <code className="bg-white px-1 rounded mx-1">since:2024-01</code>{' '}
-          <code className="bg-white px-1 rounded mx-1">tag:urgent</code>
-        </p>
-      </div>
+      <p className="rounded-md bg-field px-3 py-2 text-xs text-text-secondary">
+        You can also type modifiers in the search bar:{' '}
+        {['type:pdf', 'status:pending', 'since:2026-01', 'tag:urgent'].map((example) => (
+          <code key={example} className="mr-1.5 rounded-xs bg-surface-1 px-1.5 font-mono">{example}</code>
+        ))}
+      </p>
     </div>
   )
 }

@@ -16,7 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { AlertCircle, Loader2 } from 'lucide-react';
+import { AlertCircle, Loader2 } from '@/components/icons';
 import { useToast } from '@/hooks/use-toast';
 import { createCardDefinition } from '@/lib/api/dashboard';
 import type { CreateCardDefinitionRequest } from '@/lib/api/dashboard';
@@ -35,9 +35,9 @@ const CARD_TYPES = [
 ];
 
 const LAYOUT_ZONES = [
-  { value: 'top', label: 'Top (Summary)' },
-  { value: 'side', label: 'Side (Tasks/Alerts)' },
-  { value: 'middle', label: 'Middle (Analytics)' },
+  { value: 'top', label: 'Top (summary)' },
+  { value: 'side', label: 'Side (tasks and alerts)' },
+  { value: 'middle', label: 'Middle (analytics)' },
 ];
 
 export function CreateCardModal({ open, onOpenChange, onCardCreated }: CreateCardModalProps) {
@@ -53,8 +53,8 @@ export function CreateCardModal({ open, onOpenChange, onCardCreated }: CreateCar
     // Validate required fields
     if (!title.trim()) {
       toast({
-        title: 'Processing...',
-        description: 'Processing...',
+        title: 'Title needed',
+        description: 'Enter a title for the card.',
         variant: 'destructive',
       });
       return;
@@ -74,8 +74,8 @@ export function CreateCardModal({ open, onOpenChange, onCardCreated }: CreateCar
       await createCardDefinition(request);
 
       toast({
-        title: 'Success',
-        description: 'Card definition created successfully',
+        title: 'Card created',
+        description: 'The new card is ready to configure.',
       });
 
       // Reset form
@@ -91,10 +91,10 @@ export function CreateCardModal({ open, onOpenChange, onCardCreated }: CreateCar
       // Refresh the parent component
       onCardCreated();
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to create card definition';
+      const message = err instanceof Error ? err.message : 'Check the details and try again.';
       toast({
-        title: 'Processing...',
-        description: 'Processing...',
+        title: "Couldn't create the card",
+        description: message,
         variant: 'destructive',
       });
     } finally {
@@ -106,19 +106,19 @@ export function CreateCardModal({ open, onOpenChange, onCardCreated }: CreateCar
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Create New Card</DialogTitle>
+          <DialogTitle>Create a dashboard card</DialogTitle>
           <DialogDescription>
-            Add a new dashboard card definition for your team
+            Add a new dashboard card definition for your team.
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
           {/* Title */}
           <div className="space-y-2">
-            <Label htmlFor="card-title">Title *</Label>
+            <Label htmlFor="card-title">Title (required)</Label>
             <Input
               id="card-title"
-              placeholder="e.g., Total Policies"
+              placeholder="Total policies"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               disabled={loading}
@@ -127,10 +127,10 @@ export function CreateCardModal({ open, onOpenChange, onCardCreated }: CreateCar
 
           {/* Description */}
           <div className="space-y-2">
-            <Label htmlFor="card-description">Description</Label>
+            <Label htmlFor="card-description">Description (optional)</Label>
             <Input
               id="card-description"
-              placeholder="Optional description"
+              placeholder="Policies in force this quarter"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               disabled={loading}
@@ -139,7 +139,7 @@ export function CreateCardModal({ open, onOpenChange, onCardCreated }: CreateCar
 
           {/* Card Type */}
           <div className="space-y-2">
-            <Label htmlFor="card-type">Card Type *</Label>
+            <Label htmlFor="card-type">Card type (required)</Label>
             <Select value={cardType} onValueChange={(v) => setCardType(v as any)} disabled={loading}>
               <SelectTrigger id="card-type">
                 <SelectValue />
@@ -156,7 +156,7 @@ export function CreateCardModal({ open, onOpenChange, onCardCreated }: CreateCar
 
           {/* Layout Zone */}
           <div className="space-y-2">
-            <Label htmlFor="layout-zone">Layout Zone *</Label>
+            <Label htmlFor="layout-zone">Layout zone (required)</Label>
             <Select value={layoutZone} onValueChange={(v) => setLayoutZone(v as any)} disabled={loading}>
               <SelectTrigger id="layout-zone">
                 <SelectValue />
@@ -173,7 +173,7 @@ export function CreateCardModal({ open, onOpenChange, onCardCreated }: CreateCar
 
           {/* Order Index */}
           <div className="space-y-2">
-            <Label htmlFor="order-index">Order Index</Label>
+            <Label htmlFor="order-index">Order</Label>
             <Input
               id="order-index"
               type="number"
@@ -183,25 +183,25 @@ export function CreateCardModal({ open, onOpenChange, onCardCreated }: CreateCar
               disabled={loading}
               min="0"
             />
-            <p className="text-xs text-gray-500">
-              Lower numbers appear first. Default: end of zone
+            <p className="text-xs text-text-muted">
+              Lower numbers appear first. By default the card goes to the end of its zone.
             </p>
           </div>
 
           {/* Info Note for Top Zone */}
           {layoutZone === 'top' && (
-            <div className="flex gap-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-              <AlertCircle className="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5" />
-              <p className="text-sm text-blue-800">
-                Top zone is limited to 3 cards. Will be rejected if zone is full.
+            <div className="flex gap-2 rounded-md bg-caution-tint p-3 text-caution">
+              <AlertCircle size={16} className="mt-0.5 flex-shrink-0" />
+              <p className="text-sm">
+                The top zone holds 3 cards. A new card is rejected if the zone is full.
               </p>
             </div>
           )}
         </div>
 
-        <div className="flex gap-3 justify-end pt-4">
+        <div className="flex justify-end gap-3 pt-4">
           <Button
-            variant="outline"
+            variant="secondary"
             onClick={() => onOpenChange(false)}
             disabled={loading}
           >
@@ -209,14 +209,15 @@ export function CreateCardModal({ open, onOpenChange, onCardCreated }: CreateCar
           </Button>
           <Button
             onClick={handleCreateCard}
-            disabled={loading || !title.trim()}          >
+            disabled={loading || !title.trim()}
+          >
             {loading ? (
               <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Creating...
+                <Loader2 size={16} className="animate-spin" />
+                Creating
               </>
             ) : (
-              'Create Card'
+              'Create card'
             )}
           </Button>
         </div>

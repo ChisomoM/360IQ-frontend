@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle } from "@/components/icons";
 import { Button } from "@/components/ui/button";
 import { Pill, reasonText } from "./ui";
 import type { MatchResult } from "@/types/profile";
@@ -26,16 +26,16 @@ export function DuplicatePanel({
     ref.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
   }, []);
   return (
-    <div ref={ref} className="space-y-3 rounded-lg border border-caution bg-caution-tint p-3 text-caution" role="alert">
-      <div className="flex items-start gap-2">
-        <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+    <div ref={ref} className="space-y-3 rounded-md border border-caution bg-caution-tint p-3" role="alert">
+      <div className="flex items-start gap-2 text-caution">
+        <AlertTriangle size={16} className="mt-0.5 shrink-0" />
         <p className="text-sm font-semibold">This looks like a record you already have.</p>
       </div>
       <ul className="space-y-2">
         {match.candidates.map((c) => (
-          <li key={c.id} className="min-w-0 rounded-md bg-surface-1 p-2.5 text-text-primary">
-            <p className="break-words text-sm font-medium">{c.label}</p>
-            <div className="mt-1 flex flex-wrap items-center gap-1">
+          <li key={c.id} className="min-w-0 rounded-sm bg-surface-1 p-3 text-text-primary">
+            <p className="break-words text-sm font-semibold">{c.label}</p>
+            <div className="mt-1.5 flex flex-wrap items-center gap-1">
               {c.reasons.map((r) => (
                 <Pill key={r}>{reasonText(r)}</Pill>
               ))}
@@ -47,8 +47,8 @@ export function DuplicatePanel({
         ))}
       </ul>
       <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
-        <Button type="button" variant="outline" disabled={busy} onClick={onCreateAnyway} className="whitespace-normal">
-          {busy ? "Creating…" : "This is different, create anyway"}
+        <Button type="button" variant="secondary" disabled={busy} onClick={onCreateAnyway} className="h-auto min-h-10 whitespace-normal">
+          {busy ? "Creating…" : "Create anyway, it is different"}
         </Button>
       </div>
     </div>

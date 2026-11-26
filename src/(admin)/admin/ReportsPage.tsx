@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
-import { AlertCircle, Plus } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { Plus, Lock, FileText } from '@/components/icons';
+import { Button } from '@/components/ui/button';
+import { PageHeader } from '@/components/shared/PageHeader';
+import { EmptyState } from '@/components/shared/EmptyState';
 import { useAuth } from '@/lib/context/useAuth';
 import { hasPermission, PERMISSIONS } from '@/lib/permissions';
 import { PageTransition } from '@/components/PageTransition';
@@ -61,7 +63,7 @@ const sampleUsers = [
 const initialSavedReports: SavedReport[] = [
   {
     id: '1',
-    name: 'Monthly Finance Summary',
+    name: 'Monthly finance summary',
     type: 'financial',
     createdAt: '2025-06-01',
     lastRun: '2025-06-15',
@@ -70,7 +72,7 @@ const initialSavedReports: SavedReport[] = [
   },
   {
     id: '2',
-    name: 'Registry Processing Stats',
+    name: 'Registry processing figures',
     type: 'lifecycle',
     createdAt: '2025-05-20',
     lastRun: '2025-06-10',
@@ -79,7 +81,7 @@ const initialSavedReports: SavedReport[] = [
   },
   {
     id: '3',
-    name: 'Q2 Audit Report',
+    name: 'Q2 audit report',
     type: 'audit_trail',
     createdAt: '2025-04-01',
     lastRun: '2025-06-12',
@@ -92,20 +94,26 @@ const initialSavedReports: SavedReport[] = [
 const aiInsights = [
   {
     type: 'trend' as const,
-    title: 'Processing Efficiency',
+    title: 'Processing efficiency',
     suggestion: 'Documents are being processed 15% faster this quarter compared to last quarter. Continue current workflows.',
   },
   {
     type: 'alert' as const,
-    title: 'Approval Bottleneck',
+    title: 'Approval bottleneck',
     suggestion: 'Registry submissions show 28% of documents stuck in "In Review" stage. Consider adding resources to review team.',
   },
   {
     type: 'recommendation' as const,
-    title: 'Cost Optimization',
-    suggestion: 'Finance invoices averaging $2,607 per document. Early payment discount utilization could save ~$45K annually.',
+    title: 'Cost saving',
+    suggestion: 'Finance invoices average $2,607 per document. Taking early payment discounts could save about $45K a year.',
   },
 ];
+
+/** `user_activity` becomes "User activity report". */
+const reportTitle = (type: string) => {
+  const words = type.replace(/_/g, ' ');
+  return `${words.charAt(0).toUpperCase()}${words.slice(1)} report`;
+};
 
 export const ReportsPage: React.FC = () => {
   const { user } = useAuth();
@@ -141,20 +149,12 @@ export const ReportsPage: React.FC = () => {
   if (!canViewAnalytics) {
     return (
       <PageTransition>
-        <div className="p-6 flex flex-col items-center justify-center min-h-screen gap-4">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-          >
-            <AlertCircle className="h-12 w-12 text-danger" />
-          </motion.div>
-          <h1 className="font-display font-bold text-display-xs text-gray-900">
-            You do not have permission to access reports
-          </h1>
-          <p className="font-sans text-text-md text-gray-500">
-            Please contact your administrator
-          </p>
+        <div className="flex min-h-[60vh] flex-col items-center justify-center">
+          <EmptyState
+            icon={<Lock size={24} />}
+            title="You do not have permission to access reports"
+            description="Ask your administrator for access."
+          />
         </div>
       </PageTransition>
     );
@@ -165,7 +165,7 @@ export const ReportsPage: React.FC = () => {
     setConfig({
       ...config,
       type: type as ReportType,
-      name: `${type.replace(/_/g, ' ')} Report`,
+      name: reportTitle(type),
     });
     setShowFilterPanel(true);
   };
@@ -198,13 +198,13 @@ export const ReportsPage: React.FC = () => {
   // Handle generate report
   const handleGenerateReport = () => {
     if (!config.type) {
-      toast.error('Please select a report type');
+      toast.error('Select a report type');
       return;
     }
 
     const newReport: GeneratedReport = {
       type: config.type,
-      name: config.name || `${config.type} Report`,
+      name: config.name || reportTitle(config.type),
       generatedAt: new Date().toISOString(),
       dateRange: {
         start: config.filters.startDate,
@@ -216,7 +216,7 @@ export const ReportsPage: React.FC = () => {
 
     setGeneratedReport(newReport);
     setMode('generated');
-    toast.success('Report generated successfully');
+    toast.success('Report generated');
   };
 
   // Handle save report
@@ -240,7 +240,7 @@ export const ReportsPage: React.FC = () => {
         .join(', ');
       toast.success(`Report saved and sent to ${reviewerNames}`);
     } else {
-      toast.success('Report saved successfully');
+      toast.success('Report saved');
     }
   };
 
@@ -248,7 +248,7 @@ export const ReportsPage: React.FC = () => {
   const handleRunSavedReport = (reportId: string) => {
     const report = savedReports.find(r => r.id === reportId);
     if (report) {
-      toast.success(`Running "${report.name}"...`);
+      toast.success(`Running "${report.name}"`);
     }
   };
 
@@ -282,16 +282,14 @@ export const ReportsPage: React.FC = () => {
   if (mode === 'generated' && generatedReport) {
     return (
       <PageTransition>
-        <div className="p-6 space-y-6 bg-white min-h-screen">
-          <ReportGenerationResult
-            report={generatedReport}
-            aiInsights={aiInsights}
-            onBack={handleBackFromGenerated}
-            onSave={handleSaveReport}
-            users={sampleUsers}
-            canExport={canExportAnalytics}
-          />
-        </div>
+        <ReportGenerationResult
+          report={generatedReport}
+          aiInsights={aiInsights}
+          onBack={handleBackFromGenerated}
+          onSave={handleSaveReport}
+          users={sampleUsers}
+          canExport={canExportAnalytics}
+        />
       </PageTransition>
     );
   }
@@ -299,61 +297,36 @@ export const ReportsPage: React.FC = () => {
   // Builder view - Hybrid split panel layout
   return (
     <PageTransition>
-      <div className="p-6 space-y-6 bg-white min-h-screen">
-        {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-          className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200"
-        >
-          <div className="flex items-center justify-between gap-4">
+      <div className="mx-auto flex w-full max-w-[1440px] flex-col gap-5">
+        <PageHeader
+          title="Reports"
+          description="Build, save and run reports. Export as PDF, Excel or CSV."
+          actions={
+            <Button variant={showFilterPanel ? 'secondary' : 'default'} onClick={handleCreateNewReport}>
+              <Plus size={16} />
+              New report
+            </Button>
+          }
+        />
+
+        {/* Quick info */}
+        {config.type && !showFilterPanel && (
+          <div className="flex items-start gap-3 rounded-lg bg-field p-4 text-text-secondary">
+            <FileText size={18} className="mt-0.5 flex-shrink-0" />
             <div>
-              <h1 className="font-display font-bold text-display-sm text-gray-900">
-                Reports Builder
-              </h1>
-              <p className="font-sans text-text-md text-gray-500 mt-1">
-                Create, customize, and manage your reports with ease • Export as PDF, Excel, or CSV
+              <p className="text-sm font-semibold text-text-primary">
+                {reportTitle(config.type)} selected
+              </p>
+              <p className="mt-1 text-xs">
+                Select the report type again to set filters, or run a saved report.
               </p>
             </div>
-            <motion.button
-              onClick={handleCreateNewReport}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.97 }}
-              transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-              className="h-10 px-4 rounded-xl bg-primary text-primary-fg font-sans font-medium text-text-sm flex items-center gap-2 outline-none"
-            >
-              <Plus className="h-4 w-4" />
-              Create New Report
-            </motion.button>
           </div>
+        )}
 
-          {/* Quick Info */}
-          {config.type && !showFilterPanel && (
-            <motion.div
-              initial={{ opacity: 0, y: -4 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1], delay: 0.1 }}
-              className="mt-4 p-3 bg-blue-50/80 rounded-lg text-text-sm text-blue-700 border border-blue-200"
-            >
-              <p className="font-sans font-medium">
-                📊 {config.type.replace(/_/g, ' ')} Report Selected
-              </p>
-              <p className="font-sans text-text-xs mt-1">
-                Click "Configure & Generate" to customize filters, or click a saved report below to run it immediately.
-              </p>
-            </motion.div>
-          )}
-        </motion.div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-3">
           {/* Main Content */}
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1], delay: 0.05 }}
-            className="lg:col-span-2 space-y-6"
-          >
+          <div className="min-w-0 space-y-5 lg:col-span-2">
             {/* Step 1: Report Type Selection */}
             {!showFilterPanel ? (
               <ReportDiscoveryCards
@@ -375,37 +348,20 @@ export const ReportsPage: React.FC = () => {
                 />
 
                 {/* Action Buttons */}
-                <div className="flex gap-2">
-                  <motion.button
-                    onClick={handleCreateNewReport}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.97 }}
-                    transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-                    className="flex-1 h-10 px-4 rounded-xl bg-slate-100 hover:bg-slate-150 text-gray-700 font-sans font-medium text-text-sm outline-none border border-slate-300 transition-colors"
-                  >
-                    Back to Report Selection
-                  </motion.button>
-                  <motion.button
-                    onClick={handleGenerateReport}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.97 }}
-                    transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-                    className="flex-1 h-10 px-4 rounded-xl bg-primary text-primary-fg font-sans font-medium text-text-sm flex items-center justify-center gap-2 outline-none"
-                  >
-                    Generate Report
-                  </motion.button>
+                <div className="flex flex-wrap justify-end gap-2">
+                  <Button variant="secondary" onClick={handleCreateNewReport}>
+                    Back to report types
+                  </Button>
+                  <Button onClick={handleGenerateReport}>
+                    Generate report
+                  </Button>
                 </div>
               </>
             )}
-          </motion.div>
+          </div>
 
           {/* Sidebar: Saved Reports */}
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1], delay: 0.1 }}
-            className="lg:col-span-1"
-          >
+          <div className="min-w-0 lg:col-span-1">
             <SavedReportsManager
               reports={savedReports}
               onRun={handleRunSavedReport}
@@ -424,7 +380,7 @@ export const ReportsPage: React.FC = () => {
                 toast.success('Report deleted');
               }}
             />
-          </motion.div>
+          </div>
         </div>
       </div>
     </PageTransition>

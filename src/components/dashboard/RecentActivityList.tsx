@@ -1,6 +1,9 @@
-import { FileText, Download, Edit, Upload as UploadIcon } from 'lucide-react';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { FileText, Download, Edit, Upload as UploadIcon, ChevronRight } from '@/components/icons';
 import { Button } from '@/components/ui/button';
+import { SectionCard } from '@/components/shared/SectionCard';
+import { SectionBody } from '@/components/shared/SectionBody';
+import { EmptyState } from '@/components/shared/EmptyState';
+import { TableSkeleton } from '@/components/shared/TableSkeleton';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 
@@ -28,14 +31,14 @@ interface RecentActivityListProps {
 function getActionIcon(action: DocumentAction) {
   switch (action) {
     case 'downloaded':
-      return <Download className="h-4 w-4 text-blue-600" />;
+      return <Download size={18} />;
     case 'edited':
-      return <Edit className="h-4 w-4 text-amber-600" />;
+      return <Edit size={18} />;
     case 'uploaded':
-      return <UploadIcon className="h-4 w-4 text-emerald-600" />;
+      return <UploadIcon size={18} />;
     case 'viewed':
     default:
-      return <FileText className="h-4 w-4 text-slate-600" />;
+      return <FileText size={18} />;
   }
 }
 
@@ -59,93 +62,55 @@ export function RecentActivityList({
   onDocumentClick,
   onViewAll,
 }: RecentActivityListProps) {
-  if (isLoading) {
-    return (
-      <Card className="border-slate-200/50 shadow-premium-sm">
-        <CardHeader>
-          <CardTitle className="text-lg font-semibold">Recent Documents</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="h-14 bg-slate-200/30 rounded-xl animate-pulse" />
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  if (documents.length === 0) {
-    return (
-      <Card className="border-slate-200/50 shadow-premium-sm">
-        <CardHeader>
-          <CardTitle className="text-lg font-semibold">Recent Documents</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="text-center py-12">
-            <p className="text-slate-600 font-medium">No documents accessed yet</p>
-            <p className="text-sm text-slate-500 mt-2">
-              <span className="cursor-pointer text-primary hover:underline font-medium" onClick={() => onViewAll?.()}>
-                Upload your first document →
-              </span>
-            </p>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
   return (
-    <Card className="border-slate-200/50 shadow-premium-sm">
-      <CardHeader className="border-b border-slate-200/50 pb-4">
-        <CardTitle className="text-lg font-semibold text-slate-900">Recent Documents</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-0 divide-y divide-slate-100/50">
-          {documents.map((doc) => (
-            <button
-              key={doc.id}
-              onClick={() => onDocumentClick?.(doc.id)}
-              className="w-full py-4 px-2 text-left hover:bg-primary/5 transition-all duration-200 flex items-start gap-4 group rounded-lg -mx-2 px-3"
-            >
-              <div className="flex-shrink-0 mt-1 p-2 rounded-lg bg-slate-50/50 group-hover:bg-primary/10 transition-colors">
-                {getActionIcon(doc.lastAction)}
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="font-semibold text-slate-900 group-hover:text-primary transition-colors truncate">
-                  {doc.title}
-                </p>
-                <div className="flex items-center gap-2 mt-2 flex-wrap">
-                  {doc.department && (
-                    <span className="text-xs font-medium text-slate-600 bg-slate-100/50 px-2 py-1 rounded">
-                      {doc.department}
-                    </span>
-                  )}
-                  {doc.category && (
-                    <span className="text-xs text-slate-500">
-                      {doc.category}
-                    </span>
-                  )}
-                </div>
-                <p className="text-xs text-slate-500 mt-2">
-                  <span className="font-medium text-slate-600">{getActionLabel(doc.lastAction)}</span> {dayjs(doc.actionAt).fromNow()}
-                </p>
-              </div>
-            </button>
-          ))}
-        </div>
-
-        {documents.length > 0 && (
-          <Button
-            variant="ghost"
-            className="w-full mt-6 text-primary hover:text-primary hover:bg-primary/5 font-medium"
-            onClick={() => onViewAll?.()}
-          >
-            View all recent documents →
+    <SectionCard
+      title="Recent documents"
+      padded={false}
+      actions={
+        !isLoading && (
+          <Button variant="ghost" size="sm" onClick={() => onViewAll?.()}>
+            View all
+            <ChevronRight size={14} />
           </Button>
-        )}
-      </CardContent>
-    </Card>
+        )
+      }
+    >
+      <SectionBody
+        loading={isLoading}
+        skeleton={<TableSkeleton rows={4} columns={3} />}
+        isEmpty={documents.length === 0}
+        empty={
+          <EmptyState
+            title="No documents opened yet"
+            description="Documents you view, edit or upload appear here."
+          />
+        }
+      >
+        <ul className="divide-y divide-line">
+          {documents.map((doc) => (
+            <li key={doc.id}>
+              <button
+                type="button"
+                onClick={() => onDocumentClick?.(doc.id)}
+                className="flex w-full items-start gap-3 px-6 py-3 text-left transition-colors hover:bg-surface-2"
+              >
+                <span className="grid h-9 w-9 flex-shrink-0 place-items-center rounded-sm bg-field text-text-secondary">
+                  {getActionIcon(doc.lastAction)}
+                </span>
+                <span className="block min-w-0 flex-1">
+                  <span className="block truncate text-sm font-semibold text-text-primary">{doc.title}</span>
+                  <span className="mt-0.5 block text-xs text-text-muted">
+                    {[doc.department, doc.category].filter(Boolean).join(', ')}
+                  </span>
+                </span>
+                <span className="flex-shrink-0 text-right text-xs text-text-muted">
+                  <span className="text-text-secondary">{getActionLabel(doc.lastAction)}</span> {dayjs(doc.actionAt).fromNow()}
+                </span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      </SectionBody>
+    </SectionCard>
   );
 }

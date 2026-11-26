@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { Card, CardHeader, CardContent, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Sparkles, MessageCircle, TrendingUp, AlertTriangle } from 'lucide-react';
+import { Sparkles, Send, TrendingUp, AlertTriangle, ChevronDown, ChevronUp, Loader2 } from '@/components/icons';
 import { Input } from '@/components/ui/input';
+import { SectionCard } from '@/components/shared/SectionCard';
 
 interface InsightItem {
   type: 'trend' | 'anomaly' | 'prediction' | 'insight';
@@ -14,21 +14,21 @@ interface InsightItem {
 const mockInsights: InsightItem[] = [
   {
     type: 'trend',
-    title: 'Rising Invoice Volume',
+    title: 'Rising invoice volume',
     description: 'Invoice submissions have increased 42% YoY, driven primarily by Q2 growth. The Finance department is maintaining a 71.6% processing rate.',
-    icon: <TrendingUp className="h-5 w-5 text-blue-600" />,
+    icon: <TrendingUp size={18} className="text-text-secondary" />,
   },
   {
     type: 'anomaly',
-    title: 'Processing Time Spike',
-    description: 'Registry documents are taking 2-3 days longer than normal this month. Recommended action: Review staffing levels and workload distribution.',
-    icon: <AlertTriangle className="h-5 w-5 text-orange-600" />,
+    title: 'Processing time spike',
+    description: 'Registry documents are taking 2-3 days longer than normal this month. Recommended action: review staffing levels and workload distribution.',
+    icon: <AlertTriangle size={18} className="text-caution" />,
   },
   {
     type: 'prediction',
-    title: 'Contract Renewals Coming',
+    title: 'Contract renewals coming',
     description: 'Predictive analysis shows 18 HR contracts expiring next month. Planning ahead will prevent processing bottlenecks.',
-    icon: <TrendingUp className="h-5 w-5 text-green-600" />,
+    icon: <TrendingUp size={18} className="text-text-secondary" />,
   },
 ];
 
@@ -36,7 +36,7 @@ interface AIAnalysisPanelProps {
   onClose?: () => void;
 }
 
-const AIAnalysisPanel: React.FC<AIAnalysisPanelProps> = ({ onClose }) => {
+const AIAnalysisPanel: React.FC<AIAnalysisPanelProps> = () => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [question, setQuestion] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -72,120 +72,84 @@ const AIAnalysisPanel: React.FC<AIAnalysisPanelProps> = ({ onClose }) => {
   const toggleExpanded = () => setIsExpanded((v) => !v);
 
   return (
-    <Card className="bg-signal-tint iq-grad-border">
-      <CardHeader
-        role="button"
-        tabIndex={0}
+    <SectionCard tone="ai" padded={false}>
+      <button
+        type="button"
         aria-expanded={isExpanded}
-        aria-label={isExpanded ? 'Collapse AI insights' : 'Expand AI insights'}
         onClick={toggleExpanded}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault();
-            toggleExpanded();
-          }
-        }}
-        className="cursor-pointer select-none border-b border-primary/10 rounded-t-xl outline-none transition-colors hover:bg-slate-100/80 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+        className="flex w-full items-center justify-between gap-3 p-6 text-left"
       >
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="p-2 bg-signal rounded-md shrink-0">
-              <Sparkles className="h-5 w-5 text-white" />
-            </div>
-            <div className="min-w-0">
-              <CardTitle className="text-lg">AI-Powered Insights</CardTitle>
-              <CardDescription>Contextual analysis of your analytics data</CardDescription>
-            </div>
-          </div>
-          <span
-            className="text-muted-foreground shrink-0 text-lg font-medium leading-none tabular-nums"
-            aria-hidden
-          >
-            {isExpanded ? '−' : '+'}
+        <span className="flex min-w-0 items-center gap-3">
+          <Sparkles size={24} className="shrink-0 text-signal-text" />
+          <span className="min-w-0">
+            <span className="block text-base font-semibold text-signal-text">360IQ insights</span>
+            <span className="block text-xs text-text-secondary">Sample analysis of your analytics data</span>
           </span>
-        </div>
-      </CardHeader>
+        </span>
+        <span className="shrink-0 text-text-secondary">
+          {isExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+        </span>
+      </button>
 
       {isExpanded && (
-        <CardContent className="space-y-6 pt-6">
-          {/* Auto Insights */}
+        <div className="space-y-5 border-t border-line p-6">
+          {/* Auto insights */}
           <div className="space-y-3">
-            <h3 className="font-semibold text-sm text-gray-700">Key Insights</h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <h3 className="text-sm font-semibold text-text-primary">Key insights</h3>
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
               {mockInsights.map((insight, idx) => (
-                <div
-                  key={idx}
-                  className="p-4 rounded-lg bg-white border border-gray-200 hover:shadow-md transition-shadow"
-                >
-                  <div className="flex items-start gap-3">
-                    {insight.icon}
-                    <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-sm text-gray-800">{insight.title}</p>
-                      <p className="text-xs text-gray-600 mt-1 leading-relaxed">
-                        {insight.description}
-                      </p>
-                    </div>
+                <div key={idx} className="flex items-start gap-3 rounded-md border border-line p-4">
+                  {insight.icon}
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-semibold text-text-primary">{insight.title}</p>
+                    <p className="mt-1 text-xs leading-relaxed text-text-secondary">{insight.description}</p>
                   </div>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* Ask About Data */}
-          <div className="space-y-3 pt-4 border-t border-gray-200">
-            <h3 className="font-semibold text-sm text-gray-700">Ask About This Data</h3>
+          {/* Ask about the data */}
+          <div className="space-y-3 border-t border-line pt-5">
+            <h3 className="text-sm font-semibold text-text-primary">Ask about this data</h3>
             <div className="flex gap-2">
               <Input
-                placeholder="Ask a question about the analytics..."
+                aria-label="Ask about this data"
+                placeholder="How are finance invoices doing?"
                 value={question}
                 onChange={(e) => setQuestion(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleAskQuestion()}
                 disabled={isLoading}
-                className="bg-white"
               />
               <Button
                 onClick={handleAskQuestion}
                 disabled={isLoading || !question.trim()}
                 size="icon"
-                variant="default"
+                variant="secondary"
+                aria-label="Ask"
+                className="shrink-0"
               >
-                {isLoading ? (
-                  <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full" />
-                ) : (
-                  <MessageCircle className="h-4 w-4" />
-                )}
+                {isLoading ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
               </Button>
             </div>
 
-            {isLoading && (
-              <div className="p-4 bg-white rounded-lg border border-gray-200">
-                <div className="space-y-2">
-                  <div className="h-3 w-full bg-gray-200 rounded animate-pulse" />
-                  <div className="h-3 w-4/5 bg-gray-200 rounded animate-pulse" />
-                  <div className="h-3 w-3/4 bg-gray-200 rounded animate-pulse" />
-                </div>
-              </div>
-            )}
-
-            {response && !isLoading && (
-              <div className="p-4 rounded-lg bg-signal-tint iq-grad-border">
+            <div aria-live="polite">
+              {isLoading && <p className="text-sm text-signal-text">360IQ is reading your question…</p>}
+              {response && !isLoading && (
                 <div className="flex gap-3">
-                  <Sparkles className="h-5 w-5 text-signal-text flex-shrink-0 mt-0.5" />
-                  <p className="text-sm text-text-primary leading-relaxed">{response}</p>
+                  <Sparkles size={18} className="mt-0.5 shrink-0 text-signal-text" />
+                  <p className="text-sm leading-relaxed text-text-primary">{response}</p>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
 
-          {/* Note about AI */}
-          <div className="p-3 bg-positive-tint border border-line rounded-lg">
-            <p className="text-xs text-positive">
-              ℹ️ <strong>Note:</strong> AI insights are mocked for demonstration. In production, this will connect to a live backend AI service for real-time analysis.
-            </p>
-          </div>
-        </CardContent>
+          <p className="text-xs text-text-muted">
+            These insights and answers are sample content for demonstration. They are not yet connected to a live analysis service.
+          </p>
+        </div>
       )}
-    </Card>
+    </SectionCard>
   );
 };
 

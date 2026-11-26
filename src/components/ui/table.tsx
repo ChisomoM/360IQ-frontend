@@ -36,7 +36,7 @@ const Table = React.forwardRef<
         <table
           ref={ref}
           className={cn(
-            "min-w-full table-auto caption-bottom text-sm",
+            "min-w-full table-auto caption-bottom text-[13px]",
             className
           )}
           {...props}
@@ -120,7 +120,7 @@ const TableHead = React.forwardRef<
   <th
     ref={ref}
     className={cn(
-      "h-9 sticky top-0 bg-surface-1 text-text-muted text-xs text-left align-middle font-medium px-3 lg:px-4 [&:has([role=checkbox])]:pr-0",
+      "h-9 sticky top-0 bg-surface-1 text-text-muted text-xs text-left align-middle font-medium px-4 [&:has([role=checkbox])]:pr-0",
       className
     )}
     {...props}
@@ -135,7 +135,8 @@ const TableCell = React.forwardRef<
   <td
     ref={ref}
     className={cn(
-      "align-middle px-3 py-3 lg:px-4 lg:py-3 text-text-primary [&:has([role=checkbox])]:pr-0",
+      // The first column names the row, so it reads stronger (not for full-width empty states).
+      "align-middle px-4 py-3 text-[13px] text-text-secondary [&:first-child:not([colspan])]:font-semibold [&:first-child:not([colspan])]:text-text-primary [&:has([role=checkbox])]:pr-0",
       className
     )}
     {...props}
@@ -149,7 +150,7 @@ const TableCaption = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <caption
     ref={ref}
-    className={cn("mt-4 text-sm text-muted-foreground", className)}
+    className={cn("mt-4 text-xs text-text-muted", className)}
     {...props}
   />
 ));

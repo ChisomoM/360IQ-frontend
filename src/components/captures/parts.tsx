@@ -1,12 +1,13 @@
-// Shared building blocks for the CaptureIQ screens. Colours come only from the brand
-// tokens in tailwind.config.js (surface, line, signal, positive, caution, risk, text-*).
+// Shared building blocks for the CaptureIQ screens. Colours come only from the 360IQ tokens.
 
 import { useEffect, useState, type ReactNode } from "react";
-import { AlertTriangle, Camera, FileText, Mic, PenLine, Sparkles } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { AlertTriangle, Camera, FileText, Mic, PenLine } from "@/components/icons";
+import { StatusBadge } from "@/components/shared/StatusBadge";
 import { cn } from "@/lib/utils";
 import { getCaptureMeta } from "@/lib/api/captures";
-import { Pill, labelOf } from "@/components/profiles/ui";
+import { formatDateTime } from "@/lib/format";
+import type { Tone } from "@/lib/status";
+import { labelOf } from "@/components/profiles/ui";
 import type { CaptureMeta, CaptureMethod, CaptureStatus } from "@/types/capture";
 
 export const METHOD_LABEL: Record<CaptureMethod, string> = {
@@ -24,25 +25,25 @@ export function MethodIcon({ method, className }: { method: CaptureMethod; class
   return <FileText className={c} />;
 }
 
-const STATUS: Record<CaptureStatus, { label: string; variant: "signal" | "positive" | "caution" | "risk" | "neutral" }> = {
-  PROCESSING: { label: "Reading…", variant: "neutral" },
-  NEEDS_REVIEW: { label: "Needs review", variant: "signal" },
-  AI_FAILED: { label: "Finish by hand", variant: "caution" },
-  CONFIRMED: { label: "Saved", variant: "positive" },
-  REJECTED: { label: "Rejected", variant: "neutral" },
+const STATUS: Record<CaptureStatus, { label: string; tone: Tone }> = {
+  PROCESSING: { label: "Reading…", tone: "caution" },
+  NEEDS_REVIEW: { label: "Needs review", tone: "caution" },
+  AI_FAILED: { label: "Finish by hand", tone: "caution" },
+  CONFIRMED: { label: "Saved", tone: "positive" },
+  REJECTED: { label: "Rejected", tone: "neutral" },
 };
 
 export function StatusPill({ status }: { status: CaptureStatus }) {
-  const s = STATUS[status] ?? { label: labelOf(status), variant: "neutral" as const };
-  return <Pill variant={s.variant}>{s.label}</Pill>;
+  const s = STATUS[status] ?? { label: labelOf(status), tone: "neutral" as const };
+  return <StatusBadge tone={s.tone} label={s.label} />;
 }
 
 /** Marks content produced by the AI, so it is never mistaken for something a person entered. */
 export function AiBadge({ className }: { className?: string }) {
   return (
-    <Badge variant="caution" className={cn("gap-1", className)}>
-      <Sparkles className="h-3 w-3" /> AI
-    </Badge>
+    <StatusBadge tone="signal" className={className}>
+      AI
+    </StatusBadge>
   );
 }
 
@@ -92,19 +93,14 @@ export function ErrorBanner({ children, tone = "risk" }: { children: ReactNode; 
   return (
     <div
       role="alert"
-      className={cn(
-        "flex items-start gap-2 rounded-lg border px-3 py-2.5 text-sm",
-        tone === "risk" ? "border-risk bg-risk-tint text-risk" : "border-caution bg-caution-tint text-caution"
-      )}
+      className={cn("flex items-start gap-2 rounded-md px-4 py-3 text-sm", tone === "risk" ? "bg-risk-tint text-risk" : "bg-caution-tint text-caution")}
     >
-      <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+      <AlertTriangle size={16} className="mt-0.5 shrink-0" />
       <div className="min-w-0 break-words">{children}</div>
     </div>
   );
 }
 
 export function fmtTime(iso: string): string {
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return "";
-  return d.toLocaleString(undefined, { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+  return formatDateTime(iso);
 }

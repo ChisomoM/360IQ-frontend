@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
+import { Label } from '@/components/ui/label';
 import {
   BarChart,
   Bar,
@@ -20,18 +19,26 @@ import {
   Cell,
 } from 'recharts';
 import {
-  Download,
   FileText,
+  FileSpreadsheet,
   Mail,
-  Share2,
   ChevronLeft,
   Sparkles,
   TrendingUp,
   AlertTriangle,
-  Users,
-  Copy,
-} from 'lucide-react';
+  Lightbulb,
+  Save,
+} from '@/components/icons';
 import { toast } from 'sonner';
+import { PageHeader } from '@/components/shared/PageHeader';
+import { SectionCard } from '@/components/shared/SectionCard';
+import { KpiTile } from '@/components/shared/KpiTile';
+import {
+  axisProps, gridProps, tooltipProps, legendProps, barCursor, lineCursor, seriesColor,
+  BAR_RADIUS, MAX_BAR_SIZE,
+} from '@/components/dashboard/chartTheme';
+import { formatDateTime } from '@/lib/format';
+import { cn } from '@/lib/utils';
 
 interface ReportPreviewData {
   type: string;
@@ -61,7 +68,7 @@ interface ReportGenerationResultProps {
 const reportDataSamples = {
   lifecycle: [
     { stage: 'Submitted', count: 245 },
-    { stage: 'In Review', count: 189 },
+    { stage: 'In review', count: 189 },
     { stage: 'Approved', count: 156 },
     { stage: 'Completed', count: 142 },
   ],
@@ -74,13 +81,11 @@ const reportDataSamples = {
     { month: 'Jun', value: 220000, count: 85 },
   ],
   statusBreakdown: [
-    { name: 'Approved', value: 385, fill: 'var(--positive)' },
-    { name: 'Pending', value: 145, fill: 'var(--caution)' },
-    { name: 'Rejected', value: 70, fill: 'var(--risk)' },
+    { name: 'Approved', value: 385 },
+    { name: 'Pending', value: 145 },
+    { name: 'Rejected', value: 70 },
   ],
 };
-
-const COLORS = ['var(--chart-1)', 'var(--chart-2)', 'var(--chart-3)', 'var(--chart-4)', 'var(--chart-1)', 'var(--chart-2)'];
 
 export const ReportGenerationResult: React.FC<ReportGenerationResultProps> = ({
   report,
@@ -93,7 +98,6 @@ export const ReportGenerationResult: React.FC<ReportGenerationResultProps> = ({
   const [exportFormat, setExportFormat] = useState<'pdf' | 'excel' | 'csv'>('pdf');
   const [reportName, setReportName] = useState(report.name);
   const [selectedReviewers, setSelectedReviewers] = useState<string[]>([]);
-  const [showSavePanel, setShowSavePanel] = useState(false);
 
   const handleExport = (format: 'pdf' | 'excel' | 'csv') => {
     if (!canExport) {
@@ -101,16 +105,16 @@ export const ReportGenerationResult: React.FC<ReportGenerationResultProps> = ({
       return;
     }
     setExportFormat(format);
-    toast.success(`Exporting report as ${format.toUpperCase()}...`);
+    toast.success(`Exporting report as ${format.toUpperCase()}`);
   };
 
   const handleEmailReport = () => {
     const recipients = selectedReviewers
       .map(id => users.find(u => u.id === id)?.email)
       .filter(Boolean);
-    
+
     if (recipients.length === 0) {
-      toast.error('Please select reviewers to email');
+      toast.error('Select reviewers to email');
       return;
     }
 
@@ -121,11 +125,11 @@ export const ReportGenerationResult: React.FC<ReportGenerationResultProps> = ({
 
   const handleSave = () => {
     if (!reportName.trim()) {
-      toast.error('Please enter a report name');
+      toast.error('Enter a report name');
       return;
     }
     onSave(reportName, selectedReviewers);
-    toast.success(`Report "${reportName}" saved successfully`);
+    toast.success(`Report "${reportName}" saved`);
   };
 
   const toggleReviewer = (reviewerId: string) => {
@@ -136,127 +140,93 @@ export const ReportGenerationResult: React.FC<ReportGenerationResultProps> = ({
     );
   };
 
+  const exportClass = (format: 'pdf' | 'excel' | 'csv') =>
+    cn(exportFormat === format && 'bg-surface-2');
+
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-        <div className="flex items-start justify-between gap-4 mb-4">
-          <div>
-            <h1 className="text-3xl font-semibold text-text-primary">
-              Report Generated
-            </h1>
-            <p className="text-sm text-muted-foreground mt-2">
-              {report.name} • Generated {new Date(report.generatedAt).toLocaleString()}
-            </p>
-          </div>
-          <Button variant="outline" onClick={onBack} className="gap-2">
-            <ChevronLeft className="h-4 w-4" />
-            Back
-          </Button>
-        </div>
+    <div className="mx-auto flex w-full max-w-[1440px] flex-col gap-5">
+      <PageHeader
+        crumb="Reports"
+        title={report.name}
+        description={`Report generated ${formatDateTime(report.generatedAt)}`}
+        actions={
+          <>
+            <Button variant="ghost" onClick={onBack}>
+              <ChevronLeft size={16} />
+              Back
+            </Button>
+            <Button variant="secondary" className={exportClass('pdf')} onClick={() => handleExport('pdf')} disabled={!canExport}>
+              <FileText size={16} />
+              Export PDF
+            </Button>
+            <Button variant="secondary" className={exportClass('excel')} onClick={() => handleExport('excel')} disabled={!canExport}>
+              <FileSpreadsheet size={16} />
+              Export Excel
+            </Button>
+            <Button variant="secondary" className={exportClass('csv')} onClick={() => handleExport('csv')} disabled={!canExport}>
+              <FileText size={16} />
+              Export CSV
+            </Button>
+            <Button variant="secondary" onClick={handleEmailReport} disabled={selectedReviewers.length === 0}>
+              <Mail size={16} />
+              Email report
+            </Button>
+          </>
+        }
+      />
 
-        {/* Export Actions - Now Primary */}
-        <div className="grid grid-cols-1 sm:grid-cols-4 gap-2">
-          <Button
-            onClick={() => handleExport('pdf')}
-            disabled={!canExport}
-            className="gap-2"
-            variant={exportFormat === 'pdf' ? 'default' : 'outline'}
+      <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-3">
+        {/* Main content */}
+        <div className="min-w-0 space-y-5 lg:col-span-2">
+          {/* Report data preview */}
+          <SectionCard
+            eyebrow={`Data from ${report.dateRange.start} to ${report.dateRange.end}`}
+            title="Report data preview"
           >
-            <FileText className="h-4 w-4" />
-            Export PDF
-          </Button>
-          <Button
-            onClick={() => handleExport('excel')}
-            disabled={!canExport}
-            variant={exportFormat === 'excel' ? 'default' : 'outline'}
-            className="gap-2"
-          >
-            📊 Export Excel
-          </Button>
-          <Button
-            onClick={() => handleExport('csv')}
-            disabled={!canExport}
-            variant={exportFormat === 'csv' ? 'default' : 'outline'}
-            className="gap-2"
-          >
-            📋 Export CSV
-          </Button>
-          <Button
-            onClick={handleEmailReport}
-            variant="outline"
-            className="gap-2"
-            disabled={selectedReviewers.length === 0}
-          >
-            <Mail className="h-4 w-4" />
-            Email Report
-          </Button>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Main Content */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Report Data Preview */}
-          <Card className="shadow-md border-gray-200">
-            <CardHeader>
-              <CardTitle>Report Data Preview</CardTitle>
-              <CardDescription>
-                Data from {report.dateRange.start} to {report.dateRange.end}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {report.type === 'lifecycle' && (
-                <div className="space-y-6">
-                  <ResponsiveContainer width="100%" height={300}>
-                    <BarChart data={reportDataSamples.lifecycle}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="stage" />
-                      <YAxis />
-                      <Tooltip />
-                      <Bar dataKey="count" fill="var(--chart-1)" />
-                    </BarChart>
-                  </ResponsiveContainer>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="p-4 bg-blue-50 rounded-lg">
-                      <p className="text-sm text-gray-600">Total Documents</p>
-                      <p className="text-2xl font-bold text-primary">732</p>
-                    </div>
-                    <div className="p-4 bg-green-50 rounded-lg">
-                      <p className="text-sm text-gray-600">Completed</p>
-                      <p className="text-2xl font-bold text-green-600">142</p>
-                    </div>
-                  </div>
+            {report.type === 'lifecycle' && (
+              <div className="space-y-5">
+                <p className="text-xs text-text-muted">Documents by stage</p>
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart data={reportDataSamples.lifecycle}>
+                    <CartesianGrid {...gridProps} />
+                    <XAxis {...axisProps} dataKey="stage" />
+                    <YAxis {...axisProps} />
+                    <Tooltip {...tooltipProps} cursor={barCursor} />
+                    <Bar dataKey="count" name="Documents" fill="var(--chart-1)" radius={BAR_RADIUS} maxBarSize={MAX_BAR_SIZE} />
+                  </BarChart>
+                </ResponsiveContainer>
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <KpiTile label="Total documents" value="732" />
+                  <KpiTile label="Completed" value="142" />
                 </div>
-              )}
+              </div>
+            )}
 
-              {report.type === 'financial' && (
-                <div className="space-y-6">
-                  <ResponsiveContainer width="100%" height={300}>
-                    <LineChart data={reportDataSamples.financial}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="month" />
-                      <YAxis />
-                      <Tooltip />
-                      <Legend />
-                      <Line type="monotone" dataKey="value" stroke="var(--chart-1)" name="Value ($)" />
-                      <Line type="monotone" dataKey="count" stroke="var(--chart-2)" name="Count" />
-                    </LineChart>
-                  </ResponsiveContainer>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="p-4 bg-blue-50 rounded-lg">
-                      <p className="text-sm text-gray-600">Total Value</p>
-                      <p className="text-2xl font-bold text-primary">$1.28M</p>
-                    </div>
-                    <div className="p-4 bg-green-50 rounded-lg">
-                      <p className="text-sm text-gray-600">Total Documents</p>
-                      <p className="text-2xl font-bold text-green-600">365</p>
-                    </div>
-                  </div>
+            {report.type === 'financial' && (
+              <div className="space-y-5">
+                <p className="text-xs text-text-muted">Value in $ (left axis) and document count (right axis) by month</p>
+                <ResponsiveContainer width="100%" height={300}>
+                  <LineChart data={reportDataSamples.financial}>
+                    <CartesianGrid {...gridProps} />
+                    <XAxis {...axisProps} dataKey="month" />
+                    <YAxis {...axisProps} yAxisId="value" />
+                    <YAxis {...axisProps} yAxisId="count" orientation="right" />
+                    <Tooltip {...tooltipProps} cursor={lineCursor} />
+                    <Legend {...legendProps} />
+                    <Line yAxisId="value" type="monotone" dataKey="value" stroke="var(--chart-1)" strokeWidth={2} dot={false} name="Value ($)" />
+                    <Line yAxisId="count" type="monotone" dataKey="count" stroke="var(--chart-2)" strokeWidth={2} dot={false} name="Count" />
+                  </LineChart>
+                </ResponsiveContainer>
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <KpiTile label="Total value" value="$1.28M" />
+                  <KpiTile label="Total documents" value="365" />
                 </div>
-              )}
+              </div>
+            )}
 
-              {report.type === 'user_activity' && (
+            {report.type === 'user_activity' && (
+              <div className="space-y-3">
+                <p className="text-xs text-text-muted">Documents by status</p>
                 <ResponsiveContainer width="100%" height={300}>
                   <PieChart>
                     <Pie
@@ -264,131 +234,98 @@ export const ReportGenerationResult: React.FC<ReportGenerationResultProps> = ({
                       cx="50%"
                       cy="50%"
                       labelLine={false}
-                      label={({ name, value }) => `${name}: ${value}`}
-                      outerRadius={80}
-                      fill="var(--chart-1)"
+                      label={({ value }) => value}
+                      outerRadius={90}
                       dataKey="value"
                     >
                       {reportDataSamples.statusBreakdown.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.fill} />
+                        <Cell key={entry.name} fill={seriesColor(index)} stroke="var(--surface-1)" />
                       ))}
                     </Pie>
-                    <Tooltip />
+                    <Tooltip {...tooltipProps} />
+                    <Legend {...legendProps} />
                   </PieChart>
                 </ResponsiveContainer>
-              )}
-
-              {report.type === 'audit_trail' && (
-                <div className="p-4 bg-gray-50 rounded-lg space-y-3">
-                  <div className="flex justify-between items-center pb-2 border-b">
-                    <span className="text-sm font-medium">Total Audit Events</span>
-                    <span className="text-xl font-bold">847</span>
-                  </div>
-                  <div className="flex justify-between items-center pb-2 border-b">
-                    <span className="text-sm font-medium">Modified Records</span>
-                    <span className="text-xl font-bold">324</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium">Users Involved</span>
-                    <span className="text-xl font-bold">28</span>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* AI Insights */}
-          <Card className="bg-signal-tint iq-grad-border">
-            <CardHeader className="border-b border-primary/10">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-signal rounded-md">
-                  <Sparkles className="h-5 w-5 text-white" />
-                </div>
-                <div>
-                  <CardTitle className="text-lg">AI Analysis & Recommendations</CardTitle>
-                  <CardDescription>Data-driven insights and actionable decisions</CardDescription>
-                </div>
               </div>
-            </CardHeader>
-            <CardContent className="pt-6 space-y-4">
-              {aiInsights.map((insight, idx) => (
-                <div
-                  key={idx}
-                  className="p-4 rounded-lg bg-white border border-gray-200 hover:shadow-md transition-shadow"
-                >
-                  <div className="flex items-start gap-4">
-                    <div
-                      className={`p-2 rounded-lg flex-shrink-0 ${
-                        insight.type === 'alert'
-                          ? 'bg-orange-100'
-                          : insight.type === 'trend'
-                          ? 'bg-blue-100'
-                          : 'bg-green-100'
-                      }`}
-                    >
-                      {insight.type === 'alert' && (
-                        <AlertTriangle className="h-5 w-5 text-orange-600" />
-                      )}
-                      {insight.type === 'trend' && (
-                        <TrendingUp className="h-5 w-5 text-blue-600" />
-                      )}
-                      {insight.type === 'recommendation' && (
-                        <Sparkles className="h-5 w-5 text-green-600" />
-                      )}
-                    </div>
-                    <div className="flex-1">
-                      <p className="font-semibold text-gray-800">{insight.title}</p>
-                      <p className="text-sm text-gray-600 mt-1">{insight.suggestion}</p>
-                    </div>
+            )}
+
+            {report.type === 'audit_trail' && (
+              <dl className="divide-y divide-line">
+                {[
+                  ['Total audit events', '847'],
+                  ['Modified records', '324'],
+                  ['People involved', '28'],
+                ].map(([label, value]) => (
+                  <div key={label} className="flex items-center justify-between py-3">
+                    <dt className="text-sm text-text-secondary">{label}</dt>
+                    <dd className="font-mono text-base text-text-primary">{value}</dd>
                   </div>
-                </div>
+                ))}
+              </dl>
+            )}
+          </SectionCard>
+
+          {/* Analysis */}
+          <SectionCard
+            tone="ai"
+            eyebrow={
+              <span className="flex items-center gap-1.5 text-signal-text">
+                <Sparkles size={16} />
+                Sample analysis
+              </span>
+            }
+            title="Analysis and recommendations"
+          >
+            <ul className="divide-y divide-line">
+              {aiInsights.map((insight, idx) => (
+                <li key={idx} className="flex items-start gap-3 py-3 first:pt-0 last:pb-0">
+                  <span className={cn('mt-0.5 flex-shrink-0', insight.type === 'alert' ? 'text-caution' : 'text-signal-text')}>
+                    {insight.type === 'alert' && <AlertTriangle size={18} />}
+                    {insight.type === 'trend' && <TrendingUp size={18} />}
+                    {insight.type === 'recommendation' && <Lightbulb size={18} />}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-semibold text-text-primary">{insight.title}</p>
+                    <p className="mt-1 text-sm text-text-secondary">{insight.suggestion}</p>
+                  </div>
+                </li>
               ))}
-            </CardContent>
-          </Card>
+            </ul>
+          </SectionCard>
         </div>
 
         {/* Sidebar */}
-        <div className="lg:col-span-1 space-y-4">
-          {/* Save Report Card */}
-          <Card className="shadow-md border-gray-200 sticky top-6">
-            <CardHeader>
-              <CardTitle className="text-lg">Save This Report</CardTitle>
-              <CardDescription>Make it easy to re-run later</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Report Name *
-                </label>
+        <div className="min-w-0 space-y-5 lg:col-span-1">
+          {/* Save report */}
+          <SectionCard title="Save this report">
+            <div className="space-y-4">
+              <p className="text-sm text-text-secondary">Save it to run it again later.</p>
+              <div className="space-y-1.5">
+                <Label htmlFor="report-name">Report name</Label>
                 <Input
-                  placeholder="e.g., Q2 Finance Report"
+                  id="report-name"
+                  placeholder="Q2 finance report"
                   value={reportName}
                   onChange={(e) => setReportName(e.target.value)}
                 />
               </div>
 
-              <Button onClick={handleSave} className="w-full gap-2">
-                <Copy className="h-4 w-4" />
-                Save Report
+              <Button onClick={handleSave} className="w-full">
+                <Save size={16} />
+                Save report
               </Button>
-            </CardContent>
-          </Card>
+            </div>
+          </SectionCard>
 
-          {/* Tag Reviewers Card */}
+          {/* Reviewers */}
           {users.length > 0 && (
-            <Card className="shadow-md border-gray-200">
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <Users className="h-5 w-5" />
-                  Notify Reviewers
-                </CardTitle>
-                <CardDescription>Tag people to review this report</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-3">
+            <SectionCard title="Notify reviewers">
+              <p className="mb-3 text-sm text-text-secondary">Tag people to review this report.</p>
+              <div className="space-y-1">
                 {users.map((user) => (
                   <div
                     key={user.id}
-                    className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-50"
+                    className="flex items-center gap-3 rounded-sm p-2 hover:bg-surface-2"
                   >
                     <Checkbox
                       id={`reviewer-${user.id}`}
@@ -397,15 +334,15 @@ export const ReportGenerationResult: React.FC<ReportGenerationResultProps> = ({
                     />
                     <label
                       htmlFor={`reviewer-${user.id}`}
-                      className="flex-1 cursor-pointer"
+                      className="min-w-0 flex-1 cursor-pointer"
                     >
-                      <p className="text-sm font-medium text-gray-800">{user.name}</p>
-                      <p className="text-xs text-gray-500">{user.email}</p>
+                      <span className="block text-sm font-medium text-text-primary">{user.name}</span>
+                      <span className="block truncate text-xs text-text-muted">{user.email}</span>
                     </label>
                   </div>
                 ))}
-              </CardContent>
-            </Card>
+              </div>
+            </SectionCard>
           )}
         </div>
       </div>

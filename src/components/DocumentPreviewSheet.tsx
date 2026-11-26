@@ -1,5 +1,4 @@
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import {
   Sheet,
@@ -12,22 +11,16 @@ import {
   FileText,
   Download,
   Share2,
-  MoreVertical,
   Lock,
   Globe,
-  Shield,
-  Calendar,
-  User,
   Building,
   Tag,
-  Eye,
-  Loader2,
-} from 'lucide-react';
+} from '@/components/icons';
+import { StatusBadge } from '@/components/shared/StatusBadge';
+import { TableSkeleton } from '@/components/shared/TableSkeleton';
+import { DocumentStatusBadge } from '@/components/documents/DocumentStatusBadge';
+import { formatDate, formatDateTime } from '@/lib/format';
 import type { Document, Department, DocumentVersion } from '@/types/dms';
-import dayjs from 'dayjs';
-import relativeTime from 'dayjs/plugin/relativeTime';
-
-dayjs.extend(relativeTime);
 
 interface DocumentPreviewSheetProps {
   document: Document | null;
@@ -48,26 +41,28 @@ const formatBytes = (bytes: number) => {
   return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`;
 };
 
-const getStatusColor = (status: string) => {
-  const colors: Record<string, string> = {
-    active: 'bg-green-100 text-green-800 border-green-300',
-    approved: 'bg-blue-100 text-blue-800 border-blue-300',
-    pending: 'bg-amber-100 text-amber-800 border-amber-300',
-    archived: 'bg-gray-100 text-gray-800 border-gray-300',
-    rejected: 'bg-red-100 text-red-800 border-red-300',
-    deleted: 'bg-red-100 text-red-800 border-red-300',
-  };
-  return colors[status] || colors.active;
-};
-
 const getVisibilityLabel = (level: string) => {
   const labels: Record<string, { icon: React.ReactNode; label: string }> = {
-    public: { icon: <Globe className="h-4 w-4" />, label: 'Public (All Staff)' },
-    restricted: { icon: <Lock className="h-4 w-4" />, label: 'Restricted (Private)' },
-    department: { icon: <Building className="h-4 w-4" />, label: 'Department Only' },
+    public: { icon: <Globe size={16} />, label: 'Public, all staff' },
+    restricted: { icon: <Lock size={16} />, label: 'Restricted' },
+    department: { icon: <Building size={16} />, label: 'Department only' },
   };
   return labels[level] || labels.department;
 };
+
+const Row = ({ label, children }: { label: string; children: React.ReactNode }) => (
+  <div className="flex items-center justify-between gap-3">
+    <dt className="whitespace-nowrap text-xs text-text-muted">{label}</dt>
+    <dd className="flex min-w-0 items-center gap-1.5 text-[13px] font-medium text-text-primary">{children}</dd>
+  </div>
+);
+
+const Group = ({ title, children }: { title: string; children: React.ReactNode }) => (
+  <div className="space-y-2">
+    <h3 className="text-xs font-semibold uppercase tracking-[.04em] text-text-muted">{title}</h3>
+    <dl className="space-y-2">{children}</dl>
+  </div>
+);
 
 export default function DocumentPreviewSheet({
   document,
@@ -85,39 +80,36 @@ export default function DocumentPreviewSheet({
 
   return (
     <Sheet open={isOpen} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="w-full sm:w-[500px] max-w-lg overflow-y-auto">
+      <SheetContent side="right" className="w-full max-w-lg overflow-y-auto sm:w-[500px]">
         {isLoading ? (
-          <div className="flex h-full items-center justify-center">
-            <Loader2 className="h-8 w-8 animate-spin text-tenant-primary" />
-          </div>
+          <TableSkeleton rows={8} columns={2} />
         ) : (
           <>
             <SheetHeader>
-              <SheetTitle className="text-left">Document Preview</SheetTitle>
-              <SheetDescription className="text-left">View full details and metadata</SheetDescription>
+              <SheetTitle className="text-left">Document preview</SheetTitle>
+              <SheetDescription className="text-left">Details and metadata</SheetDescription>
             </SheetHeader>
 
-            <div className="space-y-6 py-4">
+            <div className="space-y-5 py-4">
               {/* Document preview area */}
-              <div className="bg-tenant-primary/10 rounded-lg h-48 flex items-center justify-center border-2 border-dashed border-tenant-primary/20">
+              <div className="flex h-40 items-center justify-center rounded-lg bg-field">
                 <div className="text-center">
-                  <FileText className="h-12 w-12 text-tenant-primary mx-auto mb-2 opacity-60" />
-                  <p className="text-sm text-gray-600">Document Preview</p>
-                  <p className="text-xs text-gray-500 mt-1">{formatBytes(document.file_size)}</p>
+                  <FileText size={40} className="mx-auto mb-2 text-text-muted" />
+                  <p className="font-mono text-xs text-text-muted">{formatBytes(document.file_size)}</p>
                 </div>
               </div>
 
               {/* Quick action buttons */}
               <div className="flex gap-2">
                 <Button
-                  className="flex-1 bg-tenant-primary hover:bg-tenant-primary/90 text-white gap-2"
+                  className="flex-1"
                   onClick={() => onDownload(document)}
                 >
-                  <Download className="h-4 w-4" />
+                  <Download />
                   Download
                 </Button>
-                <Button variant="outline" className="gap-2">
-                  <Share2 className="h-4 w-4" />
+                <Button variant="secondary">
+                  <Share2 />
                   Share
                 </Button>
               </div>
@@ -126,141 +118,59 @@ export default function DocumentPreviewSheet({
 
               {/* Document title and status */}
               <div>
-                <h2 className="text-xl font-bold text-gray-900 mb-2">{document.title}</h2>
+                <h2 className="mb-1 text-xl font-semibold text-text-primary">{document.title}</h2>
                 {document.description && (
-                  <p className="text-sm text-gray-600">{document.description}</p>
+                  <p className="text-sm text-text-secondary">{document.description}</p>
                 )}
-
-                {/* Status badge */}
                 <div className="mt-3">
-                  <Badge className={`${getStatusColor(document.status)} border`}>
-                    {document.status.charAt(0).toUpperCase() + document.status.slice(1)}
-                  </Badge>
+                  <DocumentStatusBadge status={document.status} />
                 </div>
               </div>
 
               <Separator />
 
-              {/* Metadata grid */}
-              <div className="space-y-4">
-                <h3 className="font-semibold text-sm text-gray-900">Metadata</h3>
+              <Group title="File">
+                <Row label="File type"><span className="truncate font-mono text-xs">{document.file_type}</span></Row>
+                <Row label="File size"><span className="font-mono text-xs">{formatBytes(document.file_size)}</span></Row>
+                <Row label="File name"><span className="truncate font-mono text-xs">{document.file_name}</span></Row>
+              </Group>
 
-                <div className="grid grid-cols-1 gap-3">
-                  {/* File Information */}
-                  <div className="bg-gray-50 rounded-lg p-3 space-y-2">
-                    <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">File Information</p>
-                    <div className="space-y-1.5 text-sm">
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">File Type:</span>
-                        <span className="font-mono font-medium text-gray-900">{document.file_type}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">File Size:</span>
-                        <span className="font-medium text-gray-900">{formatBytes(document.file_size)}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">File Name:</span>
-                        <span className="font-medium text-gray-900 truncate">{document.file_name}</span>
-                      </div>
-                    </div>
+              <Group title="Details">
+                <Row label="Type"><span className="capitalize">{document.document_type}</span></Row>
+                {document.category && (
+                  <Row label="Category"><span className="capitalize">{document.category}</span></Row>
+                )}
+                {department && (
+                  <Row label="Department"><Building size={16} />{department.name}</Row>
+                )}
+              </Group>
+
+              <Group title="Access">
+                <Row label="Visibility">{visibility.icon}{visibility.label}</Row>
+                <Row label="Encrypted">{document.is_encrypted ? 'Yes' : 'No'}</Row>
+                <Row label="Version"><span className="font-mono text-xs">v{document.version}</span></Row>
+              </Group>
+
+              <Group title="Ownership and dates">
+                <Row label="Owner">{ownerName}</Row>
+                <Row label="Created"><span className="font-mono text-xs">{formatDate(document.created_at)}</span></Row>
+                <Row label="Modified"><span className="font-mono text-xs">{formatDate(document.updated_at)}</span></Row>
+              </Group>
+
+              {/* Tags */}
+              {document.tags && document.tags.length > 0 && (
+                <div className="space-y-2">
+                  <h3 className="text-xs font-semibold uppercase tracking-[.04em] text-text-muted">Tags</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {document.tags.map((tag) => (
+                      <StatusBadge key={tag} tone="neutral">
+                        <Tag size={14} />
+                        {tag}
+                      </StatusBadge>
+                    ))}
                   </div>
-
-                  {/* Document Details */}
-                  <div className="bg-gray-50 rounded-lg p-3 space-y-2">
-                    <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Details</p>
-                    <div className="space-y-1.5 text-sm">
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Type:</span>
-                        <Badge variant="secondary" className="text-xs capitalize">
-                          {document.document_type}
-                        </Badge>
-                      </div>
-                      {document.category && (
-                        <div className="flex justify-between">
-                          <span className="text-gray-600">Category:</span>
-                          <span className="font-medium text-gray-900 capitalize">{document.category}</span>
-                        </div>
-                      )}
-                      {department && (
-                        <div className="flex justify-between items-center">
-                          <span className="text-gray-600">Department:</span>
-                          <div className="flex items-center gap-1">
-                            <Building className="h-3.5 w-3.5" />
-                            <span className="font-medium text-gray-900">{department.name}</span>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Access & Visibility */}
-                  <div className="bg-gray-50 rounded-lg p-3 space-y-2">
-                    <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Access & Visibility</p>
-                    <div className="space-y-1.5 text-sm">
-                      <div className="flex items-center justify-between">
-                        <span className="text-gray-600">Visibility:</span>
-                        <div className="flex items-center gap-1">
-                          {visibility.icon}
-                          <span className="font-medium text-gray-900">{visibility.label}</span>
-                        </div>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Encrypted:</span>
-                        <span className={`font-medium ${document.is_encrypted ? 'text-green-600' : 'text-gray-600'}`}>
-                          {document.is_encrypted ? '✓ Yes' : 'No'}
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Version:</span>
-                        <span className="font-medium text-gray-900">v{document.version}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Ownership & Dates */}
-                  <div className="bg-gray-50 rounded-lg p-3 space-y-2">
-                    <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Ownership & Dates</p>
-                    <div className="space-y-1.5 text-sm">
-                      <div className="flex items-center justify-between">
-                        <span className="text-gray-600">Owner:</span>
-                        <div className="flex items-center gap-1">
-                          <User className="h-3.5 w-3.5" />
-                          <span className="font-medium text-gray-900">{ownerName}</span>
-                        </div>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-gray-600">Created:</span>
-                        <div className="flex items-center gap-1 text-xs text-gray-700">
-                          <Calendar className="h-3 w-3" />
-                          <span>{dayjs(document.created_at).format('MMM DD, YYYY')}</span>
-                        </div>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-gray-600">Modified:</span>
-                        <div className="flex items-center gap-1 text-xs text-gray-700">
-                          <Calendar className="h-3 w-3" />
-                          <span>{dayjs(document.updated_at).format('MMM DD, YYYY')}</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Tags */}
-                  {document.tags && document.tags.length > 0 && (
-                    <div className="bg-gray-50 rounded-lg p-3 space-y-2">
-                      <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Tags</p>
-                      <div className="flex flex-wrap gap-2">
-                        {document.tags.map((tag) => (
-                          <Badge key={tag} variant="outline" className="text-xs">
-                            <Tag className="h-2.5 w-2.5 mr-1" />
-                            {tag}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                  )}
                 </div>
-              </div>
+              )}
 
               {versions && versions.length > 0 && (
                 <>
@@ -268,17 +178,17 @@ export default function DocumentPreviewSheet({
 
                   {/* Version history */}
                   <div className="space-y-3">
-                    <h3 className="font-semibold text-sm text-gray-900">Version History</h3>
-                    <div className="space-y-2 max-h-48 overflow-y-auto">
+                    <h3 className="text-sm font-semibold text-text-primary">Version history</h3>
+                    <div className="max-h-48 space-y-2 overflow-y-auto">
                       {versions.map((version) => (
-                        <div key={version.id} className="bg-gray-50 rounded-lg p-3 text-sm border border-gray-200">
-                          <div className="flex items-center justify-between mb-1">
-                            <span className="font-medium text-gray-900">v{version.version_number}</span>
-                            <span className="text-xs text-gray-500">{formatBytes(version.file_size)}</span>
+                        <div key={version.id} className="rounded-md border border-line p-3">
+                          <div className="mb-1 flex items-center justify-between">
+                            <span className="font-mono text-xs font-medium text-text-primary">v{version.version_number}</span>
+                            <span className="font-mono text-xs text-text-muted">{formatBytes(version.file_size)}</span>
                           </div>
-                          <p className="text-xs text-gray-600 mb-1">{dayjs(version.created_at).format('MMM DD, YYYY HH:mm')}</p>
+                          <p className="mb-1 font-mono text-xs text-text-secondary">{formatDateTime(version.created_at)}</p>
                           {version.change_notes && (
-                            <p className="text-xs text-gray-700 italic">"{version.change_notes}"</p>
+                            <p className="text-xs text-text-secondary">"{version.change_notes}"</p>
                           )}
                         </div>
                       ))}

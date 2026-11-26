@@ -1,4 +1,3 @@
-import React from 'react';
 import {
   Dialog,
   DialogContent,
@@ -6,7 +5,6 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-  DialogFooter,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,9 +12,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
-import { FileText, Upload, FileUp, Shield, Tag, X, CheckCircle2, Loader2, Star, Building2 } from 'lucide-react';
+import { StatusBadge } from '@/components/shared/StatusBadge';
+import { FileText, Upload, FileUp, Shield, X, Check, CheckCircle2, Loader2, Star, Building2 } from '@/components/icons';
+import { cn } from '@/lib/utils';
 import { useDropzone } from 'react-dropzone';
 
 import type { Department } from '@/types/dms';
@@ -102,109 +101,108 @@ export default function DocumentUploadDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogTrigger asChild>
-        <Button variant="tenantPrimary" className="shadow-lg hover:shadow-xl transition-all">
-          <Upload className="h-4 w-4 mr-2" />
-          Upload Document
+        <Button>
+          <Upload />
+          Upload document
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-4xl bg-white p-0 overflow-hidden border-none shadow-2xl">
-        <div className="flex h-full max-h-[90vh]">
-          <div className="w-2/5 bg-slate-50 p-8 border-r border-slate-100 flex flex-col justify-center">
-            <div className="mb-8">
-              <h3 className="text-xl font-bold text-slate-800">File Ingestion</h3>
-              <p className="text-sm text-slate-500 mt-1">Upload your document to safely archive it in the vault.</p>
+      <DialogContent className="max-w-4xl gap-0 overflow-hidden p-0">
+        <div className="flex max-h-[90vh] flex-col overflow-y-auto md:flex-row md:overflow-hidden">
+          <div className="flex shrink-0 flex-col justify-center border-b border-line bg-surface-0 p-6 md:w-2/5 md:border-b-0 md:border-r">
+            <div className="mb-6">
+              <h3 className="text-base font-semibold text-text-primary">File</h3>
+              <p className="mt-1 text-sm text-text-secondary">Choose the document you want to add.</p>
             </div>
 
             {!uploadData.file ? (
               <div
                 {...getRootProps()}
-                className={`
-                  border-2 border-dashed rounded-2xl p-10 transition-all cursor-pointer
-                  flex flex-col items-center justify-center text-center space-y-4
-                  ${isDragActive ? 'border-primary bg-primary/5 scale-[1.02]' : 'border-slate-300 hover:border-primary hover:bg-white'}
-                `}
+                className={cn(
+                  'flex cursor-pointer flex-col items-center justify-center gap-3 rounded-lg border-2 border-dashed p-8 text-center transition-colors',
+                  isDragActive ? 'border-signal bg-signal-tint' : 'border-line-strong bg-surface-1 hover:border-signal',
+                )}
               >
                 <input {...getInputProps()} />
-                <div className="p-4 bg-white rounded-full shadow-sm text-primary">
-                  <FileUp className="h-10 w-10" />
+                <div className="grid h-12 w-12 place-items-center rounded-lg bg-field text-text-secondary">
+                  <FileUp size={24} />
                 </div>
                 <div>
-                  <p className="font-semibold text-slate-700">Click or drag file</p>
-                  <p className="text-xs text-slate-400 mt-1">Supports PDF, DOCX, XLSX (Max 50MB)</p>
+                  <p className="text-sm font-semibold text-text-primary">Drop a file here or browse</p>
+                  <p className="mt-1 text-xs text-text-muted">PDF, DOCX or XLSX, up to 50MB</p>
                 </div>
               </div>
             ) : (
-              <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 relative group">
-                <button
-                  onClick={() => setUploadData({ ...uploadData, file: null })}
-                  className="absolute -top-2 -right-2 p-1.5 bg-red-500 text-white rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity"
-                >
-                  <X className="h-3 w-3" />
-                </button>
-                <div className="flex items-center gap-4">
-                  <div className="p-3 bg-blue-50 text-blue-600 rounded-xl">
-                    <FileText className="h-8 w-8" />
+              <div className="rounded-lg border border-line bg-surface-1 p-4 shadow-card">
+                <div className="flex items-center gap-3">
+                  <div className="grid h-12 w-12 shrink-0 place-items-center rounded-sm bg-field text-text-secondary">
+                    <FileText size={24} />
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-bold text-slate-800 truncate" title={uploadData.file?.name}>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-semibold text-text-primary" title={uploadData.file?.name}>
                       {uploadData.file?.name}
                     </p>
-                    <p className="text-xs text-slate-500">
-                      {uploadData.file && `${formatBytes(uploadData.file.size)} • ${uploadData.file.type.split('/').pop()?.toUpperCase()}`}
+                    <p className="font-mono text-xs text-text-muted">
+                      {uploadData.file && `${formatBytes(uploadData.file.size)} · ${uploadData.file.type.split('/').pop()?.toUpperCase()}`}
                     </p>
                   </div>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    aria-label="Remove file"
+                    title="Remove file"
+                    onClick={() => setUploadData({ ...uploadData, file: null })}
+                  >
+                    <X />
+                  </Button>
                 </div>
-                <div className="mt-4 flex items-center gap-2 text-positive text-[10px] font-bold uppercase tracking-wider bg-positive-tint px-3 py-1 rounded-full w-fit">
-                  <CheckCircle2 className="h-3 w-3" /> Ready for upload
-                </div>
+                <StatusBadge tone="positive" className="mt-3">Ready to upload</StatusBadge>
               </div>
             )}
 
-            <div className="mt-auto pt-8">
-              <div className="flex items-center gap-2 text-xs text-slate-400">
-                <Shield className="h-3 w-3" />
-                <span>Secure end-to-end encryption available</span>
-              </div>
-            </div>
+            <p className="mt-6 flex items-center gap-2 text-xs text-text-muted">
+              <Shield size={16} />
+              You can encrypt the file before it is stored.
+            </p>
           </div>
 
-          <div className="flex-1 p-8 overflow-y-auto bg-white">
-            <DialogHeader className="mb-6">
-              <DialogTitle className="text-2xl font-black text-slate-900 leading-none">Metadata & Settings</DialogTitle>
-              <DialogDescription>Index your document with precision for easy retrieval.</DialogDescription>
+          <div className="flex-1 p-6 md:overflow-y-auto">
+            <DialogHeader className="mb-5">
+              <DialogTitle>Upload document</DialogTitle>
+              <DialogDescription>Add the details people will use to find this document.</DialogDescription>
             </DialogHeader>
 
-            <div className="grid gap-6">
-              <div className="space-y-4 pt-2">
-                <div className="space-y-2">
-                  <Label className="text-slate-700 font-bold">Document Title *</Label>
+            <div className="grid gap-5">
+              <div className="space-y-4">
+                <div className="space-y-1.5">
+                  <Label htmlFor="upload-dialog-title">Title (required)</Label>
                   <Input
+                    id="upload-dialog-title"
                     value={uploadData.title}
                     onChange={(e) => setUploadData({ ...uploadData, title: e.target.value })}
-                    placeholder="e.g., Annual Financial Audit 2024"
-                    className="h-11 border-slate-200 focus:ring-primary shadow-sm"
+                    placeholder="Annual financial audit 2026"
                   />
                 </div>
 
-                <div className="space-y-2">
-                  <Label className="text-slate-700 font-bold">Description</Label>
+                <div className="space-y-1.5">
+                  <Label htmlFor="upload-dialog-description">Description</Label>
                   <Textarea
+                    id="upload-dialog-description"
                     value={uploadData.description}
                     onChange={(e) => setUploadData({ ...uploadData, description: e.target.value })}
-                    placeholder="Provide deep context for this record..."
+                    placeholder="Audit of the 2026 accounts, prepared for the board"
                     rows={3}
-                    className="resize-none border-slate-200 shadow-sm"
                   />
                 </div>
               </div>
 
               <Separator />
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label className="text-slate-700 font-bold text-xs uppercase tracking-wider">Document Type</Label>
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div className="space-y-1.5">
+                  <Label>Document type</Label>
                   <Select value={uploadData.document_type} onValueChange={(v) => setUploadData({ ...uploadData, document_type: v })}>
-                    <SelectTrigger className="h-10 border-slate-200 bg-slate-50/50"><SelectValue /></SelectTrigger>
+                    <SelectTrigger aria-label="Document type"><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="policy">Policy</SelectItem>
                       <SelectItem value="minutes">Minutes</SelectItem>
@@ -214,136 +212,136 @@ export default function DocumentUploadDialog({
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="space-y-2">
-                  <Label className="text-slate-700 font-bold text-xs uppercase tracking-wider">Classification</Label>
+                <div className="space-y-1.5">
+                  <Label>Classification</Label>
                   <Select value={uploadData.category} onValueChange={(v) => setUploadData({ ...uploadData, category: v })}>
-                    <SelectTrigger className="h-10 border-slate-200 bg-slate-50/50"><SelectValue /></SelectTrigger>
+                    <SelectTrigger aria-label="Classification"><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="academic">Academic</SelectItem>
                       <SelectItem value="financial">Financial</SelectItem>
-                      <SelectItem value="hr">Human Resources</SelectItem>
+                      <SelectItem value="hr">Human resources</SelectItem>
                       <SelectItem value="administrative">Administrative</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2 col-span-2">
-                  <Label className="text-slate-700 font-bold text-xs uppercase tracking-wider text-primary flex items-center gap-1">
-                    <Building2 className="h-3 w-3" /> Departments
-                    <span className="text-slate-400 normal-case font-normal ml-1">— first selected is the owning department</span>
-                  </Label>
-                  {/* Multi-select department checkboxes */}
-                  <div className="border border-slate-200 rounded-lg bg-slate-50/50 max-h-40 overflow-y-auto p-2 space-y-1">
-                    {departments.filter(d => d.id?.trim()).length === 0 && (
-                      <p className="text-xs text-slate-400 px-2 py-1">No departments available</p>
-                    )}
-                    {departments.filter(d => d.id?.trim()).map(d => {
-                      const isSelected = uploadData.department_ids.includes(d.id)
-                      const isPrimary = uploadData.department_ids[0] === d.id
-                      return (
-                        <button
-                          key={d.id}
-                          type="button"
-                          onClick={() => {
-                            const current = uploadData.department_ids
-                            const next = isSelected
-                              ? current.filter(id => id !== d.id)
-                              : [...current, d.id]
-                            setUploadData({ ...uploadData, department_ids: next })
-                          }}
-                          className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-sm transition-colors ${
-                            isSelected
-                              ? 'bg-primary/10 text-primary font-medium'
-                              : 'hover:bg-slate-100 text-slate-600'
-                          }`}
-                        >
-                          <div className={`h-4 w-4 rounded border flex-shrink-0 flex items-center justify-center ${
-                            isSelected ? 'bg-primary border-primary' : 'border-slate-300'
-                          }`}>
-                            {isSelected && <X className="h-2.5 w-2.5 text-white" />}
-                          </div>
-                          <span className="flex-1 text-left truncate">{d.name}</span>
-                          {isPrimary && (
-                            <span className="flex items-center gap-0.5 text-amber-500 text-xs font-semibold">
-                              <Star className="h-3 w-3 fill-amber-400" /> Primary
-                            </span>
-                          )}
-                        </button>
-                      )
-                    })}
-                  </div>
-                  {uploadData.department_ids.length === 0 && (
-                    <p className="text-xs text-slate-400">No department selected — document will be institution-wide</p>
+              <div className="space-y-1.5">
+                <Label className="flex items-center gap-1.5">
+                  <Building2 size={16} /> Departments
+                </Label>
+                {/* Multi-select department list */}
+                <div className="max-h-40 space-y-1 overflow-y-auto rounded-md bg-field p-1.5">
+                  {departments.filter(d => d.id?.trim()).length === 0 && (
+                    <p className="px-2 py-1 text-xs text-text-muted">No departments available</p>
                   )}
+                  {departments.filter(d => d.id?.trim()).map(d => {
+                    const isSelected = uploadData.department_ids.includes(d.id)
+                    const isPrimary = uploadData.department_ids[0] === d.id
+                    return (
+                      <button
+                        key={d.id}
+                        type="button"
+                        aria-pressed={isSelected}
+                        onClick={() => {
+                          const current = uploadData.department_ids
+                          const next = isSelected
+                            ? current.filter(id => id !== d.id)
+                            : [...current, d.id]
+                          setUploadData({ ...uploadData, department_ids: next })
+                        }}
+                        className={cn(
+                          'flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm transition-colors',
+                          isSelected ? 'bg-surface-1 font-medium text-text-primary' : 'text-text-secondary hover:bg-field-hover',
+                        )}
+                      >
+                        <span className={cn('grid h-4 w-4 shrink-0 place-items-center rounded-xs border', isSelected ? 'border-signal bg-signal text-on-signal' : 'border-line-strong bg-surface-1')}>
+                          {isSelected && <Check size={12} />}
+                        </span>
+                        <span className="flex-1 truncate text-left">{d.name}</span>
+                        {isPrimary && (
+                          <span className="flex items-center gap-1 text-xs font-semibold text-signal-text">
+                            <Star size={14} />Primary
+                          </span>
+                        )}
+                      </button>
+                    )
+                  })}
                 </div>
-                <div className="space-y-2 col-span-2">
-                  <Label className="text-slate-700 font-bold text-xs uppercase tracking-wider flex items-center gap-1">Visibility Level</Label>
-                  <Select value={uploadData.visibility_level} onValueChange={(v: any) => setUploadData({ ...uploadData, visibility_level: v })}>
-                    <SelectTrigger className="h-10 border-slate-200 bg-slate-50/50"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="department">Department Internal</SelectItem>
-                      <SelectItem value="public">Institution Public</SelectItem>
-                      <SelectItem value="restricted">Restricted Access</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+                <p className="text-xs text-text-muted">
+                  {uploadData.department_ids.length === 0
+                    ? 'No department selected, so the document is shared across the organisation.'
+                    : 'The first one you select is the primary department.'}
+                </p>
               </div>
 
-              <div className="space-y-2">
-                <Label className="text-slate-700 font-bold text-xs uppercase tracking-wider flex items-center gap-1">Tags</Label>
-                <div className="flex gap-2 mb-2 flex-wrap">
-                  {uploadData.tags.map(t => (
-                    <Badge key={t} variant="secondary" className="px-2 py-0.5 rounded-md flex items-center gap-1 bg-slate-100 text-slate-600 hover:bg-slate-200 group">
-                      {t}
-                      <X className="h-3 w-3 cursor-pointer opacity-50 group-hover:opacity-100" onClick={() => removeTag(t)} />
-                    </Badge>
-                  ))}
-                </div>
-                <div className="flex gap-2">
+              <div className="space-y-1.5">
+                <Label>Visibility</Label>
+                <Select value={uploadData.visibility_level} onValueChange={(v: any) => setUploadData({ ...uploadData, visibility_level: v })}>
+                  <SelectTrigger aria-label="Visibility"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="department">Department only</SelectItem>
+                    <SelectItem value="public">Everyone in the organisation</SelectItem>
+                    <SelectItem value="restricted">Restricted</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="upload-dialog-tag">Tags</Label>
+                {uploadData.tags.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {uploadData.tags.map(t => (
+                      <StatusBadge key={t} tone="neutral">
+                        {t}
+                        <button type="button" aria-label={`Remove tag ${t}`} className="rounded-pill hover:text-text-primary" onClick={() => removeTag(t)}>
+                          <X size={12} />
+                        </button>
+                      </StatusBadge>
+                    ))}
+                  </div>
+                )}
+                <div className="flex items-center gap-2">
                   <Input
-                    placeholder="Add tag and press Enter..."
+                    id="upload-dialog-tag"
+                    placeholder="renewal"
                     value={tagInput}
                     onChange={(e) => setTagInput(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addTag())}
-                    className="h-9 border-slate-200 text-sm"
                   />
-                  <Button variant="outline" size="sm" onClick={addTag} disabled={!tagInput.trim()}>Add</Button>
+                  <Button variant="secondary" onClick={addTag} disabled={!tagInput.trim()}>Add tag</Button>
                 </div>
               </div>
 
-              <div className="flex items-center justify-between p-4 rounded-2xl bg-blue-50/50 border border-blue-100">
+              <div className="flex items-center justify-between gap-3 rounded-lg border border-line p-4">
                 <div className="flex gap-3">
-                  <div className="p-2 bg-blue-100 text-blue-600 rounded-lg h-fit">
-                    <Shield className="h-5 w-5" />
+                  <div className="grid h-10 w-10 shrink-0 place-items-center rounded-sm bg-field text-text-secondary">
+                    <Shield size={20} />
                   </div>
                   <div>
-                    <p className="text-sm font-bold text-slate-800">Zero-Trust Encryption</p>
-                    <p className="text-xs text-slate-500">Encrypt this file before storing it in the persistent vault.</p>
+                    <p className="text-sm font-semibold text-text-primary">Encrypt this file</p>
+                    <p className="text-xs text-text-muted">The file is encrypted before it is stored.</p>
                   </div>
                 </div>
-                <Switch checked={uploadData.is_encrypted} onCheckedChange={(checked) => setUploadData({ ...uploadData, is_encrypted: checked })} />
+                <Switch aria-label="Encrypt this file" checked={uploadData.is_encrypted} onCheckedChange={(checked) => setUploadData({ ...uploadData, is_encrypted: checked })} />
               </div>
             </div>
 
-            <div className="mt-10 flex gap-3">
-              <Button variant="ghost" className="flex-1 h-12 text-slate-500" onClick={() => onOpenChange(false)}>Discard</Button>
+            <div className="mt-6 flex justify-end gap-2">
+              <Button variant="secondary" onClick={() => onOpenChange(false)}>Cancel</Button>
               <Button
-                variant="tenantPrimary"
-                className="flex-[2] h-12 shadow-md shadow-primary/20 text-lg font-bold"
                 onClick={onUpload}
                 disabled={isUploading || !uploadData.file}
               >
                 {isUploading ? (
                   <>
-                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                    Archiving Document...
+                    <Loader2 className="animate-spin" />
+                    Uploading
                   </>
                 ) : (
                   <>
-                    <CheckCircle2 className="mr-2 h-5 w-5" />
-                    Upload
+                    <CheckCircle2 />
+                    Upload document
                   </>
                 )}
               </Button>

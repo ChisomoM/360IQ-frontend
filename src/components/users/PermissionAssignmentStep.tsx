@@ -1,9 +1,8 @@
 import { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { ChevronDown, ChevronUp } from 'lucide-react';
+import { EmptyState } from '@/components/shared/EmptyState';
+import { ChevronDown, ChevronUp } from '@/components/icons';
 import type { Permission } from '@/types/rbac';
 
 interface PermissionAssignmentStepProps {
@@ -100,33 +99,12 @@ export function PermissionAssignmentStep({
     return { selected, total };
   };
 
-  const getActionColor = (action: string): string => {
-    switch (action.toLowerCase()) {
-      case 'read':
-        return 'bg-blue-50 border-blue-200 text-blue-700';
-      case 'write':
-        return 'bg-green-50 border-green-200 text-green-700';
-      case 'delete':
-        return 'bg-red-50 border-red-200 text-red-700';
-      case 'approve':
-        return 'bg-signal-tint border-line text-signal-text';
-      case 'manage':
-        return 'bg-orange-50 border-orange-200 text-orange-700';
-      case 'export':
-        return 'bg-yellow-50 border-yellow-200 text-yellow-700';
-      case 'sign':
-        return 'bg-surface-2 border-line text-text-secondary';
-      default:
-        return 'bg-gray-50 border-gray-200 text-gray-700';
-    }
-  };
-
   return (
-    <div className="w-full space-y-6">
-      <div className="bg-positive-tint border border-line rounded-lg p-4">
-        <h3 className="font-semibold text-blue-900 mb-1">Permission Assignment</h3>
-        <p className="text-sm text-blue-700 leading-relaxed">
-          Assign permissions to control what this user can access and do in the system. Use the quick-select buttons to streamline your workflow.
+    <div className="w-full space-y-4">
+      <div className="rounded-md bg-field p-4">
+        <h3 className="font-semibold text-sm text-text-primary mb-1">Permissions</h3>
+        <p className="text-sm text-text-secondary leading-relaxed">
+          Choose what this user can see and do. Select a whole group or single permissions.
         </p>
       </div>
 
@@ -143,63 +121,53 @@ export function PermissionAssignmentStep({
           const actions = Object.keys(actionGrouped).sort();
 
           return (
-            <Card
+            <section
               key={resource}
-              className="border-gray-150 shadow-sm hover:shadow-md transition-shadow rounded-xl overflow-hidden bg-white"
+              className="rounded-lg border border-line bg-surface-1 overflow-hidden"
             >
-              <CardHeader className="pb-3 bg-surface-2">
-                <div className="flex items-center justify-between gap-4">
-                  <button
-                    onClick={() => toggleCategory(resource)}
-                    className="flex items-center gap-3 flex-1 hover:bg-white/50 rounded-lg px-2 py-1 transition"
-                  >
-                    {isExpanded ? (
-                      <ChevronUp className="h-5 w-5 text-blue-500 flex-shrink-0" />
-                    ) : (
-                      <ChevronDown className="h-5 w-5 text-gray-400 flex-shrink-0" />
-                    )}
-                    <div className="text-left">
-                      <h3 className="font-semibold text-gray-900 capitalize text-sm">
-                        {resource.replace(/_/g, ' ')}
-                      </h3>
-                      <p className="text-xs text-gray-500 mt-0.5">
-                        {progress.total} permission{progress.total !== 1 ? 's' : ''}
-                      </p>
-                    </div>
-                  </button>
-                  <div className="flex items-center gap-3 ml-auto flex-shrink-0">
-                    <div className="text-right">
-                      <div className="font-semibold text-sm text-gray-900">
-                        {progress.selected}
-                      </div>
-                      <div className="text-xs text-gray-500">
-                        of {progress.total}
-                      </div>
-                    </div>
-                    <div className="flex gap-1.5">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => selectAllForResource(resource)}
-                        className="text-xs h-8 border-gray-200 text-gray-700 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-700 rounded-lg"
-                      >
-                        All
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => deselectAllForResource(resource)}
-                        className="text-xs h-8 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg"
-                      >
-                        Clear
-                      </Button>
-                    </div>
+              <div className="flex flex-wrap items-center justify-between gap-3 p-3">
+                <button
+                  type="button"
+                  onClick={() => toggleCategory(resource)}
+                  aria-expanded={isExpanded}
+                  className="flex items-center gap-3 flex-1 min-w-0 hover:bg-surface-2 rounded-md px-2 py-1 transition-colors"
+                >
+                  {isExpanded ? (
+                    <ChevronUp size={18} className="text-signal-text shrink-0" />
+                  ) : (
+                    <ChevronDown size={18} className="text-text-muted shrink-0" />
+                  )}
+                  <div className="text-left">
+                    <h3 className="font-semibold text-text-primary text-sm first-letter:uppercase">
+                      {resource.replace(/_/g, ' ')}
+                    </h3>
+                    <p className="text-xs text-text-muted mt-0.5">
+                      <span className="font-mono">{progress.selected}</span> of <span className="font-mono">{progress.total}</span> selected
+                    </p>
                   </div>
+                </button>
+                <div className="flex gap-1.5 ml-auto shrink-0">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="secondary"
+                    onClick={() => selectAllForResource(resource)}
+                  >
+                    Select all
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => deselectAllForResource(resource)}
+                  >
+                    Clear
+                  </Button>
                 </div>
-              </CardHeader>
+              </div>
 
               {isExpanded && (
-                <CardContent className="pt-6 space-y-5">
+                <div className="border-t border-line p-4 space-y-4">
                   {actions.map((action) => {
                     const actionPerms = actionGrouped[action];
                     const actionSelectedCount = actionPerms.filter((p) =>
@@ -207,21 +175,17 @@ export function PermissionAssignmentStep({
                     ).length;
 
                     return (
-                      <div key={action} className={`rounded-xl border p-5 transition ${getActionColor(action)}`}>
-                        <div className="flex items-center justify-between mb-4">
-                          <h4 className="font-semibold capitalize text-sm">
-                            {action.replace(/_/g, ' ')} Permissions
+                      <div key={action} className="rounded-md bg-field p-3">
+                        <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+                          <h4 className="font-semibold text-sm text-text-primary first-letter:uppercase">
+                            {action.replace(/_/g, ' ')} permissions
                           </h4>
                           <div className="flex items-center gap-3">
-                            <div className="text-right">
-                              <div className="text-xs font-semibold">
-                                {actionSelectedCount}
-                              </div>
-                              <div className="text-xs opacity-75">
-                                of {actionPerms.length}
-                              </div>
-                            </div>
+                            <span className="text-xs text-text-muted">
+                              <span className="font-mono">{actionSelectedCount}</span> of <span className="font-mono">{actionPerms.length}</span>
+                            </span>
                             <Button
+                              type="button"
                               size="sm"
                               variant="ghost"
                               onClick={() =>
@@ -229,35 +193,34 @@ export function PermissionAssignmentStep({
                                   ? deselectAllForAction(resource, action)
                                   : selectAllForAction(resource, action)
                               }
-                              className="text-xs h-7 px-2 hover:bg-white/30 rounded-lg font-medium"
                             >
                               {actionSelectedCount === actionPerms.length
-                                ? 'Deselect'
-                                : 'Select All'}
+                                ? 'Clear all'
+                                : 'Select all'}
                             </Button>
                           </div>
                         </div>
 
-                        <div className="space-y-3">
+                        <div className="space-y-1">
                           {actionPerms.map((perm) => {
                             const isSelected = selectedPermissions.includes(String(perm.id));
                             return (
                               <label
                                 key={perm.id}
-                                className="flex items-start gap-3 cursor-pointer hover:bg-white/40 p-3 rounded-lg transition group"
+                                className="flex items-start gap-3 cursor-pointer hover:bg-surface-2 p-2 rounded-sm transition-colors"
                               >
                                 <Checkbox
                                   checked={isSelected}
                                   onCheckedChange={() => togglePermission(String(perm.id))}
-                                  className="mt-1 group-hover:border-current"
+                                  className="mt-0.5"
                                 />
                                 <div className="flex-1 min-w-0">
-                                  <p className="font-medium text-sm leading-snug">
+                                  <p className="font-medium text-sm text-text-primary leading-snug">
                                     {perm.description || `${perm.resource}.${perm.action}`}
                                   </p>
                                   {perm.description && (
-                                    <p className="text-xs opacity-70 mt-1">
-                                      Scope: {perm.resource}.{perm.action}
+                                    <p className="font-mono text-xs text-text-muted mt-1">
+                                      {perm.resource}.{perm.action}
                                     </p>
                                   )}
                                 </div>
@@ -268,19 +231,15 @@ export function PermissionAssignmentStep({
                       </div>
                     );
                   })}
-                </CardContent>
+                </div>
               )}
-            </Card>
+            </section>
           );
         })}
       </div>
 
       {categories.length === 0 && (
-        <Card className="border-dashed bg-surface-2 rounded-lg">
-          <CardContent className="py-16 text-center text-gray-500">
-            <p className="font-medium">No permissions available to assign</p>
-          </CardContent>
-        </Card>
+        <EmptyState title="No permissions to assign" description="Permissions appear here once they are set up." />
       )}
     </div>
   );

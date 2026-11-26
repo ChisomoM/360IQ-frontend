@@ -1,20 +1,21 @@
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
+import { Loader2 } from "@/components/icons";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { addLink, changeJob, updateLink } from "@/lib/api/profiles";
 import type { CompanyLink } from "@/types/profile";
 import { EntityPicker } from "./EntityPicker";
-import { Field } from "./formParts";
+import { Field, FormError } from "./formParts";
 
 type Picked = { id: string; name: string } | null;
 
 function CompanyChoice({ value, onChange }: { value: Picked; onChange: (p: Picked) => void }) {
   return value ? (
-    <div className="flex items-center justify-between gap-2 rounded-lg border border-line p-2.5 text-sm">
-      <span className="min-w-0 break-words font-medium">{value.name}</span>
+    <div className="flex items-center justify-between gap-2 rounded-md border border-line p-3 text-sm">
+      <span className="min-w-0 break-words font-semibold">{value.name}</span>
       <Button type="button" variant="ghost" size="sm" onClick={() => onChange(null)}>
         Change
       </Button>
@@ -73,18 +74,14 @@ export function AddLinkDialog({ open, onOpenChange, personId, onDone }: { open: 
               <Input id="al-start" type="date" value={start} onChange={(e) => setStart(e.target.value)} />
             </Field>
           </div>
-          {error && (
-            <p role="alert" className="rounded-md bg-risk-tint px-3 py-2 text-sm text-risk">
-              {error}
-            </p>
-          )}
+          {error && <FormError>{error}</FormError>}
         </div>
-        <DialogFooter className="gap-2 sm:gap-0">
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+        <DialogFooter className="gap-2">
+          <Button variant="secondary" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
           <Button onClick={save} disabled={!company || busy}>
-            {busy && <Loader2 className="h-4 w-4 animate-spin" />} Add link
+            {busy && <Loader2 className="animate-spin" />} Add link
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -148,14 +145,19 @@ export function JobChangeDialog({
         <div className="space-y-3">
           {current.length > 1 && (
             <Field label="Leaving" htmlFor="jc-from">
-              <select id="jc-from" value={from} onChange={(e) => setFrom(e.target.value)} className="h-10 w-full rounded-md border border-line-strong bg-surface-1 px-3 text-sm text-text-primary">
-                {current.map((l) => (
-                  <option key={l.id} value={l.id}>
-                    {l.company_name}
-                    {l.title ? ` (${l.title})` : ""}
-                  </option>
-                ))}
-              </select>
+              <Select value={from} onValueChange={setFrom}>
+                <SelectTrigger id="jc-from">
+                  <SelectValue placeholder="Choose a company" />
+                </SelectTrigger>
+                <SelectContent>
+                  {current.map((l) => (
+                    <SelectItem key={l.id} value={l.id}>
+                      {l.company_name}
+                      {l.title ? ` (${l.title})` : ""}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </Field>
           )}
           {current.length === 1 && (
@@ -172,18 +174,14 @@ export function JobChangeDialog({
               <Input id="jc-start" type="date" value={start} onChange={(e) => setStart(e.target.value)} />
             </Field>
           </div>
-          {error && (
-            <p role="alert" className="rounded-md bg-risk-tint px-3 py-2 text-sm text-risk">
-              {error}
-            </p>
-          )}
+          {error && <FormError>{error}</FormError>}
         </div>
-        <DialogFooter className="gap-2 sm:gap-0">
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+        <DialogFooter className="gap-2">
+          <Button variant="secondary" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
           <Button onClick={save} disabled={!company || busy}>
-            {busy && <Loader2 className="h-4 w-4 animate-spin" />} Record job change
+            {busy && <Loader2 className="animate-spin" />} Record job change
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -222,12 +220,12 @@ export function EndLinkDialog({ link, onOpenChange, onDone }: { link: CompanyLin
         <Field label="Ended on" htmlFor="el-end">
           <Input id="el-end" type="date" value={end} onChange={(e) => setEnd(e.target.value)} />
         </Field>
-        <DialogFooter className="gap-2 sm:gap-0">
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+        <DialogFooter className="gap-2">
+          <Button variant="secondary" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
           <Button onClick={save} disabled={busy || !end}>
-            {busy && <Loader2 className="h-4 w-4 animate-spin" />} End link
+            {busy && <Loader2 className="animate-spin" />} End link
           </Button>
         </DialogFooter>
       </DialogContent>

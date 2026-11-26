@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { motion } from 'framer-motion'
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search, UserPlus } from 'lucide-react';
+import { Search, UserPlus } from '@/components/icons';
+import { PageHeader } from '@/components/shared/PageHeader';
 import {
     Select,
     SelectContent,
@@ -38,34 +39,16 @@ export function UserListHeader({
 
     return (
         <div className="space-y-4">
-            {/* Title Section */}
-            <motion.div
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{
-                    duration: 0.35,
-                    ease: [0.16, 1, 0.3, 1],
-                }}
-                className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
-            >
-                <div>
-                    <h1 className="font-display font-bold text-display-sm text-gray-900">
-                        Users Management
-                    </h1>
-                    <p className="font-sans text-text-md text-muted-foreground mt-1">
-                        Manage system administrators and user roles. Create and configure user access.
-                    </p>
-                </div>
-                {canCreate && (
-                    <Button
-                        onClick={onCreateClick}
-                        className="bg-primary text-primary-foreground hover:bg-primary/90 whitespace-nowrap h-10"
-                    >
-                        <UserPlus className="h-4 w-4 mr-2" />
-                        Create User
+            <PageHeader
+                title="Users"
+                description="Create accounts and set what each person can access."
+                actions={canCreate && (
+                    <Button onClick={onCreateClick}>
+                        <UserPlus />
+                        Create user
                     </Button>
                 )}
-            </motion.div>
+            />
 
             {/* Search and Filters */}
             <motion.div
@@ -79,24 +62,24 @@ export function UserListHeader({
                 className="flex flex-col sm:flex-row gap-3"
             >
                 <div className="flex-1 relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
                     <Input
-                        placeholder="Search by name or email..."
+                        placeholder="Search by name or email"
                         value={searchQuery}
                         onChange={(e) => onSearchChange(e.target.value)}
-                        className="pl-9 h-10 font-sans"
+                        className="pl-9"
                         aria-label="Search users by name or email"
                     />
                 </div>
 
                 {onRoleFilterChange && (
                     <Select onValueChange={onRoleFilterChange} defaultValue="all">
-                        <SelectTrigger className="w-full sm:w-40 h-10 font-sans">
+                        <SelectTrigger className="w-full sm:w-40" aria-label="Filter by role">
                             <SelectValue placeholder="Filter by role" />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="all">All Roles</SelectItem>
-                            <SelectItem value="super_admin">Super Admin</SelectItem>
+                            <SelectItem value="all">All roles</SelectItem>
+                            <SelectItem value="super_admin">Super admin</SelectItem>
                             <SelectItem value="admin">Admin</SelectItem>
                             <SelectItem value="user">User</SelectItem>
                         </SelectContent>
@@ -105,11 +88,11 @@ export function UserListHeader({
 
                 {onStatusFilterChange && (
                     <Select onValueChange={onStatusFilterChange} defaultValue="all">
-                        <SelectTrigger className="w-full sm:w-40 h-10 font-sans">
+                        <SelectTrigger className="w-full sm:w-40" aria-label="Filter by status">
                             <SelectValue placeholder="Filter by status" />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="all">All Status</SelectItem>
+                            <SelectItem value="all">All statuses</SelectItem>
                             <SelectItem value="active">Active</SelectItem>
                             <SelectItem value="inactive">Inactive</SelectItem>
                         </SelectContent>

@@ -1,9 +1,24 @@
 import { useState, useEffect } from 'react'
-import { motion } from 'framer-motion'
-import { X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Select } from '@/components/ui/select'
+import { Textarea } from '@/components/ui/textarea'
+import { Label } from '@/components/ui/label'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { getStatus } from '@/lib/status'
 import type { Document } from '@/types/dms'
 
 interface EditModalProps {
@@ -22,9 +37,9 @@ export interface EditFormData {
 }
 
 const visibilityLevels = [
-  { value: 'public' as const, label: 'Public - All Users' },
-  { value: 'department' as const, label: 'Department Only' },
-  { value: 'restricted' as const, label: 'Restricted (Owner Only)' },
+  { value: 'public' as const, label: 'Public, all users' },
+  { value: 'department' as const, label: 'Department only' },
+  { value: 'restricted' as const, label: 'Restricted, owner only' },
 ]
 
 const statusOptions = [
@@ -76,92 +91,71 @@ export function EditModal({
   if (!open || !document) return null
 
   return (
-    <>
-      <div
-        className="fixed inset-0 bg-black/50 z-40"
-        onClick={onClose}
-        aria-hidden="true"
-      />
-      <motion.div
-        className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-2xl shadow-2xl max-w-xl w-11/12 max-h-[90vh] overflow-y-auto z-50"
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        exit={{ opacity: 0, scale: 0.95 }}
-        transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-      >
-        <div className="p-6 border-b border-gray-100 flex items-center justify-between sticky top-0 bg-white rounded-t-2xl">
-          <h2 className="font-display font-semibold text-text-xl text-gray-900">
-            Edit Document
-          </h2>
-          <button
-            onClick={onClose}
-            className="p-1 hover:bg-gray-100 rounded-lg text-gray-500 transition-colors"
-          >
-            <X className="h-5 w-5" />
-          </button>
-        </div>
+    <Dialog open={open} onOpenChange={(next) => { if (!next) onClose() }}>
+      <DialogContent className="max-h-[90vh] max-w-xl overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Edit document</DialogTitle>
+          <DialogDescription>Update the document details. The file itself is not changed.</DialogDescription>
+        </DialogHeader>
 
-        <div className="p-6 space-y-4">
+        <div className="space-y-4">
           {/* Title */}
-          <div>
-            <label className="block text-text-sm font-sans font-semibold text-gray-700 mb-2">
-              Document Title *
-            </label>
+          <div className="space-y-1.5">
+            <Label htmlFor="edit-title">Title (required)</Label>
             <Input
+              id="edit-title"
               type="text"
               value={formData.title}
               onChange={(e) =>
                 setFormData(prev => ({ ...prev, title: e.target.value }))
               }
               disabled={isLoading}
-              className="w-full"
             />
           </div>
 
           {/* Description */}
-          <div>
-            <label className="block text-text-sm font-sans font-semibold text-gray-700 mb-2">
-              Description
-            </label>
-            <textarea
+          <div className="space-y-1.5">
+            <Label htmlFor="edit-description">Description</Label>
+            <Textarea
+              id="edit-description"
               value={formData.description}
               onChange={(e) =>
                 setFormData(prev => ({ ...prev, description: e.target.value }))
               }
               disabled={isLoading}
-              className="w-full px-3 py-2 border border-gray-200 rounded-lg font-sans text-text-sm focus:outline-none focus:ring-2 focus:ring-tenant-primary focus:border-transparent resize-none"
               rows={4}
             />
           </div>
 
           {/* Status & Visibility Grid */}
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-text-sm font-sans font-semibold text-gray-700 mb-2">
-                Status
-              </label>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="space-y-1.5">
+              <Label htmlFor="edit-status">Status</Label>
               <Select
                 value={formData.status}
-                onChange={(value) =>
+                onValueChange={(value) =>
                   setFormData(prev => ({ ...prev, status: value }))
                 }
                 disabled={isLoading}
               >
-                {statusOptions.map((status) => (
-                  <option key={status} value={status}>
-                    {status.charAt(0).toUpperCase() + status.slice(1)}
-                  </option>
-                ))}
+                <SelectTrigger id="edit-status">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {statusOptions.map((status) => (
+                    <SelectItem key={status} value={status}>
+                      {getStatus(status).label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
               </Select>
             </div>
 
-            <div>
-              <label className="block text-text-sm font-sans font-semibold text-gray-700 mb-2">
-                Visibility
-              </label>
+            <div className="space-y-1.5">
+              <Label htmlFor="edit-visibility">Visibility</Label>
               <Select
                 value={formData.visibility_level}
-                onChange={(value) =>
+                onValueChange={(value) =>
                   setFormData(prev => ({
                     ...prev,
                     visibility_level: value as 'public' | 'department' | 'restricted',
@@ -169,33 +163,38 @@ export function EditModal({
                 }
                 disabled={isLoading}
               >
-                {visibilityLevels.map((level) => (
-                  <option key={level.value} value={level.value}>
-                    {level.label}
-                  </option>
-                ))}
+                <SelectTrigger id="edit-visibility">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {visibilityLevels.map((level) => (
+                    <SelectItem key={level.value} value={level.value}>
+                      {level.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
               </Select>
             </div>
           </div>
-
-          {/* Actions */}
-          <div className="flex gap-3 justify-end pt-4 border-t border-gray-100">
-            <Button
-              variant="outline"
-              onClick={onClose}
-              disabled={isLoading}
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handleSubmit}
-              disabled={isLoading || !formData.title.trim()}
-            >
-              Save Changes
-            </Button>
-          </div>
         </div>
-      </motion.div>
-    </>
+
+        {/* Actions */}
+        <DialogFooter>
+          <Button
+            variant="secondary"
+            onClick={onClose}
+            disabled={isLoading}
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={handleSubmit}
+            disabled={isLoading || !formData.title.trim()}
+          >
+            Save changes
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   )
 }

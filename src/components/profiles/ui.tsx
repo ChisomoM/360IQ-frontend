@@ -1,12 +1,14 @@
 // Shared building blocks for the ProfileIQ screens (people and companies).
-// Colours come only from the brand tokens in tailwind.config.js (surface, line,
-// signal, positive, caution, risk, text-*).
+// Page furniture comes from components/shared; colours only from the 360IQ tokens.
 
 import { useEffect, useState, type ReactNode } from "react";
-import dayjs from "dayjs";
-import { ChevronDown, ChevronUp, EyeOff, Sparkles, CheckCircle2 } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { ChevronDown, ChevronUp, Lock, Sparkles, CheckCircle2 } from "@/components/icons";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { DataTablePagination } from "@/components/shared/DataTablePagination";
+import { StatusBadge } from "@/components/shared/StatusBadge";
+import { formatDate } from "@/lib/format";
+import type { Tone } from "@/lib/status";
 import { cn } from "@/lib/utils";
 import { getProfileMeta } from "@/lib/api/profiles";
 import type { FieldSource, ProfileMeta } from "@/types/profile";
@@ -36,23 +38,23 @@ export function sourceLabel(t: string): string {
 }
 
 export function fmtDate(d?: string | null): string {
-  return d ? dayjs(d).format("D MMM YYYY") : "";
+  return formatDate(d);
 }
 
-export const BUYING_ROLE_VARIANT: Record<string, "signal" | "positive" | "caution" | "risk" | "neutral"> = {
-  DECISION_MAKER: "signal",
+export const BUYING_ROLE_VARIANT: Record<string, Tone> = {
+  DECISION_MAKER: "neutral",
   CHAMPION: "positive",
-  INFLUENCER: "positive",
+  INFLUENCER: "neutral",
   PROCUREMENT: "neutral",
   USER: "neutral",
   BLOCKER: "risk",
-  ECONOMIC_BUYER: "signal",
+  ECONOMIC_BUYER: "neutral",
   GATEKEEPER: "caution",
 };
 
-export const STAGE_VARIANT: Record<string, "signal" | "positive" | "caution" | "risk" | "neutral"> = {
+export const STAGE_VARIANT: Record<string, Tone> = {
   LEAD: "neutral",
-  PROSPECT: "caution",
+  PROSPECT: "neutral",
   CUSTOMER: "positive",
   CHURNED: "risk",
 };
@@ -86,35 +88,13 @@ export function useProfileMeta(): ProfileMeta | null {
 
 // ─── layout pieces ───────────────────────────────────────────────────────────
 
-export function Panel({ title, action, children, className }: { title?: string; action?: ReactNode; children: ReactNode; className?: string }) {
-  return (
-    <section className={cn("rounded-xl border border-line bg-surface-1 p-4 sm:p-5 min-w-0", className)}>
-      {(title || action) && (
-        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-          {title && <h2 className="font-display text-base font-semibold text-text-primary">{title}</h2>}
-          {action}
-        </div>
-      )}
-      {children}
-    </section>
-  );
-}
-
-export function EmptyPanel({ icon, title, children }: { icon?: ReactNode; title: string; children?: ReactNode }) {
-  return (
-    <div className="flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-line bg-surface-0 px-4 py-12 text-center">
-      {icon && <div className="text-text-muted">{icon}</div>}
-      <p className="font-display font-semibold text-text-primary">{title}</p>
-      {children && <div className="max-w-sm text-sm text-text-secondary">{children}</div>}
-    </div>
-  );
-}
-
 export function MaskedNotice() {
   return (
-    <div className="flex items-start gap-2 rounded-lg border border-line bg-surface-2 px-3 py-2 text-sm text-text-secondary">
-      <EyeOff className="mt-0.5 h-4 w-4 shrink-0" />
-      <span>Phone, email and notes are hidden for your role. Ask an administrator for the "view sensitive" permission if you need them.</span>
+    <div className="flex items-start gap-3 rounded-lg bg-field px-4 py-3 text-sm text-text-secondary">
+      <Lock size={18} className="mt-0.5 shrink-0" />
+      <span>
+        <strong className="font-semibold text-text-primary">Phone, email and notes are hidden by your access level.</strong> Ask an administrator for the "view sensitive" permission if you need them.
+      </span>
     </div>
   );
 }
@@ -125,65 +105,43 @@ export interface TabDef<T extends string> {
   count?: number | null;
 }
 
-/** Scrollable pill tab bar. Scrolls inside its own box so the page never scrolls sideways. */
-export function TabBar<T extends string>({ tabs, active, onChange }: { tabs: TabDef<T>[]; active: T; onChange: (id: T) => void }) {
+/** Pill tabs. They scroll inside their own box so the page never scrolls sideways. */
+export function TabBar<T extends string>({ tabs, active, onChange, children }: { tabs: TabDef<T>[]; active: T; onChange: (id: T) => void; children?: ReactNode }) {
   return (
-    <div className="-mx-1 max-w-full overflow-x-auto px-1 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" role="tablist">
-      <div className="flex w-max gap-0.5 rounded-xl bg-surface-2 p-1">
-        {tabs.map((t) => (
-          <button
-            key={t.id}
-            role="tab"
-            aria-selected={active === t.id}
-            onClick={() => onChange(t.id)}
-            className={cn(
-              "flex h-9 items-center gap-1.5 whitespace-nowrap rounded-lg px-3 text-sm font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-focus",
-              active === t.id ? "bg-surface-1 text-text-primary shadow-raised" : "text-text-muted hover:text-text-secondary"
-            )}
-          >
-            {t.label}
-            {t.count ? <span className="rounded-full bg-signal px-1.5 py-0.5 text-xs font-semibold leading-none text-on-signal">{t.count}</span> : null}
-          </button>
-        ))}
+    <Tabs value={active} onValueChange={(v) => onChange(v as T)} className="min-w-0">
+      <div className="max-w-full overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <TabsList className="w-max">
+          {tabs.map((t) => (
+            <TabsTrigger key={t.id} value={t.id} className="gap-1.5">
+              {t.label}
+              {t.count ? <span className="rounded-pill bg-surface-2 px-1.5 font-mono text-xs text-text-secondary">{t.count}</span> : null}
+            </TabsTrigger>
+          ))}
+        </TabsList>
       </div>
-    </div>
+      <TabsContent value={active}>{children}</TabsContent>
+    </Tabs>
   );
 }
 
 export function Pager({ page, pageSize, total, onPage }: { page: number; pageSize: number; total: number; onPage: (p: number) => void }) {
   if (total <= pageSize) return null;
-  const from = (page - 1) * pageSize + 1;
-  const to = Math.min(total, page * pageSize);
-  return (
-    <div className="flex flex-wrap items-center justify-between gap-2 pt-2 text-sm text-text-secondary">
-      <span>
-        {from}–{to} of {total}
-      </span>
-      <div className="flex gap-2">
-        <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => onPage(page - 1)}>
-          Previous
-        </Button>
-        <Button variant="outline" size="sm" disabled={to >= total} onClick={() => onPage(page + 1)}>
-          Next
-        </Button>
-      </div>
-    </div>
-  );
+  return <DataTablePagination page={page} pageSize={pageSize} total={total} onPageChange={onPage} />;
 }
 
 // ─── field with source ───────────────────────────────────────────────────────
 
 function ConfidenceText({ c }: { c: number }) {
-  return <>{Math.round(c * 100)}%</>;
+  return <span className="font-mono">{Math.round(c * 100)}%</span>;
 }
 
 /** Where a value came from, who added it, when, and whether it is confirmed or an AI suggestion. */
 export function SourceChip({ src }: { src: FieldSource }) {
   const ai = src.status === "AI_SUGGESTED";
   return (
-    <span className={cn("inline-flex max-w-full flex-wrap items-center gap-1 text-xs", ai ? "text-caution" : "text-text-muted")}>
-      {ai ? <Sparkles className="h-3 w-3 shrink-0" /> : <CheckCircle2 className="h-3 w-3 shrink-0 text-positive" />}
-      <span className="font-medium">{ai ? "AI suggested" : "Confirmed"}</span>
+    <span className={cn("inline-flex max-w-full flex-wrap items-center gap-1 text-xs", ai ? "text-signal-text" : "text-text-muted")}>
+      {ai ? <Sparkles size={14} className="shrink-0" /> : <CheckCircle2 size={14} className="shrink-0 text-positive" />}
+      <span className="font-semibold">{ai ? "AI suggested" : "Confirmed"}</span>
       <span>
         · {sourceLabel(src.source_type)}
         {ai && (
@@ -224,19 +182,19 @@ export function FieldRow({ label, field, value, display, sources = [], canConfir
   const hasValue = Boolean(display) || Boolean(value && value.trim());
   return (
     <div className={cn("min-w-0 space-y-1", className)}>
-      <p className="text-xs font-medium uppercase tracking-wide text-text-muted">{label}</p>
+      <p className="text-xs font-medium text-text-muted">{label}</p>
       <div className="break-words text-sm text-text-primary">
-        {hasValue ? display ?? value : <span className="italic text-text-muted">{emptyText ?? "Not known yet"}</span>}
+        {hasValue ? display ?? value : <span className="text-text-muted">{emptyText ?? "Not known yet"}</span>}
       </div>
       {hasValue && (current ? <SourceChip src={current} /> : <span className="text-xs text-text-muted">No source recorded (entered before source tracking)</span>)}
       {suggestions.map((s) => (
-        <div key={s.id} className="flex flex-wrap items-center gap-2 rounded-md bg-caution-tint px-2 py-1.5 text-xs text-caution">
-          <Sparkles className="h-3 w-3 shrink-0" />
+        <div key={s.id} className="iq-grad-border flex flex-wrap items-center gap-2 rounded-md bg-signal-tint px-3 py-2 text-xs text-text-secondary [--surface-1:var(--signal-tint)]">
+          <Sparkles size={14} className="shrink-0 text-signal-text" />
           <span className="min-w-0 break-words">
-            AI suggests <strong className="break-words">{s.value}</strong> (<ConfidenceText c={s.confidence} /> from {sourceLabel(s.source_type)})
+            AI suggests <strong className="break-words text-text-primary">{s.value}</strong> (<ConfidenceText c={s.confidence} /> from {sourceLabel(s.source_type)})
           </span>
           {canConfirm && onConfirm && (
-            <Button variant="outline" size="sm" className="ml-auto h-7 whitespace-normal px-2" onClick={() => onConfirm(s.id)}>
+            <Button variant="secondary" size="sm" className="ml-auto" onClick={() => onConfirm(s.id)}>
               Confirm
             </Button>
           )}
@@ -249,15 +207,15 @@ export function FieldRow({ label, field, value, display, sources = [], canConfir
           className="inline-flex items-center gap-1 text-xs font-medium text-signal-text hover:underline"
           aria-expanded={open}
         >
-          {open ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+          {open ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
           {open ? "Hide" : "Show"} all {mine.length} sources
         </button>
       )}
       {open && (
-        <ul className="space-y-1 rounded-md border border-line bg-surface-0 p-2 text-xs">
+        <ul className="space-y-1 rounded-md bg-field p-3 text-xs">
           {mine.map((s) => (
             <li key={s.id} className="min-w-0 break-words">
-              <span className="font-medium text-text-primary">{s.value || "(cleared)"}</span>{" "}
+              <span className="font-semibold text-text-primary">{s.value || "(cleared)"}</span>{" "}
               <span className="text-text-muted">{s.is_current ? "· current" : "· not applied"}</span>
               <div>
                 <SourceChip src={s} />
@@ -270,11 +228,11 @@ export function FieldRow({ label, field, value, display, sources = [], canConfir
   );
 }
 
-export function Pill({ children, variant = "neutral" }: { children: ReactNode; variant?: "signal" | "positive" | "caution" | "risk" | "neutral" }) {
+export function Pill({ children, variant = "neutral" }: { children: ReactNode; variant?: Tone }) {
   return (
-    <Badge variant={variant} className="h-auto min-h-[22px] whitespace-normal py-0.5">
+    <StatusBadge tone={variant} className="h-auto min-h-[1.572rem] whitespace-normal break-words py-0.5">
       {children}
-    </Badge>
+    </StatusBadge>
   );
 }
 

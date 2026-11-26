@@ -1,6 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
-import { Search, Upload, MoreVertical } from 'lucide-react';
+import { Search, Upload, MoreVertical, Loader2 } from '@/components/icons';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { PageHeader } from '@/components/shared/PageHeader';
 import { useNavigate } from 'react-router-dom';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
@@ -76,81 +78,77 @@ export function DashboardHeader({ onUploadClick, recentSearches = [], onSearch }
   };
 
   return (
-    <div className="sticky top-0 z-40 bg-white border-b border-slate-200/50 shadow-premium-sm">
-      <div className="px-8 py-5">
-        <div className="flex items-center justify-between gap-6">
-          {/* Search Bar */}
-          <div className="flex-1 relative max-w-md" ref={searchRef}>
-            <div className="relative group">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 transition-colors group-focus-within:text-primary" />
-              <input
-                type="search"
-                placeholder="Search documents..."
-                value={searchQuery}
-                onChange={(e) => handleSearchChange(e.target.value)}
-                onKeyDown={handleSearchKeyDown}
-                onFocus={() => searchQuery.trim() && setShowResults(true)}
-                aria-label="Search documents by name, department, or content"
-                className="w-full pl-12 pr-4 py-3 bg-slate-50/50 border border-slate-200/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all text-slate-900 placeholder:text-slate-500"
-              />
-              {isSearching && (
-                <div className="absolute right-4 top-1/2 -translate-y-1/2">
-                  <div className="animate-spin h-4 w-4 border-2 border-primary border-t-transparent rounded-full" />
-                </div>
-              )}
-            </div>
+    <PageHeader
+      title="Dashboard"
+      actions={
+        <>
+          {/* Search bar */}
+          <div className="relative w-72 max-w-full" ref={searchRef}>
+            <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
+            <Input
+              type="search"
+              placeholder="Search documents"
+              value={searchQuery}
+              onChange={(e) => handleSearchChange(e.target.value)}
+              onKeyDown={handleSearchKeyDown}
+              onFocus={() => searchQuery.trim() && setShowResults(true)}
+              aria-label="Search documents by name, department or content"
+              className="px-9"
+            />
+            {isSearching && (
+              <Loader2 size={16} className="absolute right-3 top-1/2 -translate-y-1/2 animate-spin text-text-muted" />
+            )}
 
-            {/* Search Results Dropdown */}
+            {/* Search results dropdown */}
             {showResults && (
-              <div className="absolute top-full left-0 right-0 mt-3 bg-white border border-slate-200/50 rounded-xl shadow-premium-lg z-50 overflow-hidden animate-fade-in-up">
+              <div className="absolute left-0 right-0 top-full z-50 mt-2 overflow-hidden rounded-md border border-line bg-surface-1 shadow-raised">
                 {searchResults.length > 0 ? (
-                  <div className="max-h-96 overflow-y-auto">
-                    {searchResults.map((result, idx) => (
-                      <button
-                        key={result.id}
-                        onClick={() => handleResultClick(result.id)}
-                        className={`w-full text-left px-4 py-3 hover:bg-primary/5 transition-colors ${idx !== searchResults.length - 1 ? 'border-b border-slate-100' : ''}`}
-                      >
-                        <div className="flex items-start gap-3">
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-slate-900 truncate">{result.title}</p>
+                  <ul className="max-h-96 divide-y divide-line overflow-y-auto">
+                    {searchResults.map((result) => (
+                      <li key={result.id}>
+                        <button
+                          type="button"
+                          onClick={() => handleResultClick(result.id)}
+                          className="flex w-full items-start gap-3 px-4 py-3 text-left transition-colors hover:bg-surface-2"
+                        >
+                          <span className="block min-w-0 flex-1">
+                            <span className="block truncate text-sm font-semibold text-text-primary">{result.title}</span>
                             {result.department && (
-                              <p className="text-xs text-slate-500 mt-1">{result.department}</p>
+                              <span className="mt-0.5 block text-xs text-text-muted">{result.department}</span>
                             )}
-                          </div>
+                          </span>
                           {result.lastAccessedAt && (
-                            <span className="text-xs text-slate-400 whitespace-nowrap ml-2">
+                            <span className="ml-2 whitespace-nowrap text-xs text-text-muted">
                               {dayjs(result.lastAccessedAt).fromNow()}
                             </span>
                           )}
-                        </div>
-                      </button>
+                        </button>
+                      </li>
                     ))}
-                  </div>
+                  </ul>
                 ) : searchQuery.trim() ? (
-                  <div className="px-4 py-8 text-center text-slate-500 text-sm">
+                  <p className="px-4 py-8 text-center text-sm text-text-muted">
                     No documents found for "{searchQuery}"
-                  </div>
+                  </p>
                 ) : (
-                  <div className="px-4 py-4">
+                  <div className="p-2">
                     {recentSearches.length > 0 && (
                       <div>
-                        <p className="text-xs font-semibold text-slate-500 uppercase mb-3 tracking-wider">Recent Searches</p>
-                        <div className="space-y-1">
-                          {recentSearches.map((search) => (
-                            <button
-                              key={search}
-                              onClick={() => handleSearchChange(search)}
-                              className="w-full text-left px-3 py-2 text-sm text-slate-600 hover:bg-slate-100/50 rounded-lg transition-colors"
-                            >
-                              {search}
-                            </button>
-                          ))}
-                        </div>
+                        <p className="px-2 py-1 text-xs font-semibold uppercase tracking-[.04em] text-text-muted">Recent searches</p>
+                        {recentSearches.map((search) => (
+                          <button
+                            type="button"
+                            key={search}
+                            onClick={() => handleSearchChange(search)}
+                            className="w-full rounded-inner px-2 py-2 text-left text-sm text-text-secondary transition-colors hover:bg-surface-2"
+                          >
+                            {search}
+                          </button>
+                        ))}
                       </div>
                     )}
                     {recentSearches.length === 0 && (
-                      <p className="text-xs text-slate-400">Start typing to search...</p>
+                      <p className="px-2 py-2 text-xs text-text-muted">Type to search</p>
                     )}
                   </div>
                 )}
@@ -158,28 +156,18 @@ export function DashboardHeader({ onUploadClick, recentSearches = [], onSearch }
             )}
           </div>
 
-          {/* Action Buttons */}
-          <Button
-            onClick={onUploadClick}
-            variant="tenantPrimary"
-            className="gap-2 shadow-premium-md hover:shadow-premium-lg transition-all hover:scale-105 active:scale-95"
-            aria-label="Upload a new document"
-          >
-            <Upload className="h-4 w-4" />
-            <span className="hidden sm:inline">Upload</span>
+          {/* Action buttons */}
+          <Button onClick={onUploadClick}>
+            <Upload size={16} />
+            Upload document
           </Button>
 
           {/* Menu */}
-          <Button
-            variant="ghost"
-            size="icon"
-            className="text-slate-600 hover:text-slate-900 hover:bg-slate-100/60 transition-colors"
-            aria-label="More options"
-          >
-            <MoreVertical className="h-5 w-5" />
+          <Button variant="ghost" size="icon" aria-label="More options">
+            <MoreVertical size={18} />
           </Button>
-        </div>
-      </div>
-    </div>
+        </>
+      }
+    />
   );
 }

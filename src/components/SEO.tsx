@@ -14,13 +14,13 @@ interface SEOProps {
 }
 
 const SEO: React.FC<SEOProps> = ({
-  title = 'Default Title',
-  description = 'Default description',
+  title = '360IQ',
+  description = '360IQ brings your sales pipeline, contracts and account intelligence into one system.',
   keywords = '',
   image = '',
   url = window.location.href,
   type = 'website',
-  siteName = 'Your Site Name',
+  siteName = '360IQ',
   twitterCard = 'summary_large_image',
   canonical,
   children,

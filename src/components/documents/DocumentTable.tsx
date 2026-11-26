@@ -1,14 +1,13 @@
 import { motion } from 'framer-motion'
-import { ChevronUp, ChevronDown, MoreVertical, Download, Eye, Trash2, Edit2, History } from 'lucide-react'
+import { ChevronUp, ChevronDown, MoreVertical, Download, Trash2, Edit2, History } from '@/components/icons'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
 import {
   Table,
   TableBody,
   TableCell,
   TableHead,
   TableHeader,
-  TableRow,
+  TableHeaderRow,
 } from '@/components/ui/table'
 import {
   DropdownMenu,
@@ -16,6 +15,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { DocumentStatusBadge } from '@/components/documents/DocumentStatusBadge'
+import { formatDateTime } from '@/lib/format'
 import type { Document } from '@/types/dms'
 import { getFileTypeIcon, getFileTypeLabel } from '@/lib/utils/fileTypeMap'
 import { formatDistanceToNow } from 'date-fns'
@@ -36,7 +37,7 @@ interface DocumentTableProps {
 
 /**
  * DocumentTable — List view table for displaying documents
- * 
+ *
  * Features:
  * - Sortable columns (click header to sort)
  * - File type icon in first column
@@ -58,53 +59,44 @@ export function DocumentTable({
   canEdit = true,
   canDelete = true,
 }: DocumentTableProps) {
-  const statusColorMap: Record<string, string> = {
-    'active': 'bg-signal-tint text-signal-text',
-    'archived': 'bg-surface-2 text-text-secondary',
-    'pending': 'bg-caution-tint text-caution',
-    'approved': 'bg-positive-tint text-positive',
-    'rejected': 'bg-risk-tint text-risk',
-    'action_required': 'bg-caution-tint text-caution',
-  }
-
   const renderSortIcon = (column: string) => {
     if (sortColumn !== column) return null
     return sortDirection === 'asc'
-      ? <ChevronUp className="h-3 w-3 inline ml-1" />
-      : <ChevronDown className="h-3 w-3 inline ml-1" />
+      ? <ChevronUp size={14} />
+      : <ChevronDown size={14} />
   }
 
-  const SortHeader = ({ label, column }: { label: string; column: string }) => (
+  const sortHeader = (label: string, column: string, alignRight = false) => (
     <TableHead
-      className="cursor-pointer hover:bg-gray-100 transition-colors user-select-none"
+      className={alignRight ? 'cursor-pointer select-none text-right' : 'cursor-pointer select-none'}
+      aria-sort={sortColumn === column ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}
       onClick={() => onSort?.(column)}
     >
-      <div className="flex items-center gap-1 font-sans font-medium text-text-sm text-gray-700">
+      <button type="button" className={`flex items-center gap-1 rounded-xs text-xs font-medium hover:text-text-primary ${alignRight ? 'ml-auto' : ''}`}>
         {label}
         {renderSortIcon(column)}
-      </div>
+      </button>
     </TableHead>
   )
 
   return (
-    <div className="border border-gray-200 rounded-lg overflow-hidden bg-white">
+    <div className="overflow-hidden rounded-lg border border-line bg-surface-1 shadow-card">
       <Table>
-        <TableHeader className="bg-gray-50 border-b border-gray-200">
-          <TableRow>
-            <SortHeader label="Document" column="title" />
-            <SortHeader label="Type" column="document_type" />
-            <SortHeader label="Size" column="file_size" />
-            <SortHeader label="Status" column="status" />
-            <SortHeader label="Uploaded" column="created_at" />
-            <TableHead className="text-right pr-4">Actions</TableHead>
-          </TableRow>
+        <TableHeader>
+          <TableHeaderRow>
+            {sortHeader('Document', 'title')}
+            {sortHeader('Type', 'document_type')}
+            {sortHeader('Size', 'file_size', true)}
+            {sortHeader('Status', 'status')}
+            {sortHeader('Uploaded', 'created_at')}
+            <TableHead className="text-right">Actions</TableHead>
+          </TableHeaderRow>
         </TableHeader>
 
         <TableBody>
           {documents.map((doc, idx) => {
             const fileIcon = getFileTypeIcon(doc.file_name)
             const fileTypeLabel = getFileTypeLabel(doc.file_name)
-            const statusColor = statusColorMap[doc.status] || 'bg-gray-100 text-gray-800'
             const uploadDate = new Date(doc.created_at)
             const timeAgo = formatDistanceToNow(uploadDate, { addSuffix: true })
 
@@ -114,22 +106,22 @@ export function DocumentTable({
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: idx * 0.02 }}
-                className="border-b border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer group"
+                className="group cursor-pointer border-b border-line transition-colors last:border-0 hover:bg-surface-2"
                 onClick={() => onView(doc)}
               >
                 {/* Title + File icon */}
-                <TableCell className="py-3 px-4">
-                  <div className="flex items-center gap-3 min-w-0">
+                <TableCell>
+                  <div className="flex min-w-0 items-center gap-3">
                     <img
                       src={fileIcon}
                       alt={fileTypeLabel}
-                      className="h-5 w-5 flex-shrink-0"
+                      className="h-5 w-5 shrink-0"
                     />
                     <div className="min-w-0 flex-1">
-                      <p className="font-sans font-medium text-text-sm text-gray-900 truncate group-hover:text-tenant-primary transition-colors">
+                      <p className="truncate text-[13px] font-semibold text-text-primary">
                         {doc.title}
                       </p>
-                      <p className="font-mono text-text-xs text-gray-400">
+                      <p className="font-mono text-xs text-text-muted">
                         {doc.file_name}
                       </p>
                     </div>
@@ -137,66 +129,60 @@ export function DocumentTable({
                 </TableCell>
 
                 {/* Document type */}
-                <TableCell className="py-3 px-4">
-                  <span className="font-sans text-text-sm text-gray-700">
-                    {doc.document_type}
-                  </span>
+                <TableCell className="text-[13px] text-text-secondary">
+                  {doc.document_type}
                 </TableCell>
 
                 {/* File size */}
-                <TableCell className="py-3 px-4">
-                  <span className="font-mono text-text-sm text-gray-600">
-                    {formatFileSize(doc.file_size || 0)}
-                  </span>
+                <TableCell className="text-right font-mono text-xs text-text-secondary">
+                  {formatFileSize(doc.file_size || 0)}
                 </TableCell>
 
                 {/* Status badge */}
-                <TableCell className="py-3 px-4">
-                  <Badge className={`text-text-xs font-medium ${statusColor}`}>
-                    {doc.status}
-                  </Badge>
+                <TableCell>
+                  <DocumentStatusBadge status={doc.status} />
                 </TableCell>
 
                 {/* Upload date (time ago) */}
-                <TableCell className="py-3 px-4">
-                  <span className="font-sans text-text-sm text-gray-600">
-                    {timeAgo}
-                  </span>
+                <TableCell className="text-[13px] text-text-secondary" title={formatDateTime(doc.created_at)}>
+                  {timeAgo}
                 </TableCell>
 
                 {/* Action menu */}
-                <TableCell className="py-3 px-4 text-right">
+                <TableCell className="text-right">
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
                       <Button
                         variant="ghost"
-                        size="sm"
-                        className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                        size="icon"
+                        aria-label={`Actions for ${doc.title}`}
+                        title="More actions"
+                        className="h-8 w-8"
                       >
-                        <MoreVertical className="h-4 w-4" />
+                        <MoreVertical />
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onDownload(doc); }}>
-                        <Download className="h-4 w-4 mr-2" />
+                        <Download size={16} className="mr-2" />
                         Download
                       </DropdownMenuItem>
                       {canEdit && (
                         <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onEdit(doc); }}>
-                          <Edit2 className="h-4 w-4 mr-2" />
-                          Edit Metadata
+                          <Edit2 size={16} className="mr-2" />
+                          Edit details
                         </DropdownMenuItem>
                       )}
                       <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onVersions(doc); }}>
-                        <History className="h-4 w-4 mr-2" />
-                        Version History
+                        <History size={16} className="mr-2" />
+                        Version history
                       </DropdownMenuItem>
                       {canDelete && (
                         <DropdownMenuItem
                           onClick={(e) => { e.stopPropagation(); onDelete(doc); }}
-                          className="text-red-600"
+                          className="text-risk focus:text-risk"
                         >
-                          <Trash2 className="h-4 w-4 mr-2" />
+                          <Trash2 size={16} className="mr-2" />
                           Delete
                         </DropdownMenuItem>
                       )}

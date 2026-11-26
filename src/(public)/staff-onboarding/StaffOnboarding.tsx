@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import {
   Select,
@@ -11,19 +10,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import { CheckCircle2, ChevronLeft, ChevronRight, Loader2, UserCircle } from 'lucide-react';
+import { PageHeader } from '@/components/shared/PageHeader';
+import { SectionCard } from '@/components/shared/SectionCard';
+import { Field } from '@/components/profiles/formParts';
+import { CheckCircle2, ChevronLeft, ChevronRight, Loader2 } from '@/components/icons';
 import { submitApplication } from '@/lib/api/hr';
+import { formatDate } from '@/lib/format';
 import type { EmploymentType } from '@/types/hr';
+import { PublicHeader, Stepper } from '../PublicParts';
 
 const STEPS = [
-  { label: 'Personal Info' },
+  { label: 'Personal details' },
   { label: 'Employment' },
   { label: 'Background' },
   { label: 'Review' },
@@ -119,102 +116,65 @@ export default function StaffOnboarding() {
 
   if (submitted) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-        <Card className="w-full max-w-md text-center">
-          <CardContent className="pt-10 pb-10 flex flex-col items-center gap-4">
-            <CheckCircle2 className="h-16 w-16 text-green-500" />
-            <h2 className="text-2xl font-bold text-gray-900">Application Submitted!</h2>
-            <p className="text-gray-600">
-              Thank you for applying. An HR officer will review your application and contact you at{' '}
-              <strong>{form.email}</strong> once a decision has been made.
-            </p>
-            <Button variant="outline" onClick={() => { setForm(EMPTY_FORM); setSubmitted(false); setStep(0); }}>
-              Submit another application
-            </Button>
-          </CardContent>
-        </Card>
+      <div className="min-h-screen bg-surface-0 text-text-primary">
+        <PublicHeader />
+        <main className="mx-auto flex w-full max-w-lg flex-col gap-5 px-4 py-10 sm:px-6">
+          <PageHeader title="Application submitted" />
+          <SectionCard>
+            <div className="flex flex-col items-center gap-4 py-4 text-center" role="status">
+              <div className="grid h-12 w-12 place-items-center rounded-lg bg-positive-tint text-positive">
+                <CheckCircle2 size={24} />
+              </div>
+              <p className="max-w-[44ch] text-sm text-text-secondary">
+                An HR officer will review your application and contact you at{' '}
+                <strong className="break-all text-text-primary">{form.email}</strong> once a decision has been made.
+              </p>
+              <Button variant="secondary" onClick={() => { setForm(EMPTY_FORM); setSubmitted(false); setStep(0); }}>
+                Submit another application
+              </Button>
+            </div>
+          </SectionCard>
+        </main>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
-      {/* Header */}
-      <header className="bg-white border-b shadow-sm">
-        <div className="max-w-3xl mx-auto px-4 py-4 flex items-center gap-3">
-          <UserCircle className="h-8 w-8 text-blue-600" />
-          <div>
-            <h1 className="text-lg font-bold text-gray-900">Staff Onboarding Portal</h1>
-            <p className="text-xs text-gray-500">Submit your application to join our team</p>
-          </div>
-        </div>
-      </header>
+    <div className="min-h-screen bg-surface-0 text-text-primary">
+      <PublicHeader />
 
-      <main className="flex-1 max-w-3xl w-full mx-auto px-4 py-8">
-        {/* Stepper */}
-        <div className="flex items-center justify-between mb-8">
-          {STEPS.map((s, i) => (
-            <div key={i} className="flex items-center flex-1">
-              <div className="flex flex-col items-center">
-                <div
-                  className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold border-2 transition-colors ${
-                    i < step
-                      ? 'bg-blue-600 border-blue-600 text-white'
-                      : i === step
-                      ? 'border-blue-600 text-blue-600 bg-white'
-                      : 'border-gray-300 text-gray-400 bg-white'
-                  }`}
-                >
-                  {i < step ? '✓' : i + 1}
-                </div>
-                <span className={`text-xs mt-1 hidden sm:block ${i === step ? 'text-blue-600 font-medium' : 'text-gray-400'}`}>
-                  {s.label}
-                </span>
-              </div>
-              {i < STEPS.length - 1 && (
-                <div className={`flex-1 h-px mx-2 ${i < step ? 'bg-blue-600' : 'bg-gray-200'}`} />
-              )}
-            </div>
-          ))}
-        </div>
+      <main className="mx-auto flex w-full max-w-3xl flex-col gap-5 px-4 py-8 sm:px-6">
+        <PageHeader title="Staff application" description="Submit your application to join the team." />
+
+        <Stepper steps={STEPS.map(s => s.label)} current={step} />
 
         {/* Step 0: Personal Info */}
         {step === 0 && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Personal Information</CardTitle>
-              <CardDescription>Tell us about yourself</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <Label htmlFor="first_name">First Name <span className="text-red-500">*</span></Label>
-                  <Input id="first_name" value={form.first_name} onChange={e => set('first_name', e.target.value)} placeholder="John" />
-                </div>
-                <div className="space-y-1">
-                  <Label htmlFor="last_name">Last Name <span className="text-red-500">*</span></Label>
-                  <Input id="last_name" value={form.last_name} onChange={e => set('last_name', e.target.value)} placeholder="Doe" />
-                </div>
+          <SectionCard title="Personal details">
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <Field label="First name (required)" htmlFor="first_name">
+                  <Input id="first_name" value={form.first_name} onChange={e => set('first_name', e.target.value)} placeholder="Natasha" />
+                </Field>
+                <Field label="Last name (required)" htmlFor="last_name">
+                  <Input id="last_name" value={form.last_name} onChange={e => set('last_name', e.target.value)} placeholder="Lungu" />
+                </Field>
               </div>
-              <div className="space-y-1">
-                <Label htmlFor="email">Email Address <span className="text-red-500">*</span></Label>
-                <Input id="email" type="email" value={form.email} onChange={e => set('email', e.target.value)} placeholder="john.doe@example.com" />
+              <Field label="Email address (required)" htmlFor="email">
+                <Input id="email" type="email" value={form.email} onChange={e => set('email', e.target.value)} placeholder="name@company.co.zm" />
+              </Field>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <Field label="Phone number" htmlFor="contact_number">
+                  <Input id="contact_number" value={form.contact_number} onChange={e => set('contact_number', e.target.value)} placeholder="+260 97 123 4567" />
+                </Field>
+                <Field label="National ID" htmlFor="national_id">
+                  <Input id="national_id" value={form.national_id} onChange={e => set('national_id', e.target.value)} placeholder="123456/78/1" className="font-mono" />
+                </Field>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <Label htmlFor="contact_number">Phone Number</Label>
-                  <Input id="contact_number" value={form.contact_number} onChange={e => set('contact_number', e.target.value)} placeholder="+260 97x xxx xxx" />
-                </div>
-                <div className="space-y-1">
-                  <Label htmlFor="national_id">National ID</Label>
-                  <Input id="national_id" value={form.national_id} onChange={e => set('national_id', e.target.value)} placeholder="123456/78/1" />
-                </div>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <Label htmlFor="gender">Gender</Label>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <Field label="Gender" htmlFor="gender">
                   <Select value={form.gender} onValueChange={v => set('gender', v)}>
-                    <SelectTrigger id="gender"><SelectValue placeholder="Select gender" /></SelectTrigger>
+                    <SelectTrigger id="gender"><SelectValue placeholder="Choose a gender" /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="male">Male</SelectItem>
                       <SelectItem value="female">Female</SelectItem>
@@ -222,134 +182,125 @@ export default function StaffOnboarding() {
                       <SelectItem value="prefer_not_to_say">Prefer not to say</SelectItem>
                     </SelectContent>
                   </Select>
-                </div>
-                <div className="space-y-1">
-                  <Label htmlFor="date_of_birth">Date of Birth</Label>
+                </Field>
+                <Field label="Date of birth" htmlFor="date_of_birth">
                   <Input id="date_of_birth" type="date" value={form.date_of_birth} onChange={e => set('date_of_birth', e.target.value)} />
-                </div>
+                </Field>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </SectionCard>
         )}
 
         {/* Step 1: Employment */}
         {step === 1 && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Employment Details</CardTitle>
-              <CardDescription>Information about the role you are applying for</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-1">
-                <Label htmlFor="position">Position / Job Title <span className="text-red-500">*</span></Label>
-                <Input id="position" value={form.position} onChange={e => set('position', e.target.value)} placeholder="e.g. Lecturer, Registrar" />
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <Label htmlFor="employment_type">Employment Type <span className="text-red-500">*</span></Label>
+          <SectionCard title="Employment details">
+            <div className="space-y-4">
+              <Field label="Position or job title (required)" htmlFor="position">
+                <Input id="position" value={form.position} onChange={e => set('position', e.target.value)} placeholder="Account manager" />
+              </Field>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <Field label="Employment type (required)" htmlFor="employment_type">
                   <Select value={form.employment_type} onValueChange={v => set('employment_type', v)}>
-                    <SelectTrigger id="employment_type"><SelectValue placeholder="Select type" /></SelectTrigger>
+                    <SelectTrigger id="employment_type"><SelectValue placeholder="Choose a type" /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="permanent">Permanent</SelectItem>
                       <SelectItem value="contract">Contract</SelectItem>
-                      <SelectItem value="part_time">Part-Time</SelectItem>
+                      <SelectItem value="part_time">Part-time</SelectItem>
                       <SelectItem value="probation">Probation</SelectItem>
                     </SelectContent>
                   </Select>
-                </div>
-                <div className="space-y-1">
-                  <Label htmlFor="employment_number">Staff / Employment Number</Label>
-                  <Input id="employment_number" value={form.employment_number} onChange={e => set('employment_number', e.target.value)} placeholder="e.g. UNILUS/S/2024/001" />
-                </div>
+                </Field>
+                <Field label="Staff or employment number" htmlFor="employment_number">
+                  <Input id="employment_number" value={form.employment_number} onChange={e => set('employment_number', e.target.value)} className="font-mono" />
+                </Field>
               </div>
-              <div className="space-y-1">
-                <Label htmlFor="salary_scale">Salary Scale</Label>
-                <Input id="salary_scale" value={form.salary_scale} onChange={e => set('salary_scale', e.target.value)} placeholder="e.g. SS-7" />
-              </div>
-            </CardContent>
-          </Card>
+              <Field label="Salary scale" htmlFor="salary_scale">
+                <Input id="salary_scale" value={form.salary_scale} onChange={e => set('salary_scale', e.target.value)} placeholder="SS-7" />
+              </Field>
+            </div>
+          </SectionCard>
         )}
 
         {/* Step 2: Background */}
         {step === 2 && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Background &amp; Reason</CardTitle>
-              <CardDescription>Help us understand your qualifications and motivation</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-1">
-                <Label htmlFor="qualifications">Qualifications</Label>
+          <SectionCard title="Background and reason">
+            <div className="space-y-4">
+              <Field label="Qualifications" htmlFor="qualifications">
                 <Textarea
                   id="qualifications"
                   value={form.qualifications}
                   onChange={e => set('qualifications', e.target.value)}
-                  placeholder="List your academic qualifications and certifications..."
+                  placeholder="Your academic qualifications and certifications"
                   rows={4}
                 />
-              </div>
-              <div className="space-y-1">
-                <Label htmlFor="reason_for_joining">Reason for Joining</Label>
+              </Field>
+              <Field label="Reason for joining" htmlFor="reason_for_joining">
                 <Textarea
                   id="reason_for_joining"
                   value={form.reason_for_joining}
                   onChange={e => set('reason_for_joining', e.target.value)}
-                  placeholder="Why do you want to join our institution?"
+                  placeholder="Why you want to join the team"
                   rows={4}
                 />
-              </div>
-            </CardContent>
-          </Card>
+              </Field>
+            </div>
+          </SectionCard>
         )}
 
         {/* Step 3: Review */}
         {step === 3 && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Review Your Application</CardTitle>
-              <CardDescription>Please confirm the details below before submitting</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="rounded-lg border bg-gray-50 p-4 grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
-                <div><span className="text-gray-500">Name:</span> <span className="font-medium">{form.first_name} {form.last_name}</span></div>
-                <div><span className="text-gray-500">Email:</span> <span className="font-medium">{form.email}</span></div>
-                <div><span className="text-gray-500">Phone:</span> <span className="font-medium">{form.contact_number || 'N/A'}</span></div>
-                <div><span className="text-gray-500">National ID:</span> <span className="font-medium">{form.national_id || 'N/A'}</span></div>
-                <div><span className="text-gray-500">Position:</span> <span className="font-medium">{form.position}</span></div>
-                <div><span className="text-gray-500">Employment Type:</span> <span className="font-medium capitalize">{form.employment_type.replace('_', ' ')}</span></div>
-                {form.employment_number && <div><span className="text-gray-500">Staff No.:</span> <span className="font-medium">{form.employment_number}</span></div>}
-                {form.salary_scale && <div><span className="text-gray-500">Salary Scale:</span> <span className="font-medium">{form.salary_scale}</span></div>}
-              </div>
+          <SectionCard title="Review your application">
+            <div className="space-y-4">
+              <dl className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <ReviewItem label="Name" value={`${form.first_name} ${form.last_name}`} />
+                <ReviewItem label="Email" value={form.email} />
+                <ReviewItem label="Phone" value={form.contact_number || 'Not provided'} />
+                <ReviewItem label="National ID" value={form.national_id || 'Not provided'} />
+                {form.date_of_birth && <ReviewItem label="Date of birth" value={formatDate(form.date_of_birth)} />}
+                <ReviewItem label="Position" value={form.position} />
+                <ReviewItem label="Employment type" value={form.employment_type.replace('_', ' ')} className="capitalize" />
+                {form.employment_number && <ReviewItem label="Staff number" value={form.employment_number} />}
+                {form.salary_scale && <ReviewItem label="Salary scale" value={form.salary_scale} />}
+              </dl>
               {form.reason_for_joining && (
                 <div>
-                  <p className="text-sm text-gray-500 mb-1">Reason for Joining:</p>
-                  <p className="text-sm text-gray-700 bg-gray-50 rounded border p-3">{form.reason_for_joining}</p>
+                  <p className="mb-1 text-xs font-medium text-text-muted">Reason for joining</p>
+                  <p className="whitespace-pre-wrap break-words rounded-md bg-field p-3 text-sm text-text-primary">{form.reason_for_joining}</p>
                 </div>
               )}
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-text-muted">
                 By submitting this application you confirm that all information provided is accurate and complete.
               </p>
-            </CardContent>
-          </Card>
+            </div>
+          </SectionCard>
         )}
 
         {/* Navigation */}
-        <div className="flex justify-between mt-6">
-          <Button variant="outline" onClick={handleBack} disabled={step === 0} className="flex items-center gap-1">
-            <ChevronLeft className="h-4 w-4" /> Back
+        <div className="flex justify-between gap-2">
+          <Button variant="secondary" onClick={handleBack} disabled={step === 0}>
+            <ChevronLeft /> Back
           </Button>
           {step < STEPS.length - 1 ? (
-            <Button onClick={handleNext} className="flex items-center gap-1">
-              Next <ChevronRight className="h-4 w-4" />
+            <Button onClick={handleNext}>
+              Continue <ChevronRight />
             </Button>
           ) : (
-            <Button onClick={handleSubmit} disabled={submitting} className="flex items-center gap-2">
-              {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
-              Submit Application
+            <Button onClick={handleSubmit} disabled={submitting}>
+              {submitting && <Loader2 className="animate-spin" />}
+              Submit application
             </Button>
           )}
         </div>
       </main>
+    </div>
+  );
+}
+
+function ReviewItem({ label, value, className }: { label: string; value: string; className?: string }) {
+  return (
+    <div className="min-w-0">
+      <dt className="text-xs font-medium text-text-muted">{label}</dt>
+      <dd className={`mt-0.5 break-words text-sm font-semibold text-text-primary ${className ?? ''}`}>{value}</dd>
     </div>
   );
 }

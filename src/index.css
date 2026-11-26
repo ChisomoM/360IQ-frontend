@@ -11,8 +11,8 @@
    ControlHub defaults serve as the system fallback.
 ───────────────────────────────────────────────────────────────────────────── */
 
-/* ── ControlHub / DIMS Default Theme ─────────────────────────────────────── */
-:root {
+/* ── 360IQ Design System: tokens (360IQ_Design_System.md section 2) ──────── */
+:root, [data-theme="paper"] {
   /* 14px root (360IQ density) */
   --font-size: 87.5%;
 
@@ -27,6 +27,12 @@
   --surface-0: #F2F5F7;
   --surface-1: #FFFFFF;
   --surface-2: #E7EDF2;
+  --field: #EEF2F6;
+  --field-hover: #E6EBF1;
+  /* sidebar: dark in both themes */
+  --sidebar-bg: #0B1B2B;
+  --sidebar-hover: rgba(255, 255, 255, 0.06);
+  --sidebar-active: rgba(25, 195, 166, 0.14);
   --line: #D3DCE4;
   --line-strong: #76899A;
   --text-primary: #0B1B2B;
@@ -48,16 +54,16 @@
   --grade-silver: #A9B8C6;   --grade-bronze: #C98656;
   --on-grade: #0B1B2B;
   --focus: #0A6B5B;
-  --shadow-raised: 0 2px 8px rgba(11, 27, 43, 0.10);
-  --shadow-overlay: 0 16px 48px rgba(11, 27, 43, 0.18);
+  --shadow-card: 0 1px 2px rgba(11, 27, 43, 0.04), 0 4px 16px rgba(11, 27, 43, 0.06);
+  --shadow-card-hover: 0 2px 4px rgba(11, 27, 43, 0.05), 0 10px 28px rgba(11, 27, 43, 0.10);
+  --shadow-raised: 0 4px 12px rgba(11, 27, 43, 0.10);
+  --shadow-overlay: 0 24px 56px rgba(11, 27, 43, 0.20);
 
   /* gradients: blue into teal, AI surfaces only */
   --gradient-signal: linear-gradient(90deg, #2A7FD4 0%, #3BB6E6 50%, #2FD8B9 100%);
   --gradient-signal-deep: linear-gradient(90deg, #1B63AE 0%, #1386A6 50%, #0A8A72 100%);
   --gradient-hero-ink: radial-gradient(120% 95% at 88% 0%, #1E4E66 0%, #0E2E48 34%, #081A2B 68%, #06131F 100%);
   --gradient-hero-paper: radial-gradient(120% 95% at 88% 0%, #CDEBF2 0%, #E4F0F7 34%, #F2F5F7 72%);
-  --gradient-button: linear-gradient(90deg, #1B63AE 0%, #0A7A67 100%);
-  --gradient-sidebar: linear-gradient(170deg, #0B1B2B 0%, #0D2A40 52%, #0A3B3F 100%);
   --gradient-protect: linear-gradient(180deg, rgba(11, 27, 43, 0) 40%, rgba(11, 27, 43, 0.88) 100%);
   --iq-grad: var(--gradient-signal-deep);
   --iq-hero: var(--gradient-hero-paper);
@@ -108,7 +114,7 @@
   --input: 208 24% 86%;
   --ring: 172 87% 22%;                /* focus */
 
-  --radius: 0.5rem;
+  --radius: 0.857rem;                 /* 12px at the 14px root */
 
   /* ── Sidebar (360IQ ink) ── */
   --sidebar-background: 210 59% 11%;  /* brand-ink */
@@ -175,6 +181,11 @@
   --surface-0: #0B1B2B;
   --surface-1: #12283C;
   --surface-2: #1A3550;
+  --field: #1A3550;
+  --field-hover: #20405E;
+  --sidebar-bg: #07121D;
+  --sidebar-hover: rgba(255, 255, 255, 0.06);
+  --sidebar-active: rgba(25, 195, 166, 0.14);
   --line: #24425E;
   --line-strong: #5F7E9A;
   --text-primary: #E8EEF4;
@@ -193,11 +204,12 @@
   --caution: #F4BE5C;  --caution-tint: #3A3018;
   --positive: #8CC4FF; --positive-tint: #16304D;
   --focus: #5BE0C8;
-  --shadow-raised: 0 2px 8px rgba(2, 8, 14, 0.45);
-  --shadow-overlay: 0 16px 48px rgba(2, 8, 14, 0.6);
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.30), 0 4px 16px rgba(0, 0, 0, 0.22);
+  --shadow-card-hover: 0 2px 4px rgba(0, 0, 0, 0.35), 0 10px 28px rgba(0, 0, 0, 0.32);
+  --shadow-raised: 0 4px 12px rgba(2, 8, 14, 0.45);
+  --shadow-overlay: 0 24px 56px rgba(2, 8, 14, 0.6);
   --iq-grad: var(--gradient-signal);
   --iq-hero: var(--gradient-hero-ink);
-  --gradient-button: linear-gradient(90deg, #7CCFF4 0%, #19C3A6 100%);
 
   --tenant-primary: #19C3A6;
   --tenant-primary-hover: #3FD6BB;
@@ -274,7 +286,7 @@
 
 @layer base {
   * {
-    border-color: var(--border);
+    border-color: var(--line);
   }
 
   body {
@@ -306,7 +318,33 @@
   background: linear-gradient(var(--surface-1), var(--surface-1)) padding-box, var(--iq-grad) border-box;
 }
 
+/* primary button shimmer: a soft light sweep on hover (flat teal, no gradient fill) */
+.btn-shimmer::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(105deg, transparent 30%, rgba(255, 255, 255, 0.28) 50%, transparent 70%);
+  transform: translateX(-120%);
+}
+.btn-shimmer:hover::after {
+  transform: translateX(120%);
+  transition: transform 700ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* loading skeleton */
+.skeleton {
+  background: linear-gradient(90deg, var(--surface-2) 25%, var(--field) 50%, var(--surface-2) 75%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.6s linear infinite;
+}
+@keyframes skeleton-shimmer {
+  from { background-position: 200% 0; }
+  to { background-position: -200% 0; }
+}
+
 @media (prefers-reduced-motion: reduce) {
+  .btn-shimmer::after { display: none; }
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;

@@ -1,8 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Table,
   TableBody,
@@ -17,10 +16,16 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { PageHeader } from '@/components/shared/PageHeader';
+import { SectionCard } from '@/components/shared/SectionCard';
+import { StatusBadge } from '@/components/shared/StatusBadge';
+import { EmptyState } from '@/components/shared/EmptyState';
+import { TableSkeleton } from '@/components/shared/TableSkeleton';
+import { formatDate as formatDisplayDate } from '@/lib/format';
+import type { Tone } from '@/lib/status';
 import { list } from '@/lib/api/crud';
-import { GraduationCap, Search, MoreVertical, Eye, FileText, Loader2, Download } from 'lucide-react';
+import { GraduationCap, Search, MoreVertical, Eye, FileText, RefreshCw, Download } from '@/components/icons';
 import { toast } from 'sonner';
-import dayjs from 'dayjs';
 import { Link } from 'react-router-dom';
 
 // Interface matching the Student model structure from backend
@@ -47,6 +52,12 @@ interface Student {
     phone_number: string;
   };
 }
+
+// Statuses the shared map does not cover
+const STUDENT_TONES: Record<string, Tone> = {
+  graduated: 'positive',
+  withdrawn: 'neutral',
+};
 
 export default function Students() {
   const [students, setStudents] = useState<Student[]>([]);
@@ -86,7 +97,7 @@ export default function Students() {
         const fullName = `${firstName} ${lastName}`.toLowerCase();
         const studentId = student.student_id.toLowerCase();
         const programme = student.application?.programme_of_study?.toLowerCase() || '';
-        
+
         return fullName.includes(query) || studentId.includes(query) || programme.includes(query);
       });
     }
@@ -102,25 +113,7 @@ export default function Students() {
     filterStudents();
   }, [filterStudents]);
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'active':
-        return <Badge className="bg-positive-tint text-positive border-line">Active</Badge>;
-      case 'graduated':
-        return <Badge className="bg-blue-100 text-blue-800 border-blue-200">Graduated</Badge>;
-      case 'suspended':
-        return <Badge className="bg-red-100 text-red-800 border-red-200">Suspended</Badge>;
-      case 'withdrawn':
-        return <Badge className="bg-gray-100 text-gray-800 border-gray-200">Withdrawn</Badge>;
-      default:
-        return <Badge variant="outline">{status}</Badge>;
-    }
-  };
-
-  const formatDate = (dateString: string) => {
-    if (!dateString) return 'N/A';
-    return dayjs(dateString).format('MMM DD, YYYY');
-  };
+  const formatDate = (dateString: string) => formatDisplayDate(dateString) || 'N/A';
 
   const getName = (student: Student) => {
     if (student.application) {
@@ -133,136 +126,106 @@ export default function Students() {
   };
 
   return (
-    <div className="w-full space-y-6">
-      {/* Page Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Students</h1>
-          <p className="text-gray-600 mt-1">Manage enrolled students records</p>
-        </div>
-        <div className="flex gap-2">
-            <Button onClick={fetchStudents} variant="outline">
-            <Loader2 className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-            Refresh
+    <div className="w-full flex flex-col gap-5">
+      <PageHeader
+        title="Students"
+        description="Records of enrolled students."
+        actions={
+          <>
+            <Button onClick={fetchStudents} variant="secondary">
+              <RefreshCw className={loading ? 'animate-spin' : undefined} />
+              Refresh
             </Button>
-            <Button variant="tenantPrimary">
-                <Download className="h-4 w-4 mr-2" />
-                Export CSV
+            <Button>
+              <Download />
+              Export CSV
             </Button>
-        </div>
-      </div>
+          </>
+        }
+      />
 
-      {/* Filters */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Search className="h-5 w-5" />
-            Filter Students
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col md:flex-row gap-4 items-start md:items-end">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-              <Input
-                placeholder="Search by name, ID, or programme..."
-                className="pl-10"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
-            <div className="flex gap-2">
-              <Button
-                variant={statusFilter === 'all' ? 'tenantPrimary' : 'outline'}
-                onClick={() => setStatusFilter('all')}
-              >
-                All
-              </Button>
-              <Button
-                variant={statusFilter === 'active' ? 'tenantPrimary' : 'outline'}
-                onClick={() => setStatusFilter('active')}
-              >
-                Active
-              </Button>
-              <Button
-                variant={statusFilter === 'graduated' ? 'tenantPrimary' : 'outline'}
-                onClick={() => setStatusFilter('graduated')}
-              >
-                Graduated
-              </Button>
-            </div>
+      <SectionCard padded={false}>
+        {/* Filters */}
+        <div className="flex flex-col md:flex-row gap-3 md:items-center md:justify-between p-4 border-b border-line">
+          <Tabs value={statusFilter} onValueChange={(value) => setStatusFilter(value as typeof statusFilter)}>
+            <TabsList>
+              <TabsTrigger value="all">All</TabsTrigger>
+              <TabsTrigger value="active">Active</TabsTrigger>
+              <TabsTrigger value="graduated">Graduated</TabsTrigger>
+            </TabsList>
+          </Tabs>
+          <div className="relative md:w-80">
+            <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
+            <Input
+              aria-label="Search students"
+              placeholder="Search by name, ID or programme"
+              className="pl-9"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
           </div>
-        </CardContent>
-      </Card>
+        </div>
 
-      {/* Students Table */}
-      <Card>
-        <CardHeader className="bg-surface-2 border-b">
-          <CardTitle>Enrolled Students</CardTitle>
-        </CardHeader>
-        <CardContent className="p-0">
-          {loading ? (
-            <div className="flex items-center justify-center h-64">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            </div>
-          ) : filteredStudents.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-64 text-gray-500">
-              <GraduationCap className="h-12 w-12 mb-4" />
-              <p>No students found</p>
-            </div>
-          ) : (
-            <Table>
-              <TableHeader className="bg-gray-900">
-                <TableRow className="border-b border-gray-700">
-                  <TableHead className="text-white font-semibold py-3 px-4">Student ID</TableHead>
-                  <TableHead className="text-white font-semibold py-3 px-4">Name</TableHead>
-                  <TableHead className="text-white font-semibold py-3 px-4">Programme</TableHead>
-                  <TableHead className="text-white font-semibold py-3 px-4">Year</TableHead>
-                  <TableHead className="text-white font-semibold py-3 px-4">Enrollment Date</TableHead>
-                  <TableHead className="text-white font-semibold py-3 px-4">Status</TableHead>
-                  <TableHead className="text-white font-semibold py-3 px-4 text-right">Actions</TableHead>
+        {/* Students Table */}
+        {loading ? (
+          <TableSkeleton rows={8} columns={6} />
+        ) : filteredStudents.length === 0 ? (
+          <EmptyState
+            icon={<GraduationCap size={24} />}
+            title="No students found"
+            description="Change your search or filter to see more."
+          />
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead scope="col">Student ID</TableHead>
+                <TableHead scope="col">Name</TableHead>
+                <TableHead scope="col">Programme</TableHead>
+                <TableHead scope="col">Year</TableHead>
+                <TableHead scope="col">Enrolled</TableHead>
+                <TableHead scope="col">Status</TableHead>
+                <TableHead scope="col" className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredStudents.map((student) => (
+                <TableRow key={student.ID}>
+                  <TableCell className="font-mono text-xs">{student.student_id}</TableCell>
+                  <TableCell className="font-semibold">{getName(student)}</TableCell>
+                  <TableCell className="text-text-secondary">{student.application?.programme_of_study || 'N/A'}</TableCell>
+                  <TableCell className="text-text-secondary">Year {student.current_year}</TableCell>
+                  <TableCell className="whitespace-nowrap font-mono text-xs text-text-secondary">{formatDate(student.enrollment_date)}</TableCell>
+                  <TableCell>
+                    <StatusBadge status={student.enrollment_status} tone={STUDENT_TONES[student.enrollment_status]} />
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-8 w-8" aria-label={`Actions for ${getName(student)}`}>
+                          <MoreVertical />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem asChild>
+                          <Link to={`/admin/students/${student.ID}`}>
+                            <Eye size={16} className="mr-2" />
+                            View profile
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem>
+                          <FileText size={16} className="mr-2" />
+                          Academic record
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
                 </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredStudents.map((student, index) => (
-                  <TableRow
-                    key={student.ID}
-                    className={index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}
-                  >
-                    <TableCell className="font-medium font-mono text-primary">{student.student_id}</TableCell>
-                    <TableCell className="font-medium">{getName(student)}</TableCell>
-                    <TableCell>{student.application?.programme_of_study || 'N/A'}</TableCell>
-                    <TableCell>Year {student.current_year}</TableCell>
-                    <TableCell>{formatDate(student.enrollment_date)}</TableCell>
-                    <TableCell>{getStatusBadge(student.enrollment_status)}</TableCell>
-                    <TableCell className="text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" className="h-8 w-8 p-0">
-                            <MoreVertical className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="bg-white">
-                          <DropdownMenuItem asChild>
-                            <Link to={`/admin/students/${student.ID}`}>
-                                <Eye className="h-4 w-4 mr-2" />
-                                View Profile
-                            </Link>
-                          </DropdownMenuItem>
-                          <DropdownMenuItem>
-                            <FileText className="h-4 w-4 mr-2" />
-                            Academic Record
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
+              ))}
+            </TableBody>
+          </Table>
+        )}
+      </SectionCard>
     </div>
   );
 }

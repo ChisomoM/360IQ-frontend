@@ -1,7 +1,10 @@
 import { useState, useRef } from 'react';
-import { Upload, X, AlertCircle } from 'lucide-react';
+import { Upload, X, AlertCircle, CheckCircle, Sparkles } from '@/components/icons';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { cn } from '@/lib/utils';
 
 export interface UploadMetadata {
   department: string;
@@ -76,7 +79,7 @@ export function QuickUploadWidget({
       setSelectedFile(file);
       setUploadSuccess(false);
     } else {
-      alert(`Unsupported file format. Supported: ${supportedFormats.join(', ')}`);
+      alert(`This file format is not supported. Choose one of: ${supportedFormats.join(', ')}`);
     }
   };
 
@@ -89,7 +92,7 @@ export function QuickUploadWidget({
 
   const handleUploadClick = async () => {
     if (!selectedFile || !metadata.department) {
-      alert('Please select a file and department');
+      alert('Select a file and a department');
       return;
     }
 
@@ -140,49 +143,55 @@ export function QuickUploadWidget({
 
   if (uploadSuccess) {
     return (
-      <div className="w-full bg-green-50 border-2 border-green-200 rounded-lg p-6 text-center">
-
-        <h3 className="text-lg font-semibold text-green-900 mb-1">Upload Successful!</h3>
-        <p className="text-sm text-green-700 mb-2">{selectedFile?.name} uploaded</p>
-        <p className="text-xs text-green-600">🤖 AI is analyzing your document...</p>
+      <div role="status" className="w-full rounded-lg bg-positive-tint p-6 text-center">
+        <h3 className="mb-1 flex items-center justify-center gap-2 text-base font-semibold text-positive">
+          <CheckCircle size={18} />
+          Document uploaded
+        </h3>
+        <p className="mb-2 text-sm text-text-primary">{selectedFile?.name} uploaded</p>
+        <p className="flex items-center justify-center gap-1.5 text-xs text-signal-text">
+          <Sparkles size={14} />
+          360IQ is reading your document…
+        </p>
       </div>
     );
   }
 
   if (selectedFile && !isUploading) {
     return (
-      <div className="w-full bg-white border border-gray-200 rounded-lg p-6">
-        <div className="bg-blue-50 border border-blue-200 rounded p-4 mb-4">
+      <div className="w-full rounded-lg border border-line bg-surface-1 p-6">
+        <div className="mb-4 rounded-md bg-field p-4">
           <div className="flex items-start gap-3">
-            <Upload className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
-            <div className="flex-1">
-              <p className="font-medium text-blue-900">{selectedFile.name}</p>
-              <p className="text-sm text-blue-700 mt-1">
+            <Upload size={18} className="mt-0.5 flex-shrink-0 text-text-secondary" />
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-semibold text-text-primary">{selectedFile.name}</p>
+              <p className="mt-1 font-mono text-xs text-text-muted">
                 {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
               </p>
             </div>
-            <button
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={handleRemoveFile}
-              className="text-blue-600 hover:text-blue-900"
               aria-label="Remove file"
             >
-              <X className="h-5 w-5" />
-            </button>
+              <X size={16} />
+            </Button>
           </div>
         </div>
 
         {error && (
-          <div className="bg-red-50 border border-red-200 rounded p-3 mb-4 flex gap-2">
-            <AlertCircle className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
-            <p className="text-sm text-red-700">{error}</p>
+          <div role="alert" className="mb-4 flex gap-2 rounded-md bg-risk-tint p-3 text-risk">
+            <AlertCircle size={18} className="mt-0.5 flex-shrink-0" />
+            <p className="text-sm">{error}</p>
           </div>
         )}
 
-        <div className="space-y-4 mb-6">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Department *</label>
+        <div className="mb-6 space-y-4">
+          <div className="space-y-1.5">
+            <Label htmlFor="upload-department">Department (required)</Label>
             <Select value={metadata.department} onValueChange={(value) => setMetadata({ ...metadata, department: value })}>
-              <SelectTrigger>
+              <SelectTrigger id="upload-department">
                 <SelectValue placeholder="Select department" />
               </SelectTrigger>
               <SelectContent>
@@ -196,11 +205,11 @@ export function QuickUploadWidget({
           </div>
 
           {categories.length > 0 && (
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+            <div className="space-y-1.5">
+              <Label htmlFor="upload-category">Category (optional)</Label>
               <Select value={metadata.category || ''} onValueChange={(value) => setMetadata({ ...metadata, category: value })}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select category (optional)" />
+                <SelectTrigger id="upload-category">
+                  <SelectValue placeholder="Select category" />
                 </SelectTrigger>
                 <SelectContent>
                   {categories.map((cat) => (
@@ -213,27 +222,28 @@ export function QuickUploadWidget({
             </div>
           )}
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Tags</label>
-            <input
+          <div className="space-y-1.5">
+            <Label htmlFor="upload-tags">Tags (optional, separated by commas)</Label>
+            <Input
+              id="upload-tags"
               type="text"
-              placeholder="Add tags (comma-separated, optional)"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-600"
+              placeholder="budget, Q3"
               onChange={(e) => setMetadata({ ...metadata, tags: e.target.value.split(',').map(t => t.trim()).filter(Boolean) })}
             />
           </div>
         </div>
 
         <div className="flex gap-3">
-          <Button variant="outline" onClick={handleRemoveFile}>
+          <Button variant="secondary" onClick={handleRemoveFile}>
             Cancel
           </Button>
           <Button
+            variant="secondary"
             onClick={handleUploadClick}
-            className="flex-1 bg-green-700 hover:bg-green-800 text-white"
+            className="flex-1"
             disabled={isLoading}
           >
-            {isLoading ? 'Uploading...' : 'Upload'}
+            {isLoading ? 'Uploading' : 'Upload file'}
           </Button>
         </div>
       </div>
@@ -242,15 +252,15 @@ export function QuickUploadWidget({
 
   if (isUploading) {
     return (
-      <div className="w-full bg-white border border-gray-200 rounded-lg p-6">
-        <p className="text-sm font-medium text-gray-900 mb-3">Uploading {selectedFile?.name}</p>
-        <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
+      <div className="w-full rounded-lg border border-line bg-surface-1 p-6">
+        <p className="mb-3 text-sm font-semibold text-text-primary">Uploading {selectedFile?.name}</p>
+        <div className="mb-2 h-2 w-full overflow-hidden rounded-pill bg-surface-2">
           <div
-            className="bg-green-600 h-2 rounded-full transition-all duration-300"
+            className="h-2 rounded-pill bg-signal transition-all duration-300"
             style={{ width: `${uploadProgress}%` }}
           />
         </div>
-        <p className="text-xs text-gray-500">{Math.round(uploadProgress)}% complete</p>
+        <p className="text-xs text-text-muted">{Math.round(uploadProgress)}% complete</p>
       </div>
     );
   }
@@ -261,11 +271,10 @@ export function QuickUploadWidget({
       onDragLeave={handleDragLeave}
       onDragOver={handleDragOver}
       onDrop={handleDrop}
-      className={`w-full border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
-        isDragging
-          ? 'border-green-500 bg-green-50'
-          : 'border-gray-300 bg-white hover:border-gray-400'
-      }`}
+      className={cn(
+        'w-full rounded-lg border border-dashed p-8 text-center transition-colors',
+        isDragging ? 'border-signal bg-surface-2' : 'border-line-strong bg-surface-1',
+      )}
     >
       <input
         ref={fileInputRef}
@@ -276,27 +285,26 @@ export function QuickUploadWidget({
         className="hidden"
       />
 
-      <Upload className={`h-12 w-12 mx-auto mb-4 ${isDragging ? 'text-green-600' : 'text-gray-400'}`} />
+      <Upload size={32} className={cn('mx-auto mb-4', isDragging ? 'text-signal-text' : 'text-text-muted')} />
 
-      <h3 className="text-lg font-semibold text-gray-900 mb-1">
-        {isDragging ? '✨ Drop files to upload them ✨' : '📤 Upload Document'}
+      <h3 className="mb-1 text-base font-semibold text-text-primary">
+        {isDragging ? 'Drop the file to upload it' : 'Upload a document'}
       </h3>
 
-      <p className="text-sm text-gray-600 mb-4">
-        {isDragging ? 'Release to upload' : 'Drag & drop files here or click to browse'}
+      <p className="mb-4 text-sm text-text-secondary">
+        {isDragging ? 'Release to upload' : 'Drag a file here or browse for one'}
       </p>
 
-      <p className="text-xs text-gray-500 mb-6">
-        Supports: Word, Excel, PDF, Images
+      <p className="mb-6 text-xs text-text-muted">
+        Word, Excel, PDF, text and image files
       </p>
 
       <Button
         onClick={() => fileInputRef.current?.click()}
-        variant="outline"
-        className="gap-2"
+        variant="secondary"
       >
-        <Upload className="h-4 w-4" />
-        Browse Files
+        <Upload size={16} />
+        Browse files
       </Button>
     </div>
   );

@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
-import { Loader2, RefreshCw, Trash2 } from "lucide-react";
+import { Loader2, RefreshCw, Trash2 } from "@/components/icons";
 import { Button } from "@/components/ui/button";
+import { SectionCard } from "@/components/shared/SectionCard";
+import { StatusBadge } from "@/components/shared/StatusBadge";
 import { deletePending, listPending, type PendingCapture } from "@/lib/capture/pending";
 import type { CaptureView } from "@/types/capture";
 import { METHOD_LABEL, ErrorBanner, fmtTime } from "./parts";
@@ -39,40 +41,41 @@ export function PendingUploads({ onSent }: { onSent: (v: CaptureView) => void })
   };
 
   return (
-    <section className="space-y-2 rounded-xl border border-caution bg-caution-tint p-3" aria-label="Captures not sent yet">
-      <h2 className="font-display text-sm font-semibold text-caution">Not sent yet ({items.length})</h2>
-      <p className="text-xs text-text-secondary">These are saved on this device only. Send them when you have a connection.</p>
-      <ul className="space-y-2">
-        {items.map((p) => (
-          <li key={p.id} className="space-y-2 rounded-lg bg-surface-1 p-3 text-sm">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <span className="font-medium text-text-primary">
-                {METHOD_LABEL[KIND_METHOD[p.kind]]} · {fmtTime(new Date(p.createdAt).toISOString())}
-                {p.eventName ? ` · ${p.eventName}` : ""}
-              </span>
-              <span className="flex gap-2">
-                <Button type="button" size="sm" disabled={busy === p.id} onClick={() => void send(p)}>
-                  {busy === p.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <RefreshCw className="h-3 w-3" />} Send
-                </Button>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="outline"
-                  disabled={busy === p.id}
-                  onClick={async () => {
-                    await deletePending(p.id);
-                    await load();
-                  }}
-                >
-                  <Trash2 className="h-3 w-3" /> Discard
-                </Button>
-              </span>
-            </div>
-            {p.kind === "note" && p.text && <p className="line-clamp-2 break-words text-text-secondary">{p.text}</p>}
-            {(errors[p.id] || p.lastError) && <ErrorBanner>{errors[p.id] || `Last attempt failed: ${p.lastError}`}</ErrorBanner>}
-          </li>
-        ))}
-      </ul>
-    </section>
+    <div role="region" aria-label="Captures not sent yet">
+      <SectionCard title="Not sent yet" actions={<StatusBadge tone="caution">{items.length} on this device</StatusBadge>}>
+        <p className="mb-3 text-sm text-text-secondary">These are saved on this device only. Send them when you have a connection.</p>
+        <ul className="divide-y divide-line">
+          {items.map((p) => (
+            <li key={p.id} className="space-y-2 py-3 text-sm first:pt-0 last:pb-0">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <span className="min-w-0 break-words font-semibold text-text-primary">
+                  {METHOD_LABEL[KIND_METHOD[p.kind]]} · {fmtTime(new Date(p.createdAt).toISOString())}
+                  {p.eventName ? ` · ${p.eventName}` : ""}
+                </span>
+                <span className="flex gap-2">
+                  <Button type="button" size="sm" variant="secondary" disabled={busy === p.id} onClick={() => void send(p)}>
+                    {busy === p.id ? <Loader2 className="animate-spin" /> : <RefreshCw />} Send
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    disabled={busy === p.id}
+                    onClick={async () => {
+                      await deletePending(p.id);
+                      await load();
+                    }}
+                  >
+                    <Trash2 /> Discard
+                  </Button>
+                </span>
+              </div>
+              {p.kind === "note" && p.text && <p className="line-clamp-2 break-words text-text-secondary">{p.text}</p>}
+              {(errors[p.id] || p.lastError) && <ErrorBanner>{errors[p.id] || `Last attempt failed: ${p.lastError}`}</ErrorBanner>}
+            </li>
+          ))}
+        </ul>
+      </SectionCard>
+    </div>
   );
 }
